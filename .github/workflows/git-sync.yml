@@ -1,0 +1,17 @@
+on:
+  push:
+    branches:
+      - master
+#    paths:
+#      - '!.github/workflows/**'
+jobs:
+  git-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: git-sync
+        uses: wei/git-sync@v3
+        with:
+          source_repo: "https://${{ secrets.GIT_MIRROR_SRC_USER }}:${{ secrets.GIT_MIRROR_SRC_TOKEN}}@github.com/$GITHUB_REPOSITORY"
+          source_branch: "master"
+          destination_repo: "https://${{ secrets.GIT_MIRROR_DST_USER}}:${{ secrets.GIT_MIRROR_DST_TOKEN }}@${{ secrets.GIT_MIRROR_DST_REPOSITORY }}"
+          destination_branch: "$GITHUB_REPOSITORY"
