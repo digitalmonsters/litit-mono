@@ -7,19 +7,19 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
-	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"time"
 )
 
 type IAuthWrapper interface {
+	ParseToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
+		forceLog bool) chan AuthParseTokenResponseChan
 }
 
 type AuthWrapper struct {
 	defaultTimeout time.Duration
 	apiUrl         string
 	serviceName    string
-	client         *fasthttp.Client
 	baseWrapper    *wrappers.BaseWrapper
 }
 
@@ -33,7 +33,7 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 	resChan := make(chan AuthParseTokenResponseChan, 2)
 
 	w.baseWrapper.GetPool().Submit(func() {
-		rpcInternalResponse := <- w.baseWrapper.SendRequestWithRpcResponse(fmt.Sprintf("%v/token/parse", w.apiUrl),
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponse(fmt.Sprintf("%v/token/parse", w.apiUrl),
 			"unpack jwt",
 			AuthParseTokenRequest{
 				Token:            token,
