@@ -73,7 +73,19 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		}
 
 		rpcResponse, shouldLog := r.executeAction(rpcRequest, targetCmd.commandFn, ctx, apmTransaction, targetCmd.forceLog,
-			ctx.UserValue)
+			func(key string) interface{} {
+				if v := ctx.UserValue(key); v != nil {
+					return v
+				}
+
+				if ctx.QueryArgs() != nil {
+					if v := ctx.QueryArgs().Peek(key); len(v) > 0 {
+						return string(v)
+					}
+				}
+
+				return nil
+			})
 
 		var responseBody []byte
 
