@@ -11,7 +11,7 @@ import (
 )
 
 type ILikeWrapper interface {
-	GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponse
+	GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -27,7 +27,7 @@ func NewLikeWrapper(apiUrl string) ILikeWrapper {
 		serviceName: "like-backend"}
 }
 
-type LastLikedByUserResponse struct {
+type LastLikedByUserResponseChan struct {
 	Error *rpc.RpcError          `json:"error"`
 	Items map[int64][]LikeRecord `json:"items"`
 }
@@ -42,8 +42,9 @@ type GetLatestLikedByUserRequest struct {
 	UserIds      []int64 `json:"user_ids"`
 }
 
-func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponse {
-	respCh := make(chan LastLikedByUserResponse, 2)
+func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction,
+	forceLog bool) chan LastLikedByUserResponseChan {
+	respCh := make(chan LastLikedByUserResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetLastLikesByUsers", GetLatestLikedByUserRequest{
 		LimitPerUser: limitPerUser,
@@ -57,7 +58,7 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 
 		resp := <-respChan
 
-		result := LastLikedByUserResponse{
+		result := LastLikedByUserResponseChan{
 			Error: resp.Error,
 		}
 
