@@ -2,6 +2,7 @@ package watch
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
@@ -10,7 +11,7 @@ import (
 )
 
 type IWatchWrapper interface {
-	GetLastWatchesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastWatcherByUserResponse
+	GetLastWatchesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastWatcherByUserResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -22,7 +23,8 @@ type WatchWrapper struct {
 }
 
 func NewWatchWrapper(apiUrl string) IWatchWrapper {
-	return &WatchWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second, apiUrl: apiUrl,
+	return &WatchWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second,
+		apiUrl: common.StripSlashFromUrl(apiUrl),
 		serviceName: "watch-backend"}
 }
 
@@ -33,7 +35,7 @@ type LastWatchesByUserRecord struct {
 	Percent    float64 `json:"percent"`
 }
 
-type LastWatcherByUserResponse struct {
+type LastWatcherByUserResponseChan struct {
 	Error *rpc.RpcError                       `json:"error"`
 	Items map[int64][]LastWatchesByUserRecord `json:"items"`
 }
@@ -44,10 +46,11 @@ type GetLatestWatchesByUserRequest struct {
 	MinPercent   float64 `json:"min_percent"`
 }
 
-func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastWatcherByUserResponse {
-	respCh := make(chan LastWatcherByUserResponse, 2)
+func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction,
+	forceLog bool) chan LastWatcherByUserResponseChan {
+	respCh := make(chan LastWatcherByUserResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRequest(w.apiUrl, "GetLastWatchesByUsers", GetLatestWatchesByUserRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetLastWatchesByUsers", GetLatestWatchesByUserRequest{
 		LimitPerUser: limitPerUser,
 		UserIds:      userIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
@@ -59,7 +62,7 @@ func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, 
 
 		resp := <-respChan
 
-		result := LastWatcherByUserResponse{
+		result := LastWatcherByUserResponseChan{
 			Error: resp.Error,
 		}
 

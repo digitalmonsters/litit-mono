@@ -1,14 +1,13 @@
 package apm_helper
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
-	"io/ioutil"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -129,9 +128,17 @@ func stringify(value interface{}) string {
 	return ""
 }
 
-func SendRequest(client *http.Client, req *http.Request, parentTx *apm.Transaction, logResponse bool) (*http.Response, error) {
+func SendHttpRequest(client *fasthttp.Client, request *fasthttp.Request, response *fasthttp.Response, parentTx *apm.Transaction,
+	timeout time.Duration, logResponse bool) error {
+	if request == nil {
+		return errors.New("request should not be nil")
+	}
+	if response == nil {
+		return errors.New("response should not be nil")
+	}
+
 	tx := StartNewApmTransaction(
-		fmt.Sprintf("[%v] %v", req.Method, req.URL.String()),
+		fmt.Sprintf("[%v] %v", string(request.Header.Method()), request.URI().String()),
 		"http_external",
 		nil,
 		parentTx,
@@ -139,42 +146,28 @@ func SendRequest(client *http.Client, req *http.Request, parentTx *apm.Transacti
 
 	defer tx.End()
 
-	if tx.TransactionData != nil {
-		tx.Context.SetHTTPRequest(req)
-	}
-
-	if req.Body != nil {
-		requestBody, err := req.GetBody()
-
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		if requestBody != nil {
-			requestContent, _ := ioutil.ReadAll(requestBody)
-			tx.Context.SetCustom("request_body", string(requestContent))
-		}
-	}
-
-	resp, err := client.Do(req)
+	err := client.DoTimeout(request, response, timeout)
 
 	if err != nil {
-		return resp, errors.WithStack(err)
+		return err
 	}
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	data, _ := common.UnpackFastHttpBody(response)
 
-	if err != nil {
-		return nil, errors.WithStack(err)
+	tx.Context.SetHTTPStatusCode(response.StatusCode())
+
+	if logResponse || (response.StatusCode() != 200 && response.StatusCode() != 201) {
+		headers := map[string]string{}
+
+		response.Header.VisitAll(func(key, value []byte) {
+			headers[string(key)] = string(value)
+		})
+
+		b, _ := json.Marshal(headers)
+
+		AddApmData(tx, "headers", string(b))
+		tx.Context.SetCustom("response_body", string(data))
 	}
 
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(responseBody))
-
-	tx.Context.SetHTTPStatusCode(resp.StatusCode)
-
-	if logResponse || resp.StatusCode != 200 {
-		tx.Context.SetCustom("response_body", string(responseBody))
-	}
-
-	return resp, nil
+	return nil
 }
