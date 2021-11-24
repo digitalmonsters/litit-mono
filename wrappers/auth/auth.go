@@ -3,9 +3,10 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"time"
@@ -19,95 +20,42 @@ type AuthWrapper struct {
 	apiUrl         string
 	serviceName    string
 	client         *fasthttp.Client
+	baseWrapper    *wrappers.BaseWrapper
 }
 
 func NewAuthWrapper(apiUrl string) IAuthWrapper {
-	return &AuthWrapper{defaultTimeout: 5 * time.Second, apiUrl: apiUrl,
-		serviceName: "auth-wrapper", client: &fasthttp.Client{}}
+	return &AuthWrapper{defaultTimeout: 5 * time.Second, apiUrl: common.StripSlashFromUrl(apiUrl),
+		serviceName: "auth-wrapper", baseWrapper: wrappers.GetBaseWrapper()}
 }
 
-func (w *AuthWrapper) ParseToken2(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
+func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 	forceLog bool) chan AuthParseTokenResponseChan {
 	resChan := make(chan AuthParseTokenResponseChan, 2)
 
-	go func() {
-		var chanResponse AuthParseTokenResponseChan
+	w.baseWrapper.GetPool().Submit(func() {
+		rpcInternalResponse := <- w.baseWrapper.SendRequestWithRpcResponse(fmt.Sprintf("%v/token/parse", w.apiUrl),
+			"unpack jwt",
+			AuthParseTokenRequest{
+				Token:            token,
+				IgnoreExpiration: ignoreExpiration,
+			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-		defer func() {
-			resChan <- chanResponse
-		}()
-
-		req := fasthttp.AcquireRequest()
-		resp := fasthttp.AcquireResponse()
-
-		defer func() {
-			fasthttp.ReleaseRequest(req)
-			fasthttp.ReleaseResponse(resp)
-		}()
-
-		req.Header.SetMethod("POST")
-
-		if err := json.NewEncoder(resp.BodyWriter()).Encode(AuthParseTokenRequest{
-			Token:            token,
-			IgnoreExpiration: ignoreExpiration,
-		}); err != nil {
-			chanResponse.Error = &rpc.RpcError{
-				Code:    error_codes.GenericMappingError,
-				Message: err.Error(),
-				Data:    nil,
-				Stack:   fmt.Sprintf("%+v", err),
-			}
-
-			return
+		finalResponse := AuthParseTokenResponseChan{
+			Error: rpcInternalResponse.Error,
 		}
 
-		if err := apm_helper.SendHttpRequest(w.client, req, resp, apmTransaction, w.defaultTimeout, forceLog); err != nil {
-			chanResponse.Error = &rpc.RpcError{
-				Code:    error_codes.GenericServerError,
-				Message: err.Error(),
-				Data:    nil,
-				Stack:   fmt.Sprintf("%+v", err),
-			}
-
-			return
-		}
-
-		var result rpc.RpcResponseInternal
-
-		if err := json.Unmarshal(resp.Body(), &result); err != nil {
-			chanResponse.Error = &rpc.RpcError{
-				Code:    error_codes.GenericMappingError,
-				Message: err.Error(),
-				Data:    nil,
-				Stack:   fmt.Sprintf("%+v", err),
-			}
-
-			return
-		}
-
-		var realResponse AuthParseTokenResponse
-
-		if result.Error != nil {
-			chanResponse.Error = result.Error
-
-			return
-		}
-
-		if len(result.Result) > 0 {
-			if err := json.Unmarshal(result.Result, &realResponse); err != nil {
-				chanResponse.Error = &rpc.RpcError{
+		if len(rpcInternalResponse.Result) > 0 {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Resp); err != nil {
+				finalResponse.Error = &rpc.RpcError{
 					Code:    error_codes.GenericMappingError,
 					Message: err.Error(),
 					Data:    nil,
-					Stack:   fmt.Sprintf("%+v", err),
 				}
-
-				return
 			}
 		}
 
-		chanResponse.Resp = realResponse
-	}()
+		resChan <- finalResponse
+	})
 
 	return resChan
 }

@@ -1,8 +1,8 @@
 package common
 
 import (
-	"github.com/digitalmonsters/go-common/wrappers/auth"
 	"github.com/valyala/fasthttp"
+	"strings"
 )
 
 func UnpackFastHttpBody(response *fasthttp.Response) ([]byte, error) {
@@ -18,9 +18,16 @@ func UnpackFastHttpBody(response *fasthttp.Response) ([]byte, error) {
 	}
 }
 
-func Test() {
-	a := auth.NewAuthWrapper()
+func StripSlashFromUrl(input string) string {
+	if len(input) == 0 {
+		return input
+	}
 
-	v := <- a.ParseToken()
-	v.
+	input = strings.TrimSpace(strings.ToLower(input))
+
+	if strings.HasSuffix(input, "/") {
+		return input[:len(input)-1]
+	}
+
+	return input
 }

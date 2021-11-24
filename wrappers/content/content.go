@@ -2,6 +2,7 @@ package content
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
@@ -43,14 +44,15 @@ type ContentWrapper struct {
 }
 
 func NewContentWrapper(apiUrl string) IContentWrapper {
-	return &ContentWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second, apiUrl: apiUrl,
+	return &ContentWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second,
+		apiUrl: common.StripSlashFromUrl(apiUrl),
 		serviceName: "content-backend"}
 }
 
 func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan ContentGetInternalResponse {
 	respCh := make(chan ContentGetInternalResponse, 2)
 
-	respChan := w.baseWrapper.SendRequest(w.apiUrl, "ContentGetInternal", ContentGetInternalRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "ContentGetInternal", ContentGetInternalRequest{
 		ContentIds:     contentIds,
 		IncludeDeleted: includeDeleted,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)

@@ -27,6 +27,7 @@ func (b *BaseWrapper) GetPool() *workerpool.WorkerPool {
 	return b.workerPool
 }
 
+
 func GetBaseWrapper() *BaseWrapper {
 	if baseWrapper != nil {
 		return baseWrapper
@@ -44,7 +45,24 @@ func GetBaseWrapper() *BaseWrapper {
 	return baseWrapper
 }
 
-func (b *BaseWrapper) SendRequest(url string, methodName string, request interface{}, timeout time.Duration,
+func (b *BaseWrapper) SendRequestWithRpcResponse(url string, methodName string, request interface{}, timeout time.Duration,
+	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+
+	return b.GetRpcResponse(url, request, methodName, timeout, apmTransaction, externalServiceName, forceLog)
+}
+
+func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request interface{}, timeout time.Duration,
+	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+	name := strings.ToLower(methodName)
+	return b.GetRpcResponse(url, rpc.RpcRequestInternal{
+		Method:  name,
+		Params:  request,
+		Id:      "1",
+		JsonRpc: "2.0",
+	}, name, timeout, apmTransaction, externalServiceName, forceLog)
+}
+
+func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName string, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
@@ -95,12 +113,7 @@ func (b *BaseWrapper) SendRequest(url string, methodName string, request interfa
 		req.Header.SetMethod("POST")
 
 		if request != nil {
-			if b, err := json.Marshal(rpc.RpcRequestInternal{
-				Method:  strings.ToLower(methodName),
-				Params:  request,
-				Id:      "1",
-				JsonRpc: "2.0",
-			}); err != nil {
+			if b, err := json.Marshal(request); err != nil {
 				genericResponse = &rpc.RpcResponseInternal{
 					Error: &rpc.RpcError{
 						Code:    error_codes.GenericMappingError,

@@ -2,6 +2,7 @@ package like
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
@@ -22,7 +23,7 @@ type LikeWrapper struct {
 }
 
 func NewLikeWrapper(apiUrl string) ILikeWrapper {
-	return &LikeWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second, apiUrl: apiUrl,
+	return &LikeWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second, apiUrl: common.StripSlashFromUrl(apiUrl),
 		serviceName: "like-backend"}
 }
 
@@ -44,7 +45,7 @@ type GetLatestLikedByUserRequest struct {
 func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponse {
 	respCh := make(chan LastLikedByUserResponse, 2)
 
-	respChan := w.baseWrapper.SendRequest(w.apiUrl, "GetLastLikesByUsers", GetLatestLikedByUserRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetLastLikesByUsers", GetLatestLikedByUserRequest{
 		LimitPerUser: limitPerUser,
 		UserIds:      userIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
