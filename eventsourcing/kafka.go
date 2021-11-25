@@ -8,14 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
-	"sync"
-	"time"
 )
 
 type KafkaEventPublisher struct {
 	writer        *kafka.Writer
-	initMutex     sync.Mutex
-	isInitialized bool
 	cfg           boilerplate.KafkaWriterConfiguration
 	publisherType PublisherType
 }
@@ -32,68 +28,25 @@ func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topic stri
 	}
 
 	if cfg.Tls {
+
+		dialer := kafka.DefaultDialer
+		dialer.TLS = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+
 		h.writer.Transport = &kafka.Transport{
 			TLS: &tls.Config{
 				InsecureSkipVerify: true,
 			},
+			Dial: dialer.DialFunc,
 		}
 	}
 
 	return h
 }
 
-func (s *KafkaEventPublisher) init() error {
-	if s.isInitialized {
-		return nil
-	}
-
-	s.initMutex.Lock()
-	defer s.initMutex.Unlock()
-
-	if s.isInitialized {
-		return nil
-	}
-
-	dialer := kafka.DefaultDialer
-
-	if s.cfg.Tls {
-		dialer = &kafka.Dialer{
-			Timeout:   10 * time.Second,
-			DualStack: true,
-			TLS: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		}
-	}
-
-	conn, err := dialer.Dial("tcp", s.writer.Addr.String())
-
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	defer func() {
-		_ = conn.Close()
-	}()
-
-	//if err := conn.CreateTopics(kafka.TopicConfig{
-	//	Topic:             s.writer.Topic,
-	//	NumPartitions:     s.cfg.TopicPartitionCount,
-	//	ReplicationFactor: s.cfg.TopicReplicationFactor,
-	//}); err != nil {
-	//	return errors.WithStack(err)
-	//}
-
-	s.isInitialized = true
-
-	return nil
-}
-
 func (s *KafkaEventPublisher) Publish(apmTransaction *apm.Transaction, events ...IEventData) []error {
-	if err := s.init(); err != nil {
-		return []error{errors.WithStack(err)}
-	}
-
+	
 	var eventsMarshalled []kafka.Message
 
 	for _, event := range events {
