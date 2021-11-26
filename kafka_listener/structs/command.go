@@ -13,11 +13,11 @@ type ExecutionData struct {
 }
 
 type ICommand interface {
-	Execute(executionData ExecutionData, request ...kafka.Message) (result interface{}, err error)
+	Execute(executionData ExecutionData, request ...kafka.Message) (result interface{}, successfullyProcessed []kafka.Message, err error)
 	GetFancyName() string
 }
 
-type CommandFunc func(executionData ExecutionData, request ...kafka.Message) (interface{}, error)
+type CommandFunc func(executionData ExecutionData, request ...kafka.Message) (interface{}, []kafka.Message, error)
 
 type Command struct {
 	fancyName string
@@ -42,7 +42,7 @@ func NewCommand(fancyName string, fn CommandFunc, forceLog bool) *Command {
 	return cmd
 }
 
-func (c *Command) Execute(executionData ExecutionData, request ...kafka.Message) (result interface{}, err error) {
+func (c *Command) Execute(executionData ExecutionData, request ...kafka.Message) (result interface{}, successfullyProcessed []kafka.Message, err error) {
 	defer func() {
 		if er := recover(); er != nil {
 			result = nil
