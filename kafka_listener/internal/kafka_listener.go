@@ -69,7 +69,7 @@ func (k KafkaListener) GetTopic() string {
 }
 
 func (k *KafkaListener) getPartitionsForTopic() ([]int, error) {
-	if k.IsConsumerGroupMode() {
+	if k.isConsumerGroupMode {
 		return []int{0}, nil // 0 means that we dont care as we have GroupId
 	}
 
