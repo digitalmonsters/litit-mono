@@ -17,19 +17,8 @@ import (
 
 var readerMutex sync.Mutex
 
-type KafkaListenerLowLevelConfig struct {
-	GroupId             string // can be empty
-	ReadOnlyNewMessages bool
-	Topic               string
-	Hosts               string
-	Tls                 bool
-	KafkaAuth           boilerplate.KafkaAuth
-	MinBytes            int
-	MaxBytes            int
-}
-
 type KafkaListener struct {
-	cfg               KafkaListenerLowLevelConfig
+	cfg               boilerplate.KafkaListenerConfiguration
 	ctx               context.Context
 	readers           map[int]*kafka.Reader // key is partition; 0 - for GroupId
 	targetTopic       string
@@ -40,7 +29,7 @@ type KafkaListener struct {
 	dialer            *kafka.Dialer
 }
 
-func NewKafkaListener(config KafkaListenerLowLevelConfig, ctx context.Context, command structs.ICommand) *KafkaListener {
+func NewKafkaListener(config boilerplate.KafkaListenerConfiguration, ctx context.Context, command structs.ICommand) *KafkaListener {
 	if len(config.Topic) == 0 {
 		panic("kafka topic should not be empty")
 	}
@@ -49,7 +38,11 @@ func NewKafkaListener(config KafkaListenerLowLevelConfig, ctx context.Context, c
 		config.MaxBytes = 10e6 // 10 MB
 	}
 
-	dialer, err := GetKafkaDialer(config.Tls, config.KafkaAuth)
+	if config.KafkaAuth == nil {
+		config.KafkaAuth = &boilerplate.KafkaAuth{}
+	}
+
+	dialer, err := GetKafkaDialer(config.Tls, *config.KafkaAuth)
 
 	if err != nil {
 		panic(err)
@@ -64,6 +57,7 @@ func NewKafkaListener(config KafkaListenerLowLevelConfig, ctx context.Context, c
 		targetTopic:  config.Topic,
 		command:      command,
 		dialer:       dialer,
+		readers:      map[int]*kafka.Reader{},
 		listenerName: fmt.Sprintf("kafka_listener_%v", config.Topic),
 	}
 }
@@ -117,14 +111,10 @@ func (k *KafkaListener) getReaderForPartition(partition int) (*kafka.Reader, err
 		return v, nil
 	}
 
-	dialer, err := GetKafkaDialer(true, k.cfg.KafkaAuth)
+	dialer, err := GetKafkaDialer(true, *k.cfg.KafkaAuth)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
-	}
-
-	if len(k.cfg.GroupId) == 0 { // then we need to implement specific logic, as we dont have consumer group
-
 	}
 
 	var kafkaCfg = kafka.ReaderConfig{
@@ -165,6 +155,7 @@ func (k *KafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 		p := partition
 
 		go func() {
+			firstRun := true
 			for k.ctx.Err() == nil {
 				reader, err := k.getReaderForPartition(p)
 
@@ -175,7 +166,19 @@ func (k *KafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 					continue
 				}
 
+				if len(k.cfg.GroupId) == 0 && firstRun { // then lets read only new messages from this point
+					if err := reader.SetOffsetAt(k.ctx, time.Now().UTC()); err != nil {
+						log.Err(err).Send()
+					}
+				}
+
+				firstRun = false
+
 				if err := k.listen(maxBatchSize, maxDuration, reader); err != nil {
+					if len(k.cfg.GroupId) > 0 {
+						k.closeReader(p) // reset to last position
+					}
+
 					tx := apm_helper.StartNewApmTransaction(k.listenerName, "kafka_listener", nil, nil)
 
 					apm_helper.CaptureApmError(err, tx)
