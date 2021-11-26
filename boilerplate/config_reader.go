@@ -90,6 +90,7 @@ type KafkaListenerConfiguration struct {
 	MaxBatchSize     int        `json:"MaxBatchSize"`
 	ListenerDuration int        `json:"ListenerDuration"`
 	Tls              bool       `json:"Tls"`
+	ReadFromEnd      bool       `json:"read_from_end"`
 }
 
 type KafkaWriterConfiguration struct {
