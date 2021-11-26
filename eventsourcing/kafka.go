@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
+	"time"
 )
 
 type KafkaEventPublisher struct {
@@ -28,7 +29,6 @@ func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topic stri
 	}
 
 	if cfg.Tls {
-
 		dialer := kafka.DefaultDialer
 		dialer.TLS = &tls.Config{
 			InsecureSkipVerify: true,
@@ -59,6 +59,7 @@ func (s *KafkaEventPublisher) Publish(apmTransaction *apm.Transaction, events ..
 		eventsMarshalled = append(eventsMarshalled, kafka.Message{
 			Key:   []byte(event.GetPublishKey()),
 			Value: value,
+			Time: time.Now().UTC(),
 		})
 	}
 
