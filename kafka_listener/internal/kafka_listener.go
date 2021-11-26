@@ -18,15 +18,16 @@ import (
 var readerMutex sync.Mutex
 
 type KafkaListener struct {
-	cfg               boilerplate.KafkaListenerConfiguration
-	ctx               context.Context
-	readers           map[int]*kafka.Reader // key is partition; 0 - for GroupId
-	targetTopic       string
-	command           structs.ICommand
-	listenerName      string
-	cancelFn          context.CancelFunc
-	hasRunningRequest bool
-	dialer            *kafka.Dialer
+	cfg                boilerplate.KafkaListenerConfiguration
+	ctx                context.Context
+	readers            map[int]*kafka.Reader // key is partition; 0 - for GroupId
+	targetTopic        string
+	command            structs.ICommand
+	listenerName       string
+	cancelFn           context.CancelFunc
+	hasRunningRequest  bool
+	dialer              *kafka.Dialer
+	isConsumerGroupMode bool
 }
 
 func NewKafkaListener(config boilerplate.KafkaListenerConfiguration, ctx context.Context, command structs.ICommand) *KafkaListener {
@@ -51,14 +52,15 @@ func NewKafkaListener(config boilerplate.KafkaListenerConfiguration, ctx context
 	localCtx, cancelFn := context.WithCancel(ctx)
 
 	return &KafkaListener{
-		cfg:          config,
-		ctx:          localCtx,
-		cancelFn:     cancelFn,
-		targetTopic:  config.Topic,
-		command:      command,
-		dialer:       dialer,
-		readers:      map[int]*kafka.Reader{},
-		listenerName: fmt.Sprintf("kafka_listener_%v", config.Topic),
+		cfg:                 config,
+		ctx:                 localCtx,
+		cancelFn:            cancelFn,
+		targetTopic:         config.Topic,
+		command:             command,
+		dialer:              dialer,
+		isConsumerGroupMode: len(config.GroupId) > 0,
+		readers:             map[int]*kafka.Reader{},
+		listenerName:        fmt.Sprintf("kafka_listener_%v", config.Topic),
 	}
 }
 
@@ -67,7 +69,7 @@ func (k KafkaListener) GetTopic() string {
 }
 
 func (k *KafkaListener) getPartitionsForTopic() ([]int, error) {
-	if len(k.cfg.GroupId) != 0 {
+	if k.IsConsumerGroupMode() {
 		return []int{0}, nil // 0 means that we dont care as we have GroupId
 	}
 
@@ -168,7 +170,7 @@ func (k *KafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 					continue
 				}
 
-				if len(k.cfg.GroupId) == 0 && firstRun { // then lets read only new messages from this point
+				if !k.isConsumerGroupMode && firstRun { // then lets read only new messages from this point
 					if err := reader.SetOffsetAt(k.ctx, time.Now().UTC()); err != nil {
 						log.Err(err).Send()
 					}
@@ -177,9 +179,9 @@ func (k *KafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 				firstRun = false
 
 				if err := k.listen(maxBatchSize, maxDuration, reader); err != nil {
-					if len(k.cfg.GroupId) > 0 {
-						k.closeReader(p) // reset to last position
-					}
+					//if len(k.cfg.GroupId) > 0 {
+					//	k.closeReader(p) // reset to last position
+					//}
 
 					tx := apm_helper.StartNewApmTransaction(k.listenerName, "kafka_listener", nil, nil)
 
@@ -237,6 +239,7 @@ func (k *KafkaListener) Close() error {
 func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, reader *kafka.Reader) error {
 	messagePool := make([]kafka.Message, maxBatchSize)
 	messageIndex := 0
+	var processedMessages []kafka.Message
 
 	for k.ctx.Err() == nil {
 		message2, err := reader.FetchMessage(k.ctx)
@@ -305,32 +308,34 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 		commandExecutionContext := apm.ContextWithTransaction(context.TODO(), apmTransaction)
 
-		_, err = k.command.Execute(structs.ExecutionData{
+		_, processedMessages, err = k.command.Execute(structs.ExecutionData{
 			ApmTransaction: apmTransaction,
 			Context:        commandExecutionContext,
 		}, messagePool[:messageIndex]...)
+
+		if k.isConsumerGroupMode && len(processedMessages) > 0 {
+			if err := reader.CommitMessages(commandExecutionContext, messagePool[:messageIndex]...); err != nil {
+				apm_helper.CaptureApmError(err, apmTransaction)
+
+				if errors.Is(err, io.EOF) {
+					apmTransaction.End()
+
+					break
+				}
+
+				k.hasRunningRequest = false
+
+				apmTransaction.End()
+				continue
+			}
+		}
 
 		if err != nil {
 			apm_helper.CaptureApmError(err, apmTransaction)
 			apmTransaction.End()
 			k.hasRunningRequest = false
 
-			return errors.Wrap(err, "re-read")
-		}
-
-		if err := reader.CommitMessages(commandExecutionContext, messagePool[:messageIndex]...); err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
-
-			if errors.Is(err, io.EOF) {
-				apmTransaction.End()
-
-				break
-			}
-
-			k.hasRunningRequest = false
-
-			apmTransaction.End()
-			continue
+			return errors.Wrap(err, "re-read")  // todo ! ?
 		}
 
 		k.hasRunningRequest = false
