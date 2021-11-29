@@ -18,30 +18,7 @@ type Wrapper struct {
 }
 
 type ICategoryWrapper interface {
-	GetCategoryInternal(categoryIds []int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
-}
-
-type SimpleCategory struct {
-	Id         int64  `json:"id"`
-	Name       string `json:"name"`
-	ViewsCount int    `json:"views_count"`
-	Emojis     string `json:"emojis"`
-}
-
-type ResponseData struct {
-	Items      []SimpleCategory `json:"items"`
-	TotalCount int64            `json:"total_count"`
-}
-
-type CategoryGetInternalResponseChan struct {
-	Error *rpc.RpcError `json:"error"`
-	Data  *ResponseData `json:"data"`
-}
-
-type GetCategoryInternalRequest struct {
-	CategoryIds []int64 `json:"category_ids"`
-	Limit       int     `json:"limit"`
-	Offset      int     `json:"offset"`
+	GetCategoryInternal(categoryIds []int64, limit int, offset int, excludeRoot bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
 }
 
 func NewCategoryWrapper(apiUrl string) ICategoryWrapper {
@@ -52,13 +29,14 @@ func NewCategoryWrapper(apiUrl string) ICategoryWrapper {
 		serviceName:    "content-backend"}
 }
 
-func (w *Wrapper) GetCategoryInternal(categoryIds []int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
+func (w *Wrapper) GetCategoryInternal(categoryIds []int64, limit int, offset int, excludeRoot bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
 	respCh := make(chan CategoryGetInternalResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetCategoryInternal", GetCategoryInternalRequest{
 		CategoryIds: categoryIds,
 		Limit:       limit,
 		Offset:      offset,
+		ExcludeRoot: excludeRoot,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	w.baseWrapper.GetPool().Submit(func() {
