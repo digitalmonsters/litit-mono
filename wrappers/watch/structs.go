@@ -19,3 +19,19 @@ type GetLatestWatchesByUserRequest struct {
 	UserIds      []int64 `json:"user_ids"`
 	MinPercent   float64 `json:"min_percent"`
 }
+
+type CategoryInfo struct {
+	Id         int64  `json:"id"`
+	Name       string `json:"name"`
+	ViewsCount int64  `json:"views_count"`
+}
+
+type GetCategoriesByViewsRequest struct {
+	Limit  int64
+	Offset int64
+}
+
+type GetCategoriesResponseChan struct {
+	Error *rpc.RpcError  `json:"error"`
+	Items []CategoryInfo `json:"items"`
+}

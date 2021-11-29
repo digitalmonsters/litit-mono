@@ -43,9 +43,11 @@ func (e Environment) ToString() string {
 }
 
 type Wrappers struct {
-	Content WrapperConfig `json:"Content"`
-	Like    WrapperConfig `json:"Like"`
-	Watch   WrapperConfig `json:"Watch"`
+	Content  WrapperConfig `json:"Content"`
+	Like     WrapperConfig `json:"Like"`
+	Watch    WrapperConfig `json:"Watch"`
+	Category WrapperConfig `json:"category"`
+	Hashtag  WrapperConfig `json:"hashtag"`
 }
 
 type WrapperConfig struct {
