@@ -50,6 +50,7 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 					Code:    error_codes.GenericMappingError,
 					Message: err.Error(),
 					Data:    nil,
+					Hostname: w.baseWrapper.GetHostName(),
 				}
 			}
 		}

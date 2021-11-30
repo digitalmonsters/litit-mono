@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +19,7 @@ import (
 type BaseWrapper struct {
 	workerPool *workerpool.WorkerPool
 	client     *fasthttp.Client
+	hostName   string
 }
 
 var mutex sync.Mutex
@@ -26,7 +28,6 @@ var baseWrapper *BaseWrapper
 func (b *BaseWrapper) GetPool() *workerpool.WorkerPool {
 	return b.workerPool
 }
-
 
 func GetBaseWrapper() *BaseWrapper {
 	if baseWrapper != nil {
@@ -40,9 +41,19 @@ func GetBaseWrapper() *BaseWrapper {
 		return baseWrapper
 	}
 
-	baseWrapper = &BaseWrapper{workerPool: workerpool.New(1024), client: &fasthttp.Client{}}
+	hostName, _ := os.Hostname()
+
+	baseWrapper = &BaseWrapper{
+		workerPool: workerpool.New(1024),
+		client:     &fasthttp.Client{},
+		hostName:   hostName,
+	}
 
 	return baseWrapper
+}
+
+func (b *BaseWrapper) GetHostName() string {
+	return b.hostName
 }
 
 func (b *BaseWrapper) SendRequestWithRpcResponse(url string, methodName string, request interface{}, timeout time.Duration,
@@ -113,19 +124,20 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 		req.Header.SetMethod("POST")
 
 		if request != nil {
-			if b, err := json.Marshal(request); err != nil {
+			if data, err := json.Marshal(request); err != nil {
 				genericResponse = &rpc.RpcResponseInternal{
 					Error: &rpc.RpcError{
 						Code:    error_codes.GenericMappingError,
 						Message: err.Error(),
 						Data:    nil,
+						Hostname: b.hostName,
 					},
 				}
 
 				responseCh <- *genericResponse
 				return
 			} else {
-				rawBodyRequest = b
+				rawBodyRequest = data
 
 				req.SetBodyRaw(rawBodyRequest)
 			}
@@ -142,6 +154,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				Error: &rpc.RpcError{
 					Code:    code,
 					Message: "error during sending request",
+					Hostname: b.hostName,
 				},
 			}
 
@@ -159,6 +172,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				Code:    error_codes.GenericMappingError,
 				Message: err.Error(),
 				Data:    nil,
+				Hostname: b.hostName,
 			}
 
 			responseCh <- *genericResponse

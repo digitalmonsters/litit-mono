@@ -47,6 +47,10 @@ func (r RestCommand) GetHttpMethod() string {
 	return r.method
 }
 
+func (r RestCommand) GetFn() CommandFunc {
+	return r.commandFn
+}
+
 type genericRestResponse struct {
 	Data    interface{} `json:"data"`
 	Success bool        `json:"success"`

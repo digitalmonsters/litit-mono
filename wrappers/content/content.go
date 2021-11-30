@@ -55,6 +55,7 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 					Code:    error_codes.GenericMappingError,
 					Message: err.Error(),
 					Data:    nil,
+					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {
 				result.Items = items

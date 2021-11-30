@@ -56,6 +56,7 @@ func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, 
 					Code:    error_codes.GenericMappingError,
 					Message: err.Error(),
 					Data:    nil,
+					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {
 				result.Items = items
