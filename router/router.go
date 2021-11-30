@@ -201,7 +201,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	userId := int64(0)
 
-	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); string(externalAuthValue) == "allowed" {
+	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
 		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
 				apm_helper.CaptureApmError(err, apmTransaction)
