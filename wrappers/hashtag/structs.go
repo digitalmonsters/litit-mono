@@ -18,7 +18,8 @@ type HashtagsGetInternalResponseChan struct {
 }
 
 type GetHashtagsInternalRequest struct {
-	Hashtags []string `json:"hashtags"`
-	Limit    int      `json:"limit"`
-	Offset   int      `json:"offset"`
+	Hashtags     []string `json:"hashtags"`
+	OmitHashtags []string `json:"omit_hashtags"`
+	Limit        int      `json:"limit"`
+	Offset       int      `json:"offset"`
 }
