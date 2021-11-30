@@ -18,7 +18,7 @@ type Wrapper struct {
 }
 
 type ICategoryWrapper interface {
-	GetCategoryInternal(categoryIds []int64, limit int, offset int, excludeRoot bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
+	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, excludeRoot bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
 }
 
 func NewCategoryWrapper(apiUrl string) ICategoryWrapper {
@@ -29,14 +29,15 @@ func NewCategoryWrapper(apiUrl string) ICategoryWrapper {
 		serviceName:    "content-backend"}
 }
 
-func (w *Wrapper) GetCategoryInternal(categoryIds []int64, limit int, offset int, excludeRoot bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
+func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, excludeRoot bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
 	respCh := make(chan CategoryGetInternalResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetCategoryInternal", GetCategoryInternalRequest{
-		CategoryIds: categoryIds,
-		Limit:       limit,
-		Offset:      offset,
-		ExcludeRoot: excludeRoot,
+		CategoryIds:     categoryIds,
+		Limit:           limit,
+		Offset:          offset,
+		OmitCategoryIds: omitCategoryIds,
+		ExcludeRoot:     excludeRoot,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	w.baseWrapper.GetPool().Submit(func() {
@@ -55,9 +56,9 @@ func (w *Wrapper) GetCategoryInternal(categoryIds []int64, limit int, offset int
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:    error_codes.GenericMappingError,
-					Message: err.Error(),
-					Data:    nil,
+					Code:     error_codes.GenericMappingError,
+					Message:  err.Error(),
+					Data:     nil,
 					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {
