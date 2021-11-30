@@ -78,6 +78,7 @@ func (w *Wrapper) GetHashtagsInternal(hashtags []string, limit int, offset int, 
 					Code:    error_codes.GenericMappingError,
 					Message: err.Error(),
 					Data:    nil,
+					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {
 				result.Data = data

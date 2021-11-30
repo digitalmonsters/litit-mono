@@ -70,6 +70,7 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 					Code:    error_codes.GenericMappingError,
 					Message: err.Error(),
 					Data:    nil,
+					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {
 				result.Items = items

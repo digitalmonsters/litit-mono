@@ -42,8 +42,9 @@ type RpcResponseInternal struct {
 
 //goland:noinspection ALL
 type RpcError struct {
-	Code    error_codes.ErrorCode  `json:"code"`
-	Message string                 `json:"message"`
-	Data    map[string]interface{} `json:"data"`
-	Stack   string                 `json:"stack"`
+	Code     error_codes.ErrorCode  `json:"code"`
+	Message  string                 `json:"message"`
+	Data     map[string]interface{} `json:"data"`
+	Stack    string                 `json:"stack"`
+	Hostname string                 `json:"hostname"`
 }

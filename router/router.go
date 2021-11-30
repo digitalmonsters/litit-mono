@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/wrappers/auth"
 	fastRouter "github.com/fasthttp/router"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -14,6 +16,7 @@ import (
 	"go.elastic.co/apm"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,12 +26,14 @@ type HttpRouter struct {
 	hostname     string
 	restCommands map[string]*RestCommand
 	isProd       bool
+	authWrapper  auth.IAuthWrapper
 }
 
-func NewRouter(rpcEndpointPath string) *HttpRouter {
+func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
 	h := &HttpRouter{
 		realRouter:   fastRouter.New(),
 		executor:     NewCommandExecutor(),
+		authWrapper:  wrapper,
 		restCommands: map[string]*RestCommand{},
 	}
 
@@ -72,7 +77,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			JsonRpc: "2.0",
 		}
 
-		rpcResponse, shouldLog := r.executeAction(rpcRequest, targetCmd.commandFn, ctx, apmTransaction, targetCmd.forceLog,
+		rpcResponse, shouldLog := r.executeAction(rpcRequest, targetCmd, ctx, apmTransaction, targetCmd.forceLog,
 			func(key string) interface{} {
 				if v := ctx.UserValue(key); v != nil {
 					return v
@@ -140,7 +145,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 	return nil
 }
 
-func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmdFn CommandFunc, ctx *fasthttp.RequestCtx,
+func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx *fasthttp.RequestCtx,
 	apmTransaction *apm.Transaction, forceLog bool, getUserValue func(key string) interface{}) (rpcResponse rpc.RpcResponse, shouldLog bool) {
 	totalTiming := time.Now()
 	apm.ContextWithTransaction(ctx, apmTransaction)
@@ -178,9 +183,10 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmdFn CommandFunc,
 
 			rpcResponse.Result = nil
 			rpcResponse.Error = &rpc.RpcError{
-				Code:    error_codes.GenericPanicError,
-				Message: panicErr.Error(),
-				Data:    nil,
+				Code:     error_codes.GenericPanicError,
+				Message:  panicErr.Error(),
+				Data:     nil,
+				Hostname: r.hostname,
 			}
 
 			if !r.isProd {
@@ -195,32 +201,74 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmdFn CommandFunc,
 
 	userId := int64(0)
 
-	userIdFromHeader := ctx.Request.Header.Peek("UserId")
-
-	if userIdFromHeader != nil {
-		if id, err := strconv.ParseInt(string(userIdFromHeader), 10, 64); err != nil {
-			// todo handle somehow
-		} else {
-			userId = id
+	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); string(externalAuthValue) == "allowed" {
+		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
+			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
+				apm_helper.CaptureApmError(err, apmTransaction)
+			} else {
+				userId = userIdParsed
+			}
 		}
 	}
 
-	//if cmd.RequireIdentityValidation() && userId <= 0 { // some specific logic to properly handle authorization
-	//	// todo handle somehow
+	if userId == 0 {
+		if authHeaderValue := ctx.Request.Header.Peek("Authorization"); len(authHeaderValue) > 0 {
+			jwtStr := string(authHeaderValue)
+
+			if len(jwtStr) > 0 {
+				jwtStr = strings.TrimSpace(strings.ReplaceAll(jwtStr, "Bearer", ""))
+			}
+
+			resp := <-r.authWrapper.ParseToken(jwtStr, false, apmTransaction, true)
+
+			if resp.Error != nil {
+				rpcResponse.Error = resp.Error
+				return
+			}
+
+			userId = resp.Resp.UserId
+		}
+	}
+
+	if cmd.RequireIdentityValidation() || cmd.AccessLevel() > common.AccessLevelPublic {
+		err := errors.New("missing jwt token for auth")
+
+		rpcResponse.Error = &rpc.RpcError{
+			Code:     error_codes.MissingJwtToken,
+			Message:  "missing jwt token for auth",
+			Hostname: r.hostname,
+		}
+
+		if !r.isProd {
+			rpcResponse.Error.Stack = fmt.Sprintf("%+v", err)
+		}
+
+		return
+	}
+
+	//userIdFromHeader := ctx.Request.Header.Peek("UserId")
+	//
+	//if userIdFromHeader != nil {
+	//	if id, err := strconv.ParseInt(string(userIdFromHeader), 10, 64); err != nil {
+	//		// todo handle somehow
+	//	} else {
+	//		userId = id
+	//	}
 	//}
 
 	executionTiming := time.Now()
 
-	if resp, err := cmdFn(rpcRequest.Params, MethodExecutionData{
+	if resp, err := cmd.GetFn()(rpcRequest.Params, MethodExecutionData{
 		ApmTransaction: apmTransaction,
 		Context:        ctx,
 		UserId:         userId,
 		getUserValueFn: getUserValue,
 	}); err != nil {
 		rpcResponse.Error = &rpc.RpcError{
-			Code:    err.GetCode(),
-			Message: err.GetMessage(),
-			Data:    nil,
+			Code:     err.GetCode(),
+			Message:  err.GetMessage(),
+			Data:     nil,
+			Hostname: r.hostname,
 		}
 
 		if !r.isProd {
@@ -257,9 +305,10 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 					shouldLog = true
 					rpcResponse.Result = nil
 					rpcResponse.Error = &rpc.RpcError{
-						Code:    error_codes.GenericMappingError,
-						Message: errors.Wrap(err, "error during response serialization").Error(),
-						Data:    nil,
+						Code:     error_codes.GenericMappingError,
+						Message:  errors.Wrap(err, "error during response serialization").Error(),
+						Data:     nil,
+						Hostname: r.hostname,
 					}
 					if !r.isProd {
 						rpcResponse.Error.Stack = fmt.Sprintf("%+v", err)
@@ -291,9 +340,10 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 
 		if err := json.Unmarshal(requestBody, &rpcRequest); err != nil {
 			rpcResponse.Error = &rpc.RpcError{
-				Code:    error_codes.GenericMappingError,
-				Message: err.Error(),
-				Data:    nil,
+				Code:     error_codes.GenericMappingError,
+				Message:  err.Error(),
+				Data:     nil,
+				Hostname: r.hostname,
 			}
 
 			if !r.isProd {
@@ -307,9 +357,10 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 
 		if err != nil {
 			rpcResponse.Error = &rpc.RpcError{
-				Code:    error_codes.CommandNotFoundError,
-				Message: err.Error(),
-				Data:    nil,
+				Code:     error_codes.CommandNotFoundError,
+				Message:  err.Error(),
+				Data:     nil,
+				Hostname: r.hostname,
 			}
 
 			if !r.isProd {
@@ -319,7 +370,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 			return
 		}
 
-		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd.fn, ctx, apmTransaction, cmd.forceLog, nil)
+		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd, ctx, apmTransaction, cmd.forceLog, nil)
 	})
 }
 

@@ -80,6 +80,7 @@ func (w *Wrapper) GetCategoryInternal(categoryIds []int64, limit int, offset int
 					Code:    error_codes.GenericMappingError,
 					Message: err.Error(),
 					Data:    nil,
+					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {
 				result.Data = data
