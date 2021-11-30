@@ -1,6 +1,9 @@
 package category
 
-import "github.com/digitalmonsters/go-common/rpc"
+import (
+	"github.com/digitalmonsters/go-common/rpc"
+	"gopkg.in/guregu/null.v4"
+)
 
 type SimpleCategory struct {
 	Id         int64  `json:"id"`
@@ -28,8 +31,10 @@ type CategoryGetInternalResponseChan struct {
 }
 
 type GetCategoryInternalRequest struct {
-	CategoryIds []int64 `json:"category_ids"`
-	Limit       int     `json:"limit"`
-	Offset      int     `json:"offset"`
-	ExcludeRoot bool    `json:"exclude_root"`
+	CategoryIds      []int64  `json:"category_ids"`
+	Limit            int      `json:"limit"`
+	UserId           null.Int `json:"user_id"`
+	Offset           int      `json:"offset"`
+	ExcludeRoot      bool     `json:"exclude_root"`
+	ExcludeFollowing bool     `json:"exclude_following"`
 }
