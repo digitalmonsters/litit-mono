@@ -27,21 +27,6 @@ func NewLikeWrapper(apiUrl string) ILikeWrapper {
 		serviceName: "like-backend"}
 }
 
-type LastLikedByUserResponseChan struct {
-	Error *rpc.RpcError          `json:"error"`
-	Items map[int64][]LikeRecord `json:"items"`
-}
-
-//goland:noinspection GoNameStartsWithPackageName
-type LikeRecord struct {
-	ContentId int64 `json:"content_id"`
-}
-
-type GetLatestLikedByUserRequest struct {
-	LimitPerUser int     `json:"limit_per_user"`
-	UserIds      []int64 `json:"user_ids"`
-}
-
 func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction,
 	forceLog bool) chan LastLikedByUserResponseChan {
 	respCh := make(chan LastLikedByUserResponseChan, 2)
