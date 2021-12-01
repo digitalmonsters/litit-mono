@@ -230,6 +230,12 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 		}
 	}
 
+	if userId > 0 {
+		if apmTransaction != nil {
+			apmTransaction.Context.SetUserID(fmt.Sprint(userId))
+		}
+	}
+
 	if cmd.RequireIdentityValidation() || cmd.AccessLevel() > common.AccessLevelPublic {
 		err := errors.New("missing jwt token for auth")
 
@@ -245,17 +251,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 		return
 	}
-
-	//userIdFromHeader := ctx.Request.Header.Peek("UserId")
-	//
-	//if userIdFromHeader != nil {
-	//	if id, err := strconv.ParseInt(string(userIdFromHeader), 10, 64); err != nil {
-	//		// todo handle somehow
-	//	} else {
-	//		userId = id
-	//	}
-	//}
-
+	
 	executionTiming := time.Now()
 
 	if resp, err := cmd.GetFn()(rpcRequest.Params, MethodExecutionData{

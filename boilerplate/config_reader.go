@@ -3,11 +3,10 @@ package boilerplate
 import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ft-t/go-micro-consul"
+	"github.com/ft-t/go-micro-env"
 	"github.com/pkg/errors"
 	"go-micro.dev/v4/config"
 	"go-micro.dev/v4/config/source"
-	"go-micro.dev/v4/config/source/env"
 	"go-micro.dev/v4/config/source/file"
 	"os"
 	"path"
@@ -77,12 +76,6 @@ type RedisConfig struct {
 	Password string `json:"Password"`
 }
 
-type ConsulConfig struct {
-	Url      string   `json:"Url"`
-	AclToken string   `json:"AclToken"`
-	Keys     []string `json:"Keys"`
-}
-
 type KafkaListenerConfiguration struct {
 	Hosts            string     `json:"Hosts"`
 	Topic            string     `json:"Topic"`
@@ -140,7 +133,7 @@ type ScyllaConfiguration struct {
 var configuration interface{}
 
 func ReadConfigFile(input interface{}) (interface{}, error) {
-	return ReadConfigByFilePaths([]string{"config.json"}, nil, input)
+	return ReadConfigByFilePaths([]string{"config.json"}, input)
 }
 
 func SplitHostsToSlice(currentString string) []string {
@@ -155,7 +148,7 @@ func SplitHostsToSlice(currentString string) []string {
 	return results
 }
 
-func ReadConfigByFilePaths(filePath []string, consulConfig *ConsulConfig, input interface{}) (interface{}, error) {
+func ReadConfigByFilePaths(filePath []string, input interface{}) (interface{}, error) {
 	if configuration != nil {
 		return configuration, nil
 	}
@@ -199,44 +192,19 @@ func ReadConfigByFilePaths(filePath []string, consulConfig *ConsulConfig, input 
 		sources = append(sources, file.NewSource(option))
 	}
 
-	if consulConfig != nil && len(consulConfig.Url) > 0 {
-		for _, k := range consulConfig.Keys {
-			sources = append(sources, micro_consul.NewSource(micro_consul.WithConfig(consulConfig.Url, k, consulConfig.AclToken)))
-		}
-	}
-
-	sources = append(sources, env.NewSource())
+	sources = append(sources, go_micro_env.NewSource(input))
 
 	if err := conf.Load(sources...); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	if err := conf.Get().Scan(input); err != nil {
+		if err := conf.Get().Scan(input); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	configuration = input
 
 	return configuration, nil
-}
-
-func ExtractConsulConfig() *ConsulConfig {
-	consulUrl := os.Getenv("APP_CONSUL_URL")
-	consulKeys := os.Getenv("APP_CONSUL_KEYS")
-
-	if len(consulUrl) < 4 || len(consulKeys) == 0 {
-		return nil
-	}
-
-	cfg := &ConsulConfig{
-		Url:      consulUrl,
-		AclToken: os.Getenv("APP_CONSUL_ACL_TOKEN"),
-		Keys:     nil,
-	}
-
-	cfg.Keys = append(cfg.Keys, strings.Split(consulKeys, ",")...)
-
-	return cfg
 }
 
 func RecursiveFindFile(fileName string, startDirectory string, maxDepth int) (string, error) {
