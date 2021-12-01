@@ -62,6 +62,15 @@ func (b *BaseWrapper) SendRequestWithRpcResponse(url string, methodName string, 
 	return b.GetRpcResponse(url, request, methodName, timeout, apmTransaction, externalServiceName, forceLog)
 }
 
+func (b *BaseWrapper) SendRequestWithRpcResponseFromNodeJsService(url string, httpMethod string, contentType string,
+	methodName string, request interface{}, timeout time.Duration, apmTransaction *apm.Transaction,
+	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+
+	return b.GetRpcResponseFromNodeJsService(
+		url, request, httpMethod, contentType, methodName, timeout, apmTransaction, externalServiceName, forceLog,
+	)
+}
+
 func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request interface{}, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	name := strings.ToLower(methodName)
@@ -92,28 +101,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				"internal_rpc", nil, apmTransaction)
 		}
 
-		defer func() {
-			if rqTransaction == nil {
-				return
-			}
-
-			shouldLog := forceLog
-
-			if genericResponse != nil && genericResponse.Error != nil {
-				shouldLog = true // we have an error
-
-				apm_helper.CaptureApmError(errors.New(fmt.Sprintf("external service [%v] replay with error [%v] and msg [%v]",
-					externalServiceName, genericResponse.Error.Code, genericResponse.Error.Message)), rqTransaction)
-			}
-
-			if shouldLog {
-				apm_helper.AddApmData(rqTransaction, "raw_request", rawBodyRequest)
-				apm_helper.AddApmData(rqTransaction, "raw_response", rawBodyResponse)
-				apm_helper.AddApmData(rqTransaction, "parsed_response", genericResponse)
-			}
-
-			rqTransaction.End()
-		}()
+		defer endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
 
 		req := fasthttp.AcquireRequest()
 		defer fasthttp.ReleaseRequest(req)
@@ -127,9 +115,9 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			if data, err := json.Marshal(request); err != nil {
 				genericResponse = &rpc.RpcResponseInternal{
 					Error: &rpc.RpcError{
-						Code:    error_codes.GenericMappingError,
-						Message: err.Error(),
-						Data:    nil,
+						Code:     error_codes.GenericMappingError,
+						Message:  err.Error(),
+						Data:     nil,
 						Hostname: b.hostName,
 					},
 				}
@@ -152,8 +140,8 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 
 			genericResponse = &rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:    code,
-					Message: "error during sending request",
+					Code:     code,
+					Message:  "error during sending request",
 					Hostname: b.hostName,
 				},
 			}
@@ -169,9 +157,9 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 
 		if err := json.Unmarshal(rawBodyResponse, genericResponse); err != nil {
 			genericResponse.Error = &rpc.RpcError{
-				Code:    error_codes.GenericMappingError,
-				Message: err.Error(),
-				Data:    nil,
+				Code:     error_codes.GenericMappingError,
+				Message:  err.Error(),
+				Data:     nil,
 				Hostname: b.hostName,
 			}
 
@@ -184,4 +172,168 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 	})
 
 	return responseCh
+}
+
+func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interface{}, httpMethod string,
+	contentType string, methodName string, timeout time.Duration, apmTransaction *apm.Transaction,
+	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+	responseCh := make(chan rpc.RpcResponseInternal, 2)
+
+	b.workerPool.Submit(func() {
+		defer func() {
+			close(responseCh)
+		}()
+
+		var rqTransaction *apm.Transaction
+		var rawBodyRequest []byte
+		var rawBodyResponse []byte
+		var genericResponse *rpc.RpcResponseInternal
+
+		if apmTransaction != nil {
+			rqTransaction = apm_helper.StartNewApmTransaction(fmt.Sprintf("HTTP [%s] [%v] [%v]", httpMethod, url, methodName),
+				"internal_rpc", nil, apmTransaction)
+		}
+
+		defer endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+
+		req := fasthttp.AcquireRequest()
+		defer fasthttp.ReleaseRequest(req)
+		resp := fasthttp.AcquireResponse()
+		defer fasthttp.ReleaseResponse(resp)
+
+		req.SetRequestURI(url)
+		req.Header.SetMethod(httpMethod)
+
+		if request != nil {
+			if data, err := json.Marshal(request); err != nil {
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:     error_codes.GenericMappingError,
+						Message:  err.Error(),
+						Data:     nil,
+						Hostname: b.hostName,
+					},
+				}
+
+				responseCh <- *genericResponse
+				return
+			} else {
+				rawBodyRequest = data
+
+				req.Header.SetContentType(contentType)
+				req.SetBodyRaw(rawBodyRequest)
+			}
+		}
+
+		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
+			code := error_codes.GenericServerError
+
+			if errors.Is(err, fasthttp.ErrTimeout) {
+				code = error_codes.GenericTimeoutError
+			}
+
+			genericResponse = &rpc.RpcResponseInternal{
+				Error: &rpc.RpcError{
+					Code:     code,
+					Message:  "error during sending request",
+					Hostname: b.hostName,
+				},
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		rawBodyResponse = resp.Body()
+
+		nodeJsResponse := &struct {
+			Success bool         `json:"success"`
+			Data    *interface{} `json:"data"`
+			Error   *struct {
+				Status  int    `json:"status"`
+				Message string `json:"message"`
+			} `json:"error"`
+		}{}
+		genericResponse = &rpc.RpcResponseInternal{}
+
+		if err := json.Unmarshal(rawBodyResponse, nodeJsResponse); err != nil {
+			genericResponse.Error = &rpc.RpcError{
+				Code:     error_codes.GenericMappingError,
+				Message:  err.Error(),
+				Data:     nil,
+				Hostname: b.hostName,
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		if !nodeJsResponse.Success {
+			if nodeJsResponse.Error != nil {
+				genericResponse.Error = &rpc.RpcError{
+					Code:     error_codes.GenericServerError,
+					Message:  errors.New(fmt.Sprintf("status: %v, error: %s", nodeJsResponse.Error.Status, nodeJsResponse.Error.Message)).Error(),
+					Data:     nil,
+					Hostname: b.hostName,
+				}
+			} else {
+				genericResponse.Error = &rpc.RpcError{
+					Code:     error_codes.GenericServerError,
+					Message:  errors.New("unknown error").Error(),
+					Data:     nil,
+					Hostname: b.hostName,
+				}
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		if nodeJsResponse.Data == nil {
+			responseCh <- *genericResponse
+			return
+		}
+
+		dataInBytes, err := json.Marshal(*nodeJsResponse.Data)
+		if err != nil {
+			genericResponse.Error = &rpc.RpcError{
+				Code:     error_codes.GenericMappingError,
+				Message:  err.Error(),
+				Data:     nil,
+				Hostname: b.hostName,
+			}
+		}
+
+		genericResponse.Result = dataInBytes
+
+		responseCh <- *genericResponse
+	})
+
+	return responseCh
+}
+
+func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest []byte, rawBodyResponse []byte, externalServiceName string, rqTransaction *apm.Transaction, forceLog bool) {
+	if rqTransaction == nil {
+		return
+	}
+
+	shouldLog := forceLog
+
+	if genericResponse != nil && genericResponse.Error != nil {
+		shouldLog = true // we have an error
+
+		apm_helper.CaptureApmError(errors.New(fmt.Sprintf("external service [%v] replay with error [%v] and msg [%v]",
+			externalServiceName, genericResponse.Error.Code, genericResponse.Error.Message)), rqTransaction)
+	}
+
+	if shouldLog {
+		apm_helper.AddApmData(rqTransaction, "raw_request", rawBodyRequest)
+		apm_helper.AddApmData(rqTransaction, "raw_response", rawBodyResponse)
+		apm_helper.AddApmData(rqTransaction, "parsed_response", genericResponse)
+	}
+
+	rqTransaction.End()
 }

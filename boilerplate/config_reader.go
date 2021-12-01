@@ -48,6 +48,7 @@ type Wrappers struct {
 	Watch    WrapperConfig `json:"Watch"`
 	Category WrapperConfig `json:"category"`
 	Hashtag  WrapperConfig `json:"hashtag"`
+	User     WrapperConfig `json:"user"`
 }
 
 type WrapperConfig struct {
@@ -198,7 +199,7 @@ func ReadConfigByFilePaths(filePath []string, input interface{}) (interface{}, e
 		return nil, errors.WithStack(err)
 	}
 
-		if err := conf.Get().Scan(input); err != nil {
+	if err := conf.Get().Scan(input); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
