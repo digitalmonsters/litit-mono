@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -148,7 +149,11 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx *fasthttp.RequestCtx,
 	apmTransaction *apm.Transaction, forceLog bool, getUserValue func(key string) interface{}) (rpcResponse rpc.RpcResponse, shouldLog bool) {
 	totalTiming := time.Now()
-	apm.ContextWithTransaction(ctx, apmTransaction)
+
+	newCtx, cancel := context.WithCancel(ctx)
+	newCtx = apm.ContextWithTransaction(newCtx, apmTransaction)
+
+	defer cancel()
 
 	r.logRequestHeaders(ctx, apmTransaction) // in future filter for specific routes
 	r.logUserValues(ctx, apmTransaction)
@@ -248,7 +253,6 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 		if !r.isProd {
 			rpcResponse.Error.Stack = fmt.Sprintf("%+v", err)
 		}
-
 		return
 	}
 	
@@ -256,7 +260,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	if resp, err := cmd.GetFn()(rpcRequest.Params, MethodExecutionData{
 		ApmTransaction: apmTransaction,
-		Context:        ctx,
+		Context:        newCtx,
 		UserId:         userId,
 		getUserValueFn: getUserValue,
 	}); err != nil {
@@ -279,7 +283,6 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 	}
 
 	executionMs = time.Since(executionTiming).Milliseconds()
-
 	return
 }
 
