@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/nodejs"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/gammazero/workerpool"
 	"github.com/pkg/errors"
@@ -101,7 +102,9 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				"internal_rpc", nil, apmTransaction)
 		}
 
-		defer endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+		defer func() {
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+		}()
 
 		req := fasthttp.AcquireRequest()
 		defer fasthttp.ReleaseRequest(req)
@@ -194,7 +197,9 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 				"internal_rpc", nil, apmTransaction)
 		}
 
-		defer endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+		defer func() {
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+		}()
 
 		req := fasthttp.AcquireRequest()
 		defer fasthttp.ReleaseRequest(req)
@@ -247,14 +252,7 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 
 		rawBodyResponse = resp.Body()
 
-		nodeJsResponse := &struct {
-			Success bool         `json:"success"`
-			Data    *interface{} `json:"data"`
-			Error   *struct {
-				Status  int    `json:"status"`
-				Message string `json:"message"`
-			} `json:"error"`
-		}{}
+		nodeJsResponse := &nodejs.Response{}
 		genericResponse = &rpc.RpcResponseInternal{}
 
 		if err := json.Unmarshal(rawBodyResponse, nodeJsResponse); err != nil {
@@ -292,22 +290,7 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 			return
 		}
 
-		if nodeJsResponse.Data == nil {
-			responseCh <- *genericResponse
-			return
-		}
-
-		dataInBytes, err := json.Marshal(*nodeJsResponse.Data)
-		if err != nil {
-			genericResponse.Error = &rpc.RpcError{
-				Code:     error_codes.GenericMappingError,
-				Message:  err.Error(),
-				Data:     nil,
-				Hostname: b.hostName,
-			}
-		}
-
-		genericResponse.Result = dataInBytes
+		genericResponse.Result = nodeJsResponse.Data
 
 		responseCh <- *genericResponse
 	})
