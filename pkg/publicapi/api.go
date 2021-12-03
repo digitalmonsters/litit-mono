@@ -8,6 +8,7 @@ import (
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -100,8 +101,78 @@ func GetRepliesByCommentId(commentId int64, db *gorm.DB) (interface{}, error) {
 
 }
 
-func VoteComment(commentId int64, voteUp bool, db *gorm.DB) (interface{}, error) {
+func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId int64) (interface{}, error) {
+	tx := db.Begin()
+	defer tx.Rollback()
 
+	var comment database.Comment
+
+	if err := tx.Find(&comment).Take(&comment, commentId).Error; err != nil {
+		return nil, err
+	}
+
+	var previousVote database.CommentVote
+
+	if err := tx.Find(&previousVote).Take(&previousVote, commentId, currentUserId).Error; err != nil {
+		if voteUp.IsZero() {
+			return nil, nil
+		}
+
+		previousVote.CommentId = commentId
+		previousVote.UserId = currentUserId
+		previousVote.VoteUp = voteUp.Bool
+
+		if err := tx.Create(previousVote).Error; err != nil {
+			return nil, err
+		}
+
+		if voteUp.Bool {
+			if err := tx.Model(&comment).Update("num_upvotes", comment.NumUpvotes+1).Error; err != nil {
+				return nil, err
+			}
+		} else {
+			if err := tx.Model(&comment).Update("num_downvotes", comment.NumDownvotes+1).Error; err != nil {
+				return nil, err
+			}
+		}
+
+		// TODO: send notify 'comment vote'
+		if err := tx.Commit().Error; err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+
+	if !voteUp.IsZero() && voteUp.Bool == previousVote.VoteUp {
+		return nil, nil
+	}
+
+	if voteUp.IsZero() {
+		if err := tx.Delete(&previousVote, commentId, currentUserId).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		if err := tx.Model(&previousVote).Update("vote_up", voteUp.Bool).Error; err != nil {
+			return nil, err
+		}
+
+		if voteUp.Bool {
+			if err := tx.Model(&comment).Update("num_upvotes", comment.NumUpvotes+1).Error; err != nil {
+				return nil, err
+			}
+		} else {
+			if err := tx.Model(&comment).Update("num_downvotes", comment.NumDownvotes+1).Error; err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func ReportComment(commentId int64, details string, db *gorm.DB) (interface{}, error) {
@@ -230,6 +301,77 @@ func GetCommentByTypeWithResourceId(request GetCommentsByTypeWithResourceRequest
 	return &finalResponse, nil
 }
 
-func SendComment(commentType string, resourceId int64, db *gorm.DB) (interface{}, error) {
+func SendContentComment(db *gorm.DB, resourceId int64, request SendCommentRequest, contentWrapper content.IContentWrapper,
+	apmTransaction *apm.Transaction) (*SendCommentResponse, error) {
+	var parentComment database.Comment
 
+	if !request.ParentId.IsZero() {
+		if err := db.Find(&parentComment).Take(&parentComment, request.ParentId.Int64).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	mappedComment := mapDbCommentForSendToCommentForSend(parentComment)
+
+	extenders := []chan error{
+		extendWithContentForSend(contentWrapper, apmTransaction, &mappedComment),
+	}
+
+	for _, e := range extenders {
+		if err := <-e; err != nil {
+			apm_helper.CaptureApmError(err, apmTransaction)
+		}
+	}
+
+	blockedUserType, err := isBlocked(request.AuthorId, mappedComment.AuthorId)
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if blockedUserType != nil {
+		return nil, errors.WithStack(errors.New(string(*blockedUserType)))
+	}
+
+	tx := db.Begin()
+	defer tx.Rollback()
+	var comment database.Comment
+
+	comment.ContentId = resourceId
+	comment.Comment = request.Comment
+	comment.AuthorId = request.AuthorId
+	comment.ParentId = request.ParentId
+
+	if err := tx.Omit("created_at").Create(&comment).Error; err != nil {
+		return nil, err
+	}
+
+	if !request.ParentId.IsZero() {
+		if err := tx.Model(&parentComment).Update("num_replies", parentComment.NumReplies+1).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if err := updateUserStatsComments(request.AuthorId); err != nil {
+		return nil, err
+	}
+
+	// TODO: send notify 'comment'
+
+	return &SendCommentResponse{
+		Id:        comment.Id,
+		Comment:   comment.Comment,
+		AuthorId:  comment.AuthorId,
+		ContentId: comment.ContentId,
+	}, nil
+}
+
+func isBlocked(blockBy int64, blockTo int64) (*BlockedUserType, error) {
+	// TODO: need implementation
+	return nil, nil
+}
+
+func updateUserStatsComments(authorId int64) error {
+	// TODO: need implementation
+	return nil
 }

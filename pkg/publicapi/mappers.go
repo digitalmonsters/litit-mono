@@ -22,6 +22,17 @@ func mapDbCommentForDeleteToCommentForDelete(comment database.CommentForDelete) 
 		NumReplies: comment.NumReplies,
 		ContentId:  comment.ContentId,
 		ParentId:   comment.ParentId,
-		Content:    ContentCommentForDelete{},
+		Content:    ContentWithAuthorId{},
+	}
+}
+
+func mapDbCommentForSendToCommentForSend(comment database.Comment) CommentForSend {
+	return CommentForSend{
+		Id:         comment.Id,
+		AuthorId:   comment.AuthorId,
+		NumReplies: comment.NumReplies,
+		ContentId:  comment.ContentId,
+		ParentId:   comment.ParentId,
+		Content:    ContentWithAuthorId{},
 	}
 }

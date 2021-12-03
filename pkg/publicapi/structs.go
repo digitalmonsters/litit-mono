@@ -25,15 +25,24 @@ type Author struct {
 }
 
 type CommentForDelete struct {
-	Id         int64                   `json:"id"`
-	AuthorId   int64                   `json:"author_id"`
-	NumReplies int64                   `json:"num_replies"`
-	ContentId  int64                   `json:"content_id"`
-	ParentId   null.Int                `json:"parent_id"`
-	Content    ContentCommentForDelete `json:"content"`
+	Id         int64               `json:"id"`
+	AuthorId   int64               `json:"author_id"`
+	NumReplies int64               `json:"num_replies"`
+	ContentId  int64               `json:"content_id"`
+	ParentId   null.Int            `json:"parent_id"`
+	Content    ContentWithAuthorId `json:"content"`
 }
 
-type ContentCommentForDelete struct {
+type CommentForSend struct {
+	Id         int64               `json:"id"`
+	AuthorId   int64               `json:"author_id"`
+	NumReplies int64               `json:"num_replies"`
+	ContentId  int64               `json:"content_id"`
+	ParentId   null.Int            `json:"parent_id"`
+	Content    ContentWithAuthorId `json:"content"`
+}
+
+type ContentWithAuthorId struct {
 	Id       int64 `json:"id"`
 	AuthorId int64 `json:"author_id"`
 }

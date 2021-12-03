@@ -137,7 +137,49 @@ func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction 
 
 			for _, comment := range comments {
 				if v, ok := responseData.Items[comment.ContentId]; ok {
-					comment.Content = ContentCommentForDelete{
+					comment.Content = ContentWithAuthorId{
+						Id:       v.Id,
+						AuthorId: v.AuthorId,
+					}
+				}
+			}
+		}
+	}()
+
+	return ch
+}
+
+func extendWithContentForSend(contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction, comments ...*CommentForSend) chan error {
+	ch := make(chan error)
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+
+		if len(comments) == 0 {
+			return
+		}
+
+		var contentIds []int64
+
+		for _, comment := range comments {
+			if !funk.ContainsInt64(contentIds, comment.ContentId) {
+				contentIds = append(contentIds, comment.ContentId)
+			}
+		}
+
+		if len(contentIds) > 0 {
+			responseData := <-contentWrapper.GetInternal(contentIds, false, apmTransaction, false)
+
+			if responseData.Error != nil {
+				ch <- errors.New(fmt.Sprintf("invalid response from content service [%v]", responseData.Error.Message))
+				return
+			}
+
+			for _, comment := range comments {
+				if v, ok := responseData.Items[comment.ContentId]; ok {
+					comment.Content = ContentWithAuthorId{
 						Id:       v.Id,
 						AuthorId: v.AuthorId,
 					}
