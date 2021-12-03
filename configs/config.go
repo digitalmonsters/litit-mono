@@ -6,7 +6,8 @@ import (
 )
 
 type Settings struct {
-	Db boilerplate.DbConfig
+	AuthApiUrl string `json:"AuthApiUrl"`
+	Db         boilerplate.DbConfig
 }
 
 var settings Settings

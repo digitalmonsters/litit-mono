@@ -4,6 +4,8 @@ import (
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers/auth"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +16,8 @@ func main() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
 
-	configs.GetConfig()
+	cfg := configs.GetConfig()
 	database.GetDb()
+
+	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.AuthApiUrl))
 }
