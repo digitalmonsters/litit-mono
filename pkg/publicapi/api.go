@@ -4,8 +4,8 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/user"
-	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
+	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"go.elastic.co/apm"
 	"gorm.io/gorm"
 	"strings"
@@ -35,8 +35,37 @@ func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 	return &resultComment, nil
 }
 
-func DeleteCommentById(commentId int64, db *gorm.DB) (interface{}, error) {
+func DeleteCommentById(commentId int64, currentUserId int64, db *gorm.DB) (interface{}, error) {
+	var comment database.Comment
 
+	if err := db.Find(&comment).Take(&comment, commentId).Error; err != nil {
+		return nil, err
+	}
+
+	if comment.AuthorId != currentUserId && comment.Content.UserId != currentUserId {
+		return nil, errors.WithStack(errors.New("not allowed"))
+	}
+
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	if !comment.ParentId.IsZero() {
+		var parentComment database.Comment
+
+		if err := tx.Find(&parentComment).Take(&parentComment, comment.ParentId.Int64).Error; err != nil {
+			return nil, err
+		}
+
+		if err := tx.Model(&parentComment).Update("num_replies", parentComment.NumReplies-1).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tx.Delete(&comment, commentId).Error; err != nil {
+		return nil, err
+	}
+
+	return nil, tx.Commit().Error
 }
 
 func UpdateCommentById(commentId int64, comment string, db *gorm.DB) (interface{}, error) {
