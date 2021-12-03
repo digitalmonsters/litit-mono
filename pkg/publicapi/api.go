@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"github.com/digitalmonsters/comments/pkg/database"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"go.elastic.co/apm"
 	"gorm.io/gorm"
@@ -9,18 +10,30 @@ import (
 
 func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserWrapper,
 	apmTransaction *apm.Transaction) (interface{}, error) {
-	var comment *database.Comment
+	var comment database.Comment
 
 	if err := db.Find(&comment).Take(&comment, commentId).Error; err != nil {
 		return nil, err
 	}
 
-	if currentUserId > 0 {
-		if err := db.Model(database.CommentVote{}).Where("user_id = ? and comment_id = ?",
-			currentUserId, commentId)
+	//if currentUserId > 0 {
+	//	if err := db.Model(database.CommentVote{}).Where("user_id = ? and comment_id = ?",
+	//		currentUserId, commentId)
+	//}
+
+	resultComment := mapDbCommentToComment(comment)
+
+	extenders := []chan error{
+		extendWithAuthor(userWrapper, apmTransaction, &resultComment),
 	}
 
-	extendWithAuthor(userWrapper, apmTransaction, comment)
+	for _, e := range extenders {
+		if err := <-e; err != nil {
+			apm_helper.CaptureApmError(err, apmTransaction)
+		}
+	}
+
+	return resultComment, nil
 }
 
 func DeleteCommentById(commentId int64, db *gorm.DB) (interface{}, error) {

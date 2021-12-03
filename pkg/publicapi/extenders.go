@@ -2,7 +2,7 @@ package publicapi
 
 import (
 	"errors"
-	"github.com/digitalmonsters/go-common/apm_helper"
+	"fmt"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/thoas/go-funk"
 	"go.elastic.co/apm"
@@ -32,7 +32,7 @@ func extendWithAuthor(userInfoWrapper user.IUserWrapper, apmTransaction *apm.Tra
 			responseData := <-userInfoWrapper.GetUsers(authors, apmTransaction, false)
 
 			if responseData.Error != nil {
-				apm_helper.CaptureApmError(errors.New(responseData.Error.Message), apmTransaction) // todo fancy error
+				ch <- errors.New(fmt.Sprintf("invalid response from user service [%v]", responseData.Error.Message))
 				return
 			}
 
