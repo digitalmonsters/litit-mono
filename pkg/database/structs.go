@@ -15,7 +15,6 @@ type Comment struct {
 	Active       bool
 	Comment      string   `json:"comment"`
 	ContentId    int64    `json:"content_id"`
-	Content      Content  `json:"content"`
 	ParentId     null.Int `json:"parent_id"`
 }
 
@@ -30,11 +29,24 @@ func (CommentVote) TableName() string {
 	return "comment_vote"
 }
 
-type Content struct {
-	Id     int64 `json:"id"`
-	UserId int64 `json:"user_id"`
+type CommentForDelete struct {
+	Id         int64    `json:"id"`
+	AuthorId   int64    `json:"author_id"`
+	NumReplies int64    `json:"num_replies"`
+	ContentId  int64    `json:"content_id"`
+	ParentId   null.Int `json:"parent_id"`
 }
 
-func (Content) TableName() string {
-	return "content"
+func (CommentForDelete) TableName() string {
+	return "comment"
+}
+
+type CommentWithAuthorId struct {
+	Id       int64  `json:"id"`
+	AuthorId int64  `json:"author_id"`
+	Comment  string `json:"comment"`
+}
+
+func (CommentWithAuthorId) TableName() string {
+	return "comment"
 }

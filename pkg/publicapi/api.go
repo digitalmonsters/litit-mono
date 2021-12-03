@@ -3,9 +3,10 @@ package publicapi
 import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
-	"github.com/pkg/errors"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
+	"github.com/pkg/errors"
 	"go.elastic.co/apm"
 	"gorm.io/gorm"
 	"strings"
@@ -35,14 +36,27 @@ func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 	return &resultComment, nil
 }
 
-func DeleteCommentById(commentId int64, currentUserId int64, db *gorm.DB) (interface{}, error) {
-	var comment database.Comment
+func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, contentWrapper content.IContentWrapper,
+	apmTransaction *apm.Transaction) (interface{}, error) {
+	var comment database.CommentForDelete
 
 	if err := db.Find(&comment).Take(&comment, commentId).Error; err != nil {
 		return nil, err
 	}
 
-	if comment.AuthorId != currentUserId && comment.Content.UserId != currentUserId {
+	mappedComment := mapDbCommentForDeleteToCommentForDelete(comment)
+
+	extenders := []chan error{
+		extendWithContentId(contentWrapper, apmTransaction, &mappedComment),
+	}
+
+	for _, e := range extenders {
+		if err := <-e; err != nil {
+			apm_helper.CaptureApmError(err, apmTransaction)
+		}
+	}
+
+	if mappedComment.AuthorId != currentUserId && mappedComment.Content.AuthorId != currentUserId {
 		return nil, errors.WithStack(errors.New("not allowed"))
 	}
 
@@ -50,7 +64,7 @@ func DeleteCommentById(commentId int64, currentUserId int64, db *gorm.DB) (inter
 	defer tx.Rollback()
 
 	if !comment.ParentId.IsZero() {
-		var parentComment database.Comment
+		var parentComment database.CommentForDelete
 
 		if err := tx.Find(&parentComment).Take(&parentComment, comment.ParentId.Int64).Error; err != nil {
 			return nil, err
@@ -68,8 +82,18 @@ func DeleteCommentById(commentId int64, currentUserId int64, db *gorm.DB) (inter
 	return nil, tx.Commit().Error
 }
 
-func UpdateCommentById(commentId int64, comment string, db *gorm.DB) (interface{}, error) {
+func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, currentUserId int64) (interface{}, error) {
+	var comment database.CommentWithAuthorId
 
+	if err := db.Find(&comment).Take(&comment, commentId).Error; err != nil {
+		return nil, err
+	}
+
+	if comment.AuthorId != currentUserId {
+		return nil, errors.WithStack(errors.New("not allowed"))
+	}
+
+	return nil, db.Model(&comment).Update("comment", updatedComment).Error
 }
 
 func GetRepliesByCommentId(commentId int64, db *gorm.DB) (interface{}, error) {

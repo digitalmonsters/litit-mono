@@ -14,3 +14,14 @@ func mapDbCommentToComment(comment database.Comment) Comment {
 		CreatedAt:    comment.CreatedAt,
 	}
 }
+
+func mapDbCommentForDeleteToCommentForDelete(comment database.CommentForDelete) CommentForDelete {
+	return CommentForDelete{
+		Id:         comment.Id,
+		AuthorId:   comment.AuthorId,
+		NumReplies: comment.NumReplies,
+		ContentId:  comment.ContentId,
+		ParentId:   comment.ParentId,
+		Content:    ContentCommentForDelete{},
+	}
+}

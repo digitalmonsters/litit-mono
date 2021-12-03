@@ -23,3 +23,17 @@ type Author struct {
 	Firstname string      `json:"firstname"`
 	Lastname  string      `json:"lastname"`
 }
+
+type CommentForDelete struct {
+	Id         int64                   `json:"id"`
+	AuthorId   int64                   `json:"author_id"`
+	NumReplies int64                   `json:"num_replies"`
+	ContentId  int64                   `json:"content_id"`
+	ParentId   null.Int                `json:"parent_id"`
+	Content    ContentCommentForDelete `json:"content"`
+}
+
+type ContentCommentForDelete struct {
+	Id       int64 `json:"id"`
+	AuthorId int64 `json:"author_id"`
+}
