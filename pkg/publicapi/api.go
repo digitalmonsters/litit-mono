@@ -358,6 +358,10 @@ func SendContentComment(db *gorm.DB, resourceId int64, request SendCommentReques
 
 	// TODO: send notify 'comment'
 
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
 	return &SendCommentResponse{
 		Id:        comment.Id,
 		Comment:   comment.Comment,
