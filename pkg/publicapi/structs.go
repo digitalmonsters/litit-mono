@@ -13,6 +13,7 @@ type Comment struct {
 	NumDownvotes int64     `json:"num_downvotes"`
 	CreatedAt    time.Time `json:"created_at"`
 	Author       Author    `json:"author"`
+	MyVoteUp     null.Bool `json:"my_vote_up"`
 }
 
 type Author struct {
