@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/digitalmonsters/comments/pkg/database"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/thoas/go-funk"
 	"go.elastic.co/apm"
@@ -97,6 +98,48 @@ func extendWithAuthor(userInfoWrapper user.IUserWrapper, apmTransaction *apm.Tra
 						Avatar:    v.Avatar,
 						Firstname: v.Firstname,
 						Lastname:  v.Lastname,
+					}
+				}
+			}
+		}
+	}()
+
+	return ch
+}
+
+func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction, comments ...*CommentForDelete) chan error {
+	ch := make(chan error)
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+
+		if len(comments) == 0 {
+			return
+		}
+
+		var contentIds []int64
+
+		for _, comment := range comments {
+			if !funk.ContainsInt64(contentIds, comment.ContentId) {
+				contentIds = append(contentIds, comment.ContentId)
+			}
+		}
+
+		if len(contentIds) > 0 {
+			responseData := <-contentWrapper.GetInternal(contentIds, false, apmTransaction, false)
+
+			if responseData.Error != nil {
+				ch <- errors.New(fmt.Sprintf("invalid response from content service [%v]", responseData.Error.Message))
+				return
+			}
+
+			for _, comment := range comments {
+				if v, ok := responseData.Items[comment.ContentId]; ok {
+					comment.Content = ContentCommentForDelete{
+						Id:       v.Id,
+						AuthorId: v.AuthorId,
 					}
 				}
 			}

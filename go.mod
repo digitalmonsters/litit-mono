@@ -6,6 +6,7 @@ require (
 	github.com/digitalmonsters/go-common v1.8.4
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
+	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.25.0
 	github.com/thoas/go-funk v0.9.1
 	go.elastic.co/apm v1.14.0
@@ -51,7 +52,6 @@ require (
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
 	github.com/savsgio/gotils v0.0.0-20210921075833-21a6215cb0e4 // indirect
