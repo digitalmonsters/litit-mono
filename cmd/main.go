@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/digitalmonsters/comments/configs"
-	"github.com/digitalmonsters/comments/pkg/db"
+	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"os"
 	"os/signal"
@@ -15,5 +15,5 @@ func main() {
 	boilerplate.SetupZeroLog()
 
 	configs.GetConfig()
-	db.GetDb()
+	database.GetDb()
 }
