@@ -39,7 +39,7 @@ func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 }
 
 func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, contentWrapper content.IContentWrapper,
-	apmTransaction *apm.Transaction) (interface{}, error) {
+	apmTransaction *apm.Transaction) (*SimpleComment, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
@@ -49,7 +49,7 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 		return nil, err
 	}
 
-	mappedComment := mapDbCommentForDeleteToCommentForDelete(comment)
+	mappedComment := mapDbCommentToComment(comment)
 
 	extenders := []chan error{
 		extendWithContentId(contentWrapper, apmTransaction, &mappedComment),
@@ -76,10 +76,10 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 		return nil, err
 	}
 
-	return nil, tx.Commit().Error
+	return &mappedComment.SimpleComment, tx.Commit().Error
 }
 
-func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, currentUserId int64) (*database.Comment, error) {
+func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, currentUserId int64) (*SimpleComment, error) {
 	var comment database.Comment
 
 	tx := db.Begin()
@@ -98,14 +98,16 @@ func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, curr
 		return nil, errors.WithStack(err)
 	}
 
-	return &comment, nil
+	mapped := mapDbCommentToComment(comment)
+
+	return &mapped.SimpleComment, nil
 }
 
 func GetRepliesByCommentId(commentId int64, db *gorm.DB, transaction *apm.Transaction, count int64, after string) (interface{}, error) {
 
 }
 
-func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId int64) (interface{}, error) {
+func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId int64) (*database.CommentVote, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
@@ -167,7 +169,7 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 		return nil, err
 	}
 
-	return nil, nil
+	return &previousVote, nil
 }
 
 func ReportComment(commentId int64, details string, db *gorm.DB) (interface{}, error) {
@@ -240,7 +242,7 @@ func GetCommentByTypeWithResourceId(request GetCommentsByTypeWithResourceRequest
 	p := paginator.New(
 		&paginator.Config{
 			Rules: paginatorRules,
-			Limit: request.Count,
+			Limit: int(request.Count),
 		},
 	)
 
@@ -297,7 +299,7 @@ func GetCommentByTypeWithResourceId(request GetCommentsByTypeWithResourceRequest
 }
 
 func SendContentComment(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
-	apmTransaction *apm.Transaction, currentUserId int64) (*SendCommentResponse, error) {
+	apmTransaction *apm.Transaction, currentUserId int64) (*SimpleComment, error) {
 	var parentComment database.Comment
 
 	if !parentId.IsZero() {
@@ -306,7 +308,7 @@ func SendContentComment(db *gorm.DB, resourceId int64, commentStr string, parent
 		}
 	}
 
-	mappedComment := mapDbCommentForSendToCommentForSend(parentComment)
+	mappedComment := mapDbCommentToComment(parentComment)
 
 	extenders := []chan error{
 		extendWithContentForSend(contentWrapper, apmTransaction, &mappedComment),
@@ -337,7 +339,7 @@ func SendContentComment(db *gorm.DB, resourceId int64, commentStr string, parent
 	comment.AuthorId = currentUserId
 	comment.ParentId = parentId
 
-	if err := tx.Omit("created_at").Create(&comment).Error; err != nil {
+	if err = tx.Omit("created_at").Create(&comment).Error; err != nil {
 		return nil, err
 	}
 
@@ -347,7 +349,7 @@ func SendContentComment(db *gorm.DB, resourceId int64, commentStr string, parent
 		}
 	}
 
-	if err := updateUserStatsComments(request.AuthorId); err != nil {
+	if err = updateUserStatsComments(currentUserId); err != nil {
 		return nil, err
 	}
 
@@ -357,12 +359,9 @@ func SendContentComment(db *gorm.DB, resourceId int64, commentStr string, parent
 		return nil, err
 	}
 
-	return &SendCommentResponse{
-		Id:        comment.Id,
-		Comment:   comment.Comment,
-		AuthorId:  comment.AuthorId,
-		ContentId: comment.ContentId,
-	}, nil
+	mapped := mapDbCommentToComment(comment)
+
+	return &mapped.SimpleComment, nil
 }
 
 func isBlocked(blockBy int64, blockTo int64) (*BlockedUserType, error) {

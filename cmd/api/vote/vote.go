@@ -28,14 +28,23 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		if resp, err := publicapi.VoteComment(db.WithContext(executionData.Context), commentId,
+		if _, err := publicapi.VoteComment(db.WithContext(executionData.Context), commentId,
 			reportRequest.VoteUp, executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
-			return resp, nil
+			return successResponse{
+				Success: true,
+			}, nil
 		}
 	}, "/{comment_id}/vote", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
 		return err
+	}
+
+	def["/{id}/vote"] = swagger.ApiDescription{
+		Request:           voteRequest{},
+		Response:          successResponse{},
+		MethodDescription: "report comment",
+		Tags:              []string{"report"},
 	}
 
 	return nil

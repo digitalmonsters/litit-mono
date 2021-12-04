@@ -30,14 +30,14 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			userWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
-			return comment, nil
+			return commentToFrontendCommentResponse(*comment), nil
 		}
 	}, "/{comment_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
 		return err
 	}
 
 	apiDef["/{comment_id}"] = swagger.ApiDescription{
-		Response:          publicapi.Comment{},
+		Response:          frontendCommentResponse{},
 		MethodDescription: "get comment by id",
 		Tags:              []string{"comment"},
 	}
@@ -61,7 +61,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 	}
 
 	apiDef["/{delete_comment_id}"] = swagger.ApiDescription{
-		Response:          publicapi.Comment{},
+		Response:          publicapi.SimpleComment{},
 		MethodDescription: "delete comment by id",
 		Tags:              []string{"comment"},
 	}
@@ -84,18 +84,20 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		if resp, err := publicapi.UpdateCommentById(db.WithContext(executionData.Context), commentId,
+		if _, err := publicapi.UpdateCommentById(db.WithContext(executionData.Context), commentId,
 			updateRequest.Comment, executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
-			return resp, nil
+			return successResponse{
+				Success: true,
+			}, nil
 		}
 	}, "/{update_comment_id}", http.MethodPatch, common.AccessLevelPublic, true, true)); err != nil {
 		return err
 	}
 
 	apiDef["/{update_comment_id}"] = swagger.ApiDescription{
-		Response:          publicapi.Comment{},
+		Response:          successResponse{},
 		MethodDescription: "update comment by id",
 		Tags:              []string{"comment"},
 	}
@@ -122,7 +124,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 	}
 
 	apiDef["/{comment_id}/replies"] = swagger.ApiDescription{
-		Response:          publicapi.Comment{},
+		Response:          frontendCommentPaginationResponse{},
 		MethodDescription: "get replies by comment id",
 		Tags:              []string{"comment"},
 	}
@@ -150,14 +152,14 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
-			return resp, nil
+			return commentsWithPagingToFrontendPaginationResponse(*resp), nil
 		}
 	}, "/content/{content_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
 		return err
 	}
 
 	apiDef["/content/{content_id}"] = swagger.ApiDescription{
-		Response:          publicapi.Comment{},
+		Response:          frontendCommentPaginationResponse{},
 		MethodDescription: "get comments by content",
 		Tags:              []string{"comment"},
 	}
@@ -181,14 +183,19 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
-			return resp, nil
+			return createCommentResponse{
+				Id:        resp.Id,
+				Comment:   resp.Comment,
+				AuthorId:  resp.AuthorId,
+				ContentId: resp.ContentId,
+			}, nil
 		}
 	}, "/content/{content_id_to_create_comment_on}", http.MethodPost, common.AccessLevelPublic, true, true)); err != nil {
 		return err
 	}
 
 	apiDef["/content/{content_id_to_create_comment_on}"] = swagger.ApiDescription{
-		Response:          publicapi.Comment{},
+		Response:          createCommentResponse{},
 		MethodDescription: "create comment on content",
 		Tags:              []string{"comment"},
 	}

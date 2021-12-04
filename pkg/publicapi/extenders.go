@@ -107,7 +107,7 @@ func extendWithAuthor(userInfoWrapper user.IUserWrapper, apmTransaction *apm.Tra
 	return ch
 }
 
-func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction, comments ...*CommentForDelete) chan error {
+func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction, comments ...*Comment) chan error {
 	ch := make(chan error)
 
 	go func() {
@@ -137,7 +137,7 @@ func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction 
 
 			for _, comment := range comments {
 				if v, ok := responseData.Items[comment.ContentId]; ok {
-					comment.Content = ContentWithAuthorId{
+					comment.Content = SimpleContent{
 						Id:       v.Id,
 						AuthorId: v.AuthorId,
 					}
@@ -149,7 +149,7 @@ func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction 
 	return ch
 }
 
-func extendWithContentForSend(contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction, comments ...*CommentForSend) chan error {
+func extendWithContentForSend(contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction, comments ...*Comment) chan error {
 	ch := make(chan error)
 
 	go func() {
@@ -179,7 +179,7 @@ func extendWithContentForSend(contentWrapper content.IContentWrapper, apmTransac
 
 			for _, comment := range comments {
 				if v, ok := responseData.Items[comment.ContentId]; ok {
-					comment.Content = ContentWithAuthorId{
+					comment.Content = SimpleContent{
 						Id:       v.Id,
 						AuthorId: v.AuthorId,
 					}

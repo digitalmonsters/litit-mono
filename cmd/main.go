@@ -45,7 +45,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := vote.Init(httpRouter, apiDef); err != nil {
+	if err := vote.Init(httpRouter, db, apiDef); err != nil {
 		panic(err)
 	}
 

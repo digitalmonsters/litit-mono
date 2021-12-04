@@ -18,13 +18,6 @@ type GetCommentsByTypeWithResourceResponse struct {
 	Paging   CursorPaging `json:"paging"`
 }
 
-type SendCommentResponse struct {
-	Id        int64  `json:"id"`
-	Comment   string `json:"comment"`
-	AuthorId  int64  `json:"author_id"`
-	ContentId int64  `json:"content_id"`
-}
-
 type BlockedUserType string
 
 const (

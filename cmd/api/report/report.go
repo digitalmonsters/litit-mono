@@ -28,13 +28,22 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		if resp, err := publicapi.ReportComment(commentId, reportRequest.Details, db.WithContext(executionData.Context)); err != nil {
+		if _, err := publicapi.ReportComment(commentId, reportRequest.Details, db.WithContext(executionData.Context)); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
-			return resp, nil
+			return successResponse{
+				Success: true,
+			}, nil
 		}
 	}, "/{id}/report", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
 		return err
+	}
+
+	def["/{id}/report"] = swagger.ApiDescription{
+		Request:           reportCommentRequest{},
+		Response:          successResponse{},
+		MethodDescription: "report comment",
+		Tags:              []string{"report"},
 	}
 
 	return nil
