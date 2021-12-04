@@ -10,6 +10,7 @@ import (
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"strings"
 )
 
@@ -39,9 +40,12 @@ func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 
 func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, contentWrapper content.IContentWrapper,
 	apmTransaction *apm.Transaction) (interface{}, error) {
-	var comment database.CommentForDelete
+	tx := db.Begin()
+	defer tx.Rollback()
 
-	if err := db.Find(&comment).Take(&comment, commentId).Error; err != nil {
+	var comment database.Comment
+
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Take(&comment, commentId).Error; err != nil {
 		return nil, err
 	}
 
@@ -61,17 +65,9 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 		return nil, errors.WithStack(errors.New("not allowed"))
 	}
 
-	tx := db.Begin()
-	defer tx.Rollback()
-
-	if !comment.ParentId.IsZero() {
-		var parentComment database.CommentForDelete
-
-		if err := tx.Find(&parentComment).Take(&parentComment, comment.ParentId.Int64).Error; err != nil {
-			return nil, err
-		}
-
-		if err := tx.Model(&parentComment).Update("num_replies", parentComment.NumReplies-1).Error; err != nil {
+	if comment.ParentId.ValueOrZero() > 0 {
+		if err := tx.Model(database.Comment{}).Where("id = ?", comment.ParentId.ValueOrZero()).
+			Update("num_replies", gorm.Expr("num_replies - 1")).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -83,21 +79,29 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 	return nil, tx.Commit().Error
 }
 
-func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, currentUserId int64) (interface{}, error) {
-	var comment database.CommentWithAuthorId
+func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, currentUserId int64) (*database.Comment, error) {
+	var comment database.Comment
 
-	if err := db.Find(&comment).Take(&comment, commentId).Error; err != nil {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("author_id = ?", currentUserId).
+		Take(&comment, commentId).Error; err != nil {
 		return nil, err
 	}
 
-	if comment.AuthorId != currentUserId {
-		return nil, errors.WithStack(errors.New("not allowed"))
+	if err := tx.Model(&comment).Update("comment", updatedComment).Error; err != nil {
+		return nil, err
 	}
 
-	return nil, db.Model(&comment).Update("comment", updatedComment).Error
+	if err := tx.Commit().Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &comment, nil
 }
 
-func GetRepliesByCommentId(commentId int64, db *gorm.DB) (interface{}, error) {
+func GetRepliesByCommentId(commentId int64, db *gorm.DB, transaction *apm.Transaction, count int64, after string) (interface{}, error) {
 
 }
 
@@ -107,65 +111,56 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 
 	var comment database.Comment
 
-	if err := tx.Find(&comment).Take(&comment, commentId).Error; err != nil {
-		return nil, err
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Take(&comment, commentId).Error; err != nil {
+		return nil, errors.WithStack(err)
 	}
 
+	previousVoteValue := null.NewBool(false, false)
 	var previousVote database.CommentVote
 
-	if err := tx.Find(&previousVote).Take(&previousVote, commentId, currentUserId).Error; err != nil {
-		if voteUp.IsZero() {
-			return nil, nil
-		}
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Find(&previousVote, commentId, currentUserId).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
 
-		previousVote.CommentId = commentId
-		previousVote.UserId = currentUserId
-		previousVote.VoteUp = voteUp.Bool
+	if previousVote.UserId > 0 { // if 0, then its new vote
+		previousVoteValue = null.BoolFrom(previousVote.VoteUp)
+	}
 
-		if err := tx.Create(previousVote).Error; err != nil {
-			return nil, err
-		}
+	previousVote.CommentId = commentId
+	previousVote.UserId = currentUserId
 
-		if voteUp.Bool {
-			if err := tx.Model(&comment).Update("num_upvotes", comment.NumUpvotes+1).Error; err != nil {
-				return nil, err
-			}
-		} else {
-			if err := tx.Model(&comment).Update("num_downvotes", comment.NumDownvotes+1).Error; err != nil {
-				return nil, err
-			}
-		}
-
-		// TODO: send notify 'comment vote'
-		if err := tx.Commit().Error; err != nil {
-			return nil, err
-		}
-
+	if previousVote.VoteUp == voteUp.ValueOrZero() { // nothing to do here, as status in db is already valid
 		return nil, nil
 	}
 
-	if !voteUp.IsZero() && voteUp.Bool == previousVote.VoteUp {
-		return nil, nil
-	}
+	previousVote.VoteUp = voteUp.ValueOrZero()
 
-	if voteUp.IsZero() {
-		if err := tx.Delete(&previousVote, commentId, currentUserId).Error; err != nil {
-			return nil, err
+	if previousVote.VoteUp {
+		if err := tx.Model(&comment).Update("num_upvotes", gorm.Expr("num_upvotes + 1")).Error; err != nil {
+			return nil, errors.WithStack(err)
 		}
 	} else {
-		if err := tx.Model(&previousVote).Update("vote_up", voteUp.Bool).Error; err != nil {
-			return nil, err
+		if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_upvotes + 1")).Error; err != nil {
+			return nil, errors.WithStack(err)
 		}
+	}
 
-		if voteUp.Bool {
-			if err := tx.Model(&comment).Update("num_upvotes", comment.NumUpvotes+1).Error; err != nil {
-				return nil, err
+	if previousVoteValue.Valid {
+		if previousVoteValue.Bool {
+			if err := tx.Model(&comment).Update("num_upvotes", gorm.Expr("num_upvotes - 1")).Error; err != nil {
+				return nil, errors.WithStack(err)
 			}
 		} else {
-			if err := tx.Model(&comment).Update("num_downvotes", comment.NumDownvotes+1).Error; err != nil {
-				return nil, err
+			if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_upvotes - 1")).Error; err != nil {
+				return nil, errors.WithStack(err)
 			}
 		}
+	}
+
+	if err := tx.Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Save(previousVote).Error; err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -301,12 +296,12 @@ func GetCommentByTypeWithResourceId(request GetCommentsByTypeWithResourceRequest
 	return &finalResponse, nil
 }
 
-func SendContentComment(db *gorm.DB, resourceId int64, request SendCommentRequest, contentWrapper content.IContentWrapper,
-	apmTransaction *apm.Transaction) (*SendCommentResponse, error) {
+func SendContentComment(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
+	apmTransaction *apm.Transaction, currentUserId int64) (*SendCommentResponse, error) {
 	var parentComment database.Comment
 
-	if !request.ParentId.IsZero() {
-		if err := db.Find(&parentComment).Take(&parentComment, request.ParentId.Int64).Error; err != nil {
+	if !parentId.IsZero() {
+		if err := db.Take(&parentComment, parentId.ValueOrZero()).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -323,7 +318,7 @@ func SendContentComment(db *gorm.DB, resourceId int64, request SendCommentReques
 		}
 	}
 
-	blockedUserType, err := isBlocked(request.AuthorId, mappedComment.AuthorId)
+	blockedUserType, err := isBlocked(currentUserId, mappedComment.AuthorId)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -338,15 +333,15 @@ func SendContentComment(db *gorm.DB, resourceId int64, request SendCommentReques
 	var comment database.Comment
 
 	comment.ContentId = resourceId
-	comment.Comment = request.Comment
-	comment.AuthorId = request.AuthorId
-	comment.ParentId = request.ParentId
+	comment.Comment = commentStr
+	comment.AuthorId = currentUserId
+	comment.ParentId = parentId
 
 	if err := tx.Omit("created_at").Create(&comment).Error; err != nil {
 		return nil, err
 	}
 
-	if !request.ParentId.IsZero() {
+	if !parentId.IsZero() {
 		if err := tx.Model(&parentComment).Update("num_replies", parentComment.NumReplies+1).Error; err != nil {
 			return nil, err
 		}
