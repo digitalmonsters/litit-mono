@@ -7,8 +7,10 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
+	github.com/romanyx/polluter v1.2.2
 	github.com/rs/zerolog v1.25.0
 	github.com/thoas/go-funk v0.9.1
+	github.com/valyala/fasthttp v1.31.0
 	go.elastic.co/apm v1.14.0
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/driver/postgres v1.2.1
@@ -29,6 +31,7 @@ require (
 	github.com/ft-t/go-micro-env v0.0.0-20211201004918-84abcf2cdce0 // indirect
 	github.com/gammazero/deque v0.1.0 // indirect
 	github.com/gammazero/workerpool v1.1.2 // indirect
+	github.com/go-redis/redis v6.14.0+incompatible // indirect
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -49,14 +52,15 @@ require (
 	github.com/jinzhu/now v1.1.3 // indirect
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/romanyx/jwalk v1.0.0 // indirect
 	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
 	github.com/savsgio/gotils v0.0.0-20210921075833-21a6215cb0e4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.31.0 // indirect
 	go-micro.dev/v4 v4.2.1 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
@@ -70,6 +74,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/mysql v1.0.2 // indirect
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06 // indirect
 )

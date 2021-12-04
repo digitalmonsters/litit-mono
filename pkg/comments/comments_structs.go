@@ -1,0 +1,55 @@
+package comments
+
+import (
+	"gopkg.in/guregu/null.v4"
+	"time"
+)
+
+type GetCommentsByTypeWithResourceRequest struct {
+	ContentId int64
+	ParentId  int64
+	After     string // cursor
+	Count     int64  // Limit
+	SortOrder string
+}
+
+type CursorPaging struct {
+	HasNext bool   `json:"hasNext"`
+	Next    string `json:"next"`
+}
+
+type GetCommentsByTypeWithResourceResponse struct {
+	Comments []Comment    `json:"comments"`
+	Paging   CursorPaging `json:"paging"`
+}
+
+type SimpleComment struct {
+	Id           int64     `json:"id"`
+	AuthorId     int64     `json:"author_id"`
+	NumReplies   int64     `json:"num_replies"`
+	NumUpvotes   int64     `json:"num_upvotes"`
+	NumDownvotes int64     `json:"num_downvotes"`
+	CreatedAt    time.Time `json:"created_at"`
+	MyVoteUp     null.Bool `json:"my_vote_up"`
+	ContentId    int64     `json:"content_id"`
+	Comment      string    `json:"comment"`
+}
+
+type Comment struct {
+	SimpleComment
+	Author  Author        `json:"author"`
+	Content SimpleContent `json:"content"`
+}
+
+type Author struct {
+	Id        int64       `json:"id"`
+	Username  string      `json:"username"`
+	Avatar    null.String `json:"avatar"`
+	Firstname string      `json:"firstname"`
+	Lastname  string      `json:"lastname"`
+}
+
+type SimpleContent struct {
+	Id       int64 `json:"id"`
+	AuthorId int64 `json:"author_id"`
+}

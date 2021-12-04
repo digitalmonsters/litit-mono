@@ -31,3 +31,15 @@ type CommentVote struct {
 func (CommentVote) TableName() string {
 	return "comment_vote"
 }
+
+type Report struct {
+	Id         int
+	ContentId  int64
+	Type       string
+	ReporterId int64
+	CommentId  int64
+}
+
+func (Report) TableName() string {
+	return "report"
+}

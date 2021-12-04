@@ -37,3 +37,4 @@ func ExtractInt64(getFn func(key string) interface{}, key string, defaultValue i
 		}
 	}
 }
+

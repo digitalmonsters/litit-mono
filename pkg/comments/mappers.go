@@ -1,4 +1,4 @@
-package publicapi
+package comments
 
 import (
 	"github.com/digitalmonsters/comments/pkg/database"
