@@ -1,4 +1,4 @@
-package routes
+package comments
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/pkg/errors"
@@ -14,8 +15,8 @@ import (
 	"net/http"
 )
 
-func InitPublicRoutes(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrapper,
-	contentWrapper content.IContentWrapper) error {
+func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrapper, contentWrapper content.IContentWrapper,
+	apiDef map[string]swagger.ApiDescription) error {
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -35,9 +36,15 @@ func InitPublicRoutes(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper us
 		return err
 	}
 
+	apiDef["/{comment_id}"] = swagger.ApiDescription{
+		Response:          publicapi.Comment{},
+		MethodDescription: "get comment by id",
+		Tags:              []string{"comment"},
+	}
+
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
+		commentId := utils.ExtractInt64(executionData.GetUserValue, "delete_comment_id", 0, 0)
 
 		if commentId <= 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
@@ -49,13 +56,19 @@ func InitPublicRoutes(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper us
 		} else {
 			return resp, nil
 		}
-	}, "/{comment_id}", http.MethodDelete, common.AccessLevelPublic, true, true)); err != nil {
+	}, "/{delete_comment_id}", http.MethodDelete, common.AccessLevelPublic, true, true)); err != nil {
 		return err
+	}
+
+	apiDef["/{delete_comment_id}"] = swagger.ApiDescription{
+		Response:          publicapi.Comment{},
+		MethodDescription: "delete comment by id",
+		Tags:              []string{"comment"},
 	}
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
+		commentId := utils.ExtractInt64(executionData.GetUserValue, "update_comment_id", 0, 0)
 
 		var updateRequest updateCommentRequest
 
@@ -77,8 +90,14 @@ func InitPublicRoutes(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper us
 		} else {
 			return resp, nil
 		}
-	}, "/{comment_id}", http.MethodPatch, common.AccessLevelPublic, true, true)); err != nil {
+	}, "/{update_comment_id}", http.MethodPatch, common.AccessLevelPublic, true, true)); err != nil {
 		return err
+	}
+
+	apiDef["/{update_comment_id}"] = swagger.ApiDescription{
+		Response:          publicapi.Comment{},
+		MethodDescription: "update comment by id",
+		Tags:              []string{"comment"},
 	}
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -102,40 +121,10 @@ func InitPublicRoutes(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper us
 		return err
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
-		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
-
-		if commentId <= 0 {
-			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
-		}
-
-		publicapi.VoteComment()
-	}, "/{comment_id}/vote", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
-		return err
-	}
-
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
-		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
-
-		if commentId <= 0 {
-			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
-		}
-
-		var reportRequest reportCommentRequest
-
-		if err := json.Unmarshal(request, &reportRequest); err != nil {
-			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
-		}
-
-		if resp, err := publicapi.ReportComment(commentId, reportRequest.Details, db.WithContext(executionData.Context)); err != nil {
-			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
-		} else {
-			return resp, nil
-		}
-	}, "/{id}/report", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
-		return err
+	apiDef["/{comment_id}/replies"] = swagger.ApiDescription{
+		Response:          publicapi.Comment{},
+		MethodDescription: "get replies by comment id",
+		Tags:              []string{"comment"},
 	}
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -163,13 +152,19 @@ func InitPublicRoutes(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper us
 		} else {
 			return resp, nil
 		}
-	}, "/content/{content_id}", http.MethodDelete, common.AccessLevelPublic, false, false)); err != nil {
+	}, "/content/{content_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
 		return err
+	}
+
+	apiDef["/content/{content_id}"] = swagger.ApiDescription{
+		Response:          publicapi.Comment{},
+		MethodDescription: "get comments by content",
+		Tags:              []string{"comment"},
 	}
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		contentId := utils.ExtractInt64(executionData.GetUserValue, "content_id", 0, 0)
+		contentId := utils.ExtractInt64(executionData.GetUserValue, "content_id_to_create_comment_on", 0, 0)
 
 		if contentId <= 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
@@ -188,8 +183,14 @@ func InitPublicRoutes(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper us
 		} else {
 			return resp, nil
 		}
-	}, "/{content_id}", http.MethodPost, common.AccessLevelPublic, true, true)); err != nil {
+	}, "/content/{content_id_to_create_comment_on}", http.MethodPost, common.AccessLevelPublic, true, true)); err != nil {
 		return err
+	}
+
+	apiDef["/content/{content_id_to_create_comment_on}"] = swagger.ApiDescription{
+		Response:          publicapi.Comment{},
+		MethodDescription: "create comment on content",
+		Tags:              []string{"comment"},
 	}
 
 	return nil

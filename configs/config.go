@@ -6,6 +6,7 @@ import (
 )
 
 type Settings struct {
+	HttpPort   int    `json:"HttpPort"`
 	AuthApiUrl string `json:"AuthApiUrl"`
 	Db         boilerplate.DbConfig
 }
