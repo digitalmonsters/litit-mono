@@ -21,6 +21,7 @@ func ReportComment(commentId int64, details string, db *gorm.DB, currentUserId i
 	existingReport.CommentId = commentId
 	existingReport.Type = "comment"
 	existingReport.ReporterId = currentUserId
+	existingReport.Detail = details
 
 	if err := db.Create(&existingReport).Error; err != nil {
 		return nil, errors.WithStack(err)

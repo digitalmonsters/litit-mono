@@ -9,6 +9,7 @@ type GetCommentsByTypeWithResourceRequest struct {
 	ContentId int64
 	ParentId  int64
 	After     string // cursor
+	Before    string // cursor
 	Count     int64  // Limit
 	SortOrder string
 }
@@ -16,6 +17,8 @@ type GetCommentsByTypeWithResourceRequest struct {
 type CursorPaging struct {
 	HasNext bool   `json:"hasNext"`
 	Next    string `json:"next"`
+	Before  string `json:"before"`
+	After   string `json:"after"`
 }
 
 type GetCommentsByTypeWithResourceResponse struct {

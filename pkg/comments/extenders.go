@@ -1,11 +1,11 @@
 package comments
 
 import (
-	"errors"
 	"fmt"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"

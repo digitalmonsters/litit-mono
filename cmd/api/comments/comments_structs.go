@@ -1,7 +1,7 @@
 package comments
 
 import (
-	"github.com/digitalmonsters/comments/pkg/publicapi"
+	"github.com/digitalmonsters/comments/pkg/comments"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -26,11 +26,11 @@ type successResponse struct {
 }
 
 type frontendCommentResponse struct {
-	publicapi.SimpleComment
-	Author publicapi.Author
+	comments.SimpleComment
+	Author comments.Author
 }
 
 type frontendCommentPaginationResponse struct {
 	Comments []frontendCommentResponse `json:"comments"`
-	Paging   publicapi.CursorPaging    `json:"paging"`
+	Paging   comments.CursorPaging     `json:"paging"`
 }

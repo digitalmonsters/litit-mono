@@ -1,15 +1,17 @@
 package comments
 
-import "github.com/digitalmonsters/comments/pkg/publicapi"
+import (
+	"github.com/digitalmonsters/comments/pkg/comments"
+)
 
-func commentToFrontendCommentResponse(comment publicapi.Comment) frontendCommentResponse {
+func commentToFrontendCommentResponse(comment comments.Comment) frontendCommentResponse {
 	return frontendCommentResponse{
 		SimpleComment: comment.SimpleComment,
 		Author:        comment.Author,
 	}
 }
 
-func commentsWithPagingToFrontendPaginationResponse(initialResult publicapi.GetCommentsByTypeWithResourceResponse) frontendCommentPaginationResponse {
+func commentsWithPagingToFrontendPaginationResponse(initialResult comments.GetCommentsByTypeWithResourceResponse) frontendCommentPaginationResponse {
 	res := frontendCommentPaginationResponse{
 		Paging: initialResult.Paging,
 	}

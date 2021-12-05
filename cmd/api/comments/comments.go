@@ -112,9 +112,16 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
+		before := utils.ExtractString(executionData.GetUserValue, "before", "")
+		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
-		if resp, err := comments.GetRepliesByCommentId(commentId, db.WithContext(executionData.Context), executionData.ApmTransaction,
-			count, after); err != nil {
+		if resp, err := comments.GetCommentsByContent(comments.GetCommentsByTypeWithResourceRequest{
+			ParentId:  commentId,
+			After:     after,
+			Before:    before,
+			Count:     count,
+			SortOrder: sortOrder,
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return resp, nil
@@ -141,12 +148,14 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
+		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
 		if resp, err := comments.GetCommentsByContent(comments.GetCommentsByTypeWithResourceRequest{
 			ContentId: contentId,
 			ParentId:  parentId,
 			After:     after,
+			Before:    before,
 			Count:     count,
 			SortOrder: sortOrder,
 		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction); err != nil {

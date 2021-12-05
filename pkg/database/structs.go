@@ -38,6 +38,7 @@ type Report struct {
 	Type       string
 	ReporterId int64
 	CommentId  int64
+	Detail     string
 }
 
 func (Report) TableName() string {

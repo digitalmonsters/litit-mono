@@ -15,7 +15,15 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 	userWrapper user.IUserWrapper, apmTransaction *apm.Transaction) (*GetCommentsByTypeWithResourceResponse, error) {
 	var comments []database.Comment
 
-	query := db.Model(comments).Where("content_id = ?", request.ContentId)
+	if request.ParentId == 0 && request.ContentId == 0 {
+		return nil, errors.New("parent id or content id should be set")
+	}
+
+	query := db.Model(comments)
+
+	if request.ContentId > 0 {
+		query = query.Where("content_id = ?", request.ContentId)
+	}
 
 	if request.ParentId > 0 {
 		query = query.Where("parent_id = ?", request.ParentId)
@@ -85,6 +93,10 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 		p.SetAfterCursor(request.After)
 	}
 
+	if len(request.Before) > 0 {
+		p.SetBeforeCursor(request.Before)
+	}
+
 	result, cursor, err := p.Paginate(query, &comments)
 
 	if err != nil {
@@ -119,7 +131,13 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 
 	if cursor.After != nil {
 		pagingResult.HasNext = true
+
 		pagingResult.Next = *cursor.After
+		pagingResult.After = *cursor.After
+	}
+
+	if cursor.Before != nil {
+		pagingResult.Before = *cursor.Before
 	}
 
 	finalResponse := GetCommentsByTypeWithResourceResponse{
@@ -155,10 +173,6 @@ func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 	}
 
 	return &resultComment, nil
-}
-
-func GetRepliesByCommentId(commentId int64, db *gorm.DB, transaction *apm.Transaction, count int64, after string) (interface{}, error) {
-
 }
 
 func isBlocked(blockBy int64, blockTo int64) (*BlockedUserType, error) {
