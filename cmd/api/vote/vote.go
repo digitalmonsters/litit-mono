@@ -2,7 +2,7 @@ package vote
 
 import (
 	"encoding/json"
-	"github.com/digitalmonsters/comments/pkg/publicapi"
+	"github.com/digitalmonsters/comments/pkg/vote"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -28,7 +28,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		if _, err := publicapi.VoteComment(db.WithContext(executionData.Context), commentId,
+		if _, err := vote.VoteComment(db.WithContext(executionData.Context), commentId,
 			reportRequest.VoteUp, executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {

@@ -2,7 +2,7 @@ package report
 
 import (
 	"encoding/json"
-	"github.com/digitalmonsters/comments/pkg/publicapi"
+	"github.com/digitalmonsters/comments/pkg/report"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -28,7 +28,8 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		if _, err := publicapi.ReportComment(commentId, reportRequest.Details, db.WithContext(executionData.Context)); err != nil {
+		if _, err := report.ReportComment(commentId, reportRequest.Details, db.WithContext(executionData.Context),
+			executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return successResponse{

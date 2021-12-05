@@ -26,50 +26,50 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 	switch strings.ToLower(request.SortOrder) {
 	case "newest":
 		paginatorRules = append(paginatorRules, paginator.Rule{
-			Key:   "created_at",
+			Key:   "CreatedAt",
 			Order: paginator.DESC,
 		})
 	case "oldest":
 		paginatorRules = append(paginatorRules, paginator.Rule{
-			Key:   "created_at",
+			Key:   "CreatedAt",
 			Order: paginator.ASC,
 		})
 	case "most_replied":
 		paginatorRules = append(paginatorRules, paginator.Rule{
-			Key:   "num_replies",
+			Key:   "NumReplies",
 			Order: paginator.DESC,
 		})
 	case "top_reactions":
 		paginatorRules = append(paginatorRules, paginator.Rule{
-			Key:   "num_replies",
+			Key:   "NumReplies",
 			Order: paginator.DESC,
 		}, paginator.Rule{
-			Key:   "num_upvotes",
+			Key:   "NumUpvotes",
 			Order: paginator.DESC,
 		}, paginator.Rule{
-			Key:   "num_downvotes",
+			Key:   "NumDownvotes",
 			Order: paginator.DESC,
 		})
 	case "least_popular":
 		paginatorRules = append(paginatorRules, paginator.Rule{
-			Key:   "num_replies",
+			Key:   "NumReplies",
 			Order: paginator.ASC,
 		}, paginator.Rule{
-			Key:   "num_upvotes",
+			Key:   "NumUpvotes",
 			Order: paginator.ASC,
 		}, paginator.Rule{
-			Key:   "num_downvotes",
+			Key:   "NumDownvotes",
 			Order: paginator.ASC,
 		})
 	default:
 		paginatorRules = append(paginatorRules, paginator.Rule{
-			Key:   "num_replies",
+			Key:   "NumReplies",
 			Order: paginator.DESC,
 		}, paginator.Rule{
-			Key:   "num_upvotes",
+			Key:   "NumUpvotes",
 			Order: paginator.DESC,
 		}, paginator.Rule{
-			Key:   "num_downvotes",
+			Key:   "NumDownvotes",
 			Order: paginator.DESC,
 		})
 	}
@@ -131,4 +131,42 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 	}
 
 	return &finalResponse, nil
+}
+
+func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserWrapper,
+	apmTransaction *apm.Transaction) (*Comment, error) {
+	var comment database.Comment
+
+	if err := db.Take(&comment, commentId).Error; err != nil {
+		return nil, err
+	}
+
+	resultComment := mapDbCommentToComment(comment)
+
+	extenders := []chan error{
+		extendWithAuthor(userWrapper, apmTransaction, &resultComment),
+		extendWithLikedByMe(db, currentUserId, &resultComment),
+	}
+
+	for _, e := range extenders {
+		if err := <-e; err != nil {
+			apm_helper.CaptureApmError(err, apmTransaction)
+		}
+	}
+
+	return &resultComment, nil
+}
+
+func GetRepliesByCommentId(commentId int64, db *gorm.DB, transaction *apm.Transaction, count int64, after string) (interface{}, error) {
+
+}
+
+func isBlocked(blockBy int64, blockTo int64) (*BlockedUserType, error) {
+	// TODO: need implementation
+	return nil, nil
+}
+
+func updateUserStatsComments(authorId int64) error {
+	// TODO: need implementation
+	return nil
 }

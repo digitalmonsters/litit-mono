@@ -11,7 +11,7 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "feat_comment_init_031220211717",
 			Migrate: func(db *gorm.DB) error {
 				query := `
-					create table comment
+					create table if not exists comment
 					(
 						id            serial
 							constraint comment_pkey
@@ -39,19 +39,25 @@ func getMigrations() []*gormigrate.Migration {
 						updated_at    timestamp with time zone default CURRENT_TIMESTAMP not null
 					);
 
-					create index comment_idx_content_id
+					create index if not exists comment_idx_content_id
 						on comment (content_id);
 
-					create index idx_comment_content_id
+					create index if not exists idx_comment_content_id
 						on comment (content_id);
 
-					create index idx_comment_parent_id
+					create index if not exists idx_comment_parent_id
 						on comment (parent_id);
 					
-					create index idx_comment_profile_id
+					create index if not exists idx_comment_profile_id
 						on comment (profile_id);
 
-					create table comment_vote
+					alter table comment
+						drop constraint if exists comment_author_id_foreign;
+
+					alter table content
+						drop constraint if exists content_user_id_foreign;
+
+					create table if not exists comment_vote
 					(
 						user_id    integer                                            not null,
 						comment_id integer                                            not null

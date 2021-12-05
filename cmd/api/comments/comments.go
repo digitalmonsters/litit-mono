@@ -2,7 +2,7 @@ package comments
 
 import (
 	"encoding/json"
-	"github.com/digitalmonsters/comments/pkg/publicapi"
+	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -26,7 +26,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		if comment, err := publicapi.GetCommendById(db.WithContext(executionData.Context), commentId, executionData.UserId,
+		if comment, err := comments.GetCommendById(db.WithContext(executionData.Context), commentId, executionData.UserId,
 			userWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
@@ -50,7 +50,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		if resp, err := publicapi.DeleteCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
+		if resp, err := comments.DeleteCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
 			contentWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
@@ -61,7 +61,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 	}
 
 	apiDef["/{delete_comment_id}"] = swagger.ApiDescription{
-		Response:          publicapi.SimpleComment{},
+		Response:          comments.SimpleComment{},
 		MethodDescription: "delete comment by id",
 		Tags:              []string{"comment"},
 	}
@@ -84,7 +84,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		if _, err := publicapi.UpdateCommentById(db.WithContext(executionData.Context), commentId,
+		if _, err := comments.UpdateCommentById(db.WithContext(executionData.Context), commentId,
 			updateRequest.Comment, executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
@@ -113,7 +113,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 
-		if resp, err := publicapi.GetRepliesByCommentId(commentId, db.WithContext(executionData.Context), executionData.ApmTransaction,
+		if resp, err := comments.GetRepliesByCommentId(commentId, db.WithContext(executionData.Context), executionData.ApmTransaction,
 			count, after); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
@@ -143,7 +143,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
-		if resp, err := publicapi.GetCommentByTypeWithResourceId(publicapi.GetCommentsByTypeWithResourceRequest{
+		if resp, err := comments.GetCommentsByContent(comments.GetCommentsByTypeWithResourceRequest{
 			ContentId: contentId,
 			ParentId:  parentId,
 			After:     after,
@@ -178,7 +178,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		if resp, err := publicapi.SendContentComment(db.WithContext(executionData.Context), contentId,
+		if resp, err := comments.CreateComment(db.WithContext(executionData.Context), contentId,
 			createRequest.Comment, createRequest.ParentId, contentWrapper, executionData.ApmTransaction,
 			executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
