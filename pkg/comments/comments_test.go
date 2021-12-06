@@ -85,7 +85,7 @@ func TestGetCommentsByContent(t *testing.T) {
 	assert.True(t, len(result.Paging.Next) > 0)
 	assert.Equal(t, true, result.Paging.HasNext)
 
-	assert.Equal(t, int64(9699), result.Comments[0].Id)
+	assert.Equal(t, int64(9694), result.Comments[0].Id)
 	assert.Equal(t, int64(9693), result.Comments[1].Id)
 
 	result, err = GetCommentsByContent(GetCommentsByTypeWithResourceRequest{
@@ -117,7 +117,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 28, len(result.Comments))
+	assert.Equal(t, 27, len(result.Comments))
 	assert.Equal(t, false, result.Paging.HasNext)
 	assert.Equal(t, "", result.Paging.Next)
 }
