@@ -33,9 +33,9 @@ func main() {
 	db := database.GetDb()
 	apiDef := map[string]swagger.ApiDescription{}
 
-	userWrapper := user.NewUserWrapper("")                 // todo
-	contentWrapper := content.NewContentWrapper("")        // todo
-	userBlockWrapper := user_block.NewUserBlockWrapper("") // todo
+	userWrapper := user.NewUserWrapper(cfg.UserApiUrl)
+	contentWrapper := content.NewContentWrapper(cfg.ContentApiUrl)
+	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.UserBlockApiUrl)
 
 	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.AuthApiUrl))
 

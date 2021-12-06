@@ -24,9 +24,12 @@ func (d DbConfig) ToBoilerplate() boilerplate.DbConfig {
 }
 
 type Settings struct {
-	HttpPort   int      `json:"HttpPort"`
-	AuthApiUrl string   `json:"AuthApiUrl"`
-	Db         DbConfig `json:"Db"`
+	HttpPort        int      `json:"HttpPort" default:"5215"`
+	AuthApiUrl      string   `json:"AuthApiUrl" default:""`
+	UserApiUrl      string   `json:"UserApiUrl" default:""`
+	ContentApiUrl   string   `json:"ContentApiUrl" default:""`
+	UserBlockApiUrl string   `json:"UserBlockApiUrl" default:""`
+	Db              DbConfig `json:"Db"`
 }
 
 var settings Settings

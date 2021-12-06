@@ -199,16 +199,16 @@ func getMigrations() []*gormigrate.Migration {
 					);
 
 					create index if not exists idx_hashtags
-						on content;
+						on content (hashtags);
 
 					create index if not exists idx_user_otp_id
-						on content;
+						on content (user_id);
 
 					create index if not exists upload_status_idx
-						on content;
+						on content (upload_status);
 
 					create index if not exists gin_content_hashtags_idx
-						on content;
+						on content (hashtags_array);
 
 					alter table content add COLUMN IF NOT EXISTS comments_count bigint default 0 not null;
 				`
