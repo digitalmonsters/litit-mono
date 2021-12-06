@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/digitalmonsters/go-common v1.8.6
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
-	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/romanyx/polluter v1.2.2

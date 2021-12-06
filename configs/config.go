@@ -3,7 +3,6 @@ package configs
 import (
 	_ "embed"
 	"github.com/digitalmonsters/go-common/boilerplate"
-	"github.com/kelseyhightower/envconfig"
 )
 
 type DbConfig struct {
@@ -33,7 +32,13 @@ type Settings struct {
 var settings Settings
 
 func init() {
-	if err := envconfig.Process("", &settings); err != nil {
+	cfg, err := boilerplate.RecursiveFindFile("config.json", "./", 30)
+
+	if err != nil {
+		panic(err)
+	}
+
+	if _, err = boilerplate.ReadConfigByFilePaths([]string{cfg}, &settings); err != nil {
 		panic(err)
 	}
 }

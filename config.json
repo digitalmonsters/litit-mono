@@ -1,5 +1,11 @@
 {
+  "HttpPort": 5212,
+  "AuthApiUrl": "http://localhost",
   "Db": {
-
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "base_api",
+    "User": "postgres",
+    "Password": "qwerty"
   }
 }
