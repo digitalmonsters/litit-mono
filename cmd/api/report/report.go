@@ -41,8 +41,17 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 	}
 
 	def["/{id}/report"] = swagger.ApiDescription{
-		Request:           reportCommentRequest{},
-		Response:          successResponse{},
+		Request:  reportCommentRequest{},
+		Response: successResponse{},
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "id",
+				In:          swagger.ParameterInPath,
+				Description: "comment_id",
+				Required:    true,
+				Type:        "integer",
+			},
+		},
 		MethodDescription: "report comment",
 		Tags:              []string{"report"},
 	}
