@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -12,7 +13,7 @@ import (
 )
 
 func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
-	apmTransaction *apm.Transaction, currentUserId int64) (*SimpleComment, error) {
+	userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction, currentUserId int64) (*SimpleComment, error) {
 	var parentComment database.Comment
 
 	if !parentId.IsZero() {
@@ -33,7 +34,7 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		}
 	}
 
-	blockedUserType, err := isBlocked(currentUserId, mappedComment.AuthorId)
+	blockedUserType, err := isBlocked(userBlockWrapper, apmTransaction, currentUserId, mappedComment.AuthorId)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -63,6 +64,10 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 	}
 
 	if err = updateUserStatsComments(db, currentUserId); err != nil {
+		return nil, err
+	}
+
+	if err = updateContentCommentsCounter(db, comment.ContentId, true); err != nil {
 		return nil, err
 	}
 
@@ -139,5 +144,13 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 		return nil, err
 	}
 
-	return &mappedComment.SimpleComment, tx.Commit().Error
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	if err := updateContentCommentsCounter(db, comment.ContentId, false); err != nil {
+		return nil, err
+	}
+
+	return &mappedComment.SimpleComment, nil
 }

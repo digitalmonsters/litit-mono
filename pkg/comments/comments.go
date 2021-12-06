@@ -1,9 +1,11 @@
 package comments
 
 import (
+	"fmt"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
@@ -175,9 +177,15 @@ func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 	return &resultComment, nil
 }
 
-func isBlocked(blockBy int64, blockTo int64) (*BlockedUserType, error) {
-	// TODO: need implementation
-	return nil, nil
+func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction,
+	blockedTo int64, blockedBy int64) (*user_block.BlockedUserType, error) {
+	responseData := <-userBlockWrapper.GetUserBlock(blockedTo, blockedBy, apmTransaction, false)
+
+	if responseData.Error != nil {
+		return nil, errors.New(fmt.Sprintf("invalid response from user block service [%v]", responseData.Error.Message))
+	}
+
+	return responseData.Data.Type, nil
 }
 
 func updateUserStatsComments(db *gorm.DB, authorId int64) error {
@@ -191,6 +199,30 @@ func updateUserStatsComments(db *gorm.DB, authorId int64) error {
 
 	if err := tx.Model(database.UserStatsContent{}).Where("id = ?", authorId).
 		Update("comments", gorm.Expr("comments + 1")).Error; err != nil {
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateContentCommentsCounter(db *gorm.DB, contentId int64, isIncrement bool) error {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	var incrementStm string
+
+	if isIncrement {
+		incrementStm = "comments + 1"
+	} else {
+		incrementStm = "comments - 1"
+	}
+
+	if err := tx.Model(database.Content{}).Where("id = ?", contentId).
+		Update("comments_count", gorm.Expr(incrementStm)).Error; err != nil {
 		return err
 	}
 

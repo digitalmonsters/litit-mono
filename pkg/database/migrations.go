@@ -137,6 +137,80 @@ func getMigrations() []*gormigrate.Migration {
 								on delete cascade,
 						resolved    boolean                  default false
 					);
+
+					create table if not exists content
+					(
+						id                 serial
+							constraint content_pkey
+								primary key,
+						user_id            integer,
+						video_id           varchar(255),
+						page_url           varchar(255),
+						title              varchar(255),
+						artist             varchar(255),
+						description        text,
+						tags               varchar(255),
+						category_id        integer
+							constraint content_category_id_foreign
+								references category,
+						subcategory_id     integer,
+						duration           numeric,
+						age_restricted     boolean                  default false,
+						points             integer                  default 0,
+						approved           boolean,
+						reason             varchar(255),
+						flagged            boolean                  default false,
+						unlisted           boolean                  default false,
+						live_at            timestamp with time zone,
+						created_at         timestamp with time zone default CURRENT_TIMESTAMP not null,
+						updated_at         timestamp with time zone default CURRENT_TIMESTAMP not null,
+						ohw_application_id integer
+							constraint content_ohw_application_id_foreign
+								references application,
+						whitelisted        boolean                  default false,
+						whitelisted_by_id  integer,
+						whitelisted_at     timestamp with time zone,
+						approved_by_id     integer,
+						suspended          boolean                  default false,
+						suspended_by_id    integer,
+						suspended_at       timestamp with time zone,
+						deleted            boolean                  default false,
+						deleted_by_id      integer,
+						deleted_at         timestamp with time zone,
+						hashtags           jsonb,
+						allow_comments     boolean                  default false,
+						video_share_link   varchar(255)             default NULL::character varying,
+						draft              boolean                  default true,
+						width              integer,
+						height             integer,
+						not_to_repeat      boolean                  default false,
+						upload_status      integer                  default 0,
+						by_admin           boolean                  default false,
+						moderator_rate     integer,
+						allow_download     boolean                  default true,
+						fps                varchar(255),
+						bitrate            varchar(255),
+						size               varchar(255),
+						likes_count        bigint,
+						watch_count        bigint,
+						hashtags_array     text[],
+						shares_count       bigint                   default 0                 not null,
+						comments_count     bigint                   default 0                 not null
+					);
+
+					create index if not exists idx_hashtags
+						on content;
+
+					create index if not exists idx_user_otp_id
+						on content;
+
+					create index if not exists upload_status_idx
+						on content;
+
+					create index if not exists gin_content_hashtags_idx
+						on content;
+
+					alter table content add COLUMN IF NOT EXISTS comments_count bigint default 0 not null;
 				`
 				return db.Exec(query).Error
 

@@ -62,3 +62,12 @@ type UserStatsContent struct {
 func (UserStatsContent) TableName() string {
 	return "user_stats_content"
 }
+
+type Content struct {
+	Id            int64 `json:"id"`
+	CommentsCount int64 `json:"comments_count"`
+}
+
+func (Content) TableName() string {
+	return "content"
+}

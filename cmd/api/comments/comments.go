@@ -10,13 +10,14 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
 )
 
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrapper, contentWrapper content.IContentWrapper,
-	apiDef map[string]swagger.ApiDescription) error {
+	userBlockWrapper user_block.IUserBlockWrapper, apiDef map[string]swagger.ApiDescription) error {
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -188,7 +189,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		}
 
 		if resp, err := comments.CreateComment(db.WithContext(executionData.Context), contentId,
-			createRequest.Comment, createRequest.ParentId, contentWrapper, executionData.ApmTransaction,
+			createRequest.Comment, createRequest.ParentId, contentWrapper, userBlockWrapper, executionData.ApmTransaction,
 			executionData.UserId); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {

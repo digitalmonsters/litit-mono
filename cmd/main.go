@@ -16,6 +16,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/auth"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"os"
@@ -32,12 +33,13 @@ func main() {
 	db := database.GetDb()
 	apiDef := map[string]swagger.ApiDescription{}
 
-	userWrapper := user.NewUserWrapper("")          // todo
-	contentWrapper := content.NewContentWrapper("") // todo
+	userWrapper := user.NewUserWrapper("")                 // todo
+	contentWrapper := content.NewContentWrapper("")        // todo
+	userBlockWrapper := user_block.NewUserBlockWrapper("") // todo
 
 	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.AuthApiUrl))
 
-	if err := comments.Init(httpRouter, db, userWrapper, contentWrapper, apiDef); err != nil {
+	if err := comments.Init(httpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef); err != nil {
 		panic(err)
 	}
 

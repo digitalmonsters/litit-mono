@@ -56,10 +56,3 @@ type SimpleContent struct {
 	Id       int64 `json:"id"`
 	AuthorId int64 `json:"author_id"`
 }
-
-type BlockedUserType string
-
-const (
-	BlockedUser   BlockedUserType = "BLOCKED USER"
-	BlockedByUser BlockedUserType = "YOUR PROFILE IS BLOCKED BY USER"
-)
