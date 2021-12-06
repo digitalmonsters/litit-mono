@@ -23,9 +23,9 @@ func (Comment) TableName() string {
 }
 
 type CommentVote struct {
-	UserId    int64 `json:"user_id"`
-	CommentId int64 `json:"comment_id"`
-	VoteUp    bool  `json:"vote_up"`
+	UserId    int64     `json:"user_id"`
+	CommentId int64     `json:"comment_id"`
+	VoteUp    null.Bool `json:"vote_up"`
 }
 
 func (CommentVote) TableName() string {

@@ -52,6 +52,7 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 	comment.Comment = commentStr
 	comment.AuthorId = currentUserId
 	comment.ParentId = parentId
+	comment.Active = true
 
 	if err = tx.Omit("created_at").Create(&comment).Error; err != nil {
 		return nil, err

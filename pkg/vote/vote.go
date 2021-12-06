@@ -26,25 +26,33 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 	}
 
 	if previousVote.UserId > 0 { // if 0, then its new vote
-		previousVoteValue = null.BoolFrom(previousVote.VoteUp)
+		previousVoteValue = previousVote.VoteUp
 	}
 
 	previousVote.CommentId = commentId
 	previousVote.UserId = currentUserId
 
-	if previousVote.VoteUp == voteUp.ValueOrZero() { // nothing to do here, as status in db is already valid
+	if !voteUp.Valid && !previousVote.VoteUp.Valid {
 		return nil, nil
 	}
 
-	previousVote.VoteUp = voteUp.ValueOrZero()
-
-	if previousVote.VoteUp {
-		if err := tx.Model(&comment).Update("num_upvotes", gorm.Expr("num_upvotes + 1")).Error; err != nil {
-			return nil, errors.WithStack(err)
+	if voteUp.Valid && previousVote.VoteUp.Valid {
+		if previousVote.VoteUp.ValueOrZero() == voteUp.ValueOrZero() { // nothing to do here, as status in db is already valid
+			return nil, nil
 		}
-	} else {
-		if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_upvotes + 1")).Error; err != nil {
-			return nil, errors.WithStack(err)
+	}
+
+	previousVote.VoteUp = voteUp
+
+	if previousVote.VoteUp.Valid {
+		if previousVote.VoteUp.ValueOrZero() {
+			if err := tx.Model(&comment).Update("num_upvotes", gorm.Expr("num_upvotes + 1")).Error; err != nil {
+				return nil, errors.WithStack(err)
+			}
+		} else {
+			if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_downvotes + 1")).Error; err != nil {
+				return nil, errors.WithStack(err)
+			}
 		}
 	}
 
@@ -54,15 +62,13 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 				return nil, errors.WithStack(err)
 			}
 		} else {
-			if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_upvotes - 1")).Error; err != nil {
+			if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_downvotes - 1")).Error; err != nil {
 				return nil, errors.WithStack(err)
 			}
 		}
 	}
 
-	if err := tx.Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).Save(previousVote).Error; err != nil {
+	if err := tx.Exec("insert into comment_vote(user_id, comment_id, vote_up) values (?, ?, ?) on conflict (user_id, comment_id) do update set vote_up = ?", currentUserId, commentId, voteUp, voteUp).Error; err !=nil {
 		return nil, errors.WithStack(err)
 	}
 

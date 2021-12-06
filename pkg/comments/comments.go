@@ -48,7 +48,11 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 		paginatorRules = append(paginatorRules, paginator.Rule{
 			Key:   "NumReplies",
 			Order: paginator.DESC,
-		})
+		},
+			paginator.Rule{
+				Key:   "Id",
+				Order: paginator.ASC,
+			})
 	case "top_reactions":
 		paginatorRules = append(paginatorRules, paginator.Rule{
 			Key:   "NumReplies",
@@ -59,6 +63,9 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 		}, paginator.Rule{
 			Key:   "NumDownvotes",
 			Order: paginator.DESC,
+		}, paginator.Rule{
+			Key:   "Id",
+			Order: paginator.ASC,
 		})
 	case "least_popular":
 		paginatorRules = append(paginatorRules, paginator.Rule{
@@ -70,7 +77,11 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 		}, paginator.Rule{
 			Key:   "NumDownvotes",
 			Order: paginator.ASC,
-		})
+		},
+			paginator.Rule{
+				Key:   "Id",
+				Order: paginator.ASC,
+			})
 	default:
 		paginatorRules = append(paginatorRules, paginator.Rule{
 			Key:   "NumReplies",
@@ -81,7 +92,12 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 		}, paginator.Rule{
 			Key:   "NumDownvotes",
 			Order: paginator.DESC,
-		})
+		},
+			paginator.Rule{
+				Key:   "Id",
+				Order: paginator.ASC,
+			},
+		)
 	}
 
 	p := paginator.New(
@@ -153,7 +169,7 @@ func GetCommentsByContent(request GetCommentsByTypeWithResourceRequest, currentU
 	return &finalResponse, nil
 }
 
-func GetCommendById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserWrapper,
+func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserWrapper,
 	apmTransaction *apm.Transaction) (*Comment, error) {
 	var comment database.Comment
 
@@ -216,9 +232,9 @@ func updateContentCommentsCounter(db *gorm.DB, contentId int64, isIncrement bool
 	var incrementStm string
 
 	if isIncrement {
-		incrementStm = "comments + 1"
+		incrementStm = "comments_count + 1"
 	} else {
-		incrementStm = "comments - 1"
+		incrementStm = "comments_count - 1"
 	}
 
 	if err := tx.Model(database.Content{}).Where("id = ?", contentId).

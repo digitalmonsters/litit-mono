@@ -8,8 +8,7 @@ import (
 
 func ReportComment(commentId int64, details string, db *gorm.DB, currentUserId int64) (*database.Report, error) {
 	var existingReport database.Report
-
-	if err := db.Where("comment_id = ? and reporter_id = ? and report_type = ?", commentId,
+	if err := db.Where("comment_id = ? and reporter_id = ? and type = ?", commentId,
 		currentUserId, "comment").Find(&existingReport).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -18,7 +17,14 @@ func ReportComment(commentId int64, details string, db *gorm.DB, currentUserId i
 		return &existingReport, nil
 	}
 
+	var contentId int64
+	if err := db.Model(database.Comment{}).Select("content_id").
+		Where("id = ?", commentId).First(&contentId).Error; err != nil {
+		return nil, err
+	}
+
 	existingReport.CommentId = commentId
+	existingReport.ContentId = contentId
 	existingReport.Type = "comment"
 	existingReport.ReporterId = currentUserId
 	existingReport.Detail = details

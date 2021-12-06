@@ -27,7 +27,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		if comment, err := comments.GetCommendById(db.WithContext(executionData.Context), commentId, executionData.UserId,
+		if comment, err := comments.GetCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
 			userWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {

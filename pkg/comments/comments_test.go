@@ -5,7 +5,9 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -43,6 +45,53 @@ func TestMain(m *testing.M) {
 						Items: map[int64]user.UserRecord{
 							mockUserRecord.UserId: mockUserRecord,
 						},
+					}
+				}
+			}()
+
+			return ch
+		},
+	}
+
+	contentWrapperMock = &content.ContentWrapperMock{
+		GetInternalFn: func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan content.ContentGetInternalResponseChan {
+			ch := make(chan content.ContentGetInternalResponseChan, 2)
+			go func() {
+				defer func() {
+					close(ch)
+				}()
+
+				if contentIds[0] == mockContentRecord.Id{
+					ch <- content.ContentGetInternalResponseChan{
+						Error: nil,
+						Items: map[int64]content.SimpleContent{
+							mockContentRecord.Id: mockContentRecord,
+						},
+					}
+				}
+			}()
+
+			return ch
+		},
+	}
+
+	blockWrapperMock = &user_block.UserBlockWrapperMock{
+		GetUserBlockFn: func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan user_block.GetUserBlockResponseChan {
+			ch := make(chan user_block.GetUserBlockResponseChan, 2)
+			go func() {
+				defer func() {
+					close(ch)
+				}()
+
+				if blockedTo == 1 || blockedBy == 2{
+					ch <- user_block.GetUserBlockResponseChan{
+						Error: nil,
+						Data: mockBlockRecord,
+					}
+				} else {
+					ch <- user_block.GetUserBlockResponseChan{
+						Error: nil,
+						Data: mockNotBlockRecord,
 					}
 				}
 			}()
@@ -100,8 +149,8 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, int64(9691), result.Comments[0].Id)
-	assert.Equal(t, int64(9707), result.Comments[1].Id)
+	assert.Equal(t, int64(9699), result.Comments[0].Id)
+	assert.Equal(t, int64(9705), result.Comments[1].Id)
 
 	assert.Equal(t, true, result.Paging.HasNext)
 
@@ -117,15 +166,15 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 27, len(result.Comments))
+	assert.Equal(t, 30, len(result.Comments))
 	assert.Equal(t, false, result.Paging.HasNext)
 	assert.Equal(t, "", result.Paging.Next)
 }
 
-func TestGetCommendById(t *testing.T) {
+func TestGetCommentById(t *testing.T) {
 	baseSetup(t)
 
-	data, err := GetCommendById(db, 9694, 0, userWrapperMock, nil)
+	data, err := GetCommentById(db, 9694, 0, userWrapperMock, nil)
 
 	if err != nil {
 		t.Fatal(err)
