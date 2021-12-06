@@ -112,6 +112,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
 		}()
 
+		apm_helper.AddApmLabel(rqTransaction, "remote_url", url)
 		req.SetRequestURI(url)
 		req.Header.SetMethod("POST")
 
@@ -149,6 +150,9 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 					Code:     code,
 					Message:  fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
 					Hostname: b.hostName,
+					Data: map[string]interface{}{
+						"raw_response": string(rawBodyResponse),
+					},
 				},
 			}
 
@@ -210,6 +214,7 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
 		}()
 
+		apm_helper.AddApmLabel(rqTransaction, "remote_url", url)
 		req.SetRequestURI(url)
 		req.Header.SetMethod(httpMethod)
 
@@ -248,6 +253,9 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 					Code:     code,
 					Message:  fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
 					Hostname: b.hostName,
+					Data: map[string]interface{}{
+						"raw_response": string(rawBodyResponse),
+					},
 				},
 			}
 
