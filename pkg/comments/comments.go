@@ -180,7 +180,23 @@ func isBlocked(blockBy int64, blockTo int64) (*BlockedUserType, error) {
 	return nil, nil
 }
 
-func updateUserStatsComments(authorId int64) error {
-	// TODO: need implementation
+func updateUserStatsComments(db *gorm.DB, authorId int64) error {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	if err := tx.Model(database.UserStatsAction{}).Where("id = ?", authorId).
+		Update("comments", gorm.Expr("comments + 1")).Error; err != nil {
+		return err
+	}
+
+	if err := tx.Model(database.UserStatsContent{}).Where("id = ?", authorId).
+		Update("comments", gorm.Expr("comments + 1")).Error; err != nil {
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
 	return nil
 }

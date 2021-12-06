@@ -44,3 +44,21 @@ type Report struct {
 func (Report) TableName() string {
 	return "report"
 }
+
+type UserStatsAction struct {
+	Id       int64 `json:"id"`
+	Comments int64 `json:"comments"`
+}
+
+func (UserStatsAction) TableName() string {
+	return "user_stats_action"
+}
+
+type UserStatsContent struct {
+	Id       int64 `json:"id"`
+	Comments int64 `json:"comments"`
+}
+
+func (UserStatsContent) TableName() string {
+	return "user_stats_content"
+}
