@@ -102,14 +102,15 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				"internal_rpc", nil, apmTransaction)
 		}
 
-		defer func() {
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
-		}()
-
 		req := fasthttp.AcquireRequest()
 		defer fasthttp.ReleaseRequest(req)
 		resp := fasthttp.AcquireResponse()
 		defer fasthttp.ReleaseResponse(resp)
+
+		defer func() {
+			apm_helper.AddApmLabel(rqTransaction, "remote_status_code", resp.StatusCode())
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+		}()
 
 		req.SetRequestURI(url)
 		req.Header.SetMethod("POST")
@@ -141,10 +142,12 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				code = error_codes.GenericTimeoutError
 			}
 
+			rawBodyResponse = resp.Body()
+
 			genericResponse = &rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
 					Code:     code,
-					Message:  "error during sending request",
+					Message:  fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
 					Hostname: b.hostName,
 				},
 			}
@@ -197,14 +200,15 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 				"internal_rpc", nil, apmTransaction)
 		}
 
-		defer func() {
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
-		}()
-
 		req := fasthttp.AcquireRequest()
 		defer fasthttp.ReleaseRequest(req)
 		resp := fasthttp.AcquireResponse()
 		defer fasthttp.ReleaseResponse(resp)
+
+		defer func() {
+			apm_helper.AddApmLabel(rqTransaction, "remote_status_code", resp.StatusCode())
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+		}()
 
 		req.SetRequestURI(url)
 		req.Header.SetMethod(httpMethod)
@@ -237,10 +241,12 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 				code = error_codes.GenericTimeoutError
 			}
 
+			rawBodyResponse = resp.Body()
+
 			genericResponse = &rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
 					Code:     code,
-					Message:  "error during sending request",
+					Message:  fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
 					Hostname: b.hostName,
 				},
 			}

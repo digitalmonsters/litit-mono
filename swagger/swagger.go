@@ -16,12 +16,29 @@ type IApiCommand interface {
 	GetHttpMethod() string
 }
 
+type ParameterPosition string
+
+const (
+	ParameterInQuery = ParameterPosition("query")
+	ParameterInPath  = ParameterPosition("path")
+)
+
+type ParameterDescription struct {
+	Name        string
+	In          ParameterPosition
+	Description string
+	Required    bool
+	Type        string
+	Format      string
+}
+
 type ApiDescription struct {
-	Request           interface{}
-	Response          interface{}
-	MethodDescription string
-	Summary           string
-	Tags              []string
+	Request                     interface{}
+	Response                    interface{}
+	AdditionalSwaggerParameters []ParameterDescription
+	MethodDescription           string
+	Summary                     string
+	Tags                        []string
 }
 
 type ConstantDescription struct {
@@ -155,6 +172,7 @@ func buildPath(commands []IApiCommand, apiDescriptions map[string]ApiDescription
 		}
 
 		hasResponse := false
+		var finalParameters []interface{}
 
 		if notV, ok := apiDescriptions[originalName]; ok {
 			if len(notV.MethodDescription) > 0 {
@@ -178,12 +196,12 @@ func buildPath(commands []IApiCommand, apiDescriptions map[string]ApiDescription
 					continue
 				}
 
-				if isRequest {
+				if isRequest { // request
 					paramsMap["in"] = "body"
 					paramsMap["name"] = "body"
 					//paramsMap["description"] = "some dec2"
 					paramsMap["required"] = true
-				} else {
+				} else { // response
 					paramsMap["description"] = "sample response"
 				}
 
@@ -291,7 +309,7 @@ func buildPath(commands []IApiCommand, apiDescriptions map[string]ApiDescription
 				}
 
 				if isRequest {
-					methodInfo["parameters"] = []interface{}{paramsMap}
+					finalParameters = append(finalParameters, paramsMap)
 				} else {
 					methodInfo["responses"] = map[string]interface{}{
 						"200": paramsMap,
@@ -300,6 +318,19 @@ func buildPath(commands []IApiCommand, apiDescriptions map[string]ApiDescription
 					hasResponse = true
 				}
 			}
+
+			for _, item := range notV.AdditionalSwaggerParameters {
+				finalParameters = append(finalParameters, map[string]interface{}{
+					"name":        item.Name,
+					"in":          string(item.In),
+					"description": item.Description,
+					"required":    item.Required,
+					"type":        item.Type,
+					"format":      item.Format,
+				})
+			}
+
+			methodInfo["parameters"] = finalParameters
 		}
 
 		if !hasResponse {
