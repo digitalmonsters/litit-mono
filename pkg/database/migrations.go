@@ -69,7 +69,74 @@ func getMigrations() []*gormigrate.Migration {
 						updated_at timestamp with time zone default CURRENT_TIMESTAMP not null,
 						constraint comment_vote_pkey
 							primary key (user_id, comment_id)
-					)
+					);
+
+					create table if not exists user_stats_content
+					(
+						id                integer                                            not null
+							constraint user_stats_content_pkey
+								primary key,
+						uploads           integer                  default 0,
+						viral_power       integer                  default 0,
+						watch_time        integer                  default 0,
+						views             integer                  default 0,
+						shares            integer                  default 0,
+						likes             integer                  default 0,
+						up_score          integer                  default 0,
+						dislikes          integer                  default 0,
+						down_score        integer                  default 0,
+						comments          integer                  default 0,
+						created_at        timestamp with time zone default CURRENT_TIMESTAMP not null,
+						updated_at        timestamp with time zone default CURRENT_TIMESTAMP not null,
+						paid_views        integer                  default 0,
+						paid_guest_views  integer                  default 0,
+						paid_shares       integer                  default 0,
+						paid_guest_shares integer                  default 0
+					);
+
+					create table if not exists user_stats_action
+					(
+						id             integer                                            not null
+							constraint user_stats_action_pkey
+								primary key,
+						viral_power    integer                  default 0,
+						watch_time     integer                  default 0,
+						views          integer                  default 0,
+						shares         integer                  default 0,
+						likes          integer                  default 0,
+						up_score       integer                  default 0,
+						dislikes       integer                  default 0,
+						down_score     integer                  default 0,
+						comments       integer                  default 0,
+						created_at     timestamp with time zone default CURRENT_TIMESTAMP not null,
+						updated_at     timestamp with time zone default CURRENT_TIMESTAMP not null,
+						paid_views     integer                  default 0,
+						paid_shares    integer                  default 0,
+						profile_shares integer                  default 0
+					);
+
+					create table if not exists report
+					(
+						id          integer                  default nextval('report_id_seq'::regclass) not null
+							constraint report_pkey
+								primary key,
+						content_id  integer
+							constraint report_content_id_foreign
+								references content
+								on delete cascade,
+						user_id     integer,
+						type        varchar(255),
+						detail      text,
+						created_at  timestamp with time zone default CURRENT_TIMESTAMP                  not null,
+						updated_at  timestamp with time zone default CURRENT_TIMESTAMP                  not null,
+						reporter_id integer,
+						report_type varchar(255)             default 'content'::character varying,
+						comment_id  integer
+							constraint report_comment_id_foreign
+								references comment
+								on delete cascade,
+						resolved    boolean                  default false
+					);
 				`
 				return db.Exec(query).Error
 
