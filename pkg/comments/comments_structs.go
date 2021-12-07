@@ -47,9 +47,8 @@ type Comment struct {
 
 type CommentOnProfile struct {
 	SimpleComment
-	Author  Author        `json:"author"`
+	Author Author `json:"author"`
 }
-
 
 type Author struct {
 	Id        int64       `json:"id"`
@@ -63,3 +62,11 @@ type SimpleContent struct {
 	Id       int64 `json:"id"`
 	AuthorId int64 `json:"author_id"`
 }
+
+type ResourceType int
+
+const (
+	NoneResourceType    ResourceType = 0
+	ContentResourceType ResourceType = 1
+	ProfileResourceType ResourceType = 2
+)

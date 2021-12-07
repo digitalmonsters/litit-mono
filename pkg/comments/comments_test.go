@@ -119,13 +119,13 @@ func baseSetup(t *testing.T) {
 func TestGetCommentsByContent(t *testing.T) {
 	baseSetup(t)
 
-	result, err := GetCommentsByContent(GetCommentsByTypeWithResourceRequest{
+	result, err := GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
 		ParentId:   0,
 		After:      "",
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil)
+	}, 0, db, userWrapperMock, nil, ContentResourceType)
 
 	if err != nil {
 		t.Fatal(err)
@@ -137,13 +137,13 @@ func TestGetCommentsByContent(t *testing.T) {
 	assert.Equal(t, int64(9694), result.Comments[0].Id)
 	assert.Equal(t, int64(9693), result.Comments[1].Id)
 
-	result, err = GetCommentsByContent(GetCommentsByTypeWithResourceRequest{
+	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
 		ParentId:   0,
 		After:      result.Paging.Next,
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil)
+	}, 0, db, userWrapperMock, nil, ContentResourceType)
 
 	if err != nil {
 		t.Fatal(err)
@@ -154,13 +154,13 @@ func TestGetCommentsByContent(t *testing.T) {
 
 	assert.Equal(t, true, result.Paging.HasNext)
 
-	result, err = GetCommentsByContent(GetCommentsByTypeWithResourceRequest{
+	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
 		ParentId:   0,
 		After:      result.Paging.Next,
 		Count:      9999,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil)
+	}, 0, db, userWrapperMock, nil, ContentResourceType)
 
 	if err != nil {
 		t.Fatal(err)
@@ -205,13 +205,13 @@ func TestGetCommentById(t *testing.T) {
 func TestGetCommentsByProfile(t *testing.T) {
 	baseSetup(t)
 
-	result, err := GetCommentsByProfile(GetCommentsByTypeWithResourceRequest{
+	result, err := GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 11108,
 		ParentId:   0,
 		After:      "",
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil)
+	}, 0, db, userWrapperMock, nil, ProfileResourceType)
 
 	if err != nil {
 		t.Fatal(err)
@@ -223,13 +223,13 @@ func TestGetCommentsByProfile(t *testing.T) {
 	assert.Equal(t, int64(9713), result.Comments[0].Id)
 	assert.Equal(t, int64(9712), result.Comments[1].Id)
 
-	result, err = GetCommentsByProfile(GetCommentsByTypeWithResourceRequest{
+	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 11108,
 		ParentId:   0,
 		After:      result.Paging.Next,
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil)
+	}, 0, db, userWrapperMock, nil, ProfileResourceType)
 
 	if err != nil {
 		t.Fatal(err)
