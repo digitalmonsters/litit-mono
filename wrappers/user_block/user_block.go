@@ -3,6 +3,7 @@ package user_block
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -23,9 +24,19 @@ type UserBlockWrapper struct {
 	serviceName    string
 }
 
-func NewUserBlockWrapper(apiUrl string) IUserBlockWrapper {
-	return &UserBlockWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second, apiUrl: common.StripSlashFromUrl(apiUrl),
-		serviceName: "user-block-backend"}
+func NewUserBlockWrapper(config boilerplate.WrapperConfig) IUserBlockWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	return &UserBlockWrapper{
+		baseWrapper:    wrappers.GetBaseWrapper(),
+		defaultTimeout: timeout,
+		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		serviceName:    "user-block-backend",
+	}
 }
 
 func (w *UserBlockWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction,
@@ -35,7 +46,8 @@ func (w *UserBlockWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTra
 	w.baseWrapper.GetPool().Submit(func() {
 		finalResponse := GetUserBlockResponseChan{}
 
-		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(fmt.Sprintf("%v/user/block_relations", w.apiUrl),
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(
+			fmt.Sprintf("%v/mobile/v1/user/block_relations", w.apiUrl),
 			"POST",
 			"application/json",
 			"get user block",

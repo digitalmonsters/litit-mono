@@ -2,6 +2,8 @@ package like
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -22,9 +24,19 @@ type LikeWrapper struct {
 	serviceName    string
 }
 
-func NewLikeWrapper(apiUrl string) ILikeWrapper {
-	return &LikeWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second, apiUrl: common.StripSlashFromUrl(apiUrl),
-		serviceName: "like-backend"}
+func NewLikeWrapper(config boilerplate.WrapperConfig) ILikeWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	return &LikeWrapper{
+		baseWrapper:    wrappers.GetBaseWrapper(),
+		defaultTimeout: timeout,
+		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
+		serviceName:    "like-backend",
+	}
 }
 
 func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction,
@@ -52,9 +64,9 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 
 			if err := json.Unmarshal(resp.Result, &items); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:    error_codes.GenericMappingError,
-					Message: err.Error(),
-					Data:    nil,
+					Code:     error_codes.GenericMappingError,
+					Message:  err.Error(),
+					Data:     nil,
 					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {

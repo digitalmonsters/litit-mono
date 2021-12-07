@@ -11,7 +11,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 )
 
 type Environment int32
@@ -42,18 +41,19 @@ func (e Environment) ToString() string {
 }
 
 type Wrappers struct {
-	Auth     WrapperConfig `json:"Auth"`
-	Content  WrapperConfig `json:"Content"`
-	Like     WrapperConfig `json:"Like"`
-	Watch    WrapperConfig `json:"Watch"`
-	Category WrapperConfig `json:"category"`
-	Hashtag  WrapperConfig `json:"hashtag"`
-	User     WrapperConfig `json:"user"`
+	Auth      WrapperConfig `json:"Auth"`
+	Content   WrapperConfig `json:"Content"`
+	Like      WrapperConfig `json:"Like"`
+	Watch     WrapperConfig `json:"Watch"`
+	Category  WrapperConfig `json:"Category"`
+	Hashtag   WrapperConfig `json:"Hashtag"`
+	User      WrapperConfig `json:"User"`
+	UserBlock WrapperConfig `json:"UserBlock"`
 }
 
 type WrapperConfig struct {
-	ApiUrl  string        `json:"ApiUrl"`
-	Timeout time.Duration `json:"Timeout"`
+	ApiUrl     string `json:"ApiUrl"`
+	TimeoutSec int    `json:"TimeoutSec"`
 }
 
 type ApmConfig struct {

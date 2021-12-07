@@ -2,6 +2,8 @@ package hashtag
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -21,11 +23,17 @@ type IHashtagWrapper interface {
 	GetHashtagsInternal(hashtags []string, omitHashtags []string, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan HashtagsGetInternalResponseChan
 }
 
-func NewHashtagWrapper(apiUrl string) IHashtagWrapper {
+func NewHashtagWrapper(config boilerplate.WrapperConfig) IHashtagWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
 	return &Wrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
-		defaultTimeout: 5 * time.Second,
-		apiUrl:         common.StripSlashFromUrl(apiUrl),
+		defaultTimeout: timeout,
+		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "content-backend",
 	}
 }
