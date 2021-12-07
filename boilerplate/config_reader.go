@@ -41,14 +41,14 @@ func (e Environment) ToString() string {
 }
 
 type Wrappers struct {
-	Auth      WrapperConfig `json:"Auth"`
-	Content   WrapperConfig `json:"Content"`
-	Like      WrapperConfig `json:"Like"`
-	Watch     WrapperConfig `json:"Watch"`
-	Category  WrapperConfig `json:"Category"`
-	Hashtag   WrapperConfig `json:"Hashtag"`
-	User      WrapperConfig `json:"User"`
-	UserBlock WrapperConfig `json:"UserBlock"`
+	Auth           WrapperConfig `json:"Auth"`
+	Content        WrapperConfig `json:"Content"`
+	Like           WrapperConfig `json:"Likes"`
+	Views          WrapperConfig `json:"Views"`
+	UserCategories WrapperConfig `json:"UserCategories"`
+	UserHashtags   WrapperConfig `json:"UserHashtags"`
+	UserInfo       WrapperConfig `json:"UserInfo"`
+	UserBlock      WrapperConfig `json:"UserBlock"`
 }
 
 type WrapperConfig struct {
