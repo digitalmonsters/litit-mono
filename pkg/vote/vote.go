@@ -21,7 +21,8 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 	previousVoteValue := null.NewBool(false, false)
 	var previousVote database.CommentVote
 
-	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Find(&previousVote, commentId, currentUserId).Error; err != nil {
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id = ? and comment_id = ?", currentUserId, commentId).
+		Find(&previousVote).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -68,7 +69,7 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 		}
 	}
 
-	if err := tx.Exec("insert into comment_vote(user_id, comment_id, vote_up) values (?, ?, ?) on conflict (user_id, comment_id) do update set vote_up = ?", currentUserId, commentId, voteUp, voteUp).Error; err !=nil {
+	if err := tx.Exec("insert into comment_vote(user_id, comment_id, vote_up) values (?, ?, ?) on conflict (user_id, comment_id) do update set vote_up = ?", currentUserId, commentId, voteUp, voteUp).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 

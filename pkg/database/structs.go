@@ -24,8 +24,8 @@ func (Comment) TableName() string {
 }
 
 type CommentVote struct {
-	UserId    int64     `json:"user_id"`
-	CommentId int64     `json:"comment_id"`
+	UserId    int64     `json:"user_id" gorm:"primaryKey"`
+	CommentId int64     `json:"comment_id" gorm:"primaryKey"`
 	VoteUp    null.Bool `json:"vote_up"`
 }
 
