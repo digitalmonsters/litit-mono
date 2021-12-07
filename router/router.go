@@ -111,7 +111,9 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		var restResponse genericRestResponse
 
 		restResponse.Success = true
-
+		restResponse.ExecutionTimingMs = rpcResponse.ExecutionTimingMs
+		restResponse.Hostname = rpcResponse.Hostname
+		
 		if rpcResponse.Result != nil {
 			restResponse.Data = rpcResponse.Result
 		}
@@ -255,7 +257,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 		}
 		return
 	}
-	
+
 	executionTiming := time.Now()
 
 	if resp, err := cmd.GetFn()(rpcRequest.Params, MethodExecutionData{
@@ -292,9 +294,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 		var rpcResponse rpc.RpcResponse
 		var shouldLog bool
 		var requestBody []byte
-
-		apmTransaction := apm_helper.StartNewApmTransaction(rpcRequest.Method, "rpc", nil, nil)
-		defer apmTransaction.End()
+		var apmTransaction *apm.Transaction
 
 		defer func() {
 			var responseBody []byte
@@ -352,6 +352,9 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 			return
 		}
 
+		apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, "rpc", nil, nil)
+		defer apmTransaction.End()
+
 		cmd, err := r.executor.GetCommand(rpcRequest.Method)
 
 		if err != nil {
@@ -378,6 +381,10 @@ func (r *HttpRouter) GET(path string, handler fasthttp.RequestHandler) {
 }
 
 func (r *HttpRouter) logRequestBody(body []byte, apmTransaction *apm.Transaction) {
+	if apmTransaction == nil {
+		return
+	}
+
 	if len(body) > 0 {
 		apm_helper.AddApmData(apmTransaction, "request_body", body)
 	}

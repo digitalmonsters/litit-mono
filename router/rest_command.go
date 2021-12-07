@@ -52,8 +52,10 @@ func (r RestCommand) GetFn() CommandFunc {
 }
 
 type genericRestResponse struct {
-	Data    interface{} `json:"data"`
-	Success bool        `json:"success"`
-	Error   string      `json:"error,omitempty"`
-	Stack   string      `json:"stack,omitempty"`
+	Data              interface{} `json:"data"`
+	Success           bool        `json:"success"`
+	Error             string      `json:"error,omitempty"`
+	Stack             string      `json:"stack,omitempty"`
+	Hostname          string      `json:"hostname"`
+	ExecutionTimingMs int64       `json:"execution_timing"`
 }
