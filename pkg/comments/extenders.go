@@ -122,8 +122,8 @@ func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction 
 		var contentIds []int64
 
 		for _, comment := range comments {
-			if !funk.ContainsInt64(contentIds, comment.ContentId) {
-				contentIds = append(contentIds, comment.ContentId)
+			if !funk.ContainsInt64(contentIds, comment.ContentId.ValueOrZero()) {
+				contentIds = append(contentIds, comment.ContentId.ValueOrZero())
 			}
 		}
 
@@ -136,7 +136,7 @@ func extendWithContentId(contentWrapper content.IContentWrapper, apmTransaction 
 			}
 
 			for _, comment := range comments {
-				if v, ok := responseData.Items[comment.ContentId]; ok {
+				if v, ok := responseData.Items[comment.ContentId.ValueOrZero()]; ok {
 					comment.Content = SimpleContent{
 						Id:       v.Id,
 						AuthorId: v.AuthorId,
@@ -164,8 +164,8 @@ func extendWithContentForSend(contentWrapper content.IContentWrapper, apmTransac
 		var contentIds []int64
 
 		for _, comment := range comments {
-			if !funk.ContainsInt64(contentIds, comment.ContentId) {
-				contentIds = append(contentIds, comment.ContentId)
+			if !funk.ContainsInt64(contentIds, comment.ContentId.ValueOrZero()) {
+				contentIds = append(contentIds, comment.ContentId.ValueOrZero())
 			}
 		}
 
@@ -178,7 +178,7 @@ func extendWithContentForSend(contentWrapper content.IContentWrapper, apmTransac
 			}
 
 			for _, comment := range comments {
-				if v, ok := responseData.Items[comment.ContentId]; ok {
+				if v, ok := responseData.Items[comment.ContentId.ValueOrZero()]; ok {
 					comment.Content = SimpleContent{
 						Id:       v.Id,
 						AuthorId: v.AuthorId,

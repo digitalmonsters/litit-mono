@@ -14,7 +14,8 @@ type Comment struct {
 	CreatedAt    time.Time `json:"created_at"`
 	Active       bool
 	Comment      string   `json:"comment"`
-	ContentId    int64    `json:"content_id"`
+	ContentId    null.Int `json:"content_id"`
+	ProfileId    null.Int `json:"profile_id"`
 	ParentId     null.Int `json:"parent_id"`
 }
 

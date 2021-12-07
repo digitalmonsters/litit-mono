@@ -21,6 +21,13 @@ type createCommentResponse struct {
 	ContentId int64  `json:"content_id"`
 }
 
+type createCommentOnProfileResponse struct {
+	Id        int64  `json:"id"`
+	Comment   string `json:"comment"`
+	AuthorId  int64  `json:"author_id"`
+	ProfileId int64  `json:"profile_id"`
+}
+
 type successResponse struct {
 	Success bool `json:"success"`
 }

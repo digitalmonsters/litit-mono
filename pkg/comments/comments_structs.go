@@ -6,12 +6,12 @@ import (
 )
 
 type GetCommentsByTypeWithResourceRequest struct {
-	ContentId int64
-	ParentId  int64
-	After     string // cursor
-	Before    string // cursor
-	Count     int64  // Limit
-	SortOrder string
+	ResourceId int64
+	ParentId   int64
+	After      string // cursor
+	Before     string // cursor
+	Count      int64  // Limit
+	SortOrder  string
 }
 
 type CursorPaging struct {
@@ -34,7 +34,8 @@ type SimpleComment struct {
 	NumDownvotes int64     `json:"num_downvotes"`
 	CreatedAt    time.Time `json:"created_at"`
 	MyVoteUp     null.Bool `json:"my_vote_up"`
-	ContentId    int64     `json:"content_id"`
+	ContentId    null.Int  `json:"content_id"`
+	ProfileId    null.Int  `json:"profile_id"`
 	Comment      string    `json:"comment"`
 }
 
@@ -43,6 +44,12 @@ type Comment struct {
 	Author  Author        `json:"author"`
 	Content SimpleContent `json:"content"`
 }
+
+type CommentOnProfile struct {
+	SimpleComment
+	Author  Author        `json:"author"`
+}
+
 
 type Author struct {
 	Id        int64       `json:"id"`

@@ -44,7 +44,7 @@ func TestCreateComment(t *testing.T) {
 	}
 
 	a := assert.New(t)
-	a.Equal(int64(1017738), c1.ContentId)
+	a.Equal(int64(1017738), c1.ContentId.ValueOrZero())
 	a.Equal("test_create_comment", c1.Comment)
 	a.Equal(false, c1.ParentId.Valid)
 
@@ -58,7 +58,7 @@ func TestCreateComment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	a.Equal(int64(1017738), c2.ContentId)
+	a.Equal(int64(1017738), c2.ContentId.ValueOrZero())
 	a.Equal("test_create_comment2", c2.Comment)
 	a.Equal(c1.Id, c2.ParentId.ValueOrZero())
 
@@ -89,15 +89,52 @@ func TestUpdateCommentById(t *testing.T) {
 
 func TestDeleteCommentById(t *testing.T) {
 	baseSetup(t)
-	_, err := DeleteCommentById(db, 9700, 1074240, contentWrapperMock, nil)
+	_, err := DeleteCommentById(db, 9713, 1074247, contentWrapperMock, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var deletedComment []database.Comment
-	if err := db.Where("id = 9700").Find(&deletedComment).Error; err != nil {
+	if err := db.Where("id = 9713").Find(&deletedComment).Error; err != nil {
 		t.Fatal(err)
 	}
 
 	a := assert.New(t)
 	a.Equal(0, len(deletedComment))
 }
+
+func TestCreateCommentOnProfile(t *testing.T) {
+	baseSetup(t)
+	comment, err := CreateCommentOnProfile(db, 11108, "test_create_comment_on_profile", null.NewInt(0, false), contentWrapperMock, blockWrapperMock, nil, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var c1 database.Comment
+	if err := db.Where("id = ?", comment.Id).First(&c1).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a := assert.New(t)
+	a.Equal(int64(11108), c1.ProfileId.ValueOrZero())
+	a.Equal("test_create_comment_on_profile", c1.Comment)
+	a.Equal(false, c1.ParentId.Valid)
+
+	comment2, err := CreateCommentOnProfile(db, 11108, "test_create_comment2_on_profile", null.IntFrom(comment.Id), contentWrapperMock, blockWrapperMock, nil, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var c2 database.Comment
+	if err := db.Where("id = ?", comment2.Id).First(&c2).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(int64(11108), c2.ProfileId.ValueOrZero())
+	a.Equal("test_create_comment2_on_profile", c2.Comment)
+	a.Equal(c1.Id, c2.ParentId.ValueOrZero())
+
+	_, err = CreateCommentOnProfile(db, 11108, "test_create_comment2_on_profile", null.IntFrom(comment.Id), contentWrapperMock, blockWrapperMock, nil, 1)
+	a.NotEqual(nil, err)
+
+}
+
