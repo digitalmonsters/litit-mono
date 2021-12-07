@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 					close(ch)
 				}()
 
-				if contentIds[0] == mockContentRecord.Id{
+				if contentIds[0] == mockContentRecord.Id {
 					ch <- content.ContentGetInternalResponseChan{
 						Error: nil,
 						Items: map[int64]content.SimpleContent{
@@ -83,15 +83,15 @@ func TestMain(m *testing.M) {
 					close(ch)
 				}()
 
-				if blockedTo == 1 || blockedBy == 2{
+				if blockedTo == 1 || blockedBy == 2 {
 					ch <- user_block.GetUserBlockResponseChan{
 						Error: nil,
-						Data: mockBlockRecord,
+						Data:  mockBlockRecord,
 					}
 				} else {
 					ch <- user_block.GetUserBlockResponseChan{
 						Error: nil,
-						Data: mockNotBlockRecord,
+						Data:  mockNotBlockRecord,
 					}
 				}
 			}()
@@ -107,7 +107,7 @@ func baseSetup(t *testing.T) {
 	cfg := configs.GetConfig()
 
 	if err := boilerplate_testing.FlushPostgresTables(cfg.Db.ToBoilerplate(),
-		[]string{"public.comment", "public.comment_vote", "public.content"}, nil, nil); err != nil {
+		[]string{"public.comment", "public.comment_vote", "public.content", "public.profile"}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -120,11 +120,11 @@ func TestGetCommentsByContent(t *testing.T) {
 	baseSetup(t)
 
 	result, err := GetCommentsByContent(GetCommentsByTypeWithResourceRequest{
-		ContentId: 1017738,
-		ParentId:  0,
-		After:     "",
-		Count:     2,
-		SortOrder: "",
+		ResourceId: 1017738,
+		ParentId:   0,
+		After:      "",
+		Count:      2,
+		SortOrder:  "",
 	}, 0, db, userWrapperMock, nil)
 
 	if err != nil {
@@ -138,11 +138,11 @@ func TestGetCommentsByContent(t *testing.T) {
 	assert.Equal(t, int64(9693), result.Comments[1].Id)
 
 	result, err = GetCommentsByContent(GetCommentsByTypeWithResourceRequest{
-		ContentId: 1017738,
-		ParentId:  0,
-		After:     result.Paging.Next,
-		Count:     2,
-		SortOrder: "",
+		ResourceId: 1017738,
+		ParentId:   0,
+		After:      result.Paging.Next,
+		Count:      2,
+		SortOrder:  "",
 	}, 0, db, userWrapperMock, nil)
 
 	if err != nil {
@@ -155,11 +155,11 @@ func TestGetCommentsByContent(t *testing.T) {
 	assert.Equal(t, true, result.Paging.HasNext)
 
 	result, err = GetCommentsByContent(GetCommentsByTypeWithResourceRequest{
-		ContentId: 1017738,
-		ParentId:  0,
-		After:     result.Paging.Next,
-		Count:     9999,
-		SortOrder: "",
+		ResourceId: 1017738,
+		ParentId:   0,
+		After:      result.Paging.Next,
+		Count:      9999,
+		SortOrder:  "",
 	}, 0, db, userWrapperMock, nil)
 
 	if err != nil {
@@ -189,7 +189,7 @@ func TestGetCommentById(t *testing.T) {
 			NumUpvotes:   66,
 			CreatedAt:    data.CreatedAt,
 			Comment:      "Testing comment reply notification",
-			ContentId:    1017738,
+			ContentId:    null.IntFrom(1017738),
 		},
 		Author: Author{
 			Id:        mockUserRecord.UserId,
@@ -200,4 +200,44 @@ func TestGetCommentById(t *testing.T) {
 		},
 		Content: SimpleContent{},
 	}, *data)
+}
+
+func TestGetCommentsByProfile(t *testing.T) {
+	baseSetup(t)
+
+	result, err := GetCommentsByProfile(GetCommentsByTypeWithResourceRequest{
+		ResourceId: 11108,
+		ParentId:   0,
+		After:      "",
+		Count:      2,
+		SortOrder:  "",
+	}, 0, db, userWrapperMock, nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.True(t, len(result.Paging.Next) > 0)
+	assert.Equal(t, true, result.Paging.HasNext)
+
+	assert.Equal(t, int64(9713), result.Comments[0].Id)
+	assert.Equal(t, int64(9712), result.Comments[1].Id)
+
+	result, err = GetCommentsByProfile(GetCommentsByTypeWithResourceRequest{
+		ResourceId: 11108,
+		ParentId:   0,
+		After:      result.Paging.Next,
+		Count:      2,
+		SortOrder:  "",
+	}, 0, db, userWrapperMock, nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, int64(9711), result.Comments[0].Id)
+
+	assert.Equal(t, false, result.Paging.HasNext)
+	assert.Equal(t, "", result.Paging.Next)
+
 }
