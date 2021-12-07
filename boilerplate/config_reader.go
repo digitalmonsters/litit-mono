@@ -43,7 +43,7 @@ func (e Environment) ToString() string {
 type Wrappers struct {
 	Auth           WrapperConfig `json:"Auth"`
 	Content        WrapperConfig `json:"Content"`
-	Like           WrapperConfig `json:"Likes"`
+	Likes          WrapperConfig `json:"Likes"`
 	Views          WrapperConfig `json:"Views"`
 	UserCategories WrapperConfig `json:"UserCategories"`
 	UserHashtags   WrapperConfig `json:"UserHashtags"`
