@@ -38,7 +38,7 @@ func extendWithLikedByMe(db *gorm.DB, currentUserId int64, comments ...*Comment)
 		}
 
 		if err := db.Model(database.CommentVote{}).Where("user_id = ? and comment_id in ?", currentUserId, commentIds).
-			Select("comment_id").Find(&foundVotes).Error; err != nil { // todo check mapping
+			Select("comment_id", "vote_up").Find(&foundVotes).Error; err != nil { // todo check mapping
 			ch <- err
 			return
 		}

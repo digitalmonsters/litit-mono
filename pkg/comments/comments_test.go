@@ -174,7 +174,16 @@ func TestGetCommentsByContent(t *testing.T) {
 func TestGetCommentById(t *testing.T) {
 	baseSetup(t)
 
-	data, err := GetCommentById(db, 9694, 0, userWrapperMock, nil)
+	userId := int64(10500)
+	commentId := int64(9694)
+
+	db.Create(&database.CommentVote{
+		UserId:    userId,
+		CommentId: commentId,
+		VoteUp:    null.BoolFrom(true),
+	})
+
+	data, err := GetCommentById(db, commentId, userId, userWrapperMock, nil)
 
 	if err != nil {
 		t.Fatal(err)
@@ -190,6 +199,7 @@ func TestGetCommentById(t *testing.T) {
 			CreatedAt:    data.CreatedAt,
 			Comment:      "Testing comment reply notification",
 			ContentId:    null.IntFrom(1017738),
+			MyVoteUp:     null.BoolFrom(true),
 		},
 		Author: Author{
 			Id:        mockUserRecord.UserId,
