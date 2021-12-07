@@ -49,6 +49,8 @@ type Wrappers struct {
 	UserHashtags   WrapperConfig `json:"UserHashtags"`
 	UserInfo       WrapperConfig `json:"UserInfo"`
 	UserBlock      WrapperConfig `json:"UserBlock"`
+	Categories     WrapperConfig `json:"Categories"`
+	Hashtags       WrapperConfig `json:"Hashtags"`
 }
 
 type WrapperConfig struct {
