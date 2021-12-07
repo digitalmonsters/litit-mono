@@ -31,8 +31,12 @@ func NewAuthWrapper(config boilerplate.WrapperConfig) IAuthWrapper {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
 	}
 
-	return &AuthWrapper{defaultTimeout: timeout, apiUrl: common.StripSlashFromUrl(config.ApiUrl),
-		serviceName: "auth-wrapper", baseWrapper: wrappers.GetBaseWrapper()}
+	return &AuthWrapper{
+		defaultTimeout: timeout,
+		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		serviceName:    "auth-wrapper",
+		baseWrapper:    wrappers.GetBaseWrapper(),
+	}
 }
 
 func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,

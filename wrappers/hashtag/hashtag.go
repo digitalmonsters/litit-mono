@@ -2,6 +2,7 @@ package hashtag
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -32,7 +33,7 @@ func NewHashtagWrapper(config boilerplate.WrapperConfig) IHashtagWrapper {
 	return &Wrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
-		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "content-backend",
 	}
 }

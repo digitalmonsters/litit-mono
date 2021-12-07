@@ -2,6 +2,7 @@ package watch
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -33,7 +34,7 @@ func NewWatchWrapper(config boilerplate.WrapperConfig) IWatchWrapper {
 	return &WatchWrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
-		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "watch-backend",
 	}
 }
