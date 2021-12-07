@@ -2,6 +2,7 @@ package category
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -22,12 +23,19 @@ type ICategoryWrapper interface {
 	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
 }
 
-func NewCategoryWrapper(apiUrl string) ICategoryWrapper {
+func NewCategoryWrapper(config boilerplate.WrapperConfig) ICategoryWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
 	return &Wrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
-		defaultTimeout: 5 * time.Second,
-		apiUrl:         common.StripSlashFromUrl(apiUrl),
-		serviceName:    "content-backend"}
+		defaultTimeout: timeout,
+		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		serviceName:    "content-backend",
+	}
 }
 
 func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {

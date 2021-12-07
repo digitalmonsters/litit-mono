@@ -112,9 +112,11 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
 		}()
 
-		apm_helper.AddApmLabel(rqTransaction, "remote_url", url)
+		apm_helper.AddApmLabel(rqTransaction, "remote_path", url)
 		req.SetRequestURI(url)
 		req.Header.SetMethod("POST")
+
+		apm_helper.AddApmLabel(rqTransaction, "remote_url", string(req.URI().FullURI()))
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
@@ -214,9 +216,10 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
 		}()
 
-		apm_helper.AddApmLabel(rqTransaction, "remote_url", url)
+		apm_helper.AddApmLabel(rqTransaction, "remote_path", url)
 		req.SetRequestURI(url)
 		req.Header.SetMethod(httpMethod)
+		apm_helper.AddApmLabel(rqTransaction, "remote_url", string(req.URI().FullURI()))
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {

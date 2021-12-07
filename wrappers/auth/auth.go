@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -23,8 +24,14 @@ type AuthWrapper struct {
 	baseWrapper    *wrappers.BaseWrapper
 }
 
-func NewAuthWrapper(apiUrl string) IAuthWrapper {
-	return &AuthWrapper{defaultTimeout: 5 * time.Second, apiUrl: common.StripSlashFromUrl(apiUrl),
+func NewAuthWrapper(config boilerplate.WrapperConfig) IAuthWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	return &AuthWrapper{defaultTimeout: timeout, apiUrl: common.StripSlashFromUrl(config.ApiUrl),
 		serviceName: "auth-wrapper", baseWrapper: wrappers.GetBaseWrapper()}
 }
 
@@ -47,9 +54,9 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 		if len(rpcInternalResponse.Result) > 0 {
 			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Resp); err != nil {
 				finalResponse.Error = &rpc.RpcError{
-					Code:    error_codes.GenericMappingError,
-					Message: err.Error(),
-					Data:    nil,
+					Code:     error_codes.GenericMappingError,
+					Message:  err.Error(),
+					Data:     nil,
 					Hostname: w.baseWrapper.GetHostName(),
 				}
 			}

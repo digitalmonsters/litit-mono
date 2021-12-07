@@ -2,6 +2,7 @@ package watch
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -22,10 +23,19 @@ type WatchWrapper struct {
 	serviceName    string
 }
 
-func NewWatchWrapper(apiUrl string) IWatchWrapper {
-	return &WatchWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second,
-		apiUrl:      common.StripSlashFromUrl(apiUrl),
-		serviceName: "watch-backend"}
+func NewWatchWrapper(config boilerplate.WrapperConfig) IWatchWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	return &WatchWrapper{
+		baseWrapper:    wrappers.GetBaseWrapper(),
+		defaultTimeout: timeout,
+		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		serviceName:    "watch-backend",
+	}
 }
 
 func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction,
@@ -53,9 +63,9 @@ func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, 
 
 			if err := json.Unmarshal(resp.Result, &items); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:    error_codes.GenericMappingError,
-					Message: err.Error(),
-					Data:    nil,
+					Code:     error_codes.GenericMappingError,
+					Message:  err.Error(),
+					Data:     nil,
 					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {

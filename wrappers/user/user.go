@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -25,9 +26,20 @@ type UserWrapper struct {
 	cache          *cache.Cache
 }
 
-func NewUserWrapper(apiUrl string) IUserWrapper {
-	return &UserWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second, apiUrl: common.StripSlashFromUrl(apiUrl),
-		serviceName: "user-backend", cache: cache.New(4*time.Minute, 5*time.Minute)}
+func NewUserWrapper(config boilerplate.WrapperConfig) IUserWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	return &UserWrapper{
+		baseWrapper:    wrappers.GetBaseWrapper(),
+		defaultTimeout: timeout,
+		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		serviceName:    "user-backend",
+		cache:          cache.New(4*time.Minute, 5*time.Minute),
+	}
 }
 
 func (w *UserWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction,
@@ -56,7 +68,7 @@ func (w *UserWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction,
 			return
 		}
 
-		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(fmt.Sprintf("%v/profile", w.apiUrl),
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(fmt.Sprintf("%v/mobile/v1/profile", w.apiUrl),
 			"POST",
 			"application/json",
 			"get users",

@@ -2,6 +2,7 @@ package content
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -22,10 +23,19 @@ type ContentWrapper struct {
 	serviceName    string
 }
 
-func NewContentWrapper(apiUrl string) IContentWrapper {
-	return &ContentWrapper{baseWrapper: wrappers.GetBaseWrapper(), defaultTimeout: 5 * time.Second,
-		apiUrl:      common.StripSlashFromUrl(apiUrl),
-		serviceName: "content-backend"}
+func NewContentWrapper(config boilerplate.WrapperConfig) IContentWrapper {
+	timeout := 5 * time.Second
+
+	if config.TimeoutSec > 0 {
+		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	return &ContentWrapper{
+		baseWrapper:    wrappers.GetBaseWrapper(),
+		defaultTimeout: timeout,
+		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		serviceName:    "content-backend",
+	}
 }
 
 func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan ContentGetInternalResponseChan {
@@ -52,9 +62,9 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 
 			if err := json.Unmarshal(resp.Result, &items); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:    error_codes.GenericMappingError,
-					Message: err.Error(),
-					Data:    nil,
+					Code:     error_codes.GenericMappingError,
+					Message:  err.Error(),
+					Data:     nil,
 					Hostname: w.baseWrapper.GetHostName(),
 				}
 			} else {
