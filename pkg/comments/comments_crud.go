@@ -48,7 +48,7 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 	defer tx.Rollback()
 	var comment database.Comment
 
-	comment.ContentId = resourceId
+	comment.ContentId = null.IntFrom(resourceId)
 	comment.Comment = commentStr
 	comment.AuthorId = currentUserId
 	comment.ParentId = parentId
@@ -68,7 +68,7 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		return nil, err
 	}
 
-	if err = updateContentCommentsCounter(db, comment.ContentId, true); err != nil {
+	if err = updateContentCommentsCounter(db, comment.ContentId.ValueOrZero(), true); err != nil {
 		return nil, err
 	}
 
@@ -149,9 +149,67 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 		return nil, err
 	}
 
-	if err := updateContentCommentsCounter(db, comment.ContentId, false); err != nil {
+	if err := updateContentCommentsCounter(db, comment.ContentId.ValueOrZero(), false); err != nil {
 		return nil, err
 	}
 
 	return &mappedComment.SimpleComment, nil
+}
+
+func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
+	userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction, currentUserId int64) (*SimpleComment, error) {
+	var parentComment database.Comment
+
+	if !parentId.IsZero() {
+		if err := db.Take(&parentComment, parentId.ValueOrZero()).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	mappedComment := mapDbCommentToCommentOnProfile(parentComment)
+
+
+	blockedUserType, err := isBlocked(userBlockWrapper, apmTransaction, currentUserId, mappedComment.AuthorId)
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if blockedUserType != nil {
+		return nil, errors.WithStack(errors.New(string(*blockedUserType)))
+	}
+
+	tx := db.Begin()
+	defer tx.Rollback()
+	var comment database.Comment
+
+	comment.ProfileId = null.IntFrom(resourceId)
+	comment.Comment = commentStr
+	comment.AuthorId = currentUserId
+	comment.ParentId = parentId
+	comment.Active = true
+
+	if err = tx.Omit("created_at").Create(&comment).Error; err != nil {
+		return nil, err
+	}
+
+	if !parentId.IsZero() {
+		if err := tx.Model(&parentComment).Update("num_replies", parentComment.NumReplies+1).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if err = updateUserStatsComments(db, currentUserId, resourceId); err != nil {
+		return nil, err
+	}
+
+	// TODO: send notify 'comment'
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	mapped := mapDbCommentToCommentOnProfile(comment)
+
+	return &mapped.SimpleComment, nil
 }
