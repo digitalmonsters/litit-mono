@@ -36,6 +36,7 @@ type Report struct {
 	Id         int
 	ContentId  int64
 	Type       string
+	ReportType string
 	ReporterId int64
 	CommentId  int64
 	Detail     string

@@ -33,7 +33,7 @@ func baseSetup(t *testing.T) {
 
 func TestReportComment(t *testing.T) {
 	baseSetup(t)
-	report, err := ReportComment(9700, "spam", db, 1)
+	report, err := ReportComment(9700, "spam", db, 1,"type")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,10 +46,11 @@ func TestReportComment(t *testing.T) {
 	a.Equal(int64(9700),report.CommentId)
 	a.Equal(int64(1), report.ReporterId)
 	a.Equal(int64(1017738), report.ContentId)
-	a.Equal("comment", report.Type)
+	a.Equal("comment", report.ReportType)
+	a.Equal("type", report.Type)
 	a.Equal("spam", report.Detail)
 
-	secondReport, err := ReportComment(9700, "spam", db, 1)
+	secondReport, err := ReportComment(9700, "spam", db, 1, "type")
 	if err != nil {
 		t.Fatal(err)
 	}

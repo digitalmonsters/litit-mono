@@ -64,7 +64,7 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		}
 	}
 
-	if err = updateUserStatsComments(db, currentUserId); err != nil {
+	if err = updateUserStatsComments(db, currentUserId, resourceId); err != nil {
 		return nil, err
 	}
 
