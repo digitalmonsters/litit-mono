@@ -33,11 +33,11 @@ func main() {
 	db := database.GetDb()
 	apiDef := map[string]swagger.ApiDescription{}
 
-	userWrapper := user.NewUserWrapper(cfg.UserApiUrl)
-	contentWrapper := content.NewContentWrapper(cfg.ContentApiUrl)
-	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.UserBlockApiUrl)
+	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
+	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
+	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
 
-	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.AuthApiUrl))
+	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth))
 
 	if err := comments.Init(httpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef); err != nil {
 		panic(err)
