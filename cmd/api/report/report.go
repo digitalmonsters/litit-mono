@@ -36,16 +36,16 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 				Success: true,
 			}, nil
 		}
-	}, "/{id}/report", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/{comment_id}/report", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
 		return err
 	}
 
-	def["/{id}/report"] = swagger.ApiDescription{
+	def["/{comment_id}/report"] = swagger.ApiDescription{
 		Request:  reportCommentRequest{},
 		Response: successResponse{},
 		AdditionalSwaggerParameters: []swagger.ParameterDescription{
 			{
-				Name:        "id",
+				Name:        "comment_id",
 				In:          swagger.ParameterInPath,
 				Description: "comment_id",
 				Required:    true,

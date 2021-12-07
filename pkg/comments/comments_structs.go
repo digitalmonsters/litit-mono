@@ -66,7 +66,7 @@ type SimpleContent struct {
 type ResourceType int
 
 const (
-	NoneResourceType    ResourceType = 0
-	ContentResourceType ResourceType = 1
-	ProfileResourceType ResourceType = 2
+	ContentResourceType       ResourceType = 1
+	ProfileResourceType       ResourceType = 2
+	ParentCommentResourceType ResourceType = 3
 )

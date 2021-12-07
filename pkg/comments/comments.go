@@ -30,13 +30,10 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 
 		case ProfileResourceType:
 			query = query.Where("profile_id = ?", request.ResourceId)
+		case ParentCommentResourceType:
+			query = query.Where("parent_id = ?", request.ParentId)
 		}
 	}
-
-	if request.ParentId > 0 {
-		query = query.Where("parent_id = ?", request.ParentId)
-	}
-
 	var paginatorRules []paginator.Rule
 
 	switch strings.ToLower(request.SortOrder) {

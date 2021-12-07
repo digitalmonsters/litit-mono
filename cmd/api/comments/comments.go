@@ -149,7 +149,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			Before:    before,
 			Count:     count,
 			SortOrder: sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.NoneResourceType); err != nil {
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.ParentCommentResourceType); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return resp, nil
