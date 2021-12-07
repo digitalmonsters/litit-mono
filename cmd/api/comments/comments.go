@@ -143,13 +143,13 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
-		if resp, err := comments.GetCommentsByContent(comments.GetCommentsByTypeWithResourceRequest{
+		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
 			ParentId:  commentId,
 			After:     after,
 			Before:    before,
 			Count:     count,
 			SortOrder: sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction); err != nil {
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.NoneResourceType); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return resp, nil
@@ -216,14 +216,14 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
-		if resp, err := comments.GetCommentsByContent(comments.GetCommentsByTypeWithResourceRequest{
+		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
 			ResourceId: contentId,
-			ParentId:  parentId,
-			After:     after,
-			Before:    before,
-			Count:     count,
-			SortOrder: sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction); err != nil {
+			ParentId:   parentId,
+			After:      after,
+			Before:     before,
+			Count:      count,
+			SortOrder:  sortOrder,
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.ContentResourceType); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return commentsWithPagingToFrontendPaginationResponse(*resp), nil
@@ -342,14 +342,14 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
-		if resp, err := comments.GetCommentsByProfile(comments.GetCommentsByTypeWithResourceRequest{
+		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
 			ResourceId: profileId,
-			ParentId:  parentId,
-			After:     after,
-			Before:    before,
-			Count:     count,
-			SortOrder: sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction); err != nil {
+			ParentId:   parentId,
+			After:      after,
+			Before:     before,
+			Count:      count,
+			SortOrder:  sortOrder,
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.ProfileResourceType); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return commentsWithPagingToFrontendPaginationResponse(*resp), nil
