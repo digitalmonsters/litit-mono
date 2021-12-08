@@ -359,7 +359,7 @@ func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest 
 			toLog["generic_response"] = genericResponse
 		}
 
-		if data, err := json.Marshal(genericResponse); err != nil {
+		if data, err := json.Marshal(toLog); err != nil {
 			rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
 				Instance:  externalServiceName,
 				Type:      externalServiceName,
