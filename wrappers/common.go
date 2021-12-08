@@ -84,6 +84,29 @@ func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request inte
 	}, name, timeout, apmTransaction, externalServiceName, forceLog)
 }
 
+func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, apmTransaction *apm.Transaction,
+	externalServiceName string) {
+	if rqSpan != nil && !rqSpan.Dropped() {
+		r, err := http.NewRequest(
+			string(req.Header.Method()),
+			string(req.URI().FullURI()), nil)
+
+		if err != nil {
+			apm_helper.CaptureApmError(err, apmTransaction)
+		} else {
+			rqSpan.Context.SetHTTPRequest(r)
+		}
+
+		rqSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
+			Name:     externalServiceName,
+			Resource: externalServiceName,
+		})
+
+		rqSpan.Context.SetTag("path", string(req.URI().Path()))
+		rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
+	}
+}
+
 func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName string, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
@@ -93,7 +116,6 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			close(responseCh)
 		}()
 
-		//var rqTransaction *apm.Transaction
 		var rawBodyRequest []byte
 		var rawBodyResponse []byte
 		var genericResponse *rpc.RpcResponseInternal
@@ -140,25 +162,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			}
 		}
 
-		if rqSpan != nil && !rqSpan.Dropped() {
-			r, err := http.NewRequest(
-				string(req.Header.Method()),
-				string(req.URI().FullURI()), nil)
-
-			if err != nil {
-				apm_helper.CaptureApmError(err, apmTransaction)
-			} else {
-				rqSpan.Context.SetHTTPRequest(r)
-			}
-
-			rqSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
-				Name:     externalServiceName,
-				Resource: externalServiceName,
-			})
-
-			rqSpan.Context.SetTag("path", url)
-			rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
-		}
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
 			code := error_codes.GenericServerError
@@ -218,14 +222,15 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 			close(responseCh)
 		}()
 
-		var rqTransaction *apm.Transaction
 		var rawBodyRequest []byte
 		var rawBodyResponse []byte
 		var genericResponse *rpc.RpcResponseInternal
 
+		var rqSpan *apm.Span
+
 		if apmTransaction != nil {
-			rqTransaction = apm_helper.StartNewApmTransaction(fmt.Sprintf("HTTP [%s] [%v] [%v]", httpMethod, url, methodName),
-				"internal_rpc", nil, apmTransaction)
+			rqSpan = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
+				"rpc_internal", nil)
 		}
 
 		req := fasthttp.AcquireRequest()
@@ -234,14 +239,15 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 		defer fasthttp.ReleaseResponse(resp)
 
 		defer func() {
-			apm_helper.AddApmLabel(rqTransaction, "remote_status_code", resp.StatusCode())
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, nil, forceLog) // todo
+			if rqSpan != nil && !rqSpan.Dropped() {
+				rqSpan.Context.SetHTTPStatusCode(resp.StatusCode())
+			}
+
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqSpan, forceLog)
 		}()
 
-		apm_helper.AddApmLabel(rqTransaction, "remote_path", url)
 		req.SetRequestURI(url)
 		req.Header.SetMethod(httpMethod)
-		apm_helper.AddApmLabel(rqTransaction, "remote_url", string(req.URI().FullURI()))
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
@@ -263,6 +269,8 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 				req.SetBodyRaw(rawBodyRequest)
 			}
 		}
+
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
 			code := error_codes.GenericServerError
