@@ -1,9 +1,11 @@
 package boilerplate
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ft-t/go-micro-env"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"go-micro.dev/v4/config"
 	"go-micro.dev/v4/config/source"
@@ -16,15 +18,18 @@ import (
 type Environment int32
 
 const (
-	Dev     Environment = 0
-	Qa      Environment = 1
-	Staging Environment = 2
-	Prod    Environment = 3
-	Ci      Environment = 4
+	Local   Environment = 0
+	Dev     Environment = 1
+	Qa      Environment = 2
+	Staging Environment = 3
+	Prod    Environment = 4
+	Ci      Environment = 5
 )
 
 func (e Environment) ToString() string {
 	switch e {
+	case Local:
+		return "local"
 	case Dev:
 		return "dev"
 	case Qa:
@@ -104,9 +109,11 @@ type KafkaAuth struct {
 }
 
 func GetCurrentEnvironment() Environment {
-	val := os.Getenv("environment")
+	val := os.Getenv("ENVIRONMENT")
 	val = strings.ToLower(val)
 	switch val {
+	case "dev":
+		return Dev
 	case "qa":
 		return Qa
 	case "stg":
@@ -116,7 +123,7 @@ func GetCurrentEnvironment() Environment {
 	case "ci":
 		return Ci
 	default:
-		return Dev
+		return Local
 	}
 }
 
@@ -201,7 +208,23 @@ func ReadConfigByFilePaths(filePath []string, input interface{}) (interface{}, e
 		return nil, errors.WithStack(err)
 	}
 
-	if err := conf.Get().Scan(input); err != nil {
+	tempConfig := map[string]interface{}{}
+
+	if err = json.Unmarshal(conf.Get().Bytes(), &tempConfig); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		Result:           input,
+		TagName:          "json",
+	})
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err = d.Decode(tempConfig); err != nil {
 		return nil, errors.WithStack(err)
 	}
 

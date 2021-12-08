@@ -267,6 +267,12 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 		if maxBatchSize > 1 {
 			innerCtx, innerCancelFn := context.WithTimeout(k.ctx, maxDuration)
+			kafkaReadSpan := apmTransaction.StartSpan("kafka batching", "kafka", nil)
+
+			kafkaReadSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
+				Name:     "kafka",
+				Resource: k.targetTopic,
+			})
 
 			for innerCtx.Err() == nil {
 				message1, err1 := reader.FetchMessage(innerCtx)
@@ -280,6 +286,7 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 						innerCancelFn()
 						k.hasRunningRequest = false
 
+						kafkaReadSpan.End()
 						return err1
 					}
 					log.Err(err1).Send()
@@ -296,6 +303,9 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			}
 
 			innerCancelFn()
+
+			kafkaReadSpan.Context.SetLabel("message_count", messageIndex)
+			kafkaReadSpan.End()
 
 			apm_helper.AddApmData(apmTransaction, "messages_count", messageIndex)
 		}
@@ -314,6 +324,9 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		}, messagePool[:messageIndex]...)
 
 		if k.isConsumerGroupMode && len(processedMessages) > 0 {
+			kafkaCommitSpan := apmTransaction.StartSpan("kafka commit", "kafka", nil)
+			kafkaCommitSpan.Context.SetLabel("count", len(processedMessages))
+
 			if err := reader.CommitMessages(commandExecutionContext, messagePool[:messageIndex]...); err != nil {
 				apm_helper.CaptureApmError(err, apmTransaction)
 
@@ -325,9 +338,12 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 				k.hasRunningRequest = false
 
+				kafkaCommitSpan.End()
 				apmTransaction.End()
 				continue
 			}
+
+			kafkaCommitSpan.End()
 		}
 
 		if err != nil {

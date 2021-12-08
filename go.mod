@@ -9,7 +9,7 @@ require (
 	github.com/elastic/go-sysinfo v1.7.1 // indirect
 	github.com/elastic/go-windows v1.0.1 // indirect
 	github.com/fasthttp/router v1.4.3
-	github.com/ft-t/go-micro-env v0.0.0-20211201004918-84abcf2cdce0
+	github.com/ft-t/go-micro-env v1.0.0
 	github.com/gammazero/workerpool v1.1.2
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
@@ -17,6 +17,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/jcchavezs/porto v0.2.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/mitchellh/mapstructure v1.3.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1

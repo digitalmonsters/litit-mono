@@ -19,7 +19,7 @@ func GetPostgresConnection(config *boilerplate.DbConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	if strings.ToLower(os.Getenv("environment")) == "ci" {
+	if strings.ToLower(os.Getenv("ENVIRONMENT")) == "ci" {
 		config.Db = randStringRunes()
 
 		if err := EnsurePostgresDbExists(*config); err != nil {
