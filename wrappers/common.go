@@ -351,8 +351,8 @@ func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest 
 
 	if shouldLog && rqSpan != nil {
 		toLog := map[string]interface{}{
-			"raw_response": rawBodyResponse,
-			"raw_request":  rawBodyRequest,
+			"raw_response": string(rawBodyResponse),
+			"raw_request":  string(rawBodyRequest),
 		}
 
 		if genericResponse != nil && genericResponse.Error != nil {
