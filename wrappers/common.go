@@ -349,7 +349,7 @@ func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest 
 		shouldLog = true // we have an error
 	}
 
-	instance := ""
+	instance := externalServiceName
 	finalStatement := ""
 
 	if shouldLog && rqSpan != nil {
