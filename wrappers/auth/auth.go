@@ -34,7 +34,7 @@ func NewAuthWrapper(config boilerplate.WrapperConfig) IAuthWrapper {
 	return &AuthWrapper{
 		defaultTimeout: timeout,
 		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
-		serviceName:    "auth-wrapper",
+		serviceName:    "forward-auth",
 		baseWrapper:    wrappers.GetBaseWrapper(),
 	}
 }

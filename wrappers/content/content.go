@@ -35,7 +35,7 @@ func NewContentWrapper(config boilerplate.WrapperConfig) IContentWrapper {
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
-		serviceName:    "content-backend",
+		serviceName:    "content",
 	}
 }
 

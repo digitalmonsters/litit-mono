@@ -35,7 +35,7 @@ func NewWatchWrapper(config boilerplate.WrapperConfig) IWatchWrapper {
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
-		serviceName:    "watch-backend",
+		serviceName:    "views",
 	}
 }
 
