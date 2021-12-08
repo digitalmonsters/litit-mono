@@ -12,6 +12,9 @@ type SimpleContent struct {
 	AuthorId      int64    `json:"author_id"`
 	CategoryId    null.Int `json:"category_id"`
 	Hashtags      []string `json:"hashtags"`
+	Width         int      `json:"width"`
+	Height        int      `json:"height"`
+	VideoId       string   `json:"video_id"`
 }
 
 //goland:noinspection ALL
