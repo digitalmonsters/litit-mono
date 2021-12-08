@@ -40,7 +40,7 @@ func NewUserWrapper(config boilerplate.WrapperConfig) IUserWrapper {
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
-		serviceName:    "user-backend",
+		serviceName:    "user-info",
 		cache:          cache.New(4*time.Minute, 5*time.Minute),
 	}
 }

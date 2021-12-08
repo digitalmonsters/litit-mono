@@ -35,7 +35,7 @@ func NewUserBlockWrapper(config boilerplate.WrapperConfig) IUserBlockWrapper {
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
-		serviceName:    "user-block-backend",
+		serviceName:    "user-block",
 	}
 }
 

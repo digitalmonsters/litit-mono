@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -83,6 +84,29 @@ func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request inte
 	}, name, timeout, apmTransaction, externalServiceName, forceLog)
 }
 
+func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, apmTransaction *apm.Transaction,
+	externalServiceName string) {
+	if rqSpan != nil && !rqSpan.Dropped() {
+		r, err := http.NewRequest(
+			string(req.Header.Method()),
+			string(req.URI().FullURI()), nil)
+
+		if err != nil {
+			apm_helper.CaptureApmError(err, apmTransaction)
+		} else {
+			rqSpan.Context.SetHTTPRequest(r)
+		}
+
+		rqSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
+			Name:     externalServiceName,
+			Resource: externalServiceName,
+		})
+
+		rqSpan.Context.SetTag("path", string(req.URI().Path()))
+		rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
+	}
+}
+
 func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName string, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
@@ -92,14 +116,14 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			close(responseCh)
 		}()
 
-		var rqTransaction *apm.Transaction
 		var rawBodyRequest []byte
 		var rawBodyResponse []byte
 		var genericResponse *rpc.RpcResponseInternal
+		var rqSpan *apm.Span
 
 		if apmTransaction != nil {
-			rqTransaction = apm_helper.StartNewApmTransaction(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
-				"internal_rpc", nil, apmTransaction)
+			rqSpan = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
+				"rpc_internal", nil)
 		}
 
 		req := fasthttp.AcquireRequest()
@@ -108,15 +132,15 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 		defer fasthttp.ReleaseResponse(resp)
 
 		defer func() {
-			apm_helper.AddApmLabel(rqTransaction, "remote_status_code", resp.StatusCode())
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+			if rqSpan != nil && !rqSpan.Dropped() {
+				rqSpan.Context.SetHTTPStatusCode(resp.StatusCode())
+			}
+
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqSpan, forceLog)
 		}()
 
-		apm_helper.AddApmLabel(rqTransaction, "remote_path", url)
 		req.SetRequestURI(url)
 		req.Header.SetMethod("POST")
-
-		apm_helper.AddApmLabel(rqTransaction, "remote_url", string(req.URI().FullURI()))
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
@@ -137,6 +161,8 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				req.SetBodyRaw(rawBodyRequest)
 			}
 		}
+
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
 			code := error_codes.GenericServerError
@@ -196,14 +222,15 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 			close(responseCh)
 		}()
 
-		var rqTransaction *apm.Transaction
 		var rawBodyRequest []byte
 		var rawBodyResponse []byte
 		var genericResponse *rpc.RpcResponseInternal
 
+		var rqSpan *apm.Span
+
 		if apmTransaction != nil {
-			rqTransaction = apm_helper.StartNewApmTransaction(fmt.Sprintf("HTTP [%s] [%v] [%v]", httpMethod, url, methodName),
-				"internal_rpc", nil, apmTransaction)
+			rqSpan = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
+				"rpc_internal", nil)
 		}
 
 		req := fasthttp.AcquireRequest()
@@ -212,14 +239,15 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 		defer fasthttp.ReleaseResponse(resp)
 
 		defer func() {
-			apm_helper.AddApmLabel(rqTransaction, "remote_status_code", resp.StatusCode())
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqTransaction, forceLog)
+			if rqSpan != nil && !rqSpan.Dropped() {
+				rqSpan.Context.SetHTTPStatusCode(resp.StatusCode())
+			}
+
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqSpan, forceLog)
 		}()
 
-		apm_helper.AddApmLabel(rqTransaction, "remote_path", url)
 		req.SetRequestURI(url)
 		req.Header.SetMethod(httpMethod)
-		apm_helper.AddApmLabel(rqTransaction, "remote_url", string(req.URI().FullURI()))
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
@@ -241,6 +269,8 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 				req.SetBodyRaw(rawBodyRequest)
 			}
 		}
+
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
 			code := error_codes.GenericServerError
@@ -315,8 +345,9 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 	return responseCh
 }
 
-func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest []byte, rawBodyResponse []byte, externalServiceName string, rqTransaction *apm.Transaction, forceLog bool) {
-	if rqTransaction == nil {
+func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest []byte, rawBodyResponse []byte,
+	externalServiceName string, rqSpan *apm.Span, forceLog bool) {
+	if rqSpan == nil {
 		return
 	}
 
@@ -324,16 +355,36 @@ func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest 
 
 	if genericResponse != nil && genericResponse.Error != nil {
 		shouldLog = true // we have an error
-
-		apm_helper.CaptureApmError(errors.New(fmt.Sprintf("external service [%v] replay with error [%v] and msg [%v]",
-			externalServiceName, genericResponse.Error.Code, genericResponse.Error.Message)), rqTransaction)
 	}
 
-	if shouldLog {
-		apm_helper.AddApmData(rqTransaction, "raw_request", rawBodyRequest)
-		apm_helper.AddApmData(rqTransaction, "raw_response", rawBodyResponse)
-		apm_helper.AddApmData(rqTransaction, "parsed_response", genericResponse)
+	instance := externalServiceName
+	finalStatement := ""
+
+	if shouldLog && rqSpan != nil {
+		finalStatement = string(rawBodyResponse)
+
+		if len(finalStatement) == 0 && genericResponse != nil {
+			if data, err := json.Marshal(map[string]interface{}{
+				"fake_response": genericResponse,
+			}); err != nil {
+				finalStatement = fmt.Sprintf("can not serialize generic response %+v", errors.WithStack(err))
+			} else {
+				finalStatement = string(data)
+			}
+		}
+
+		instance = string(rawBodyRequest)
+
+		if len(instance) == 0 {
+			instance = "<empty request>"
+		}
 	}
 
-	rqTransaction.End()
+	rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
+		Instance:  instance,
+		Type:      externalServiceName,
+		Statement: finalStatement,
+	})
+
+	rqSpan.End()
 }
