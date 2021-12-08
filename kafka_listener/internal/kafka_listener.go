@@ -18,14 +18,14 @@ import (
 var readerMutex sync.Mutex
 
 type KafkaListener struct {
-	cfg                boilerplate.KafkaListenerConfiguration
-	ctx                context.Context
-	readers            map[int]*kafka.Reader // key is partition; 0 - for GroupId
-	targetTopic        string
-	command            structs.ICommand
-	listenerName       string
-	cancelFn           context.CancelFunc
-	hasRunningRequest  bool
+	cfg                 boilerplate.KafkaListenerConfiguration
+	ctx                 context.Context
+	readers             map[int]*kafka.Reader // key is partition; 0 - for GroupId
+	targetTopic         string
+	command             structs.ICommand
+	listenerName        string
+	cancelFn            context.CancelFunc
+	hasRunningRequest   bool
 	dialer              *kafka.Dialer
 	isConsumerGroupMode bool
 }
@@ -335,10 +335,11 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			apmTransaction.End()
 			k.hasRunningRequest = false
 
-			return errors.Wrap(err, "re-read")  // todo ! ?
+			return errors.Wrap(err, "re-read") // todo ! ?
 		}
 
 		k.hasRunningRequest = false
+		apmTransaction.End()
 	}
 
 	k.hasRunningRequest = false
