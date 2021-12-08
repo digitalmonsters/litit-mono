@@ -155,6 +155,9 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				Name:     externalServiceName,
 				Resource: externalServiceName,
 			})
+
+			rqSpan.Context.SetTag("path", url)
+			rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
 		}
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
@@ -347,17 +350,21 @@ func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest 
 	}
 
 	if shouldLog && rqSpan != nil {
-		if data, err := json.Marshal(map[string]interface{}{
-			"raw_response":    rawBodyResponse,
-			"raw_request":     rawBodyRequest,
-			"parsed_response": genericResponse,
-		}); err != nil {
+		toLog := map[string]interface{}{
+			"raw_response": rawBodyResponse,
+			"raw_request":  rawBodyRequest,
+		}
+
+		if genericResponse != nil && genericResponse.Error != nil {
+			toLog["generic_response"] = genericResponse
+		}
+
+		if data, err := json.Marshal(genericResponse); err != nil {
 			rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
 				Instance:  externalServiceName,
 				Type:      externalServiceName,
 				Statement: fmt.Sprintf("can not log due to error in serialization %+v", errors.WithStack(err)),
 			})
-
 		} else {
 			rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
 				Instance:  externalServiceName,
