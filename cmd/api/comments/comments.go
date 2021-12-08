@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrapper, contentWrapper content.IContentWrapper,
@@ -149,7 +150,8 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			Before:    before,
 			Count:     count,
 			SortOrder: sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.ParentCommentResourceType); err != nil {
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction,
+			comments.ResourceTypeParentComment); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return resp, nil
@@ -203,10 +205,18 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		contentId := utils.ExtractInt64(executionData.GetUserValue, "content_id", 0, 0)
+		resourceId := utils.ExtractInt64(executionData.GetUserValue, "resource_id", 0, 0)
+		resourceType := utils.ExtractString(executionData.GetUserValue, "type", "content")
 
-		if contentId <= 0 {
-			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
+		if resourceId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid resource_id"), error_codes.GenericValidationError)
+		}
+
+		mappedResourceType := comments.ResourceTypeContent
+
+		switch strings.ToLower(resourceType) {
+		case "profile":
+			mappedResourceType = comments.ResourceTypeProfile
 		}
 
 		parentId := utils.ExtractInt64(executionData.GetUserValue, "parent_id", 0, 0)
@@ -217,29 +227,36 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
 		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
-			ResourceId: contentId,
+			ResourceId: resourceId,
 			ParentId:   parentId,
 			After:      after,
 			Before:     before,
 			Count:      count,
 			SortOrder:  sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.ContentResourceType); err != nil {
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, mappedResourceType); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return commentsWithPagingToFrontendPaginationResponse(*resp), nil
 		}
-	}, "/content/{content_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
+	}, "/{type}/{resource_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
 		return err
 	}
 
-	apiDef["/content/{content_id}"] = swagger.ApiDescription{
+	apiDef["/{type}/{resource_id}"] = swagger.ApiDescription{
 		Response:          frontendCommentPaginationResponse{},
-		MethodDescription: "get comments by content",
+		MethodDescription: "get comments by resource",
 		AdditionalSwaggerParameters: []swagger.ParameterDescription{
 			{
-				Name:        "content_id",
+				Name:        "type",
 				In:          swagger.ParameterInPath,
-				Description: "content_id",
+				Description: "resource type. comment || profile",
+				Required:    true,
+				Type:        "integer",
+			},
+			{
+				Name:        "resource_id",
+				In:          swagger.ParameterInPath,
+				Description: "resource_id",
 				Required:    true,
 				Type:        "integer",
 			},
@@ -327,86 +344,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		Tags: []string{"comment"},
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
-		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		profileId := utils.ExtractInt64(executionData.GetUserValue, "profile_id", 0, 0)
-
-		if profileId <= 0 {
-			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid profile_id"), error_codes.GenericValidationError)
-		}
-
-		parentId := utils.ExtractInt64(executionData.GetUserValue, "parent_id", 0, 0)
-
-		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
-		after := utils.ExtractString(executionData.GetUserValue, "after", "")
-		before := utils.ExtractString(executionData.GetUserValue, "before", "")
-		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
-
-		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
-			ResourceId: profileId,
-			ParentId:   parentId,
-			After:      after,
-			Before:     before,
-			Count:      count,
-			SortOrder:  sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, comments.ProfileResourceType); err != nil {
-			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
-		} else {
-			return commentsWithPagingToFrontendPaginationResponse(*resp), nil
-		}
-	}, "/profile/{profile_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
-		return err
-	}
-
-	apiDef["/profile/{profile_id}"] = swagger.ApiDescription{
-		Response:          frontendCommentPaginationResponse{},
-		MethodDescription: "get comments by profile",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "resource_id",
-				In:          swagger.ParameterInPath,
-				Description: "profile_id",
-				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "parent_id",
-				In:          swagger.ParameterInQuery,
-				Description: "parent_id",
-				Required:    false,
-				Type:        "integer",
-			},
-			{
-				Name:        "count",
-				In:          swagger.ParameterInQuery,
-				Description: "count per page",
-				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "after",
-				In:          swagger.ParameterInQuery,
-				Description: "cursor pagination",
-				Required:    false,
-				Type:        "string",
-			},
-			{
-				Name:        "before",
-				In:          swagger.ParameterInQuery,
-				Description: "cursor pagination",
-				Required:    false,
-				Type:        "string",
-			},
-			{
-				Name:        "sort_order",
-				In:          swagger.ParameterInQuery,
-				Description: "sort. top_reactions  newest most_replied least_popular oldest",
-				Required:    false,
-				Type:        "string",
-			},
-		},
-		Tags: []string{"comment"},
-	}
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		profileId := utils.ExtractInt64(executionData.GetUserValue, "profile_id_to_create_comment_on", 0, 0)
