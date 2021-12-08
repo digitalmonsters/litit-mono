@@ -349,30 +349,34 @@ func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest 
 		shouldLog = true // we have an error
 	}
 
+	instance := ""
+	finalStatement := ""
+
 	if shouldLog && rqSpan != nil {
-		toLog := map[string]interface{}{
-			"raw_response": string(rawBodyResponse),
-			"raw_request":  string(rawBodyRequest),
+		finalStatement = string(rawBodyResponse)
+
+		if len(finalStatement) == 0 && genericResponse != nil {
+			if data, err := json.Marshal(map[string]interface{}{
+				"fake_response": genericResponse,
+			}); err != nil {
+				finalStatement = fmt.Sprintf("can not serialize generic response %+v", errors.WithStack(err))
+			} else {
+				finalStatement = string(data)
+			}
 		}
 
-		if genericResponse != nil && genericResponse.Error != nil {
-			toLog["generic_response"] = genericResponse
-		}
+		instance = string(rawBodyRequest)
 
-		if data, err := json.Marshal(toLog); err != nil {
-			rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
-				Instance:  externalServiceName,
-				Type:      externalServiceName,
-				Statement: fmt.Sprintf("can not log due to error in serialization %+v", errors.WithStack(err)),
-			})
-		} else {
-			rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
-				Instance:  externalServiceName,
-				Type:      externalServiceName,
-				Statement: string(data),
-			})
+		if len(instance) == 0 {
+			instance = "<empty request>"
 		}
 	}
+
+	rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
+		Instance:  instance,
+		Type:      externalServiceName,
+		Statement: finalStatement,
+	})
 
 	rqSpan.End()
 }
