@@ -125,7 +125,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		After:      "",
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ContentResourceType)
+	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
 
 	if err != nil {
 		t.Fatal(err)
@@ -143,7 +143,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		After:      result.Paging.Next,
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ContentResourceType)
+	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
 
 	if err != nil {
 		t.Fatal(err)
@@ -160,7 +160,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		After:      result.Paging.Next,
 		Count:      9999,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ContentResourceType)
+	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
 
 	if err != nil {
 		t.Fatal(err)
@@ -221,7 +221,7 @@ func TestGetCommentsByProfile(t *testing.T) {
 		After:      "",
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ProfileResourceType)
+	}, 0, db, userWrapperMock, nil, ResourceTypeProfile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -239,7 +239,7 @@ func TestGetCommentsByProfile(t *testing.T) {
 		After:      result.Paging.Next,
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ProfileResourceType)
+	}, 0, db, userWrapperMock, nil, ResourceTypeProfile)
 
 	if err != nil {
 		t.Fatal(err)
