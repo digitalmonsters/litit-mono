@@ -184,7 +184,7 @@ func ReadConfigByFilePaths(filePath []string, input interface{}) (interface{}, e
 	}
 
 	switch GetCurrentEnvironment() {
-	case Dev:
+	case Local:
 		if devFilePath, err := RecursiveFindFile("config.qwerty.json", "./", 30); err == nil {
 			options = addFile(devFilePath, options)
 		}
