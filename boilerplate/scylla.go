@@ -2,14 +2,16 @@ package boilerplate
 
 import (
 	"github.com/gocql/gocql"
+	"go.elastic.co/apm/module/apmgocql"
 	"time"
 )
 
 func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
-	likeHandlerCluster := gocql.NewCluster(SplitHostsToSlice(config.Hosts)...)
-	likeHandlerCluster.Keyspace = config.Keyspace
+	observer := apmgocql.NewObserver()
+	scyllaCluster := gocql.NewCluster(SplitHostsToSlice(config.Hosts)...)
+	scyllaCluster.Keyspace = config.Keyspace
 
-	likeHandlerCluster.Authenticator = gocql.PasswordAuthenticator{
+	scyllaCluster.Authenticator = gocql.PasswordAuthenticator{
 		Username: config.UserName,
 		Password: config.Password,
 	}
@@ -19,11 +21,14 @@ func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
 		timeout = time.Duration(config.TimeoutSeconds) * time.Second
 	}
 
-	likeHandlerCluster.Timeout = timeout
-	likeHandlerCluster.MaxPreparedStmts = config.MaxPreparedStmts
-	likeHandlerCluster.NumConns = config.NumConns
-	likeHandlerCluster.MaxRoutingKeyInfo = config.MaxRoutingKeyInfo
-	likeHandlerCluster.PageSize = config.PageSize
+	scyllaCluster.Timeout = timeout
+	scyllaCluster.MaxPreparedStmts = config.MaxPreparedStmts
+	scyllaCluster.NumConns = config.NumConns
+	scyllaCluster.MaxRoutingKeyInfo = config.MaxRoutingKeyInfo
+	scyllaCluster.PageSize = config.PageSize
 
-	return likeHandlerCluster
+	scyllaCluster.QueryObserver = observer
+	scyllaCluster.BatchObserver = observer
+
+	return scyllaCluster
 }

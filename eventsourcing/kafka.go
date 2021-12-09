@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
@@ -14,6 +15,7 @@ import (
 type KafkaEventPublisher struct {
 	writer        *kafka.Writer
 	cfg           boilerplate.KafkaWriterConfiguration
+	topic         string
 	publisherType PublisherType
 }
 
@@ -25,6 +27,7 @@ func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topic stri
 			Topic:    topic,
 			Balancer: &kafka.Hash{},
 		},
+		topic:         topic,
 		publisherType: PublisherTypeKafka,
 	}
 
@@ -46,7 +49,30 @@ func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topic stri
 }
 
 func (s *KafkaEventPublisher) Publish(apmTransaction *apm.Transaction, events ...IEventData) []error {
-	
+	if len(events) == 0 {
+		return nil
+	}
+
+	var sp *apm.Span
+
+	if apmTransaction != nil {
+		sp = apmTransaction.StartSpan(fmt.Sprintf("kafka publish [%v]", s.topic), "kafka", nil)
+		sp.Context.SetLabel("count", len(events))
+
+		sp.Context.SetMessage(apm.MessageSpanContext{
+			QueueName: s.topic,
+		})
+		sp.Context.SetDatabaseRowsAffected(int64(len(events)))
+		sp.Context.SetDestinationService(apm.DestinationServiceSpanContext{
+			Name:     "kafka",
+			Resource: s.topic,
+		})
+
+		defer func() {
+			sp.End()
+		}()
+	}
+
 	var eventsMarshalled []kafka.Message
 
 	for _, event := range events {
@@ -59,7 +85,7 @@ func (s *KafkaEventPublisher) Publish(apmTransaction *apm.Transaction, events ..
 		eventsMarshalled = append(eventsMarshalled, kafka.Message{
 			Key:   []byte(event.GetPublishKey()),
 			Value: value,
-			Time: time.Now().UTC(),
+			Time:  time.Now().UTC(),
 		})
 	}
 

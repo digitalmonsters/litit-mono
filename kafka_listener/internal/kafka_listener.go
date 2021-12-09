@@ -267,12 +267,14 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 		if maxBatchSize > 1 {
 			innerCtx, innerCancelFn := context.WithTimeout(k.ctx, maxDuration)
-			kafkaReadSpan := apmTransaction.StartSpan("kafka batching", "kafka", nil)
+			kafkaReadSpan := apmTransaction.StartSpan(fmt.Sprintf("kafka batching [%v]", k.cfg.Topic),
+				"kafka", nil)
 
 			kafkaReadSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
 				Name:     "kafka",
 				Resource: k.targetTopic,
 			})
+			kafkaReadSpan.Context.SetMessage(apm.MessageSpanContext{QueueName: k.cfg.Topic})
 
 			for innerCtx.Err() == nil {
 				message1, err1 := reader.FetchMessage(innerCtx)
@@ -324,10 +326,18 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		}, messagePool[:messageIndex]...)
 
 		if k.isConsumerGroupMode && len(processedMessages) > 0 {
-			kafkaCommitSpan := apmTransaction.StartSpan("kafka commit", "kafka", nil)
+			kafkaCommitSpan := apmTransaction.StartSpan(fmt.Sprintf("kafka commit [%v]",
+				k.cfg.Topic), "kafka", nil)
+
+			kafkaCommitSpan.Context.SetMessage(apm.MessageSpanContext{QueueName: k.cfg.Topic})
+			kafkaCommitSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
+				Name:     "kafka",
+				Resource: k.cfg.Topic,
+			})
+
 			kafkaCommitSpan.Context.SetLabel("count", len(processedMessages))
 
-			if err := reader.CommitMessages(commandExecutionContext, messagePool[:messageIndex]...); err != nil {
+			if err = reader.CommitMessages(commandExecutionContext, messagePool[:messageIndex]...); err != nil {
 				apm_helper.CaptureApmError(err, apmTransaction)
 
 				if errors.Is(err, io.EOF) {
