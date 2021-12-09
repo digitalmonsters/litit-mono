@@ -35,5 +35,6 @@ type GetCategoryInternalRequest struct {
 	Limit           int       `json:"limit"`
 	Offset          int       `json:"offset"`
 	OnlyParent      null.Bool `json:"only_parent"`
+	WithViews       null.Bool `json:"with_views"`
 	OmitCategoryIds []int64   `json:"omit_category_ids"`
 }

@@ -45,6 +45,8 @@ type UserDetailRecord struct {
 	Following   int         `json:"following"`
 	Followers   int         `json:"followers"`
 	VideosCount int         `json:"videos_count"`
+	IsFollowing bool        `json:"is_following"`
+	IsFollower  bool        `json:"is_follower"`
 	Privacy     UerPrivacy  `json:"privacy"`
 	Profile     UserProfile `json:"profile"`
 	CountryName string      `json:"country_name"`

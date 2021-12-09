@@ -1,6 +1,9 @@
 package hashtag
 
-import "github.com/digitalmonsters/go-common/rpc"
+import (
+	"github.com/digitalmonsters/go-common/rpc"
+	"gopkg.in/guregu/null.v4"
+)
 
 type SimpleHashtag struct {
 	Name       string `json:"name"`
@@ -18,8 +21,9 @@ type HashtagsGetInternalResponseChan struct {
 }
 
 type GetHashtagsInternalRequest struct {
-	Hashtags     []string `json:"hashtags"`
-	OmitHashtags []string `json:"omit_hashtags"`
-	Limit        int      `json:"limit"`
-	Offset       int      `json:"offset"`
+	Hashtags     []string  `json:"hashtags"`
+	OmitHashtags []string  `json:"omit_hashtags"`
+	WithViews    null.Bool `json:"with_views"`
+	Limit        int       `json:"limit"`
+	Offset       int       `json:"offset"`
 }

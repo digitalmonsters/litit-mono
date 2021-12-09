@@ -21,7 +21,7 @@ type Wrapper struct {
 }
 
 type ICategoryWrapper interface {
-	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
+	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
 }
 
 func NewCategoryWrapper(config boilerplate.WrapperConfig) ICategoryWrapper {
@@ -39,7 +39,7 @@ func NewCategoryWrapper(config boilerplate.WrapperConfig) ICategoryWrapper {
 	}
 }
 
-func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
+func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
 	respCh := make(chan CategoryGetInternalResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetCategoryInternal", GetCategoryInternalRequest{
@@ -47,6 +47,7 @@ func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int
 		Limit:           limit,
 		Offset:          offset,
 		OmitCategoryIds: omitCategoryIds,
+		WithViews:       withViews,
 		OnlyParent:      onlyParent,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 

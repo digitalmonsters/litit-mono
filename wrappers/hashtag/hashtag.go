@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
 	"time"
 )
 
@@ -20,7 +21,7 @@ type Wrapper struct {
 }
 
 type IHashtagWrapper interface {
-	GetHashtagsInternal(hashtags []string, omitHashtags []string, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan HashtagsGetInternalResponseChan
+	GetHashtagsInternal(hashtags []string, omitHashtags []string, limit int, offset int, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan HashtagsGetInternalResponseChan
 }
 
 func NewHashtagWrapper(config boilerplate.WrapperConfig) IHashtagWrapper {
@@ -38,13 +39,14 @@ func NewHashtagWrapper(config boilerplate.WrapperConfig) IHashtagWrapper {
 	}
 }
 
-func (w *Wrapper) GetHashtagsInternal(hashtags []string, omitHashtags []string, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan HashtagsGetInternalResponseChan {
+func (w *Wrapper) GetHashtagsInternal(hashtags []string, omitHashtags []string, limit int, offset int, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan HashtagsGetInternalResponseChan {
 	respCh := make(chan HashtagsGetInternalResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetHashtagsInternal", GetHashtagsInternalRequest{
 		Hashtags:     hashtags,
 		OmitHashtags: omitHashtags,
 		Limit:        limit,
+		WithViews:    withViews,
 		Offset:       offset,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
