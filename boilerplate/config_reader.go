@@ -218,6 +218,7 @@ func ReadConfigByFilePaths(filePath []string, input interface{}) (interface{}, e
 		WeaklyTypedInput: true,
 		Result:           input,
 		TagName:          "json",
+		Squash:           true,
 	})
 
 	if err != nil {
