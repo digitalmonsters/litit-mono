@@ -16,8 +16,11 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 	userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction, currentUserId int64) (*SimpleComment, error) {
 	var parentComment database.Comment
 
+	tx := db.Begin()
+	defer tx.Rollback()
+
 	if !parentId.IsZero() {
-		if err := db.Take(&parentComment, parentId.ValueOrZero()).Error; err != nil {
+		if err := tx.Take(&parentComment, parentId.ValueOrZero()).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -44,8 +47,6 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		return nil, errors.WithStack(errors.New(string(*blockedUserType)))
 	}
 
-	tx := db.Begin()
-	defer tx.Rollback()
 	var comment database.Comment
 
 	comment.ContentId = null.IntFrom(resourceId)
@@ -64,17 +65,17 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		}
 	}
 
-	if err = updateUserStatsComments(db, currentUserId, resourceId); err != nil {
+	if err = updateUserStatsComments(tx, currentUserId, resourceId); err != nil {
 		return nil, err
 	}
 
-	if err = updateContentCommentsCounter(db, comment.ContentId.ValueOrZero(), true); err != nil {
+	if err = updateContentCommentsCounter(tx, comment.ContentId.ValueOrZero(), true); err != nil {
 		return nil, err
 	}
 
 	// TODO: send notify 'comment'
 
-	if err := tx.Commit().Error; err != nil {
+	if err = tx.Commit().Error; err != nil {
 		return nil, err
 	}
 
@@ -168,7 +169,6 @@ func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, pa
 
 	mappedComment := mapDbCommentToCommentOnProfile(parentComment)
 
-
 	blockedUserType, err := isBlocked(userBlockWrapper, apmTransaction, currentUserId, mappedComment.AuthorId)
 
 	if err != nil {
@@ -199,7 +199,7 @@ func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, pa
 		}
 	}
 
-	if err = updateUserStatsComments(db, currentUserId, resourceId); err != nil {
+	if err = updateUserStatsComments(tx, currentUserId, resourceId); err != nil {
 		return nil, err
 	}
 
