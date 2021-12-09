@@ -61,18 +61,20 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		if resp, err := comments.DeleteCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
+		if _, err := comments.DeleteCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
 			contentWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
-			return resp, nil
+			return successResponse{
+				Success: true,
+			}, nil
 		}
 	}, "/{delete_comment_id}", http.MethodDelete, common.AccessLevelPublic, true, true)); err != nil {
 		return err
 	}
 
 	apiDef["/{delete_comment_id}"] = swagger.ApiDescription{
-		Response:          comments.SimpleComment{},
+		Response:          successResponse{},
 		MethodDescription: "delete comment by id",
 		AdditionalSwaggerParameters: []swagger.ParameterDescription{
 			{
