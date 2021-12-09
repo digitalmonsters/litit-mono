@@ -34,7 +34,7 @@ type successResponse struct {
 
 type frontendCommentResponse struct {
 	comments.SimpleComment
-	Author comments.Author `json:"author"`
+	Author  comments.Author        `json:"author"`
 }
 
 type frontendCommentPaginationResponse struct {

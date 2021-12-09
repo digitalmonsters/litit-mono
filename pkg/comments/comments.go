@@ -17,8 +17,8 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	userWrapper user.IUserWrapper, apmTransaction *apm.Transaction, resourceType ResourceType) (*GetCommentsByTypeWithResourceResponse, error) {
 	var comments []database.Comment
 
-	if request.ParentId == 0 && request.ResourceId == 0 {
-		return nil, errors.New("parent id or content id should be set")
+	if request.ResourceId == 0 {
+		return nil, errors.New("resource id should be set")
 	}
 
 	query := db.Model(comments)
@@ -31,7 +31,7 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 		case ResourceTypeProfile:
 			query = query.Where("profile_id = ?", request.ResourceId)
 		case ResourceTypeParentComment:
-			query = query.Where("parent_id = ?", request.ParentId)
+			query = query.Where("parent_id = ?", request.ResourceId)
 		}
 	}
 	var paginatorRules []paginator.Rule

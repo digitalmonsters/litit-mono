@@ -7,7 +7,6 @@ import (
 
 type GetCommentsByTypeWithResourceRequest struct {
 	ResourceId int64
-	ParentId   int64
 	After      string // cursor
 	Before     string // cursor
 	Count      int64  // Limit

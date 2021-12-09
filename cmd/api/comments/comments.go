@@ -145,11 +145,11 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
 
 		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
-			ParentId:  commentId,
-			After:     after,
-			Before:    before,
-			Count:     count,
-			SortOrder: sortOrder,
+			After:      after,
+			Before:     before,
+			Count:      count,
+			SortOrder:  sortOrder,
+			ResourceId: commentId,
 		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction,
 			comments.ResourceTypeParentComment); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
@@ -219,8 +219,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			mappedResourceType = comments.ResourceTypeProfile
 		}
 
-		parentId := utils.ExtractInt64(executionData.GetUserValue, "parent_id", 0, 0)
-
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
@@ -228,7 +226,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 
 		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
 			ResourceId: resourceId,
-			ParentId:   parentId,
 			After:      after,
 			Before:     before,
 			Count:      count,
@@ -258,13 +255,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 				In:          swagger.ParameterInPath,
 				Description: "resource_id",
 				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "parent_id",
-				In:          swagger.ParameterInQuery,
-				Description: "parent_id",
-				Required:    false,
 				Type:        "integer",
 			},
 			{
@@ -364,9 +354,9 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return createCommentOnProfileResponse{
-				Id:        resp.Id,
-				Comment:   resp.Comment,
-				AuthorId:  resp.AuthorId,
+				Id:       resp.Id,
+				Comment:  resp.Comment,
+				AuthorId: resp.AuthorId,
 			}, nil
 		}
 	}, "/profile/{profile_id_to_create_comment_on}", http.MethodPost, common.AccessLevelPublic, true, true)); err != nil {
