@@ -367,7 +367,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 				Id:        resp.Id,
 				Comment:   resp.Comment,
 				AuthorId:  resp.AuthorId,
-				ProfileId: resp.ProfileId.ValueOrZero(),
 			}, nil
 		}
 	}, "/profile/{profile_id_to_create_comment_on}", http.MethodPost, common.AccessLevelPublic, true, true)); err != nil {

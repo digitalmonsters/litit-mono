@@ -131,8 +131,6 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.True(t, len(result.Paging.Next) > 0)
-	assert.Equal(t, true, result.Paging.HasNext)
 
 	assert.Equal(t, int64(9694), result.Comments[0].Id)
 	assert.Equal(t, int64(9693), result.Comments[1].Id)
@@ -140,7 +138,7 @@ func TestGetCommentsByContent(t *testing.T) {
 	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
 		ParentId:   0,
-		After:      result.Paging.Next,
+		After:      result.Paging.After,
 		Count:      2,
 		SortOrder:  "",
 	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
@@ -152,12 +150,11 @@ func TestGetCommentsByContent(t *testing.T) {
 	assert.Equal(t, int64(9699), result.Comments[0].Id)
 	assert.Equal(t, int64(9705), result.Comments[1].Id)
 
-	assert.Equal(t, true, result.Paging.HasNext)
 
 	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
 		ParentId:   0,
-		After:      result.Paging.Next,
+		After:      result.Paging.After,
 		Count:      9999,
 		SortOrder:  "",
 	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
@@ -166,9 +163,8 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
+
 	assert.Equal(t, 30, len(result.Comments))
-	assert.Equal(t, false, result.Paging.HasNext)
-	assert.Equal(t, "", result.Paging.Next)
 }
 
 func TestGetCommentById(t *testing.T) {
@@ -197,6 +193,7 @@ func TestGetCommentById(t *testing.T) {
 			NumDownvotes: 77,
 			NumUpvotes:   66,
 			CreatedAt:    data.CreatedAt,
+			CreatedAtTs:  data.CreatedAtTs,
 			Comment:      "Testing comment reply notification",
 			ContentId:    null.IntFrom(1017738),
 			MyVoteUp:     null.BoolFrom(true),
@@ -227,8 +224,6 @@ func TestGetCommentsByProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.True(t, len(result.Paging.Next) > 0)
-	assert.Equal(t, true, result.Paging.HasNext)
 
 	assert.Equal(t, int64(9713), result.Comments[0].Id)
 	assert.Equal(t, int64(9712), result.Comments[1].Id)
@@ -236,7 +231,7 @@ func TestGetCommentsByProfile(t *testing.T) {
 	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 11108,
 		ParentId:   0,
-		After:      result.Paging.Next,
+		After:      result.Paging.After,
 		Count:      2,
 		SortOrder:  "",
 	}, 0, db, userWrapperMock, nil, ResourceTypeProfile)
@@ -247,7 +242,5 @@ func TestGetCommentsByProfile(t *testing.T) {
 
 	assert.Equal(t, int64(9711), result.Comments[0].Id)
 
-	assert.Equal(t, false, result.Paging.HasNext)
-	assert.Equal(t, "", result.Paging.Next)
 
 }

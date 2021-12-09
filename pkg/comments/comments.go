@@ -151,9 +151,6 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	pagingResult := CursorPaging{}
 
 	if cursor.After != nil {
-		pagingResult.HasNext = true
-
-		pagingResult.Next = *cursor.After
 		pagingResult.After = *cursor.After
 	}
 

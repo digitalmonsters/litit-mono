@@ -15,10 +15,8 @@ type GetCommentsByTypeWithResourceRequest struct {
 }
 
 type CursorPaging struct {
-	HasNext bool   `json:"hasNext"`
-	Next    string `json:"next"`
-	Before  string `json:"before"`
-	After   string `json:"after"`
+	Before string `json:"before"`
+	After  string `json:"after"`
 }
 
 type GetCommentsByTypeWithResourceResponse struct {
@@ -33,9 +31,9 @@ type SimpleComment struct {
 	NumUpvotes   int64     `json:"num_upvotes"`
 	NumDownvotes int64     `json:"num_downvotes"`
 	CreatedAt    time.Time `json:"created_at"`
+	CreatedAtTs  int64     `json:"created_at_ts"`
 	MyVoteUp     null.Bool `json:"my_vote_up"`
 	ContentId    null.Int  `json:"content_id"`
-	ProfileId    null.Int  `json:"profile_id"`
 	Comment      string    `json:"comment"`
 }
 
