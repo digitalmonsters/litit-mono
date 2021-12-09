@@ -3,7 +3,7 @@ module github.com/digitalmonsters/comments
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.9.2
+	github.com/digitalmonsters/go-common v1.9.6
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
@@ -29,7 +29,7 @@ require (
 	github.com/elastic/go-windows v1.0.1 // indirect
 	github.com/fasthttp/router v1.4.3 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/ft-t/go-micro-env v0.0.0-20211201004918-84abcf2cdce0 // indirect
+	github.com/ft-t/go-micro-env v1.0.0 // indirect
 	github.com/gammazero/deque v0.1.0 // indirect
 	github.com/gammazero/workerpool v1.1.2 // indirect
 	github.com/go-redis/redis v6.14.0+incompatible // indirect
@@ -55,6 +55,7 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
+	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

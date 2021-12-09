@@ -207,10 +207,7 @@ func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *ap
 	return responseData.Data.Type, nil
 }
 
-func updateUserStatsComments(db *gorm.DB, authorId int64, contentId int64) error {
-	tx := db.Begin()
-	defer tx.Rollback()
-
+func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64) error {
 	if err := tx.Exec("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) do update set comments = excluded.comments + 1", authorId).Error; err != nil {
 		return err
 	}
@@ -218,17 +215,11 @@ func updateUserStatsComments(db *gorm.DB, authorId int64, contentId int64) error
 	if err := tx.Exec("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) do update set comments = excluded.comments + 1", contentId).Error; err != nil {
 		return err
 	}
-	if err := tx.Commit().Error; err != nil {
-		return err
-	}
 
 	return nil
 }
 
-func updateContentCommentsCounter(db *gorm.DB, contentId int64, isIncrement bool) error {
-	tx := db.Begin()
-	defer tx.Rollback()
-
+func updateContentCommentsCounter(tx *gorm.DB, contentId int64, isIncrement bool) error {
 	var incrementStm string
 
 	if isIncrement {
@@ -239,10 +230,6 @@ func updateContentCommentsCounter(db *gorm.DB, contentId int64, isIncrement bool
 
 	if err := tx.Model(database.Content{}).Where("id = ?", contentId).
 		Update("comments_count", gorm.Expr(incrementStm)).Error; err != nil {
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
 		return err
 	}
 
