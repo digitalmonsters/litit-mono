@@ -8,7 +8,6 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/vote"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
-	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/docs"
 	"github.com/digitalmonsters/go-common/router"
@@ -23,7 +22,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -35,21 +33,9 @@ func main() {
 	db := database.GetDb()
 	apiDef := map[string]swagger.ApiDescription{}
 
-	cfg.Wrappers.Content.ApiUrl = "https://content.dev.digitalmonster.link"
-
 	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
-
-	t := apm_helper.StartNewApmTransaction("test3", "test", nil, nil)
-
-	r := <-contentWrapper.GetInternal([]int64{1}, true, t, true)
-
-	fmt.Println(r)
-
-	t.End()
-
-	time.Sleep(20 * time.Second)
 
 	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth))
 
