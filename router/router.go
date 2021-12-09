@@ -78,6 +78,8 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			JsonRpc: "2.0",
 		}
 
+		apm_helper.AddApmLabel(apmTransaction, "full_url", string(ctx.URI().FullURI()))
+
 		rpcResponse, shouldLog := r.executeAction(rpcRequest, targetCmd, ctx, apmTransaction, targetCmd.forceLog,
 			func(key string) interface{} {
 				if v := ctx.UserValue(key); v != nil {
@@ -113,7 +115,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		restResponse.Success = true
 		restResponse.ExecutionTimingMs = rpcResponse.ExecutionTimingMs
 		restResponse.Hostname = rpcResponse.Hostname
-		
+
 		if rpcResponse.Result != nil {
 			restResponse.Data = rpcResponse.Result
 		}
