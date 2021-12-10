@@ -321,5 +321,17 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "drop_comment_profile_id_foreign_constraint",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table comment drop constraint comment_profile_id_foreign;`
+
+				return db.Exec(query).Error
+
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
