@@ -41,11 +41,11 @@ func NewKafkaListener(config boilerplate.KafkaListenerConfiguration, ctx context
 	}
 
 	if config.MaxBackOffTimeMilliseconds <= 0 {
-		config.MaxBackOffTimeMilliseconds = 15000 // 15sec
+		config.MaxBackOffTimeMilliseconds = 60000 // 60sec
 	}
 
 	if config.BackOffTimeIntervalMilliseconds <= 0 {
-		config.BackOffTimeIntervalMilliseconds = 500 // 500ms
+		config.BackOffTimeIntervalMilliseconds = 1000 // 1s
 	}
 
 	if config.KafkaAuth == nil {
@@ -330,8 +330,10 @@ func (k *KafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		commandExecutionContext := apm.ContextWithTransaction(context.TODO(), apmTransaction)
 
 		b := backoff.NewExponentialBackOff()
-		b.MaxElapsedTime = time.Duration(k.cfg.MaxBackOffTimeMilliseconds)
-		b.InitialInterval = time.Duration(k.cfg.BackOffTimeIntervalMilliseconds)
+		b.MaxElapsedTime = time.Duration(k.cfg.MaxBackOffTimeMilliseconds) * time.Millisecond
+		b.InitialInterval = time.Duration(k.cfg.BackOffTimeIntervalMilliseconds) * time.Millisecond
+
+		b.Reset()
 
 		retryCount := 0
 
