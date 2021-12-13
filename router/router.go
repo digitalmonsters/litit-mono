@@ -179,6 +179,8 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	defer func() {
 		if rec := recover(); rec != nil {
+			shouldLog = true
+
 			switch val := rec.(type) {
 			case error:
 				panicErr = errors.Wrap(val, fmt.Sprintf("panic! %v", val))
@@ -274,6 +276,8 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 			Data:     nil,
 			Hostname: r.hostname,
 		}
+
+		shouldLog = true
 
 		if !r.isProd {
 			rpcResponse.Error.Stack = err.GetStack()
