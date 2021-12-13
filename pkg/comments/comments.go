@@ -172,13 +172,48 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 }
 
 func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserWrapper,
-	apmTransaction *apm.Transaction) (*Comment, error) {
+	apmTransaction *apm.Transaction) (*CommentWithCursor, error) {
 	var comment database.Comment
 
 	if err := db.Take(&comment, commentId).Error; err != nil {
 		return nil, err
 	}
 
+	resourceType := ResourceTypeContent
+	resourceTypeString := "content_id"
+	resourceId := comment.ContentId.ValueOrZero()
+
+	if comment.ProfileId.Valid {
+		resourceType = ResourceTypeProfile
+		resourceId = comment.ProfileId.ValueOrZero()
+		resourceTypeString = "profile_id"
+	} else if comment.ParentId.Valid {
+		resourceType = ResourceTypeParentComment
+		resourceId = comment.ParentId.ValueOrZero()
+		resourceTypeString = "parent_id"
+	}
+
+	var index int64
+
+	indexQuery := fmt.Sprintf("select count(*) from comment where %v = ?", resourceTypeString)
+	if resourceType != ResourceTypeParentComment {
+		indexQuery += " and parent_id is null"
+	}
+	indexQuery += " and id >= ?;"
+
+	if err := db.Raw(indexQuery, resourceId, commentId).Scan(&index).Error; err != nil {
+		return nil, err
+	}
+
+	commentsResp, err := GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
+		ResourceId: resourceId,
+		Count:      index,
+		SortOrder:  "newest",
+	}, currentUserId, db, userWrapper, nil, resourceType)
+
+	if err != nil {
+		return nil, err
+	}
 	resultComment := MapDbCommentToComment(comment)
 
 	extenders := []chan error{
@@ -192,7 +227,19 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 		}
 	}
 
-	return &resultComment, nil
+	cursor := ""
+
+	if commentsResp != nil {
+		cursor = commentsResp.Paging.After
+	}
+
+	return &CommentWithCursor{
+		SimpleComment: resultComment.SimpleComment,
+		Author:        resultComment.Author,
+		Content:       resultComment.Content,
+		Cursor:        cursor,
+		ParentId:      comment.ParentId,
+	}, nil
 }
 
 func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction,

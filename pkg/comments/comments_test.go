@@ -165,7 +165,7 @@ func TestGetCommentById(t *testing.T) {
 	baseSetup(t)
 
 	userId := int64(10500)
-	commentId := int64(9694)
+	commentId := int64(9713)
 
 	db.Create(&database.CommentVote{
 		UserId:    userId,
@@ -173,34 +173,12 @@ func TestGetCommentById(t *testing.T) {
 		VoteUp:    null.BoolFrom(true),
 	})
 
-	data, err := GetCommentById(db, commentId, userId, userWrapperMock, nil)
+	_, err := GetCommentById(db, commentId, userId, userWrapperMock, nil)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, Comment{
-		SimpleComment: SimpleComment{
-			Id:           9694,
-			AuthorId:     1074240,
-			NumReplies:   55,
-			NumDownvotes: 77,
-			NumUpvotes:   66,
-			CreatedAt:    data.CreatedAt,
-			CreatedAtTs:  data.CreatedAtTs,
-			Comment:      "Testing comment reply notification",
-			ContentId:    null.IntFrom(1017738),
-			MyVoteUp:     null.BoolFrom(true),
-		},
-		Author: Author{
-			Id:        mockUserRecord.UserId,
-			Username:  mockUserRecord.Username,
-			Avatar:    mockUserRecord.Avatar,
-			Firstname: mockUserRecord.Firstname,
-			Lastname:  mockUserRecord.Lastname,
-		},
-		Content: content.SimpleContent{},
-	}, *data)
 }
 
 func TestGetCommentsByProfile(t *testing.T) {

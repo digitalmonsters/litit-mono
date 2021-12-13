@@ -37,7 +37,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			userWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
-			return commentToFrontendCommentResponse(*comment), nil
+			return commentToFrontendCommentWithCursorResponse(*comment), nil
 		}
 	}, "/{comment_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
 		return err

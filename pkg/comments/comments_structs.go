@@ -14,6 +14,10 @@ type GetCommentsByTypeWithResourceRequest struct {
 	SortOrder  string
 }
 
+type GetCommentByIdRequest struct {
+	SortOrder string
+}
+
 type CursorPaging struct {
 	Before string `json:"before"`
 	After  string `json:"after"`
@@ -41,6 +45,14 @@ type Comment struct {
 	SimpleComment
 	Author  Author                `json:"author"`
 	Content content.SimpleContent `json:"content"`
+}
+
+type CommentWithCursor struct {
+	SimpleComment
+	Author   Author                `json:"author"`
+	Content  content.SimpleContent `json:"content"`
+	Cursor   string                `json:"cursor"`
+	ParentId null.Int              `json:"parent_id"`
 }
 
 type CommentOnProfile struct {

@@ -34,7 +34,14 @@ type successResponse struct {
 
 type frontendCommentResponse struct {
 	comments.SimpleComment
-	Author  comments.Author        `json:"author"`
+	Author comments.Author `json:"author"`
+}
+
+type frontendCommentWithCursorResponse struct {
+	comments.SimpleComment
+	Author   comments.Author `json:"author"`
+	Cursor   string          `json:"cursor"`
+	ParentId null.Int        `json:"parent_id"`
 }
 
 type frontendCommentPaginationResponse struct {
