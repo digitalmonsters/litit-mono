@@ -50,6 +50,7 @@ func (s *Notifier) Enqueue(comment database.Comment, content content.SimpleConte
 		ContentId:    comment.ContentId,
 		ParentId:     comment.ParentId,
 		ProfileId:    comment.ProfileId,
+		EventType:    eventType,
 	}
 
 	if eventType == ContentResourceTypeCreate || eventType == ContentResourceTypeUpdate || eventType == ContentResourceTypeDelete {
