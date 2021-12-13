@@ -33,10 +33,12 @@ func (s *SingleListener) Listen() {
 	s.listener.ListenInBatches(1, 0)
 }
 
-func (s *SingleListener) ListenAsync() {
+func (s *SingleListener) ListenAsync() IKafkaListener {
 	go func() {
 		s.Listen()
 	}()
+
+	return s
 }
 
 func (s SingleListener) GetTopic() string {

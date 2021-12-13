@@ -3,6 +3,6 @@ package kafka_listener
 type IKafkaListener interface {
 	Close() error
 	Listen()
-	ListenAsync()
+	ListenAsync() IKafkaListener
 	GetTopic() string
 }

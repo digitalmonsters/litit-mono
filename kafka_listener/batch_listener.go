@@ -35,10 +35,12 @@ func (b *BatchListener) Listen() {
 	b.innerListener.ListenInBatches(b.maxBatchSize, b.maxDuration)
 }
 
-func (b *BatchListener) ListenAsync() {
+func (b *BatchListener) ListenAsync() IKafkaListener {
 	go func() {
 		b.Listen()
 	}()
+
+	return b
 }
 
 func (b *BatchListener) Close() error {
