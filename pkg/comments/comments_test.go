@@ -130,8 +130,8 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, int64(9694), result.Comments[0].Id)
-	assert.Equal(t, int64(9693), result.Comments[1].Id)
+	assert.Equal(t, int64(9693), result.Comments[0].Id)
+	assert.Equal(t, int64(9699), result.Comments[1].Id)
 
 	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
@@ -144,8 +144,8 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, int64(9699), result.Comments[0].Id)
-	assert.Equal(t, int64(9705), result.Comments[1].Id)
+	assert.Equal(t, int64(9705), result.Comments[0].Id)
+	assert.Equal(t, int64(9691), result.Comments[1].Id)
 
 	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
@@ -158,7 +158,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 30, len(result.Comments))
+	assert.Equal(t, 27, len(result.Comments))
 }
 
 func TestGetCommentById(t *testing.T) {

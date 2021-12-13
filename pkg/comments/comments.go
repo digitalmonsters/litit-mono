@@ -28,10 +28,10 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	if request.ResourceId > 0 {
 		switch resourceType {
 		case ResourceTypeContent:
-			query = query.Where("content_id = ?", request.ResourceId)
+			query = query.Where("content_id = ?", request.ResourceId).Where("parent_id is null")
 
 		case ResourceTypeProfile:
-			query = query.Where("profile_id = ?", request.ResourceId)
+			query = query.Where("profile_id = ?", request.ResourceId).Where("parent_id is null")
 		case ResourceTypeParentComment:
 			query = query.Where("parent_id = ?", request.ResourceId)
 		}
