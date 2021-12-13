@@ -1,20 +1,26 @@
 package vote
 
 import (
+	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
+	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/comments/pkg/database"
+	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/pkg/errors"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId int64) (*database.CommentVote, error) {
+func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId int64, commentNotifier *comment.Notifier,
+	apmTransaction *apm.Transaction, contentWrapper content.IContentWrapper) (*database.CommentVote, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	var comment database.Comment
+	var commentToVote database.Comment
 
-	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Take(&comment, commentId).Error; err != nil {
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Take(&commentToVote, commentId).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -47,11 +53,11 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 
 	if previousVote.VoteUp.Valid {
 		if previousVote.VoteUp.ValueOrZero() {
-			if err := tx.Model(&comment).Update("num_upvotes", gorm.Expr("num_upvotes + 1")).Error; err != nil {
+			if err := tx.Model(&commentToVote).Update("num_upvotes", gorm.Expr("num_upvotes + 1")).Error; err != nil {
 				return nil, errors.WithStack(err)
 			}
 		} else {
-			if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_downvotes + 1")).Error; err != nil {
+			if err := tx.Model(&commentToVote).Update("num_downvotes", gorm.Expr("num_downvotes + 1")).Error; err != nil {
 				return nil, errors.WithStack(err)
 			}
 		}
@@ -59,11 +65,11 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 
 	if previousVoteValue.Valid {
 		if previousVoteValue.Bool {
-			if err := tx.Model(&comment).Update("num_upvotes", gorm.Expr("num_upvotes - 1")).Error; err != nil {
+			if err := tx.Model(&commentToVote).Update("num_upvotes", gorm.Expr("num_upvotes - 1")).Error; err != nil {
 				return nil, errors.WithStack(err)
 			}
 		} else {
-			if err := tx.Model(&comment).Update("num_downvotes", gorm.Expr("num_downvotes - 1")).Error; err != nil {
+			if err := tx.Model(&commentToVote).Update("num_downvotes", gorm.Expr("num_downvotes - 1")).Error; err != nil {
 				return nil, errors.WithStack(err)
 			}
 		}
@@ -75,6 +81,30 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
+	}
+
+	mapped := comments.MapDbCommentToComment(commentToVote)
+
+	if commentNotifier != nil {
+		var eventType comment.EventType
+
+		if !mapped.ContentId.IsZero() {
+			eventType = comment.ContentResourceTypeUpdate
+
+			extenders := []chan error{
+				comments.ExtendWithContent(contentWrapper, apmTransaction, &mapped),
+			}
+
+			for _, e := range extenders {
+				if err := <-e; err != nil {
+					apm_helper.CaptureApmError(err, apmTransaction)
+				}
+			}
+		} else {
+			eventType = comment.ProfileResourceTypeUpdate
+		}
+
+		commentNotifier.Enqueue(commentToVote, mapped.Content, eventType)
 	}
 
 	return &previousVote, nil

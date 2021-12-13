@@ -4,7 +4,7 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 )
 
-func mapDbCommentToComment(comment database.Comment) Comment {
+func MapDbCommentToComment(comment database.Comment) Comment {
 	return Comment{
 		SimpleComment: SimpleComment{
 			Id:           comment.Id,

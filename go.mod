@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/digitalmonsters/go-common v1.9.11
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
+	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/romanyx/polluter v1.2.2
@@ -33,7 +34,6 @@ require (
 	github.com/gammazero/deque v0.1.0 // indirect
 	github.com/gammazero/workerpool v1.1.2 // indirect
 	github.com/go-redis/redis v6.14.0+incompatible // indirect
-	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -58,6 +58,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/romanyx/jwalk v1.0.0 // indirect
@@ -65,6 +66,7 @@ require (
 	github.com/savsgio/gotils v0.0.0-20210921075833-21a6215cb0e4 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.4.0 // indirect
+	github.com/segmentio/kafka-go v0.4.20 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go-micro.dev/v4 v4.2.1 // indirect
 	go.elastic.co/apm/module/apmgocql v1.15.0 // indirect

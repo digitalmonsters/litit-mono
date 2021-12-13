@@ -199,7 +199,7 @@ func TestGetCommentById(t *testing.T) {
 			Firstname: mockUserRecord.Firstname,
 			Lastname:  mockUserRecord.Lastname,
 		},
-		Content: SimpleContent{},
+		Content: content.SimpleContent{},
 	}, *data)
 }
 

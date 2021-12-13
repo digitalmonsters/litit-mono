@@ -6,10 +6,14 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/comments"
 	"github.com/digitalmonsters/comments/cmd/api/report"
 	"github.com/digitalmonsters/comments/cmd/api/vote"
+	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/notifiers/content_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/docs"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -22,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -32,6 +37,7 @@ func main() {
 	cfg := configs.GetConfig()
 	db := database.GetDb()
 	apiDef := map[string]swagger.ApiDescription{}
+	healthContext, healthCancel := context.WithCancel(context.Background())
 
 	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
@@ -39,7 +45,15 @@ func main() {
 
 	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth))
 
-	if err := comments.Init(httpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef); err != nil {
+	commentNotifier := comment.NewNotifier(time.Duration(cfg.NotifierCommentConfig.PollTimeMs)*time.Millisecond,
+		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic))
+	contentCommentsNotifier := content_comments_counter.NewNotifier(time.Duration(cfg.NotifierContentCommentsCounterConfig.PollTimeMs)*time.Millisecond,
+		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierContentCommentsCounterConfig.KafkaTopic))
+	userCommentsNotifier := user_comments_counter.NewNotifier(time.Duration(cfg.NotifierUserCommentsCounterConfig.PollTimeMs)*time.Millisecond,
+		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierUserCommentsCounterConfig.KafkaTopic))
+
+	if err := comments.Init(httpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
+		contentCommentsNotifier, userCommentsNotifier); err != nil {
 		panic(err)
 	}
 
@@ -47,7 +61,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := vote.Init(httpRouter, db, apiDef); err != nil {
+	if err := vote.Init(httpRouter, db, apiDef, commentNotifier, contentWrapper); err != nil {
 		panic(err)
 	}
 
@@ -62,7 +76,6 @@ func main() {
 			apiDef, nil)
 	}
 
-	healthContext, healthCancel := context.WithCancel(context.Background())
 	shutdown.RegisterHttpHealthCheck(healthContext, httpRouter)
 
 	srv := &fasthttp.Server{

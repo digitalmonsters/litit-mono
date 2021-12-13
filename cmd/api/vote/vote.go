@@ -2,18 +2,21 @@ package vote
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
 	"github.com/digitalmonsters/comments/pkg/vote"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
 )
 
-func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.ApiDescription) error {
+func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.ApiDescription, commentNotifier *comment.Notifier,
+	contentWrapper content.IContentWrapper) error {
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
@@ -29,7 +32,8 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 		}
 
 		if _, err := vote.VoteComment(db.WithContext(executionData.Context), commentId,
-			reportRequest.VoteUp, executionData.UserId); err != nil {
+			reportRequest.VoteUp, executionData.UserId, commentNotifier,
+			executionData.ApmTransaction, contentWrapper); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return successResponse{

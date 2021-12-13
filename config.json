@@ -7,5 +7,36 @@
     "Db": "base_api",
     "User": "postgres",
     "Password": "qwerty"
+  },
+  "KafkaWriter": {
+    "Hosts": "",
+    "KafkaAuth": {},
+    "Tls": true
+  },
+  "NotifierCommentConfig": {
+    "KafkaTopic": "dev.comments",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierContentCommentsCounterConfig": {
+    "KafkaTopic": "dev.content_comments_counter",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierUserCommentsCounterConfig": {
+    "KafkaTopic": "dev.user_comments_counter",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "Wrappers": {
+    "Content": {
+      "ApiUrl": ""
+    },
+    "UserInfo": {
+      "ApiUrl": ""
+    },
+    "UserBlock": {
+      "ApiUrl": ""
+    }
   }
 }

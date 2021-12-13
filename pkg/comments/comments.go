@@ -2,6 +2,8 @@ package comments
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/comments/cmd/notifiers/content_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/user"
@@ -131,7 +133,7 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	var resultComments []*Comment
 
 	for _, comment := range comments {
-		item := mapDbCommentToComment(comment)
+		item := MapDbCommentToComment(comment)
 		resultComments = append(resultComments, &item)
 	}
 
@@ -177,7 +179,7 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 		return nil, err
 	}
 
-	resultComment := mapDbCommentToComment(comment)
+	resultComment := MapDbCommentToComment(comment)
 
 	extenders := []chan error{
 		extendWithAuthor(userWrapper, apmTransaction, &resultComment),
@@ -204,13 +206,27 @@ func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *ap
 	return responseData.Data.Type, nil
 }
 
-func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64) error {
-	if err := tx.Exec("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) do update set comments = excluded.comments + 1", authorId).Error; err != nil {
+func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64,
+	userCommentsNotifier *user_comments_counter.Notifier, contentCommentsNotifier *content_comments_counter.Notifier) error {
+	var userStatsActionComments int64
+	var userStatsContentComments int64
+
+	if err := tx.Raw("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) "+
+		"do update set comments = excluded.comments + 1 returning comments", authorId).Scan(&userStatsActionComments).Error; err != nil {
 		return err
 	}
 
-	if err := tx.Exec("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) do update set comments = excluded.comments + 1", contentId).Error; err != nil {
+	if err := tx.Raw("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) "+
+		"do update set comments = excluded.comments + 1 returning comments", contentId).Scan(&userStatsContentComments).Error; err != nil {
 		return err
+	}
+
+	if userCommentsNotifier != nil {
+		userCommentsNotifier.Enqueue(authorId, userStatsActionComments)
+	}
+
+	if contentCommentsNotifier != nil {
+		contentCommentsNotifier.Enqueue(contentId, userStatsContentComments)
 	}
 
 	return nil
