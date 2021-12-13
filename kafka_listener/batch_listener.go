@@ -16,7 +16,7 @@ type BatchListener struct {
 
 func NewBatchListener(configuration boilerplate.KafkaListenerConfiguration, command structs.ICommand,
 	ctx context.Context, maxDuration time.Duration, maxBatchSize int,
-) *BatchListener {
+) IKafkaListener {
 
 	var b = &BatchListener{
 		innerListener: internal.NewKafkaListener(configuration, ctx, command),
@@ -33,6 +33,12 @@ func (b BatchListener) GetTopic() string {
 
 func (b *BatchListener) Listen() {
 	b.innerListener.ListenInBatches(b.maxBatchSize, b.maxDuration)
+}
+
+func (b *BatchListener) ListenAsync() {
+	go func() {
+		b.Listen()
+	}()
 }
 
 func (b *BatchListener) Close() error {

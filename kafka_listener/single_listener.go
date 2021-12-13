@@ -12,7 +12,7 @@ type SingleListener struct {
 }
 
 func NewSingleListener(configuration boilerplate.KafkaListenerConfiguration, command structs.ICommand,
-	ctx context.Context) *SingleListener {
+	ctx context.Context) IKafkaListener {
 
 	var s = &SingleListener{
 		listener: internal.NewKafkaListener(configuration, ctx, command),
@@ -31,4 +31,14 @@ func (s *SingleListener) Close() error {
 
 func (s *SingleListener) Listen() {
 	s.listener.ListenInBatches(1, 0)
+}
+
+func (s *SingleListener) ListenAsync() {
+	go func() {
+		s.Listen()
+	}()
+}
+
+func (s SingleListener) GetTopic() string {
+	return s.listener.GetTopic()
 }
