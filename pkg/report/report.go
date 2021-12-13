@@ -17,15 +17,17 @@ func ReportComment(commentId int64, details string, db *gorm.DB, currentUserId i
 		return &existingReport, nil
 	}
 
-	var contentId int64
-	if err := db.Model(database.Comment{}).Select("content_id").
-		Where("id = ?", commentId).First(&contentId).Error; err != nil {
+	var comment database.Comment
+
+	if err := db.Model(database.Comment{}).
+		Where("id = ?", commentId).First(&comment).Error; err != nil {
 		return nil, err
 	}
 
 	existingReport.CommentId = commentId
-	existingReport.ContentId = contentId
 	existingReport.ReportType = "comment"
+	existingReport.ContentId = comment.ContentId
+	existingReport.UserId = comment.ProfileId
 	existingReport.ReporterId = currentUserId
 	existingReport.Detail = details
 	existingReport.Type = fromReqType

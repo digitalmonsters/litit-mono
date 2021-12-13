@@ -35,7 +35,8 @@ func (CommentVote) TableName() string {
 
 type Report struct {
 	Id         int
-	ContentId  int64
+	ContentId  null.Int
+	UserId     null.Int
 	Type       string
 	ReportType string
 	ReporterId int64

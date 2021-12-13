@@ -45,7 +45,8 @@ func TestReportComment(t *testing.T) {
 	a := assert.New(t)
 	a.Equal(int64(9700),report.CommentId)
 	a.Equal(int64(1), report.ReporterId)
-	a.Equal(int64(1017738), report.ContentId)
+	a.Equal(int64(1017738), report.ContentId.ValueOrZero())
+	a.Equal(int64(0), report.UserId.ValueOrZero())
 	a.Equal("comment", report.ReportType)
 	a.Equal("type", report.Type)
 	a.Equal("spam", report.Detail)
@@ -56,4 +57,18 @@ func TestReportComment(t *testing.T) {
 	}
 
 	a.Equal(report.Id, secondReport.Id)
+
+	reportOnProfile, err := ReportComment(9713, "violence", db, 1,"profile type")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(int64(9713),reportOnProfile.CommentId)
+	a.Equal(int64(1), reportOnProfile.ReporterId)
+	a.Equal(int64(0), reportOnProfile.ContentId.ValueOrZero())
+	a.Equal(int64(11108), reportOnProfile.UserId.ValueOrZero())
+	a.Equal("comment", reportOnProfile.ReportType)
+	a.Equal("profile type", reportOnProfile.Type)
+	a.Equal("violence", reportOnProfile.Detail)
 }
