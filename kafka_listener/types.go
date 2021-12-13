@@ -22,3 +22,8 @@ type ExecutionData struct {
 	ApmTransaction *apm.Transaction
 	Context        context.Context
 }
+
+type ErrorWithKafkaMessage struct {
+	Error   error
+	Message kafka.Message
+}
