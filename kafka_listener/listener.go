@@ -344,10 +344,14 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			processingSpan := apmTransaction.StartSpan(fmt.Sprintf("%v with retry #%v", k.command.GetFancyName(),
 				retryCount), "processing", nil)
 
+			processingSpan.Context.SetLabel("messages_to_process", len(messagesToProcess))
+
 			successfullyProcessedMessages = k.command.Execute(ExecutionData{
 				ApmTransaction: apmTransaction,
 				Context:        commandExecutionContext,
 			}, messagesToProcess...)
+
+			processingSpan.Context.SetLabel("successfully_processed_messages", len(successfullyProcessedMessages))
 
 			processingSpan.End()
 
