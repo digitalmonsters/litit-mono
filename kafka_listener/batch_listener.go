@@ -3,23 +3,21 @@ package kafka_listener
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/boilerplate"
-	"github.com/digitalmonsters/go-common/kafka_listener/internal"
-	"github.com/digitalmonsters/go-common/kafka_listener/structs"
 	"time"
 )
 
 type BatchListener struct {
-	innerListener *internal.KafkaListener
+	innerListener *kafkaListener
 	maxDuration   time.Duration
 	maxBatchSize  int
 }
 
-func NewBatchListener(configuration boilerplate.KafkaListenerConfiguration, command structs.ICommand,
+func NewBatchListener(configuration boilerplate.KafkaListenerConfiguration, command ICommand,
 	ctx context.Context, maxDuration time.Duration, maxBatchSize int,
 ) IKafkaListener {
 
 	var b = &BatchListener{
-		innerListener: internal.NewKafkaListener(configuration, ctx, command),
+		innerListener: newKafkaListener(configuration, ctx, command),
 		maxDuration:   maxDuration,
 		maxBatchSize:  maxBatchSize,
 	}

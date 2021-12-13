@@ -1,22 +1,10 @@
-package structs
+package kafka_listener
 
 import (
-	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
-	"go.elastic.co/apm"
 )
-
-type ExecutionData struct {
-	ApmTransaction *apm.Transaction
-	Context        context.Context
-}
-
-type ICommand interface {
-	Execute(executionData ExecutionData, request ...kafka.Message) (successfullyProcessed []kafka.Message)
-	GetFancyName() string
-}
 
 type CommandFunc func(executionData ExecutionData, request ...kafka.Message) []kafka.Message
 

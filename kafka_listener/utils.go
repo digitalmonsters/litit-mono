@@ -1,4 +1,4 @@
-package internal
+package kafka_listener
 
 import (
 	"crypto/tls"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func GetKafkaDialer(tlsEnabled bool, auth boilerplate.KafkaAuth) (*kafka.Dialer, error) {
+func getKafkaDialer(tlsEnabled bool, auth boilerplate.KafkaAuth) (*kafka.Dialer, error) {
 	var tlsConfig *tls.Config
 
 	if tlsEnabled {
