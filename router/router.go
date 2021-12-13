@@ -420,9 +420,9 @@ func (r *HttpRouter) logUserValues(ctx *fasthttp.RequestCtx,
 func (r *HttpRouter) logRequestHeaders(ctx *fasthttp.RequestCtx,
 	apmTransaction *apm.Transaction) {
 	ctx.Request.Header.VisitAll(func(key, value []byte) {
-		keyStr := string(key)
+		keyStr := strings.ToLower(string(key))
 
-		if keyStr == "cookies" || keyStr == "authorization" {
+		if keyStr == "cookies" || keyStr == "authorization" || keyStr == "x-forwarded-client-cert" {
 			return
 		}
 
