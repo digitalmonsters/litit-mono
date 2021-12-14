@@ -256,8 +256,8 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			nil)
 
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				apmTransaction.End()
+			if errors.Is(err, io.EOF) || errors.Is(err, context.Canceled) {
+				apmTransaction.Discard()
 				return err
 			}
 
@@ -360,17 +360,17 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 				return &backoff.PermanentError{Err: err}
 			}
 
-			if len(successfullyProcessedMessages) == len(messagesToProcess) {
+			allProcessedMessages := map[string]struct{}{}
+
+			for _, m := range successfullyProcessedMessages {
+				allProcessedMessages[extractKeyFromKafkaMessage(m)] = struct{}{}
+			}
+
+			if len(allProcessedMessages) == len(messagesToProcess) { // if unique key count equals to message count, then we think that its ok
 				return nil // awesome, most of the scenarios ends here, no errors
 			}
 
 			// else messages are processed partially
-
-			allProcessedMessages := map[string]bool{}
-
-			for _, m := range successfullyProcessedMessages {
-				allProcessedMessages[extractKeyFromKafkaMessage(m)] = true
-			}
 
 			nextMessagesToProcess := make([]kafka.Message, 0)
 
@@ -435,5 +435,5 @@ func (k *kafkaListener) commitMessages(messages []kafka.Message, apmTransaction 
 }
 
 func extractKeyFromKafkaMessage(message kafka.Message) string {
-	return fmt.Sprintf("%v_%v_%v", message.Topic, message.Partition, message.Offset)
+	return fmt.Sprintf("%v_%v", message.Partition, message.Offset)
 }
