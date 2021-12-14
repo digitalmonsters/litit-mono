@@ -15,6 +15,12 @@ type SimpleContent struct {
 	Width         int      `json:"width"`
 	Height        int      `json:"height"`
 	VideoId       string   `json:"video_id"`
+	SubCategoryId null.Int `json:"sub_category_id"`
+	Unlisted      bool     `json:"unlisted"`
+	Draft         bool     `json:"draft"`
+	Deleted       bool     `json:"deleted"`
+	AllowComments bool     `json:"allow_comments"`
+	Approved      bool     `json:"approved"`
 }
 
 //goland:noinspection ALL
