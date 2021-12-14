@@ -46,7 +46,7 @@ func main() {
 	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth))
 
 	commentNotifier := comment.NewNotifier(time.Duration(cfg.NotifierCommentConfig.PollTimeMs)*time.Millisecond,
-		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic))
+		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic), db)
 	contentCommentsNotifier := content_comments_counter.NewNotifier(time.Duration(cfg.NotifierContentCommentsCounterConfig.PollTimeMs)*time.Millisecond,
 		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierContentCommentsCounterConfig.KafkaTopic))
 	userCommentsNotifier := user_comments_counter.NewNotifier(time.Duration(cfg.NotifierUserCommentsCounterConfig.PollTimeMs)*time.Millisecond,

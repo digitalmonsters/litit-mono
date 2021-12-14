@@ -146,7 +146,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
+		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
@@ -226,7 +226,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			mappedResourceType = comments.ResourceTypeProfile
 		}
 
-		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
+		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")

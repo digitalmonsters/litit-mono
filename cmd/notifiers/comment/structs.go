@@ -17,6 +17,7 @@ type eventData struct {
 	Comment         string      `json:"comment"`
 	ContentId       null.Int    `json:"content_id"`
 	ParentId        null.Int    `json:"parent_id"`
+	ParentAuthorId  null.Int    `json:"parent_author_id"`
 	Width           null.Int    `json:"width"`
 	Height          null.Int    `json:"height"`
 	VideoId         null.String `json:"video_id"`

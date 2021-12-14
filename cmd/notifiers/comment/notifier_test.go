@@ -10,6 +10,7 @@ import (
 	"github.com/gocql/gocql"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
+	"gorm.io/gorm"
 	"os"
 	"reflect"
 	"testing"
@@ -22,6 +23,7 @@ var cluster *gocql.ClusterConfig
 var kafkaPublishedEvents []eventsourcing.IEventData
 var pollTime time.Duration
 var publisherMock KafkaEventPublisherMock
+var gormDb *gorm.DB
 
 type KafkaEventPublisherMock struct {
 }
@@ -49,6 +51,7 @@ func TestMain(m *testing.M) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		gormDb,
 	)
 
 	os.Exit(m.Run())
@@ -169,6 +172,7 @@ func testPerformance(b *testing.B) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		gormDb,
 	)
 
 	for i := int64(0); i < 100000; i++ {
