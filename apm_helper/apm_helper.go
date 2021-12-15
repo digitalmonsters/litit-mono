@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"strconv"
@@ -57,14 +56,24 @@ func CaptureApmError(err error, transaction *apm.Transaction) {
 		return
 	}
 
-	log.Err(err).Send() // temp
-
 	exx := apm.DefaultTracer.NewError(err)
 
 	AddApmData(transaction, "exception", err)
 
 	exx.SetTransaction(transaction)
 	exx.Context = transaction.Context
+
+	exx.Send()
+}
+
+func CaptureApmErrorSpan(err error, span *apm.Span) {
+	if span == nil || span.Dropped() || span.SpanData == nil {
+		return
+	}
+
+	exx := apm.DefaultTracer.NewError(err)
+
+	exx.SetSpan(span)
 
 	exx.Send()
 }
@@ -86,6 +95,26 @@ func AddApmLabel(transaction *apm.Transaction, key string, value interface{}) {
 
 	if transaction.TransactionData != nil {
 		transaction.Context.SetLabel(key, resultStr)
+	}
+}
+
+func AddSpanApmLabel(span *apm.Span, key string, value string) {
+	if span == nil || span.Dropped() || span.SpanData == nil {
+		return
+	}
+
+	resultStr := stringify(value)
+
+	if len(resultStr) == 0 {
+		return
+	}
+
+	if len(resultStr) > 1022 { // limit is 1024
+		resultStr = resultStr[:1022]
+	}
+
+	if span.SpanData != nil {
+		span.Context.SetLabel(key, resultStr)
 	}
 }
 
