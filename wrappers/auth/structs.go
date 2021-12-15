@@ -13,6 +13,8 @@ type AuthParseTokenResponseChan struct {
 }
 
 type AuthParseTokenResponse struct {
-	UserId  int64 `json:"user_id"`
-	Expired bool  `json:"expired"`
+	UserId       int64 `json:"user_id"`
+	Expired      bool  `json:"expired"`
+	IsAdmin      bool  `json:"is_admin"`
+	IsSuperAdmin bool  `json:"is_super_admin"`
 }
