@@ -30,7 +30,7 @@ type NotifierConfig struct {
 }
 
 type Settings struct {
-	HttpPort                             int                                   `json:"HttpPort" default:"5215"`
+	HttpPort                             int                                   `json:"HttpPort"`
 	Wrappers                             boilerplate.Wrappers                  `json:"Wrappers"`
 	Db                                   DbConfig                              `json:"Db"`
 	KafkaWriter                          *boilerplate.KafkaWriterConfiguration `json:"KafkaWriter"`
