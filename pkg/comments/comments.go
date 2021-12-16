@@ -127,7 +127,7 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	}
 
 	if result.Error != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.WithStack(result.Error)
 	}
 
 	var resultComments []*Comment
