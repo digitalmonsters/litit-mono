@@ -3,8 +3,9 @@ module github.com/digitalmonsters/comments
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.9.11
+	github.com/digitalmonsters/go-common v1.9.15
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
+	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/romanyx/polluter v1.2.2
@@ -13,8 +14,8 @@ require (
 	github.com/thoas/go-funk v0.9.1
 	github.com/valyala/fasthttp v1.31.0
 	go.elastic.co/apm v1.15.0
+	go.elastic.co/apm/module/apmgormv2 v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
-	gorm.io/driver/postgres v1.2.1
 	gorm.io/gorm v1.22.4
 )
 
@@ -33,7 +34,6 @@ require (
 	github.com/gammazero/deque v0.1.0 // indirect
 	github.com/gammazero/workerpool v1.1.2 // indirect
 	github.com/go-redis/redis v6.14.0+incompatible // indirect
-	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -58,6 +58,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/romanyx/jwalk v1.0.0 // indirect
@@ -65,9 +66,11 @@ require (
 	github.com/savsgio/gotils v0.0.0-20210921075833-21a6215cb0e4 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.4.0 // indirect
+	github.com/segmentio/kafka-go v0.4.20 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go-micro.dev/v4 v4.2.1 // indirect
 	go.elastic.co/apm/module/apmgocql v1.15.0 // indirect
+	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
@@ -82,6 +85,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	gorm.io/driver/mysql v1.0.2 // indirect
+	gorm.io/driver/postgres v1.2.1 // indirect
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06 // indirect
 )

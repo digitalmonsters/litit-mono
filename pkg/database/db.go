@@ -5,7 +5,7 @@ import (
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/rs/zerolog/log"
-	"gorm.io/driver/postgres"
+	postgres "go.elastic.co/apm/module/apmgormv2/driver/postgres"
 	"gorm.io/gorm"
 )
 

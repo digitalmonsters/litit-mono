@@ -2,6 +2,8 @@ package comments
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/comments/cmd/notifiers/content_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/user"
@@ -26,10 +28,10 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	if request.ResourceId > 0 {
 		switch resourceType {
 		case ResourceTypeContent:
-			query = query.Where("content_id = ?", request.ResourceId)
+			query = query.Where("content_id = ?", request.ResourceId).Where("parent_id is null")
 
 		case ResourceTypeProfile:
-			query = query.Where("profile_id = ?", request.ResourceId)
+			query = query.Where("profile_id = ?", request.ResourceId).Where("parent_id is null")
 		case ResourceTypeParentComment:
 			query = query.Where("parent_id = ?", request.ResourceId)
 		}
@@ -125,13 +127,13 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	}
 
 	if result.Error != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.WithStack(result.Error)
 	}
 
 	var resultComments []*Comment
 
 	for _, comment := range comments {
-		item := mapDbCommentToComment(comment)
+		item := MapDbCommentToComment(comment)
 		resultComments = append(resultComments, &item)
 	}
 
@@ -170,14 +172,49 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 }
 
 func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserWrapper,
-	apmTransaction *apm.Transaction) (*Comment, error) {
+	apmTransaction *apm.Transaction) (*CommentWithCursor, error) {
 	var comment database.Comment
 
 	if err := db.Take(&comment, commentId).Error; err != nil {
 		return nil, err
 	}
 
-	resultComment := mapDbCommentToComment(comment)
+	resourceType := ResourceTypeContent
+	resourceTypeString := "content_id"
+	resourceId := comment.ContentId.ValueOrZero()
+
+	if comment.ProfileId.Valid {
+		resourceType = ResourceTypeProfile
+		resourceId = comment.ProfileId.ValueOrZero()
+		resourceTypeString = "profile_id"
+	} else if comment.ParentId.Valid {
+		resourceType = ResourceTypeParentComment
+		resourceId = comment.ParentId.ValueOrZero()
+		resourceTypeString = "parent_id"
+	}
+
+	var index int64
+
+	indexQuery := fmt.Sprintf("select count(*) from comment where %v = ?", resourceTypeString)
+	if resourceType != ResourceTypeParentComment {
+		indexQuery += " and parent_id is null"
+	}
+	indexQuery += " and id >= ?;"
+
+	if err := db.Raw(indexQuery, resourceId, commentId).Scan(&index).Error; err != nil {
+		return nil, err
+	}
+
+	commentsResp, err := GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
+		ResourceId: resourceId,
+		Count:      index,
+		SortOrder:  "newest",
+	}, currentUserId, db, userWrapper, nil, resourceType)
+
+	if err != nil {
+		return nil, err
+	}
+	resultComment := MapDbCommentToComment(comment)
 
 	extenders := []chan error{
 		extendWithAuthor(userWrapper, apmTransaction, &resultComment),
@@ -190,7 +227,19 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 		}
 	}
 
-	return &resultComment, nil
+	cursor := ""
+
+	if commentsResp != nil {
+		cursor = commentsResp.Paging.After
+	}
+
+	return &CommentWithCursor{
+		SimpleComment: resultComment.SimpleComment,
+		Author:        resultComment.Author,
+		Content:       resultComment.Content,
+		Cursor:        cursor,
+		ParentId:      comment.ParentId,
+	}, nil
 }
 
 func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction,
@@ -204,13 +253,27 @@ func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *ap
 	return responseData.Data.Type, nil
 }
 
-func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64) error {
-	if err := tx.Exec("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) do update set comments = excluded.comments + 1", authorId).Error; err != nil {
+func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64,
+	userCommentsNotifier *user_comments_counter.Notifier, contentCommentsNotifier *content_comments_counter.Notifier) error {
+	var userStatsActionComments int64
+	var userStatsContentComments int64
+
+	if err := tx.Raw("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) "+
+		"do update set comments = user_stats_action.comments + 1 returning comments", authorId).Scan(&userStatsActionComments).Error; err != nil {
 		return err
 	}
 
-	if err := tx.Exec("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) do update set comments = excluded.comments + 1", contentId).Error; err != nil {
+	if err := tx.Raw("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) "+
+		"do update set comments = user_stats_content.comments + 1 returning comments", contentId).Scan(&userStatsContentComments).Error; err != nil {
 		return err
+	}
+
+	if userCommentsNotifier != nil {
+		userCommentsNotifier.Enqueue(authorId, userStatsActionComments)
+	}
+
+	if contentCommentsNotifier != nil {
+		contentCommentsNotifier.Enqueue(contentId, userStatsContentComments)
 	}
 
 	return nil

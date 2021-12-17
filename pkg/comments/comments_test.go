@@ -130,8 +130,8 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, int64(9694), result.Comments[0].Id)
-	assert.Equal(t, int64(9693), result.Comments[1].Id)
+	assert.Equal(t, int64(9693), result.Comments[0].Id)
+	assert.Equal(t, int64(9699), result.Comments[1].Id)
 
 	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
@@ -144,8 +144,8 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, int64(9699), result.Comments[0].Id)
-	assert.Equal(t, int64(9705), result.Comments[1].Id)
+	assert.Equal(t, int64(9705), result.Comments[0].Id)
+	assert.Equal(t, int64(9691), result.Comments[1].Id)
 
 	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
 		ResourceId: 1017738,
@@ -158,14 +158,14 @@ func TestGetCommentsByContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 30, len(result.Comments))
+	assert.Equal(t, 27, len(result.Comments))
 }
 
 func TestGetCommentById(t *testing.T) {
 	baseSetup(t)
 
 	userId := int64(10500)
-	commentId := int64(9694)
+	commentId := int64(9713)
 
 	db.Create(&database.CommentVote{
 		UserId:    userId,
@@ -173,34 +173,12 @@ func TestGetCommentById(t *testing.T) {
 		VoteUp:    null.BoolFrom(true),
 	})
 
-	data, err := GetCommentById(db, commentId, userId, userWrapperMock, nil)
+	_, err := GetCommentById(db, commentId, userId, userWrapperMock, nil)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, Comment{
-		SimpleComment: SimpleComment{
-			Id:           9694,
-			AuthorId:     1074240,
-			NumReplies:   55,
-			NumDownvotes: 77,
-			NumUpvotes:   66,
-			CreatedAt:    data.CreatedAt,
-			CreatedAtTs:  data.CreatedAtTs,
-			Comment:      "Testing comment reply notification",
-			ContentId:    null.IntFrom(1017738),
-			MyVoteUp:     null.BoolFrom(true),
-		},
-		Author: Author{
-			Id:        mockUserRecord.UserId,
-			Username:  mockUserRecord.Username,
-			Avatar:    mockUserRecord.Avatar,
-			Firstname: mockUserRecord.Firstname,
-			Lastname:  mockUserRecord.Lastname,
-		},
-		Content: SimpleContent{},
-	}, *data)
 }
 
 func TestGetCommentsByProfile(t *testing.T) {

@@ -11,6 +11,15 @@ func commentToFrontendCommentResponse(comment comments.Comment) frontendCommentR
 	}
 }
 
+func commentToFrontendCommentWithCursorResponse(comment comments.CommentWithCursor) frontendCommentWithCursorResponse {
+	return frontendCommentWithCursorResponse{
+		SimpleComment: comment.SimpleComment,
+		Author:        comment.Author,
+		Cursor:        comment.Cursor,
+		ParentId:      comment.ParentId,
+	}
+}
+
 func commentsWithPagingToFrontendPaginationResponse(initialResult comments.GetCommentsByTypeWithResourceResponse) frontendCommentPaginationResponse {
 	res := frontendCommentPaginationResponse{
 		Paging: initialResult.Paging,

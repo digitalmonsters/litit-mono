@@ -2,6 +2,9 @@ package comments
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/notifiers/content_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/common"
@@ -18,7 +21,9 @@ import (
 )
 
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrapper, contentWrapper content.IContentWrapper,
-	userBlockWrapper user_block.IUserBlockWrapper, apiDef map[string]swagger.ApiDescription) error {
+	userBlockWrapper user_block.IUserBlockWrapper, apiDef map[string]swagger.ApiDescription,
+	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
+	userCommentsNotifier *user_comments_counter.Notifier) error {
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -32,7 +37,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			userWrapper, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
-			return commentToFrontendCommentResponse(*comment), nil
+			return commentToFrontendCommentWithCursorResponse(*comment), nil
 		}
 	}, "/{comment_id}", http.MethodGet, common.AccessLevelPublic, false, false)); err != nil {
 		return err
@@ -62,7 +67,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		}
 
 		if _, err := comments.DeleteCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
-			contentWrapper, executionData.ApmTransaction); err != nil {
+			contentWrapper, executionData.ApmTransaction, commentNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return successResponse{
@@ -107,7 +112,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		}
 
 		if _, err := comments.UpdateCommentById(db.WithContext(executionData.Context), commentId,
-			updateRequest.Comment, executionData.UserId); err != nil {
+			updateRequest.Comment, executionData.UserId, contentWrapper, commentNotifier, executionData.ApmTransaction); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return successResponse{
@@ -141,7 +146,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
-		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
+		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
@@ -221,7 +226,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			mappedResourceType = comments.ResourceTypeProfile
 		}
 
-		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 10)
+		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
@@ -307,7 +312,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 
 		if resp, err := comments.CreateComment(db.WithContext(executionData.Context), contentId,
 			createRequest.Comment, createRequest.ParentId, contentWrapper, userBlockWrapper, executionData.ApmTransaction,
-			executionData.UserId); err != nil {
+			executionData.UserId, commentNotifier, contentCommentsNotifier, userCommentsNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return createCommentResponse{
@@ -352,7 +357,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 
 		if resp, err := comments.CreateCommentOnProfile(db.WithContext(executionData.Context), profileId,
 			createRequest.Comment, createRequest.ParentId, contentWrapper, userBlockWrapper, executionData.ApmTransaction,
-			executionData.UserId); err != nil {
+			executionData.UserId, commentNotifier, contentCommentsNotifier, userCommentsNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return createCommentOnProfileResponse{
