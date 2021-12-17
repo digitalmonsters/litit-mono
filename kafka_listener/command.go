@@ -1,23 +1,12 @@
-package structs
+package kafka_listener
 
 import (
-	"context"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
-	"go.elastic.co/apm"
 )
 
-type ExecutionData struct {
-	ApmTransaction *apm.Transaction
-	Context        context.Context
-}
-
-type ICommand interface {
-	Execute(executionData ExecutionData, request ...kafka.Message) (result interface{}, successfullyProcessed []kafka.Message, err error)
-	GetFancyName() string
-}
-
-type CommandFunc func(executionData ExecutionData, request ...kafka.Message) (interface{}, []kafka.Message, error)
+type CommandFunc func(executionData ExecutionData, request ...kafka.Message) []kafka.Message
 
 type Command struct {
 	fancyName string
@@ -42,10 +31,10 @@ func NewCommand(fancyName string, fn CommandFunc, forceLog bool) *Command {
 	return cmd
 }
 
-func (c *Command) Execute(executionData ExecutionData, request ...kafka.Message) (result interface{}, successfullyProcessed []kafka.Message, err error) {
+func (c *Command) Execute(executionData ExecutionData, request ...kafka.Message) (successfullyProcessed []kafka.Message) {
 	defer func() {
 		if er := recover(); er != nil {
-			result = nil
+			var err error
 
 			switch x := er.(type) {
 			case string:
@@ -56,6 +45,8 @@ func (c *Command) Execute(executionData ExecutionData, request ...kafka.Message)
 				// Fallback err (per specs, error strings should be lowercase w/o punctuation
 				err = errors.New("unknown panic")
 			}
+
+			apm_helper.CaptureApmError(err, executionData.ApmTransaction)
 		}
 	}()
 

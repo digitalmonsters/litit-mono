@@ -85,15 +85,17 @@ type RedisConfig struct {
 }
 
 type KafkaListenerConfiguration struct {
-	Hosts            string     `json:"Hosts"`
-	Topic            string     `json:"Topic"`
-	GroupId          string     `json:"GroupId"`
-	KafkaAuth        *KafkaAuth `json:"KafkaAuth"`
-	MinBytes         int        `json:"MinBytes"`
-	MaxBytes         int        `json:"MaxBytes"`
-	MaxBatchSize     int        `json:"MaxBatchSize"`
-	ListenerDuration int        `json:"ListenerDuration"`
-	Tls              bool       `json:"Tls"`
+	Hosts                           string     `json:"Hosts"`
+	Topic                           string     `json:"Topic"`
+	GroupId                         string     `json:"GroupId"`
+	KafkaAuth                       *KafkaAuth `json:"KafkaAuth"`
+	MinBytes                        int        `json:"MinBytes"`
+	MaxBytes                        int        `json:"MaxBytes"`
+	MaxBatchSize                    int        `json:"MaxBatchSize"`
+	ListenerDuration                int        `json:"ListenerDuration"`
+	Tls                             bool       `json:"Tls"`
+	MaxBackOffTimeMilliseconds      int        `json:"MaxBackOffTimeMilliseconds"`
+	BackOffTimeIntervalMilliseconds int        `json:"BackOffTimeIntervalMilliseconds"`
 }
 
 type KafkaWriterConfiguration struct {

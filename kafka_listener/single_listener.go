@@ -3,19 +3,17 @@ package kafka_listener
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/boilerplate"
-	"github.com/digitalmonsters/go-common/kafka_listener/internal"
-	"github.com/digitalmonsters/go-common/kafka_listener/structs"
 )
 
 type SingleListener struct {
-	listener *internal.KafkaListener
+	listener *kafkaListener
 }
 
-func NewSingleListener(configuration boilerplate.KafkaListenerConfiguration, command structs.ICommand,
-	ctx context.Context) *SingleListener {
+func NewSingleListener(configuration boilerplate.KafkaListenerConfiguration, command ICommand,
+	ctx context.Context) IKafkaListener {
 
 	var s = &SingleListener{
-		listener: internal.NewKafkaListener(configuration, ctx, command),
+		listener: newKafkaListener(configuration, ctx, command),
 	}
 
 	return s
@@ -31,4 +29,16 @@ func (s *SingleListener) Close() error {
 
 func (s *SingleListener) Listen() {
 	s.listener.ListenInBatches(1, 0)
+}
+
+func (s *SingleListener) ListenAsync() IKafkaListener {
+	go func() {
+		s.Listen()
+	}()
+
+	return s
+}
+
+func (s SingleListener) GetTopic() string {
+	return s.listener.GetTopic()
 }
