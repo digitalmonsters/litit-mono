@@ -49,6 +49,7 @@ type Wrappers struct {
 	Auth           WrapperConfig `json:"Auth"`
 	Content        WrapperConfig `json:"Content"`
 	Likes          WrapperConfig `json:"Likes"`
+	Follows        WrapperConfig `json:"Follows"`
 	Views          WrapperConfig `json:"Views"`
 	UserCategories WrapperConfig `json:"UserCategories"`
 	UserHashtags   WrapperConfig `json:"UserHashtags"`

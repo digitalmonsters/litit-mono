@@ -79,3 +79,43 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 
 	return respCh
 }
+
+func (w *LikeWrapper) GetLikeContentUserByContentIdsInternal(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan LikeContentUserByContentIdsResponseChan {
+	respCh := make(chan LikeContentUserByContentIdsResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetLikeContentUserByContentIdsInternal", LikeContentUserByContentIdsRequest{
+		UserId:     userId,
+		ContentIds: contentIds,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	w.baseWrapper.GetPool().Submit(func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := LikeContentUserByContentIdsResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := map[int64]bool{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:     error_codes.GenericMappingError,
+					Message:  err.Error(),
+					Data:     nil,
+					Hostname: w.baseWrapper.GetHostName(),
+				}
+			} else {
+				result.Data = data
+			}
+		}
+
+		respCh <- result
+	})
+
+	return respCh
+}
