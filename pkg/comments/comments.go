@@ -259,12 +259,12 @@ func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64,
 	var userStatsContentComments int64
 
 	if err := tx.Raw("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) "+
-		"do update set comments = excluded.comments + 1 returning comments", authorId).Scan(&userStatsActionComments).Error; err != nil {
+		"do update set comments = user_stats_action.comments + 1 returning comments", authorId).Scan(&userStatsActionComments).Error; err != nil {
 		return err
 	}
 
 	if err := tx.Raw("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) "+
-		"do update set comments = excluded.comments + 1 returning comments", contentId).Scan(&userStatsContentComments).Error; err != nil {
+		"do update set comments = user_stats_content.comments + 1 returning comments", contentId).Scan(&userStatsContentComments).Error; err != nil {
 		return err
 	}
 

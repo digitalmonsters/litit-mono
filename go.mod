@@ -14,8 +14,8 @@ require (
 	github.com/thoas/go-funk v0.9.1
 	github.com/valyala/fasthttp v1.31.0
 	go.elastic.co/apm v1.15.0
+	go.elastic.co/apm/module/apmgormv2 v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
-	gorm.io/driver/postgres v1.2.1
 	gorm.io/gorm v1.22.4
 )
 
@@ -70,6 +70,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go-micro.dev/v4 v4.2.1 // indirect
 	go.elastic.co/apm/module/apmgocql v1.15.0 // indirect
+	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
@@ -84,6 +85,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	gorm.io/driver/mysql v1.0.2 // indirect
+	gorm.io/driver/postgres v1.2.1 // indirect
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06 // indirect
 )
