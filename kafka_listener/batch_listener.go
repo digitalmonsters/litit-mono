@@ -3,6 +3,7 @@ package kafka_listener
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -15,6 +16,11 @@ type BatchListener struct {
 func NewBatchListener(configuration boilerplate.KafkaListenerConfiguration, command ICommand,
 	ctx context.Context, maxDuration time.Duration, maxBatchSize int,
 ) IKafkaListener {
+
+	if maxBatchSize == 0 {
+		maxBatchSize = 1
+		log.Warn().Msgf("max batch size is invalid for [%v] settings 1 as max batch", configuration.Topic)
+	}
 
 	var b = &BatchListener{
 		innerListener: newKafkaListener(configuration, ctx, command),
