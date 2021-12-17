@@ -35,7 +35,7 @@ func NewFollowWrapper(config boilerplate.WrapperConfig) IFollowWrapper {
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
-		serviceName:    "content",
+		serviceName:    "follows",
 	}
 }
 
