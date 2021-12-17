@@ -11,5 +11,5 @@ type FollowContentUserByContentAuthorIdsResponseChan struct {
 //goland:noinspection GoNameStartsWithPackageName
 type FollowContentUserByContentAuthorIdsRequest struct {
 	UserId           int64   `json:"user_id"`
-	ContentAuthorIds []int64 `json:"content_ids"`
+	ContentAuthorIds []int64 `json:"content_author_ids"`
 }
