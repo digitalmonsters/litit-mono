@@ -246,6 +246,7 @@ func (k *kafkaListener) Close() error {
 
 func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, reader *kafka.Reader) error {
 	messagePool := make([]kafka.Message, maxBatchSize)
+
 	messageIndex := 0
 	var successfullyProcessedMessages []kafka.Message
 
