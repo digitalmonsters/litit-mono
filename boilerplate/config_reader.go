@@ -92,8 +92,6 @@ type KafkaListenerConfiguration struct {
 	KafkaAuth                       *KafkaAuth `json:"KafkaAuth"`
 	MinBytes                        int        `json:"MinBytes"`
 	MaxBytes                        int        `json:"MaxBytes"`
-	MaxBatchSize                    int        `json:"MaxBatchSize"`
-	ListenerDuration                int        `json:"ListenerDuration"`
 	Tls                             bool       `json:"Tls"`
 	MaxBackOffTimeMilliseconds      int        `json:"MaxBackOffTimeMilliseconds"`
 	BackOffTimeIntervalMilliseconds int        `json:"BackOffTimeIntervalMilliseconds"`
