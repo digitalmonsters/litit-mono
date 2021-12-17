@@ -13,7 +13,7 @@ import (
 )
 
 type IFollowWrapper interface {
-	GetFollowContentUserByContentIdsInternal(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan FollowContentUserByContentIdsResponseChan
+	GetFollowContentUserByContentAuthorIdsInternal(contentAuthorIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan FollowContentUserByContentAuthorIdsResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -39,12 +39,12 @@ func NewFollowWrapper(config boilerplate.WrapperConfig) IFollowWrapper {
 	}
 }
 
-func (w *FollowWrapper) GetFollowContentUserByContentIdsInternal(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan FollowContentUserByContentIdsResponseChan {
-	respCh := make(chan FollowContentUserByContentIdsResponseChan, 2)
+func (w *FollowWrapper) GetFollowContentUserByContentAuthorIdsInternal(contentAuthorIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan FollowContentUserByContentAuthorIdsResponseChan {
+	respCh := make(chan FollowContentUserByContentAuthorIdsResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetFollowContentUserByContentIdsInternal", FollowContentUserByContentIdsRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetFollowContentUserByContentAuthorIdsInternal", FollowContentUserByContentAuthorIdsRequest{
 		UserId:     userId,
-		ContentIds: contentIds,
+		ContentAuthorIds: contentAuthorIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	w.baseWrapper.GetPool().Submit(func() {
@@ -54,7 +54,7 @@ func (w *FollowWrapper) GetFollowContentUserByContentIdsInternal(contentIds []in
 
 		resp := <-respChan
 
-		result := FollowContentUserByContentIdsResponseChan{
+		result := FollowContentUserByContentAuthorIdsResponseChan{
 			Error: resp.Error,
 		}
 
