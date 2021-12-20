@@ -35,7 +35,7 @@ func baseSetup(t *testing.T) {
 
 func TestVoteComment(t *testing.T) {
 	baseSetup(t)
-	vote, err := VoteComment(db, 9700, null.BoolFrom(true), 1, nil, nil, &content.ContentWrapperMock{})
+	vote, err := VoteComment(db, 9700, null.BoolFrom(true), 1, nil, nil, nil, &content.ContentWrapperMock{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestVoteComment(t *testing.T) {
 	a.Equal(int64(1), comment.NumUpvotes)
 	a.Equal(int64(0), comment.NumDownvotes)
 
-	_, err = VoteComment(db, 9700, null.BoolFrom(true), 1, nil, nil, &content.ContentWrapperMock{})
+	_, err = VoteComment(db, 9700, null.BoolFrom(true), 1, nil, nil, nil, &content.ContentWrapperMock{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func TestVoteComment(t *testing.T) {
 	a.Equal(int64(1), comment.NumUpvotes)
 	a.Equal(int64(0), comment.NumDownvotes)
 
-	_, err = VoteComment(db, 9700, null.BoolFrom(false), 1, nil, nil, &content.ContentWrapperMock{})
+	_, err = VoteComment(db, 9700, null.BoolFrom(false), 1, nil, nil, nil, &content.ContentWrapperMock{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestVoteComment(t *testing.T) {
 	a.Equal(int64(0), comment.NumUpvotes)
 	a.Equal(int64(1), comment.NumDownvotes)
 
-	_, err = VoteComment(db, 9700, null.NewBool(false, false), 1, nil, nil, &content.ContentWrapperMock{})
+	_, err = VoteComment(db, 9700, null.NewBool(false, false), 1, nil, nil, nil, &content.ContentWrapperMock{})
 	if err != nil {
 		t.Fatal(err)
 	}

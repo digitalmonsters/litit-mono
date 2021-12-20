@@ -2,9 +2,9 @@ package comments
 
 import (
 	"encoding/json"
-	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
-	"github.com/digitalmonsters/comments/cmd/notifiers/content_comments_counter"
-	"github.com/digitalmonsters/comments/cmd/notifiers/user_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/common"

@@ -37,6 +37,7 @@ type Settings struct {
 	NotifierCommentConfig                *NotifierConfig                       `json:"NotifierCommentConfig"`
 	NotifierContentCommentsCounterConfig *NotifierConfig                       `json:"NotifierContentCommentsCounterConfig"`
 	NotifierUserCommentsCounterConfig    *NotifierConfig                       `json:"NotifierUserCommentsCounterConfig"`
+	NotifierVoteConfig                   *NotifierConfig                       `json:"NotifierVoteConfig"`
 }
 
 var settings Settings

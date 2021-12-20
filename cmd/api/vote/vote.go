@@ -2,7 +2,8 @@ package vote
 
 import (
 	"encoding/json"
-	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
+	vote2 "github.com/digitalmonsters/comments/cmd/api/vote/notifiers/vote"
 	"github.com/digitalmonsters/comments/pkg/vote"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/common"
@@ -16,7 +17,7 @@ import (
 )
 
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.ApiDescription, commentNotifier *comment.Notifier,
-	contentWrapper content.IContentWrapper) error {
+	voteNotifier *vote2.Notifier, contentWrapper content.IContentWrapper) error {
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
@@ -32,7 +33,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 		}
 
 		if _, err := vote.VoteComment(db.WithContext(executionData.Context), commentId,
-			reportRequest.VoteUp, executionData.UserId, commentNotifier,
+			reportRequest.VoteUp, executionData.UserId, commentNotifier, voteNotifier,
 			executionData.ApmTransaction, contentWrapper); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
