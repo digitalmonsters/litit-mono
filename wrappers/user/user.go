@@ -86,10 +86,11 @@ func (w *UserWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction,
 
 			if err := json.Unmarshal(rpcInternalResponse.Result, &items); err != nil {
 				finalResponse.Error = &rpc.RpcError{
-					Code:     error_codes.GenericMappingError,
-					Message:  err.Error(),
-					Data:     nil,
-					Hostname: w.baseWrapper.GetHostName(),
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				for userId, item := range items {
@@ -136,10 +137,11 @@ func (w *UserWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Trans
 
 				if err := json.Unmarshal(rpcInternalResponse.Result, &item); err != nil {
 					finalResponse.Error = &rpc.RpcError{
-						Code:     error_codes.GenericMappingError,
-						Message:  err.Error(),
-						Data:     nil,
-						Hostname: w.baseWrapper.GetHostName(),
+						Code:        error_codes.GenericMappingError,
+						Message:     err.Error(),
+						Data:        nil,
+						Hostname:    w.baseWrapper.GetHostName(),
+						ServiceName: w.serviceName,
 					}
 				} else {
 					finalResponse.UserDetailRecord = item

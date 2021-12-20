@@ -63,10 +63,11 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 
 			if err := json.Unmarshal(resp.Result, &items); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:     error_codes.GenericMappingError,
-					Message:  err.Error(),
-					Data:     nil,
-					Hostname: w.baseWrapper.GetHostName(),
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Items = items

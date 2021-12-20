@@ -4,6 +4,15 @@ import (
 	"github.com/digitalmonsters/go-common/rpc"
 )
 
+type GetBlockListResponseChan struct {
+	Error *rpc.RpcError
+	Data  map[int64][]int64 `json:"data"`
+}
+
+type GetBlockListRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
 type GetUserBlockResponseChan struct {
 	Error *rpc.RpcError
 	Data  UserBlockData `json:"data"`

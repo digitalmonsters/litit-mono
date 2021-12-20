@@ -63,10 +63,11 @@ func (w *FollowWrapper) GetFollowContentUserByContentIdsInternal(contentIds []in
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:     error_codes.GenericMappingError,
-					Message:  err.Error(),
-					Data:     nil,
-					Hostname: w.baseWrapper.GetHostName(),
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Data = data
@@ -78,4 +79,3 @@ func (w *FollowWrapper) GetFollowContentUserByContentIdsInternal(contentIds []in
 
 	return respCh
 }
-
