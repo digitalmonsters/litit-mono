@@ -146,10 +146,11 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			if data, err := json.Marshal(request); err != nil {
 				genericResponse = &rpc.RpcResponseInternal{
 					Error: &rpc.RpcError{
-						Code:     error_codes.GenericMappingError,
-						Message:  err.Error(),
-						Data:     nil,
-						Hostname: b.hostName,
+						Code:        error_codes.GenericMappingError,
+						Message:     err.Error(),
+						Data:        nil,
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
 					},
 				}
 
@@ -175,9 +176,10 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 
 			genericResponse = &rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:     code,
-					Message:  fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
-					Hostname: b.hostName,
+					Code:        code,
+					Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
+					Hostname:    b.hostName,
+					ServiceName: externalServiceName,
 					Data: map[string]interface{}{
 						"raw_response": string(rawBodyResponse),
 					},
@@ -195,10 +197,11 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 
 		if err := json.Unmarshal(rawBodyResponse, genericResponse); err != nil {
 			genericResponse.Error = &rpc.RpcError{
-				Code:     error_codes.GenericMappingError,
-				Message:  err.Error(),
-				Data:     nil,
-				Hostname: b.hostName,
+				Code:        error_codes.GenericMappingError,
+				Message:     err.Error(),
+				Data:        nil,
+				Hostname:    b.hostName,
+				ServiceName: externalServiceName,
 			}
 
 			responseCh <- *genericResponse
@@ -253,10 +256,11 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 			if data, err := json.Marshal(request); err != nil {
 				genericResponse = &rpc.RpcResponseInternal{
 					Error: &rpc.RpcError{
-						Code:     error_codes.GenericMappingError,
-						Message:  err.Error(),
-						Data:     nil,
-						Hostname: b.hostName,
+						Code:        error_codes.GenericMappingError,
+						Message:     err.Error(),
+						Data:        nil,
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
 					},
 				}
 
@@ -283,9 +287,10 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 
 			genericResponse = &rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:     code,
-					Message:  fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
-					Hostname: b.hostName,
+					Code:        code,
+					Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
+					Hostname:    b.hostName,
+					ServiceName: externalServiceName,
 					Data: map[string]interface{}{
 						"raw_response": string(rawBodyResponse),
 					},
@@ -304,10 +309,11 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 
 		if err := json.Unmarshal(rawBodyResponse, nodeJsResponse); err != nil {
 			genericResponse.Error = &rpc.RpcError{
-				Code:     error_codes.GenericMappingError,
-				Message:  err.Error(),
-				Data:     nil,
-				Hostname: b.hostName,
+				Code:        error_codes.GenericMappingError,
+				Message:     err.Error(),
+				Data:        nil,
+				Hostname:    b.hostName,
+				ServiceName: externalServiceName,
 			}
 
 			responseCh <- *genericResponse
@@ -318,17 +324,19 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 		if !nodeJsResponse.Success {
 			if nodeJsResponse.Error != nil {
 				genericResponse.Error = &rpc.RpcError{
-					Code:     error_codes.GenericServerError,
-					Message:  errors.New(fmt.Sprintf("status: %v, error: %s", nodeJsResponse.Error.Status, nodeJsResponse.Error.Message)).Error(),
-					Data:     nil,
-					Hostname: b.hostName,
+					Code:        error_codes.GenericServerError,
+					Message:     errors.New(fmt.Sprintf("status: %v, error: %s", nodeJsResponse.Error.Status, nodeJsResponse.Error.Message)).Error(),
+					Data:        nil,
+					Hostname:    b.hostName,
+					ServiceName: externalServiceName,
 				}
 			} else {
 				genericResponse.Error = &rpc.RpcError{
-					Code:     error_codes.GenericServerError,
-					Message:  errors.New("unknown error").Error(),
-					Data:     nil,
-					Hostname: b.hostName,
+					Code:        error_codes.GenericServerError,
+					Message:     errors.New("unknown error").Error(),
+					Data:        nil,
+					Hostname:    b.hostName,
+					ServiceName: externalServiceName,
 				}
 			}
 

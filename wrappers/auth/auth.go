@@ -58,10 +58,11 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 		if len(rpcInternalResponse.Result) > 0 {
 			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Resp); err != nil {
 				finalResponse.Error = &rpc.RpcError{
-					Code:     error_codes.GenericMappingError,
-					Message:  err.Error(),
-					Data:     nil,
-					Hostname: w.baseWrapper.GetHostName(),
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			}
 		}

@@ -64,10 +64,11 @@ func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, 
 
 			if err := json.Unmarshal(resp.Result, &items); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:     error_codes.GenericMappingError,
-					Message:  err.Error(),
-					Data:     nil,
-					Hostname: w.baseWrapper.GetHostName(),
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Items = items
@@ -104,9 +105,10 @@ func (w *WatchWrapper) GetCategoriesByViews(limit int64, offset int64, apmTransa
 
 			if err := json.Unmarshal(resp.Result, &items); err != nil {
 				result.Error = &rpc.RpcError{
-					Code:    error_codes.GenericMappingError,
-					Message: err.Error(),
-					Data:    nil,
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Items = items
