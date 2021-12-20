@@ -14,6 +14,7 @@ import (
 
 type ILikeWrapper interface {
 	GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponseChan
+	GetInternalLikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalLikedByUserResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
