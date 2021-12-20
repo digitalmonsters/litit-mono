@@ -69,3 +69,8 @@ type ContentModel struct {
 	WatchCount       int64       `json:"watch_count"`
 	ShareCount       int64       `json:"shares_count"`
 }
+
+type ContentWithPointsCount struct {
+	ContentModel
+	PointsCount float64 `json:"points_count"`
+}

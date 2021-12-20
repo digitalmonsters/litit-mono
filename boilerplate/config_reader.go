@@ -57,6 +57,7 @@ type Wrappers struct {
 	UserBlock      WrapperConfig `json:"UserBlock"`
 	Categories     WrapperConfig `json:"Categories"`
 	Hashtags       WrapperConfig `json:"Hashtags"`
+	PointsCount    WrapperConfig `json:"PointsCount"`
 }
 
 type WrapperConfig struct {
