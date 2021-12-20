@@ -22,6 +22,7 @@ type Wrapper struct {
 
 type ICategoryWrapper interface {
 	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
+	GetAllCategories(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan GetAllCategoriesResponseChan
 }
 
 func NewCategoryWrapper(config boilerplate.WrapperConfig) ICategoryWrapper {
@@ -64,6 +65,47 @@ func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int
 
 		if len(resp.Result) > 0 {
 			data := &ResponseData{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Data = data
+			}
+		}
+
+		respCh <- result
+	})
+
+	return respCh
+}
+
+func (w *Wrapper) GetAllCategories(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan GetAllCategoriesResponseChan {
+	respCh := make(chan GetAllCategoriesResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetAllCategories", GetAllCategoriesRequest{
+		CategoryIds:    categoryIds,
+		IncludeDeleted: includeDeleted,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	w.baseWrapper.GetPool().Submit(func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetAllCategoriesResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := map[int64]AllCategoriesResponseItem{}
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{

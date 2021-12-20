@@ -38,3 +38,22 @@ type GetCategoryInternalRequest struct {
 	WithViews       null.Bool `json:"with_views"`
 	OmitCategoryIds []int64   `json:"omit_category_ids"`
 }
+
+type GetAllCategoriesRequest struct {
+	CategoryIds    []int64 `json:"category_ids"`
+	IncludeDeleted bool    `json:"include_deleted"`
+}
+
+type GetAllCategoriesResponseChan struct {
+	Error *rpc.RpcError                       `json:"error"`
+	Data  map[int64]AllCategoriesResponseItem `json:"data"`
+}
+
+type AllCategoriesResponseItem struct {
+	Id        int64    `json:"id"`
+	Name      string   `json:"name"`
+	Emojis    string   `json:"emojis"`
+	ParentId  null.Int `json:"parent_id"`
+	SortOrder int      `json:"sort_order"`
+	Status    Status   `json:"status"`
+}
