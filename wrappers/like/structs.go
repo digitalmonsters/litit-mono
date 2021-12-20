@@ -17,15 +17,14 @@ type GetLatestLikedByUserRequest struct {
 	UserIds      []int64 `json:"user_ids"`
 }
 
-
 //goland:noinspection GoNameStartsWithPackageName
-type LikeContentUserByContentIdsResponseChan struct {
+type GetInternalLikedByUserResponseChan struct {
 	Error *rpc.RpcError  `json:"error"`
-	Data  map[int64]bool `json:"follow_statuses"`
+	Data  map[int64]bool `json:"data"`
 }
 
 //goland:noinspection GoNameStartsWithPackageName
-type LikeContentUserByContentIdsRequest struct {
+type GetInternalLikedByUserRequest struct {
 	UserId     int64   `json:"user_id"`
 	ContentIds []int64 `json:"content_ids"`
 }

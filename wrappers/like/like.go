@@ -81,10 +81,10 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 	return respCh
 }
 
-func (w *LikeWrapper) GetLikeContentUserByContentIdsInternal(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan LikeContentUserByContentIdsResponseChan {
-	respCh := make(chan LikeContentUserByContentIdsResponseChan, 2)
+func (w *LikeWrapper) GetInternalLikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalLikedByUserResponseChan {
+	respCh := make(chan GetInternalLikedByUserResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetLikeContentUserByContentIdsInternal", LikeContentUserByContentIdsRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalLikedByUserBulk", GetInternalLikedByUserRequest{
 		UserId:     userId,
 		ContentIds: contentIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
@@ -96,7 +96,7 @@ func (w *LikeWrapper) GetLikeContentUserByContentIdsInternal(contentIds []int64,
 
 		resp := <-respChan
 
-		result := LikeContentUserByContentIdsResponseChan{
+		result := GetInternalLikedByUserResponseChan{
 			Error: resp.Error,
 		}
 
