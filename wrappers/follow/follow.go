@@ -13,7 +13,10 @@ import (
 )
 
 type IFollowWrapper interface {
-	GetFollowContentUserByContentIdsInternal(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan FollowContentUserByContentIdsResponseChan
+	GetUserFollowingRelationBulk(userId int64, requestUserIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserFollowingRelationBulkResponseChan
+	GetUserFollowingRelation(userId int64, requestUserId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserFollowingRelationResponseChan
+	GetUserFollowers(userId int64, pageState string, limit int, apmTransaction *apm.Transaction, forceLog bool) chan GetUserFollowersResponseChan
+	GetFollowersCount(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetFollowersCountResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -39,12 +42,12 @@ func NewFollowWrapper(config boilerplate.WrapperConfig) IFollowWrapper {
 	}
 }
 
-func (w *FollowWrapper) GetFollowContentUserByContentIdsInternal(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan FollowContentUserByContentIdsResponseChan {
-	respCh := make(chan FollowContentUserByContentIdsResponseChan, 2)
+func (w *FollowWrapper) GetUserFollowingRelationBulk(userId int64, requestUserIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserFollowingRelationBulkResponseChan {
+	respCh := make(chan GetUserFollowingRelationBulkResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetFollowContentUserByContentIdsInternal", FollowContentUserByContentIdsRequest{
-		UserId:     userId,
-		ContentIds: contentIds,
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalUserFollowRelationBulk", GetUserFollowingRelationBulkRequest{
+		UserId:         userId,
+		RequestUserIds: requestUserIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	w.baseWrapper.GetPool().Submit(func() {
@@ -54,12 +57,137 @@ func (w *FollowWrapper) GetFollowContentUserByContentIdsInternal(contentIds []in
 
 		resp := <-respChan
 
-		result := FollowContentUserByContentIdsResponseChan{
+		result := GetUserFollowingRelationBulkResponseChan{
 			Error: resp.Error,
 		}
 
 		if len(resp.Result) > 0 {
-			data := map[int64]bool{}
+			data := make(map[int64]UserFollowingRelationResponse)
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Data = data
+			}
+		}
+
+		respCh <- result
+	})
+
+	return respCh
+}
+
+func (w *FollowWrapper) GetUserFollowingRelation(userId int64, requestUserId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserFollowingRelationResponseChan {
+	respCh := make(chan GetUserFollowingRelationResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalUserFollowRelation", GetUserFollowingRelationRequest{
+		UserId:        userId,
+		RequestUserId: requestUserId,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	w.baseWrapper.GetPool().Submit(func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetUserFollowingRelationResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := UserFollowingRelationResponse{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.IsFollower = data.IsFollower
+				result.IsFollowing = data.IsFollowing
+			}
+		}
+
+		respCh <- result
+	})
+
+	return respCh
+}
+
+func (w *FollowWrapper) GetUserFollowers(userId int64, pageState string, limit int, apmTransaction *apm.Transaction, forceLog bool) chan GetUserFollowersResponseChan {
+	respCh := make(chan GetUserFollowersResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalGetUserFollowers", GetUserFollowersRequest{
+		UserId:    userId,
+		PageState: pageState,
+		Limit:     limit,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	w.baseWrapper.GetPool().Submit(func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetUserFollowersResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := GetUserFollowersResponse{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.FollowerIds = data.FollowerIds
+				result.PageState = data.PageState
+			}
+		}
+
+		respCh <- result
+	})
+
+	return respCh
+}
+
+func (w *FollowWrapper) GetFollowersCount(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetFollowersCountResponseChan {
+	respCh := make(chan GetFollowersCountResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalGetFollowersCount", GetFollowersCountRequest{
+		UserIds: userIds,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	w.baseWrapper.GetPool().Submit(func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetFollowersCountResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := make(map[int64]int64)
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{
