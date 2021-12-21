@@ -3,8 +3,8 @@ package follow
 import "github.com/digitalmonsters/go-common/rpc"
 
 type GetUserFollowingRelationBulkResponseChan struct {
-	Error *rpc.RpcError                           `json:"error"`
-	Data  map[int64]UserFollowingRelationResponse `json:"data"`
+	Error *rpc.RpcError          `json:"error"`
+	Data  map[int64]RelationData `json:"data"`
 }
 
 type GetUserFollowingRelationBulkRequest struct {
@@ -23,9 +23,13 @@ type GetUserFollowingRelationResponseChan struct {
 	IsFollowing bool          `json:"is_following"`
 }
 
-type UserFollowingRelationResponse struct {
+type RelationData struct {
 	IsFollower  bool `json:"is_follower"`
 	IsFollowing bool `json:"is_following"`
+}
+
+type UserFollowingRelationResponse struct {
+	Data map[int64]RelationData `json:"data"`
 }
 
 type GetUserFollowersRequest struct {

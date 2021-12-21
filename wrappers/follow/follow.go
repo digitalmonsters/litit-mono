@@ -62,9 +62,11 @@ func (w *FollowWrapper) GetUserFollowingRelationBulk(userId int64, requestUserId
 		}
 
 		if len(resp.Result) > 0 {
-			data := make(map[int64]UserFollowingRelationResponse)
+			res := UserFollowingRelationResponse{
+				Data: map[int64]RelationData{},
+			}
 
-			if err := json.Unmarshal(resp.Result, &data); err != nil {
+			if err := json.Unmarshal(resp.Result, &res); err != nil {
 				result.Error = &rpc.RpcError{
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
@@ -73,7 +75,7 @@ func (w *FollowWrapper) GetUserFollowingRelationBulk(userId int64, requestUserId
 					ServiceName: w.serviceName,
 				}
 			} else {
-				result.Data = data
+				result.Data = res.Data
 			}
 		}
 
@@ -103,7 +105,7 @@ func (w *FollowWrapper) GetUserFollowingRelation(userId int64, requestUserId int
 		}
 
 		if len(resp.Result) > 0 {
-			data := UserFollowingRelationResponse{}
+			data := RelationData{}
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{
