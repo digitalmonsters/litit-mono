@@ -4,8 +4,8 @@ import "github.com/digitalmonsters/go-common/rpc"
 
 //goland:noinspection GoNameStartsWithPackageName
 type GetUserHashtagSubscriptionStateResponseChan struct {
-	Error *rpc.RpcError  `json:"error"`
-	Data  map[int64]bool `json:"data"`
+	Error *rpc.RpcError   `json:"error"`
+	Data  map[string]bool `json:"data"`
 }
 
 //goland:noinspection GoNameStartsWithPackageName

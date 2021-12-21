@@ -42,7 +42,7 @@ func NewUserCategoryWrapper(config boilerplate.WrapperConfig) IUserCategoryWrapp
 func (w *UserCategoryWrapper) GetUserCategorySubscriptionStateBulk(categoryIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserCategorySubscriptionStateResponseChan {
 	respCh := make(chan GetUserCategorySubscriptionStateResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetUserCategorySubscriptionStateBulk", GetUserCategorySubscriptionStateBulkRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalUserCategorySubscriptionStateBulk", GetUserCategorySubscriptionStateBulkRequest{
 		UserId:      userId,
 		CategoryIds: categoryIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)

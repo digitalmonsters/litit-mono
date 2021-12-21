@@ -42,7 +42,7 @@ func NewUserCategoryWrapper(config boilerplate.WrapperConfig) IUserHashtagWrappe
 func (w *UserHashtagWrapper) GetUserHashtagSubscriptionStateBulk(hashtags []string, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserHashtagSubscriptionStateResponseChan {
 	respCh := make(chan GetUserHashtagSubscriptionStateResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetUserHashtagSubscriptionStateBulk", GetUserHashtagSubscriptionStateBulkRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalUserHashtagSubscriptionStateBulk", GetUserHashtagSubscriptionStateBulkRequest{
 		UserId:   userId,
 		Hashtags: hashtags,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
@@ -59,7 +59,7 @@ func (w *UserHashtagWrapper) GetUserHashtagSubscriptionStateBulk(hashtags []stri
 		}
 
 		if len(resp.Result) > 0 {
-			data := map[int64]bool{}
+			data := map[string]bool{}
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{
