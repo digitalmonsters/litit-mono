@@ -1,6 +1,7 @@
 package wrappers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -16,6 +17,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+)
+
+type ContentEncodingType string
+
+const (
+	ContentEncodingGzip    ContentEncodingType = "gzip"
+	ContentEncodingBrotli  ContentEncodingType = "br"
+	ContentEncodingDeflate ContentEncodingType = "deflate"
 )
 
 type BaseWrapper struct {
@@ -52,6 +61,38 @@ func GetBaseWrapper() *BaseWrapper {
 	}
 
 	return baseWrapper
+}
+
+func UnpackFastHttpBody(response *fasthttp.Response) ([]byte, error) {
+	encoding := response.Header.Peek("Content-Encoding")
+
+	if len(encoding) == 0 {
+		b := make([]byte, len(response.Body()))
+		copy(b, response.Body())
+
+		return b, nil
+	}
+
+	var err error
+	var buf bytes.Buffer
+	encodingStr := ContentEncodingType(strings.ToLower(string(encoding)))
+
+	switch encodingStr {
+	case ContentEncodingGzip:
+		_, err = fasthttp.WriteGunzip(&buf, response.Body())
+	case ContentEncodingBrotli:
+		_, err = fasthttp.WriteUnbrotli(&buf, response.Body())
+	case ContentEncodingDeflate:
+		_, err = fasthttp.WriteInflate(&buf, response.Body())
+	default:
+		err = errors.New(fmt.Sprintf("Cannot decompress response. Unknown Content-Encoding value: %s", encodingStr))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 func (b *BaseWrapper) GetHostName() string {
@@ -141,6 +182,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 
 		req.SetRequestURI(url)
 		req.Header.SetMethod("POST")
+		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli, ContentEncodingGzip, ContentEncodingDeflate))
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
@@ -172,16 +214,56 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 				code = error_codes.GenericTimeoutError
 			}
 
-			rawBodyResponse = resp.Body()
+			rawBodyResponse, err = UnpackFastHttpBody(resp)
 
+			if err != nil {
+				code = error_codes.GenericValidationError
+
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:        code,
+						Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
+						Data: map[string]interface{}{
+							"raw_response": err.Error(),
+						},
+					},
+				}
+
+				responseCh <- *genericResponse
+
+				return
+			} else {
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:        code,
+						Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
+						Data: map[string]interface{}{
+							"raw_response": string(rawBodyResponse),
+						},
+					},
+				}
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		rawBodyResponse, err := UnpackFastHttpBody(resp)
+
+		if err != nil {
 			genericResponse = &rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:        code,
-					Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
+					Code:        error_codes.GenericValidationError,
+					Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
 					Hostname:    b.hostName,
 					ServiceName: externalServiceName,
 					Data: map[string]interface{}{
-						"raw_response": string(rawBodyResponse),
+						"raw_response": err.Error(),
 					},
 				},
 			}
@@ -191,11 +273,9 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			return
 		}
 
-		rawBodyResponse = resp.Body()
-
 		genericResponse = &rpc.RpcResponseInternal{}
 
-		if err := json.Unmarshal(rawBodyResponse, genericResponse); err != nil {
+		if err = json.Unmarshal(rawBodyResponse, genericResponse); err != nil {
 			genericResponse.Error = &rpc.RpcError{
 				Code:        error_codes.GenericMappingError,
 				Message:     err.Error(),
@@ -251,6 +331,7 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 
 		req.SetRequestURI(url)
 		req.Header.SetMethod(httpMethod)
+		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli, ContentEncodingGzip, ContentEncodingDeflate))
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
@@ -283,16 +364,56 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 				code = error_codes.GenericTimeoutError
 			}
 
-			rawBodyResponse = resp.Body()
+			rawBodyResponse, err = UnpackFastHttpBody(resp)
 
+			if err != nil {
+				code = error_codes.GenericValidationError
+
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:        code,
+						Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
+						Data: map[string]interface{}{
+							"raw_response": err.Error(),
+						},
+					},
+				}
+
+				responseCh <- *genericResponse
+
+				return
+			} else {
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:        code,
+						Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
+						Data: map[string]interface{}{
+							"raw_response": string(rawBodyResponse),
+						},
+					},
+				}
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		rawBodyResponse, err := UnpackFastHttpBody(resp)
+
+		if err != nil {
 			genericResponse = &rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:        code,
-					Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
+					Code:        error_codes.GenericValidationError,
+					Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
 					Hostname:    b.hostName,
 					ServiceName: externalServiceName,
 					Data: map[string]interface{}{
-						"raw_response": string(rawBodyResponse),
+						"raw_response": err.Error(),
 					},
 				},
 			}
@@ -301,8 +422,6 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 
 			return
 		}
-
-		rawBodyResponse = resp.Body()
 
 		nodeJsResponse := &nodejs.Response{}
 		genericResponse = &rpc.RpcResponseInternal{}
