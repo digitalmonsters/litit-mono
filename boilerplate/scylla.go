@@ -22,7 +22,6 @@ func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
 	}
 
 	scyllaCluster.Timeout = timeout
-	scyllaCluster.ConnectTimeout = timeout
 	scyllaCluster.MaxPreparedStmts = config.MaxPreparedStmts
 	scyllaCluster.NumConns = config.NumConns
 	scyllaCluster.MaxRoutingKeyInfo = config.MaxRoutingKeyInfo
