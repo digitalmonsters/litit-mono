@@ -15,7 +15,7 @@ import (
 type ILikeWrapper interface {
 	GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponseChan
 	GetInternalLikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalLikedByUserResponseChan
-	GetInternalUserLikes(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan
+	GetInternalUserLikes(userId int64, size int, page []byte, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -124,11 +124,13 @@ func (w *LikeWrapper) GetInternalLikedByUser(contentIds []int64, userId int64, a
 	return respCh
 }
 
-func (w *LikeWrapper) GetInternalUserLikes(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan {
+func (w *LikeWrapper) GetInternalUserLikes(userId int64, size int, page []byte, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan {
 	respCh := make(chan GetInternalUserLikesResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalUserLikes", GetInternalUserLikesRequest{
 		UserId: userId,
+		Size:   size,
+		Page:   page,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	w.baseWrapper.GetPool().Submit(func() {

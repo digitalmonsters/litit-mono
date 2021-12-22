@@ -36,7 +36,9 @@ type GetInternalUserLikesResponseChan struct {
 }
 
 type GetInternalUserLikesRequest struct {
-	UserId int64 `json:"user_id"`
+	UserId int64  `json:"user_id"`
+	Size   int    `json:"size"`
+	Page   []byte `json:"page"`
 }
 
 type getInternalUserLikesResponse struct {
