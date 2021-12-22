@@ -23,9 +23,10 @@ func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topic stri
 	h := &KafkaEventPublisher{
 		cfg: cfg,
 		writer: &kafka.Writer{
-			Addr:     kafka.TCP(boilerplate.SplitHostsToSlice(cfg.Hosts)...),
-			Topic:    topic,
-			Balancer: &kafka.Hash{},
+			Addr:         kafka.TCP(boilerplate.SplitHostsToSlice(cfg.Hosts)...),
+			Topic:        topic,
+			Balancer:     &kafka.Hash{},
+			BatchTimeout: 10 * time.Millisecond,
 		},
 		topic:         topic,
 		publisherType: PublisherTypeKafka,
