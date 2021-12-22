@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/comments/cmd/api/comments"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/cmd/api/report"
 	"github.com/digitalmonsters/comments/cmd/api/vote"
-	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
-	"github.com/digitalmonsters/comments/cmd/notifiers/content_comments_counter"
-	"github.com/digitalmonsters/comments/cmd/notifiers/user_comments_counter"
+	vote2 "github.com/digitalmonsters/comments/cmd/api/vote/notifiers/vote"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -51,6 +52,8 @@ func main() {
 		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierContentCommentsCounterConfig.KafkaTopic))
 	userCommentsNotifier := user_comments_counter.NewNotifier(time.Duration(cfg.NotifierUserCommentsCounterConfig.PollTimeMs)*time.Millisecond,
 		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierUserCommentsCounterConfig.KafkaTopic))
+	voteNotifier := vote2.NewNotifier(time.Duration(cfg.NotifierVoteConfig.PollTimeMs)*time.Millisecond,
+		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierVoteConfig.KafkaTopic))
 
 	if err := comments.Init(httpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
 		contentCommentsNotifier, userCommentsNotifier); err != nil {
@@ -61,7 +64,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := vote.Init(httpRouter, db, apiDef, commentNotifier, contentWrapper); err != nil {
+	if err := vote.Init(httpRouter, db, apiDef, commentNotifier, voteNotifier, contentWrapper); err != nil {
 		panic(err)
 	}
 

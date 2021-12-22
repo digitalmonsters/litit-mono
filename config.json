@@ -28,6 +28,11 @@
     "PollTimeMs": 2000,
     "WorkerPoolSize": 128
   },
+  "NotifierVoteConfig": {
+    "KafkaTopic": "dev.comment_votes",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
   "Wrappers": {
     "Content": {
       "ApiUrl": ""

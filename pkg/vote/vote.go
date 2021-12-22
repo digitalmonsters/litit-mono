@@ -1,7 +1,8 @@
 package vote
 
 import (
-	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/api/vote/notifiers/vote"
 	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -14,7 +15,8 @@ import (
 )
 
 func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId int64, commentNotifier *comment.Notifier,
-	apmTransaction *apm.Transaction, contentWrapper content.IContentWrapper) (*database.CommentVote, error) {
+	voteNotifier *vote.Notifier, apmTransaction *apm.Transaction,
+	contentWrapper content.IContentWrapper) (*database.CommentVote, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
@@ -105,6 +107,7 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 		}
 
 		commentNotifier.Enqueue(commentToVote, mapped.Content, eventType)
+		voteNotifier.Enqueue(commentToVote.Id, currentUserId, voteUp, commentToVote.ParentId, commentToVote.AuthorId)
 	}
 
 	return &previousVote, nil

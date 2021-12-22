@@ -1,9 +1,9 @@
 package comments
 
 import (
-	"github.com/digitalmonsters/comments/cmd/notifiers/comment"
-	"github.com/digitalmonsters/comments/cmd/notifiers/content_comments_counter"
-	"github.com/digitalmonsters/comments/cmd/notifiers/user_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
+	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/content"
