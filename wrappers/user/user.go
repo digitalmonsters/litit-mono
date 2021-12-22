@@ -18,6 +18,7 @@ import (
 type IUserWrapper interface {
 	GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
 	GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
+	GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -164,4 +165,43 @@ func (w *UserWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Trans
 	responseChan <- response
 
 	return responseChan
+}
+
+func (w *UserWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan {
+	resChan := make(chan GetProfileBulkResponseChan, 2)
+
+	w.baseWrapper.GetPool().Submit(func() {
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(fmt.Sprintf("%v/mobile/v1/profile/getProfiles", w.apiUrl),
+			"POST",
+			"application/json",
+			"get profiles bulk",
+			GetProfileBulkRequest{
+				UserIds:       userIds,
+				CurrentUserId: currentUserId,
+			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+		finalResponse := GetProfileBulkResponseChan{
+			Error: rpcInternalResponse.Error,
+		}
+
+		if finalResponse.Error == nil && len(rpcInternalResponse.Result) > 0 {
+			resp := map[int64]UserDetailRecord{}
+
+			if err := json.Unmarshal(rpcInternalResponse.Result, &resp); err != nil {
+				finalResponse.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				finalResponse.Items = resp
+			}
+		}
+
+		resChan <- finalResponse
+	})
+
+	return resChan
 }

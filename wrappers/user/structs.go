@@ -35,6 +35,16 @@ type GetUsersRequest struct {
 	UserIds []int64 `json:"user_ids"`
 }
 
+type GetProfileBulkRequest struct {
+	CurrentUserId int64   `json:"request_user_id"`
+	UserIds       []int64 `json:"user_ids"`
+}
+
+type GetProfileBulkResponseChan struct {
+	Error *rpc.RpcError
+	Items map[int64]UserDetailRecord `json:"data"`
+}
+
 type UserDetailRecord struct {
 	Id          int64       `json:"id"`
 	Username    null.String `json:"username"`
