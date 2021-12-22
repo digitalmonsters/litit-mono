@@ -60,6 +60,9 @@ func testInsert(t *testing.T) {
 			CommentId:       1,
 			ParentId:        null.Int{},
 			CommentAuthorId: 1,
+			Comment:         "1",
+			ContentId:       null.IntFrom(1),
+			ProfileId:       null.Int{},
 		},
 		"2_2": {
 			UserId:          2,
@@ -67,6 +70,9 @@ func testInsert(t *testing.T) {
 			CommentId:       2,
 			ParentId:        null.Int{},
 			CommentAuthorId: 2,
+			Comment:         "2",
+			ContentId:       null.IntFrom(2),
+			ProfileId:       null.Int{},
 		},
 		"3_3": {
 			UserId:          3,
@@ -74,6 +80,9 @@ func testInsert(t *testing.T) {
 			CommentId:       3,
 			ParentId:        null.Int{},
 			CommentAuthorId: 3,
+			Comment:         "3",
+			ContentId:       null.IntFrom(3),
+			ProfileId:       null.Int{},
 		},
 		"4_4": {
 			UserId:          4,
@@ -81,6 +90,9 @@ func testInsert(t *testing.T) {
 			CommentId:       4,
 			ParentId:        null.Int{},
 			CommentAuthorId: 4,
+			Comment:         "4",
+			ContentId:       null.IntFrom(4),
+			ProfileId:       null.Int{},
 		},
 		"5_5": {
 			UserId:          5,
@@ -88,11 +100,15 @@ func testInsert(t *testing.T) {
 			CommentId:       5,
 			ParentId:        null.Int{},
 			CommentAuthorId: 5,
+			Comment:         "5",
+			ContentId:       null.IntFrom(5),
+			ProfileId:       null.Int{},
 		},
 	}
 
 	for _, event := range dict {
-		service.Enqueue(event.CommentId, event.UserId, event.Upvote, event.ParentId, event.CommentAuthorId)
+		service.Enqueue(event.CommentId, event.UserId, event.Upvote, event.ParentId, event.CommentAuthorId,
+			event.Comment, event.ContentId, event.ProfileId)
 	}
 
 	service.Flush()
@@ -141,7 +157,7 @@ func testPerformance(b *testing.B) {
 	)
 
 	for i := int64(0); i < 100000; i++ {
-		s.Enqueue(i, i, null.BoolFrom(true), null.IntFrom(i), i)
+		s.Enqueue(i, i, null.BoolFrom(true), null.IntFrom(i), i, fmt.Sprint(i), null.IntFrom(i), null.IntFrom(i))
 	}
 
 	b.ResetTimer()

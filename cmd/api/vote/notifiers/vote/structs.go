@@ -11,6 +11,9 @@ type eventData struct {
 	CommentId       int64     `json:"comment_id"`
 	ParentId        null.Int  `json:"parent_id"`
 	CommentAuthorId int64     `json:"comment_author_id"`
+	Comment         string    `json:"comment"`
+	ContentId       null.Int  `json:"content_id"`
+	ProfileId       null.Int  `json:"profile_id"`
 }
 
 func (l eventData) GetPublishKey() string {

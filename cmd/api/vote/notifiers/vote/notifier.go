@@ -32,7 +32,8 @@ func NewNotifier(pollTime time.Duration, ctx context.Context,
 	return n
 }
 
-func (s *Notifier) Enqueue(commentId int64, userId int64, voteUp null.Bool, parentId null.Int, commentAuthorId int64) {
+func (s *Notifier) Enqueue(commentId int64, userId int64, voteUp null.Bool, parentId null.Int, commentAuthorId int64,
+	comment string, contentId null.Int, profileId null.Int) {
 	s.mutex.Lock()
 
 	data := eventData{
@@ -41,6 +42,9 @@ func (s *Notifier) Enqueue(commentId int64, userId int64, voteUp null.Bool, pare
 		Upvote:          voteUp,
 		ParentId:        parentId,
 		CommentAuthorId: commentAuthorId,
+		Comment:         comment,
+		ContentId:       contentId,
+		ProfileId:       profileId,
 	}
 
 	s.queueMap[data.GetPublishKey()] = data

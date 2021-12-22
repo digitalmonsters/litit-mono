@@ -107,7 +107,12 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 		}
 
 		commentNotifier.Enqueue(commentToVote, mapped.Content, eventType)
-		voteNotifier.Enqueue(commentToVote.Id, currentUserId, voteUp, commentToVote.ParentId, commentToVote.AuthorId)
+
+	}
+
+	if voteNotifier != nil {
+		voteNotifier.Enqueue(commentToVote.Id, currentUserId, voteUp, commentToVote.ParentId, commentToVote.AuthorId,
+			commentToVote.Comment, commentToVote.ContentId, commentToVote.ProfileId)
 	}
 
 	return &previousVote, nil
