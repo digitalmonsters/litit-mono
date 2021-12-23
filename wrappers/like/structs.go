@@ -28,3 +28,19 @@ type GetInternalLikedByUserRequest struct {
 	UserId     int64   `json:"user_id"`
 	ContentIds []int64 `json:"content_ids"`
 }
+
+//goland:noinspection GoNameStartsWithPackageName
+type GetInternalUserLikesResponseChan struct {
+	Error           *rpc.RpcError `json:"error"`
+	LikedContentIds []int64       `json:"liked_content_ids"`
+}
+
+type GetInternalUserLikesRequest struct {
+	UserId    int64  `json:"user_id"`
+	Size      int    `json:"size"`
+	PageState string `json:"page_state"`
+}
+
+type getInternalUserLikesResponse struct {
+	ContentIds []int64 `json:"content_ids"`
+}
