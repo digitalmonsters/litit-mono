@@ -2,12 +2,11 @@ package boilerplate
 
 import (
 	"github.com/gocql/gocql"
-	"go.elastic.co/apm/module/apmgocql"
 	"time"
 )
 
 func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
-	observer := apmgocql.NewObserver()
+	//observer := apmgocql.NewObserver()
 	scyllaCluster := gocql.NewCluster(SplitHostsToSlice(config.Hosts)...)
 	scyllaCluster.Keyspace = config.Keyspace
 
@@ -27,8 +26,8 @@ func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
 	scyllaCluster.MaxRoutingKeyInfo = config.MaxRoutingKeyInfo
 	scyllaCluster.PageSize = config.PageSize
 
-	scyllaCluster.QueryObserver = observer
-	scyllaCluster.BatchObserver = observer
+	//scyllaCluster.QueryObserver = observer
+	//scyllaCluster.BatchObserver = observer
 
 	return scyllaCluster
 }

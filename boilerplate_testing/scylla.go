@@ -137,7 +137,7 @@ func getScyllaClusterInternal(config boilerplate.ScyllaConfiguration) (*gocql.Cl
 	}
 
 	newCluster.Timeout = timeout
-	newCluster.ConnectTimeout = timeout
+	//newCluster.ConnectTimeout = timeout
 	newCluster.Authenticator = gocql.PasswordAuthenticator{
 		Username: config.UserName,
 		Password: config.Password,

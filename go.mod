@@ -33,7 +33,6 @@ require (
 	github.com/valyala/fasthttp v1.31.0
 	go-micro.dev/v4 v4.2.1
 	go.elastic.co/apm v1.15.0
-	go.elastic.co/apm/module/apmgocql v1.15.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
