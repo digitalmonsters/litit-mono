@@ -31,7 +31,7 @@ type HttpRouter struct {
 	ready        bool
 }
 
-func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
+func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper, healthContext context.Context) *HttpRouter {
 	h := &HttpRouter{
 		realRouter:   fastRouter.New(),
 		executor:     NewCommandExecutor(),
@@ -50,6 +50,7 @@ func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
 
 	h.prepareRpcEndpoint(rpcEndpointPath)
 
+	h.registerHttpHealthCheck(healthContext)
 	h.registerHttpReadinessCheck()
 
 	return h
@@ -472,7 +473,7 @@ func (r *HttpRouter) GetRestRegisteredCommands() []RestCommand {
 	return commands
 }
 
-func (r *HttpRouter) RegisterHttpHealthCheck(healthContext context.Context) {
+func (r *HttpRouter) registerHttpHealthCheck(healthContext context.Context) {
 	r.GET("/health", func(ctx *fasthttp.RequestCtx) {
 		if healthContext.Err() == nil {
 			ctx.Response.SetStatusCode(200)
@@ -494,4 +495,8 @@ func (r *HttpRouter) registerHttpReadinessCheck() {
 
 func (r *HttpRouter) Ready() {
 	r.ready = true
+}
+
+func (r *HttpRouter) NotReady() {
+	r.ready = false
 }
