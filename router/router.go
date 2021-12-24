@@ -467,3 +467,23 @@ func (r *HttpRouter) GetRestRegisteredCommands() []RestCommand {
 
 	return commands
 }
+
+func (r *HttpRouter) RegisterHttpHealthCheck(healthContext context.Context) {
+	r.GET("/health", func(ctx *fasthttp.RequestCtx) {
+		if healthContext.Err() == nil {
+			ctx.Response.SetStatusCode(200)
+		} else {
+			ctx.Response.SetStatusCode(500)
+		}
+	})
+}
+
+func (r *HttpRouter) RegisterHttpReadinessCheck(readinessContext context.Context) {
+	r.GET("/readiness", func(ctx *fasthttp.RequestCtx) {
+		if readinessContext.Err() == nil {
+			ctx.Response.SetStatusCode(200)
+		} else {
+			ctx.Response.SetStatusCode(500)
+		}
+	})
+}

@@ -1,10 +1,7 @@
 package shutdown
 
 import (
-	"context"
 	"github.com/digitalmonsters/go-common/boilerplate"
-	"github.com/digitalmonsters/go-common/router"
-	"github.com/valyala/fasthttp"
 	"os"
 	"strconv"
 	"time"
@@ -38,14 +35,4 @@ func GetGracefulSleepDuration() int {
 	}
 
 	return 20
-}
-
-func RegisterHttpHealthCheck(healthContext context.Context, httpRouter *router.HttpRouter) {
-	httpRouter.GET("/health", func(ctx *fasthttp.RequestCtx) {
-		if healthContext.Err() == nil {
-			ctx.Response.SetStatusCode(200)
-		} else {
-			ctx.Response.SetStatusCode(500)
-		}
-	})
 }
