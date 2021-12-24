@@ -95,11 +95,11 @@ func ensureKeyspaceExists(config boilerplate.ScyllaConfiguration, targetKeyspace
 
 	_, ses, err := getScyllaClusterInternal(config)
 
-	defer ses.Close()
-
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	defer ses.Close()
 
 	iter := ses.Query(fmt.Sprintf("SELECT keyspace_name FROM system_schema.keyspaces WHERE keyspace_name='%v'", targetKeyspace)).Iter()
 
