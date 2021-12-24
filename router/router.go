@@ -28,14 +28,16 @@ type HttpRouter struct {
 	restCommands map[string]*RestCommand
 	isProd       bool
 	authWrapper  auth.IAuthWrapper
+	ready        bool
 }
 
-func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
+func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper, healthContext context.Context) *HttpRouter {
 	h := &HttpRouter{
 		realRouter:   fastRouter.New(),
 		executor:     NewCommandExecutor(),
 		authWrapper:  wrapper,
 		restCommands: map[string]*RestCommand{},
+		ready:        false,
 	}
 
 	if hostname, _ := os.Hostname(); len(hostname) > 0 {
@@ -47,6 +49,9 @@ func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
 	}
 
 	h.prepareRpcEndpoint(rpcEndpointPath)
+
+	h.registerHttpHealthCheck(healthContext)
+	h.registerHttpReadinessCheck()
 
 	return h
 }
@@ -466,4 +471,32 @@ func (r *HttpRouter) GetRestRegisteredCommands() []RestCommand {
 	}
 
 	return commands
+}
+
+func (r *HttpRouter) registerHttpHealthCheck(healthContext context.Context) {
+	r.GET("/health", func(ctx *fasthttp.RequestCtx) {
+		if healthContext.Err() == nil {
+			ctx.Response.SetStatusCode(200)
+		} else {
+			ctx.Response.SetStatusCode(500)
+		}
+	})
+}
+
+func (r *HttpRouter) registerHttpReadinessCheck() {
+	r.GET("/readiness", func(ctx *fasthttp.RequestCtx) {
+		if r.ready {
+			ctx.Response.SetStatusCode(200)
+		} else {
+			ctx.Response.SetStatusCode(500)
+		}
+	})
+}
+
+func (r *HttpRouter) Ready() {
+	r.ready = true
+}
+
+func (r *HttpRouter) NotReady() {
+	r.ready = false
 }
