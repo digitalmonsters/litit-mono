@@ -79,3 +79,44 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 
 	return respCh
 }
+
+func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, apmTransaction *apm.Transaction, forceLog bool) chan GetTopNotFollowingUsersResponseChan {
+	respCh := make(chan GetTopNotFollowingUsersResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetTopNotFollowingUsers", GetTopNotFollowingUsersRequest{
+		UserId: userId,
+		Limit:  limit,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	w.baseWrapper.GetPool().Submit(func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetTopNotFollowingUsersResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			var items []int64
+
+			if err := json.Unmarshal(resp.Result, &items); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Items = items
+			}
+		}
+
+		respCh <- result
+	})
+
+	return respCh
+}

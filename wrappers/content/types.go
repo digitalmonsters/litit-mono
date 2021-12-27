@@ -23,6 +23,17 @@ type SimpleContent struct {
 	Approved      bool     `json:"approved"`
 }
 
+type GetTopNotFollowingUsersRequest struct {
+	UserId int64 `json:"user_id"`
+	Limit  int   `json:"limit"`
+}
+
+//goland:noinspection ALL
+type GetTopNotFollowingUsersResponseChan struct {
+	Error *rpc.RpcError `json:"error"`
+	Items []int64       `json:"items"`
+}
+
 //goland:noinspection ALL
 type ContentGetInternalResponseChan struct {
 	Error *rpc.RpcError           `json:"error"`
