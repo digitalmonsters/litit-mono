@@ -114,6 +114,15 @@ func (b *BaseWrapper) SendRequestWithRpcResponseFromNodeJsService(url string, ht
 	)
 }
 
+func (b *BaseWrapper) SendRequestWithRpcResponseFromAnyService(url string, httpMethod string, contentType string,
+	methodName string, request interface{}, timeout time.Duration, apmTransaction *apm.Transaction,
+	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+
+	return b.GetRpcResponseFromAnyService(
+		url, request, httpMethod, contentType, methodName, timeout, apmTransaction, externalServiceName, forceLog,
+	)
+}
+
 func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request interface{}, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	name := strings.ToLower(methodName)
@@ -465,6 +474,159 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 		}
 
 		genericResponse.Result = nodeJsResponse.Data
+
+		responseCh <- *genericResponse
+	})
+
+	return responseCh
+}
+
+func (b *BaseWrapper) GetRpcResponseFromAnyService(url string, request interface{}, httpMethod string,
+	contentType string, methodName string, timeout time.Duration, apmTransaction *apm.Transaction,
+	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+	responseCh := make(chan rpc.RpcResponseInternal, 2)
+
+	b.workerPool.Submit(func() {
+		defer func() {
+			close(responseCh)
+		}()
+
+		var rawBodyRequest []byte
+		var rawBodyResponse []byte
+		var genericResponse *rpc.RpcResponseInternal
+
+		var rqSpan *apm.Span
+
+		if apmTransaction != nil {
+			rqSpan = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
+				"rpc_internal", nil)
+		}
+
+		req := fasthttp.AcquireRequest()
+		defer fasthttp.ReleaseRequest(req)
+		resp := fasthttp.AcquireResponse()
+		defer fasthttp.ReleaseResponse(resp)
+
+		defer func() {
+			if rqSpan != nil && !rqSpan.Dropped() {
+				rqSpan.Context.SetHTTPStatusCode(resp.StatusCode())
+			}
+
+			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqSpan, forceLog)
+		}()
+
+		req.SetRequestURI(url)
+		req.Header.SetMethod(httpMethod)
+		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli, ContentEncodingGzip, ContentEncodingDeflate))
+
+		if request != nil {
+			if data, err := json.Marshal(request); err != nil {
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:        error_codes.GenericMappingError,
+						Message:     err.Error(),
+						Data:        nil,
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
+					},
+				}
+
+				responseCh <- *genericResponse
+				return
+			} else {
+				rawBodyRequest = data
+
+				req.Header.SetContentType(contentType)
+				req.SetBodyRaw(rawBodyRequest)
+			}
+		}
+
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
+
+		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
+			code := error_codes.GenericServerError
+
+			if errors.Is(err, fasthttp.ErrTimeout) {
+				code = error_codes.GenericTimeoutError
+			}
+
+			rawBodyResponse, err = UnpackFastHttpBody(resp)
+
+			if err != nil {
+				code = error_codes.GenericValidationError
+
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:        code,
+						Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
+						Data: map[string]interface{}{
+							"raw_response": err.Error(),
+						},
+					},
+				}
+
+				responseCh <- *genericResponse
+
+				return
+			} else {
+				genericResponse = &rpc.RpcResponseInternal{
+					Error: &rpc.RpcError{
+						Code:        code,
+						Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
+						Hostname:    b.hostName,
+						ServiceName: externalServiceName,
+						Data: map[string]interface{}{
+							"raw_response": string(rawBodyResponse),
+						},
+					},
+				}
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		rawBodyResponse, err := UnpackFastHttpBody(resp)
+
+		if err != nil {
+			genericResponse = &rpc.RpcResponseInternal{
+				Error: &rpc.RpcError{
+					Code:        error_codes.GenericValidationError,
+					Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
+					Hostname:    b.hostName,
+					ServiceName: externalServiceName,
+					Data: map[string]interface{}{
+						"raw_response": err.Error(),
+					},
+				},
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		unknownResponse := json.RawMessage{}
+		genericResponse = &rpc.RpcResponseInternal{}
+
+		if err := json.Unmarshal(rawBodyResponse, &unknownResponse); err != nil {
+			genericResponse.Error = &rpc.RpcError{
+				Code:        error_codes.GenericMappingError,
+				Message:     err.Error(),
+				Data:        nil,
+				Hostname:    b.hostName,
+				ServiceName: externalServiceName,
+			}
+
+			responseCh <- *genericResponse
+
+			return
+		}
+
+		genericResponse.Result = unknownResponse
 
 		responseCh <- *genericResponse
 	})

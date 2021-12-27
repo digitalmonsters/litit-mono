@@ -80,7 +80,9 @@ func (w *AuthWrapper) GenerateToken(userId int64, apmTransaction *apm.Transactio
 	resChan := make(chan GenerateTokenResponseChan, 2)
 
 	w.baseWrapper.GetPool().Submit(func() {
-		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponse(fmt.Sprintf("%v/token/%v", w.apiUrl, userId),
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(fmt.Sprintf("%v/token/%v", w.apiUrl, userId),
+			"GET",
+			"application/json",
 			"generate token",
 			nil, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
