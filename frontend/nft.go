@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 )
@@ -14,12 +15,6 @@ const (
 	Audio NftContentType = 3
 )
 
-type Currency string
-
-const (
-	ETH Currency = "ETH"
-)
-
 type NftCollectionType string
 
 const (
@@ -28,26 +23,28 @@ const (
 )
 
 type NftContentModel struct {
-	Id             int64               `json:"id"`
-	Name           string              `json:"name"`
-	Author         NftShortUserModel   `json:"author"`
-	Description    string              `json:"description"`
-	CurrentBid     *NftBidModel        `json:"current_bid"`
-	EndDate        null.Time           `json:"end_date"`
-	NftAmount      null.Int            `json:"nft_amount"`
-	TotalNftAmount null.Int            `json:"total_nft_amount"`
-	CanBid         bool                `json:"can_bid"`
-	Likes          int                 `json:"likes"`
-	IsLiked        bool                `json:"is_liked"`
-	ContentUrl     string              `json:"content_url"`
-	ImageUrl       string              `json:"image_url"`
-	ContentType    NftContentType      `json:"content_type"`
-	Categories     []string            `json:"categories"`
-	Collection     *NftCollectionModel `json:"collection"`
-	Hash           string              `json:"hash"`
-	Price          *NftPriceModel      `json:"price"`
-	IsOwned        bool                `json:"is_owned"`
-	IsOnSale       bool                `json:"is_on_sale"`
+	Id             int64              `json:"id"`
+	Name           string             `json:"name"`
+	AuthorId       int64              `json:"author_id"`
+	Author         NftShortUserModel  `json:"author"`
+	Description    string             `json:"description"`
+	CurrentBid     NftBidModel        `json:"current_bid"`
+	EndDate        null.Time          `json:"end_date"`
+	NftAmount      null.Int           `json:"nft_amount"`
+	TotalNftAmount null.Int           `json:"total_nft_amount"`
+	CanBid         bool               `json:"can_bid"`
+	Likes          int                `json:"likes"`
+	IsLiked        bool               `json:"is_liked"`
+	ContentUrl     string             `json:"content_url"`
+	ImageUrl       string             `json:"image_url"`
+	ContentType    NftContentType     `json:"content_type"`
+	Categories     []string           `json:"categories"`
+	CollectionId   null.Int           `json:"collection_id"`
+	Collection     NftCollectionModel `json:"collection"`
+	Hash           string             `json:"hash"`
+	Price          NftPriceModel      `json:"price"`
+	IsOwned        bool               `json:"is_owned"`
+	IsOnSale       bool               `json:"is_on_sale"`
 }
 
 type NftShortUserModel struct {
@@ -62,18 +59,18 @@ type NftShortUserModel struct {
 
 type NftPriceModel struct {
 	Price    decimal.Decimal `json:"price"`
-	Currency Currency        `json:"currency"`
+	Currency common.Currency `json:"currency"`
 	UsdPrice decimal.Decimal `json:"usd_price"`
 }
 
 type NftBidModel struct {
 	Bid         decimal.Decimal `json:"bid"`
-	BidCurrency Currency        `json:"bid_currency"`
+	BidCurrency common.Currency `json:"bid_currency"`
 	UsdPrice    decimal.Decimal `json:"usd_price"`
 }
 
 type NftCollectionModel struct {
-	Id             string            `json:"id"`
+	Id             int               `json:"id"`
 	ImageUrl       string            `json:"image_url"`
 	Type           NftCollectionType `json:"type"`
 	SupplyLazyMint bool              `json:"supply_lazy_mint"`
