@@ -14,6 +14,7 @@ import (
 
 type IContentWrapper interface {
 	GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan ContentGetInternalResponseChan
+	GetTopNotFollowingUsers(userId int64, limit int, apmTransaction *apm.Transaction, forceLog bool) chan GetTopNotFollowingUsersResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
