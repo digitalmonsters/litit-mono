@@ -28,6 +28,7 @@ require (
 	github.com/scylladb/gocqlx/v2 v2.4.0
 	github.com/segmentio/kafka-go v0.4.20
 	github.com/shirou/gopsutil/v3 v3.21.9
+	github.com/shopspring/decimal v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/thoas/go-funk v0.9.1
 	github.com/valyala/fasthttp v1.31.0

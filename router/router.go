@@ -56,6 +56,13 @@ func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper, healthContext 
 	return h
 }
 
+func (r *HttpRouter) setCors(ctx *fasthttp.RequestCtx) {
+	ctx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
+	ctx.Response.Header.SetBytesV("Access-Control-Allow-Origin", ctx.Request.Header.Peek("Origin"))
+	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
+	ctx.Response.Header.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+}
+
 func (r *HttpRouter) RegisterRpcCommand(command *Command) error {
 	return r.executor.AddCommand(command)
 }
@@ -300,6 +307,10 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 }
 
 func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
+	r.realRouter.OPTIONS(rpcEndpointPath, func(ctx *fasthttp.RequestCtx) {
+		r.setCors(ctx)
+	})
+
 	r.realRouter.POST(rpcEndpointPath, func(ctx *fasthttp.RequestCtx) {
 		var rpcRequest rpc.RpcRequest
 		var rpcResponse rpc.RpcResponse
@@ -307,6 +318,10 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 		var requestBody []byte
 		var apmTransaction *apm.Transaction
 
+		defer func() {
+			r.setCors(ctx)
+		}()
+		
 		defer func() {
 			var responseBody []byte
 
