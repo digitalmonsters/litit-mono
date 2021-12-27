@@ -18,3 +18,13 @@ type AuthParseTokenResponse struct {
 	IsAdmin      bool  `json:"is_admin"`
 	IsSuperAdmin bool  `json:"is_super_admin"`
 }
+
+type GenerateTokenResponseChan struct {
+	Resp  GenerateTokenResponse
+	Error *rpc.RpcError
+}
+
+type GenerateTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
