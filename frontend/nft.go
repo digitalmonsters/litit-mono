@@ -5,13 +5,13 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
-type ContentType byte
+type NftContentType byte
 
 const (
-	None  ContentType = 0
-	Photo ContentType = 1
-	Video ContentType = 2
-	Audio ContentType = 3
+	None  NftContentType = 0
+	Photo NftContentType = 1
+	Video NftContentType = 2
+	Audio NftContentType = 3
 )
 
 type Currency string
@@ -20,11 +20,11 @@ const (
 	ETH Currency = "ETH"
 )
 
-type CollectionType string
+type NftCollectionType string
 
 const (
-	CollectionTypeERC721  = CollectionType("ERC721")
-	CollectionTypeERC1155 = CollectionType("ERC1155")
+	CollectionTypeERC721  = NftCollectionType("ERC721")
+	CollectionTypeERC1155 = NftCollectionType("ERC1155")
 )
 
 type NftContentModel struct {
@@ -41,7 +41,7 @@ type NftContentModel struct {
 	IsLiked        bool                `json:"is_liked"`
 	ContentUrl     string              `json:"content_url"`
 	ImageUrl       string              `json:"image_url"`
-	ContentType    ContentType         `json:"content_type"`
+	ContentType    NftContentType      `json:"content_type"`
 	Categories     []string            `json:"categories"`
 	Collection     *NftCollectionModel `json:"collection"`
 	Hash           string              `json:"hash"`
@@ -73,10 +73,10 @@ type NftBidModel struct {
 }
 
 type NftCollectionModel struct {
-	Id             string         `json:"id"`
-	ImageUrl       string         `json:"image_url"`
-	Type           CollectionType `json:"type"`
-	SupplyLazyMint bool           `json:"supply_lazy_mint"`
-	Name           string         `json:"name"`
-	Hash           string         `json:"hash"`
+	Id             string            `json:"id"`
+	ImageUrl       string            `json:"image_url"`
+	Type           NftCollectionType `json:"type"`
+	SupplyLazyMint bool              `json:"supply_lazy_mint"`
+	Name           string            `json:"name"`
+	Hash           string            `json:"hash"`
 }
