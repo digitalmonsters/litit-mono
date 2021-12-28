@@ -87,6 +87,13 @@ type RedisConfig struct {
 	Password string `json:"Password"`
 }
 
+type S3Config struct {
+	CdnUrl       string `json:"CdnUrl"`
+	CdnDirectory string `json:"CdnDirectory"`
+	Bucket       string `json:"Bucket"`
+	Region       string `json:"Region"`
+}
+
 type KafkaListenerConfiguration struct {
 	Hosts                           string     `json:"Hosts"`
 	Topic                           string     `json:"Topic"`
