@@ -45,6 +45,7 @@ type NftContentModel struct {
 	Price          NftPriceModel      `json:"price"`
 	IsOwned        bool               `json:"is_owned"`
 	IsOnSale       bool               `json:"is_on_sale"`
+	Listings       []NftListingModel  `json:"listings"`
 }
 
 type NftShortUserModel struct {
@@ -76,4 +77,11 @@ type NftCollectionModel struct {
 	SupplyLazyMint bool              `json:"supply_lazy_mint"`
 	Name           string            `json:"name"`
 	Hash           string            `json:"hash"`
+}
+
+type NftListingModel struct {
+	UserId     int64           `json:"user_id"`
+	ContentId  int64           `json:"content_id"`
+	SellAmount int64           `json:"sell_amount"`
+	Price      decimal.Decimal `json:"price"`
 }
