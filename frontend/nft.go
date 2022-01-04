@@ -55,10 +55,11 @@ type NftShortUserModel struct {
 }
 
 type NftListingModel struct {
-	OnSale         NftContentItemGroup `json:"on_sale"`
-	TotalAmount    int                 `json:"total_amount"`
-	CurrentOwnerId int64               `json:"current_owner_id"`
-	CurrentOwner   NftShortUserModel   `json:"current_owner"`
+	OnSale           []NftContentItemGroup `json:"on_sale"`
+	NotForSaleAmount int                   `json:"not_for_sale_amount"`
+	TotalAmount      int                   `json:"total_amount"`
+	CurrentOwnerId   int64                 `json:"current_owner_id"`
+	CurrentOwner     NftShortUserModel     `json:"current_owner"`
 }
 
 type NftContentItemGroup struct {
