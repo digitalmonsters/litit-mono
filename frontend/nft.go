@@ -28,11 +28,8 @@ type NftContentModel struct {
 	AuthorId       int64              `json:"author_id"`
 	Author         NftShortUserModel  `json:"author"`
 	Description    string             `json:"description"`
-	CurrentBid     NftBidModel        `json:"current_bid"`
-	EndDate        null.Time          `json:"end_date"`
 	NftAmount      null.Int           `json:"nft_amount"`
 	TotalNftAmount null.Int           `json:"total_nft_amount"`
-	CanBid         bool               `json:"can_bid"`
 	Likes          int                `json:"likes"`
 	IsLiked        bool               `json:"is_liked"`
 	ContentUrl     string             `json:"content_url"`
@@ -41,10 +38,9 @@ type NftContentModel struct {
 	Categories     []string           `json:"categories"`
 	CollectionId   null.Int           `json:"collection_id"`
 	Collection     NftCollectionModel `json:"collection"`
-	Hash           string             `json:"hash"`
-	Price          NftPriceModel      `json:"price"`
+	ContractId     string             `json:"contract_id"`
+	TokenId        string             `json:"token_id"`
 	IsOwned        bool               `json:"is_owned"`
-	IsOnSale       bool               `json:"is_on_sale"`
 	Listings       []NftListingModel  `json:"listings"`
 }
 
@@ -58,16 +54,22 @@ type NftShortUserModel struct {
 	WalletAddress string      `json:"wallet_address"`
 }
 
+type NftListingModel struct {
+	OnSale         NftContentItemGroup `json:"on_sale"`
+	TotalAmount    int                 `json:"total_amount"`
+	CurrentOwnerId int64               `json:"current_owner_id"`
+	CurrentOwner   NftShortUserModel   `json:"current_owner"`
+}
+
+type NftContentItemGroup struct {
+	Price  NftPriceModel `json:"price"`
+	Amount int           `json:"amount"`
+}
+
 type NftPriceModel struct {
 	Price    decimal.Decimal `json:"price"`
 	Currency common.Currency `json:"currency"`
 	UsdPrice decimal.Decimal `json:"usd_price"`
-}
-
-type NftBidModel struct {
-	Bid         decimal.Decimal `json:"bid"`
-	BidCurrency common.Currency `json:"bid_currency"`
-	UsdPrice    decimal.Decimal `json:"usd_price"`
 }
 
 type NftCollectionModel struct {
@@ -77,11 +79,4 @@ type NftCollectionModel struct {
 	SupplyLazyMint bool              `json:"supply_lazy_mint"`
 	Name           string            `json:"name"`
 	Hash           string            `json:"hash"`
-}
-
-type NftListingModel struct {
-	UserId     int64           `json:"user_id"`
-	ContentId  int64           `json:"content_id"`
-	SellAmount int64           `json:"sell_amount"`
-	Price      decimal.Decimal `json:"price"`
 }
