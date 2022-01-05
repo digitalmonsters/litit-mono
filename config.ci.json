@@ -1,0 +1,8 @@
+{
+  "MasterDb": {
+    "Host": "postgres"
+  },
+  "ReadonlyDb": {
+    "Host": "postgres"
+  }
+}
