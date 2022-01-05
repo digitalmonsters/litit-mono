@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ft-t/go-micro-env"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
-	"go-micro.dev/v4/config"
-	"go-micro.dev/v4/config/source"
-	"go-micro.dev/v4/config/source/file"
+	"github.com/skynet2/go-config"
+	"github.com/skynet2/go-config/source"
+	"github.com/skynet2/go-config/source/env"
+	"github.com/skynet2/go-config/source/file"
 	"os"
 	"path"
 	"strings"
@@ -212,7 +212,7 @@ func ReadConfigByFilePaths(filePath []string, input interface{}) (interface{}, e
 		sources = append(sources, file.NewSource(option))
 	}
 
-	sources = append(sources, go_micro_env.NewSource(input))
+	sources = append(sources, env.NewSource(input))
 
 	if err := conf.Load(sources...); err != nil {
 		return nil, errors.WithStack(err)
