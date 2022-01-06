@@ -45,8 +45,14 @@ func main() {
 		}
 	}()
 
+
 	if err := api.InitAuthApi(httpRouter, apiDef); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
+		panic(err)
+	}
+
+	if err := api.InitUserApi(httpRouter, apiDef); err != nil {
+		log.Panic().Err(err).Msg("[User API] Cannot initialize api")
 		panic(err)
 	}
 

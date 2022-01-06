@@ -115,6 +115,27 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_favorites_init_060120221134",
+			Migrate: func(db *gorm.DB) error {
+				query := `
+						create table favorites
+						(
+							user_id bigint,
+							song_id text
+								constraint favorites_songs_id_fk
+									references songs,
+							created_at timestamp default current_timestamp,
+							constraint favorites_pk
+								primary key (user_id, song_id)
+						);
+				`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
 
