@@ -40,11 +40,27 @@ func main() {
 	apiDef := map[string]swagger.ApiDescription{}
 	healthContext, healthCancel := context.WithCancel(context.Background())
 
+	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth),
+		healthContext)
+
+	srv := &fasthttp.Server{
+		Handler: fasthttp.CompressHandlerBrotliLevel(httpRouter.Handler(),
+			fasthttp.CompressDefaultCompression, fasthttp.CompressDefaultCompression),
+	}
+
+	go func() {
+		host := fmt.Sprintf("0.0.0.0:%v", cfg.HttpPort)
+
+		log.Logger.Info().Msgf("[HTTP] Listening on %v", host)
+
+		if err := srv.ListenAndServe(host); err != nil {
+			log.Logger.Panic().Err(err).Send()
+		}
+	}()
+
 	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
-
-	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth))
 
 	commentNotifier := comment.NewNotifier(time.Duration(cfg.NotifierCommentConfig.PollTimeMs)*time.Millisecond,
 		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic), db)
@@ -79,22 +95,7 @@ func main() {
 			apiDef, nil)
 	}
 
-	shutdown.RegisterHttpHealthCheck(healthContext, httpRouter)
-
-	srv := &fasthttp.Server{
-		Handler: fasthttp.CompressHandlerBrotliLevel(httpRouter.Handler(),
-			fasthttp.CompressDefaultCompression, fasthttp.CompressDefaultCompression),
-	}
-
-	go func() {
-		host := fmt.Sprintf("0.0.0.0:%v", cfg.HttpPort)
-
-		log.Logger.Info().Msgf("[HTTP] Listening on %v", host)
-
-		if err := srv.ListenAndServe(host); err != nil {
-			log.Logger.Panic().Err(err).Send()
-		}
-	}()
+	httpRouter.Ready()
 
 	sg := <-sig
 	log.Logger.Info().Msgf("GOT SIGNAL %v", sg.String())
