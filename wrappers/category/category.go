@@ -21,7 +21,8 @@ type Wrapper struct {
 }
 
 type ICategoryWrapper interface {
-	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
+	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool,
+		apmTransaction *apm.Transaction, shouldHaveValidContent bool, forceLog bool) chan CategoryGetInternalResponseChan
 	GetAllCategories(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan GetAllCategoriesResponseChan
 }
 
@@ -40,16 +41,18 @@ func NewCategoryWrapper(config boilerplate.WrapperConfig) ICategoryWrapper {
 	}
 }
 
-func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
+func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool,
+	apmTransaction *apm.Transaction, shouldHaveValidContent bool, forceLog bool) chan CategoryGetInternalResponseChan {
 	respCh := make(chan CategoryGetInternalResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetCategoryInternal", GetCategoryInternalRequest{
-		CategoryIds:     categoryIds,
-		Limit:           limit,
-		Offset:          offset,
-		OmitCategoryIds: omitCategoryIds,
-		WithViews:       withViews,
-		OnlyParent:      onlyParent,
+		CategoryIds:            categoryIds,
+		Limit:                  limit,
+		Offset:                 offset,
+		OmitCategoryIds:        omitCategoryIds,
+		WithViews:              withViews,
+		OnlyParent:             onlyParent,
+		ShouldHaveValidContent: shouldHaveValidContent,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	w.baseWrapper.GetPool().Submit(func() {

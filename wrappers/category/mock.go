@@ -6,12 +6,15 @@ import (
 )
 
 type CategoryWrapperMock struct {
-	GetCategoryInternalFn func(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan
-	GetAllCategoriesFn    func(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan GetAllCategoriesResponseChan
+	GetCategoryInternalFn func(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction,
+		shouldHaveValidContent bool, forceLog bool) chan CategoryGetInternalResponseChan
+	GetAllCategoriesFn func(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan GetAllCategoriesResponseChan
 }
 
-func (w *CategoryWrapperMock) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction, forceLog bool) chan CategoryGetInternalResponseChan {
-	return w.GetCategoryInternalFn(categoryIds, omitCategoryIds, limit, offset, onlyParent, withViews, apmTransaction, forceLog)
+func (w *CategoryWrapperMock) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool,
+	apmTransaction *apm.Transaction, shouldHaveValidContent bool, forceLog bool) chan CategoryGetInternalResponseChan {
+	return w.GetCategoryInternalFn(categoryIds, omitCategoryIds, limit, offset, onlyParent, withViews, apmTransaction,
+		shouldHaveValidContent, forceLog)
 }
 
 func (w *CategoryWrapperMock) GetAllCategories(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan GetAllCategoriesResponseChan {

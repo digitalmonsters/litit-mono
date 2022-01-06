@@ -31,12 +31,13 @@ type CategoryGetInternalResponseChan struct {
 }
 
 type GetCategoryInternalRequest struct {
-	CategoryIds     []int64   `json:"category_ids"`
-	Limit           int       `json:"limit"`
-	Offset          int       `json:"offset"`
-	OnlyParent      null.Bool `json:"only_parent"`
-	WithViews       null.Bool `json:"with_views"`
-	OmitCategoryIds []int64   `json:"omit_category_ids"`
+	CategoryIds            []int64   `json:"category_ids"`
+	Limit                  int       `json:"limit"`
+	Offset                 int       `json:"offset"`
+	OnlyParent             null.Bool `json:"only_parent"`
+	WithViews              null.Bool `json:"with_views"`
+	ShouldHaveValidContent bool      `json:"should_have_valid_content"`
+	OmitCategoryIds        []int64   `json:"omit_category_ids"`
 }
 
 type GetAllCategoriesRequest struct {

@@ -21,9 +21,10 @@ type HashtagsGetInternalResponseChan struct {
 }
 
 type GetHashtagsInternalRequest struct {
-	Hashtags     []string  `json:"hashtags"`
-	OmitHashtags []string  `json:"omit_hashtags"`
-	WithViews    null.Bool `json:"with_views"`
-	Limit        int       `json:"limit"`
-	Offset       int       `json:"offset"`
+	Hashtags               []string  `json:"hashtags"`
+	OmitHashtags           []string  `json:"omit_hashtags"`
+	WithViews              null.Bool `json:"with_views"`
+	ShouldHaveValidContent bool      `json:"should_have_valid_content"`
+	Limit                  int       `json:"limit"`
+	Offset                 int       `json:"offset"`
 }
