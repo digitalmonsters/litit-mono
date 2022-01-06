@@ -42,3 +42,9 @@ type PlaylistSongRelations struct {
 func (Song) PlaylistSongRelations() string {
 	return "playlist_song_relations"
 }
+
+type Favorite struct {
+	UserId    int64
+	SongId    string
+	CreatedAt time.Time
+}
