@@ -10,7 +10,7 @@ import (
 	"github.com/digitalmonsters/music/pkg/favorites"
 )
 
-func InitUserApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
+func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
 	if err := httpRouter.RegisterRpcCommand(router.NewCommand("AddToFavorites", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req favorites.AddToFavoritesRequest
 

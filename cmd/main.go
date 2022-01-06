@@ -51,8 +51,8 @@ func main() {
 		panic(err)
 	}
 
-	if err := api.InitUserApi(httpRouter, apiDef); err != nil {
-		log.Panic().Err(err).Msg("[User API] Cannot initialize api")
+	if err := api.InitPublicApi(httpRouter, apiDef); err != nil {
+		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
 		panic(err)
 	}
 
