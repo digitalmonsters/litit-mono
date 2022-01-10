@@ -74,7 +74,8 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		return nil, err
 	}
 
-	if err = updateContentCommentsCounter(tx, newComment.ContentId.ValueOrZero(), true); err != nil {
+	if err = tx.Model(database.Content{}).Where("id = ?", resourceId).
+		Update("comments_count", gorm.Expr("comments_count + 1")).Error; err != nil {
 		return nil, err
 	}
 
@@ -194,7 +195,7 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 		return nil, err
 	}
 
-	if err := updateContentCommentsCounter(db, commentToDelete.ContentId.ValueOrZero(), false); err != nil {
+	if err := updateContentCommentsCounter(db, commentToDelete.ContentId.ValueOrZero()); err != nil {
 		return nil, err
 	}
 

@@ -279,17 +279,9 @@ func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64,
 	return nil
 }
 
-func updateContentCommentsCounter(tx *gorm.DB, contentId int64, isIncrement bool) error {
-	var incrementStm string
-
-	if isIncrement {
-		incrementStm = "comments_count + 1"
-	} else {
-		incrementStm = "comments_count - 1"
-	}
-
-	if err := tx.Model(database.Content{}).Where("id = ?", contentId).
-		Update("comments_count", gorm.Expr(incrementStm)).Error; err != nil {
+func updateContentCommentsCounter(tx *gorm.DB, contentId int64) error {
+	if err := tx.Exec("update content set comments_count = (select count(*) from comment where content_id = content.id) where content.id = ?", contentId).
+		Error; err != nil {
 		return err
 	}
 
