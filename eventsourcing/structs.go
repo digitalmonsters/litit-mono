@@ -1,6 +1,7 @@
 package eventsourcing
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/guregu/null.v4"
 	"time"
@@ -14,7 +15,7 @@ type LikeEvent struct {
 }
 
 func (l LikeEvent) GetPublishKey() string {
-	return fmt.Sprintf("%v_%v", l.UserId, l.ContentId)
+	return fmt.Sprintf("{\"content_id\":%v,\"user_id\":%v}", l.ContentId, l.UserId)
 }
 
 type UserCategoryEvent struct {
@@ -25,7 +26,7 @@ type UserCategoryEvent struct {
 }
 
 func (l UserCategoryEvent) GetPublishKey() string {
-	return fmt.Sprintf("%v_%v", l.UserId, l.CategoryId)
+	return fmt.Sprintf("{\"category_id\":%v,\"user_id\":%v}", l.CategoryId, l.UserId)
 }
 
 type UserHashtagEvent struct {
@@ -35,7 +36,11 @@ type UserHashtagEvent struct {
 }
 
 func (l UserHashtagEvent) GetPublishKey() string {
-	return fmt.Sprintf("%v_%v", l.UserId, l.Hashtag)
+	name := l.Hashtag
+	if v, _ := json.Marshal(name); len(v) > 0 {
+		name = string(v)
+	}
+	return fmt.Sprintf("{\"hashtag\":\"%v\",\"user_id\":%v}", name, l.UserId)
 }
 
 type ViewEvent struct {
@@ -50,7 +55,7 @@ type ViewEvent struct {
 }
 
 func (l ViewEvent) GetPublishKey() string {
-	return fmt.Sprintf("%v_%v", l.UserId, l.ContentId)
+	return fmt.Sprintf("{\"content_id\":%v,\"user_id\":%v}", l.ContentId, l.UserId)
 }
 
 type FollowEvent struct {
@@ -61,5 +66,5 @@ type FollowEvent struct {
 }
 
 func (l FollowEvent) GetPublishKey() string {
-	return fmt.Sprintf("%v_%v", l.UserId, l.ToUserId)
+	return fmt.Sprintf("{\"user_id\":%v,\"to_user_id\":%v}", l.UserId, l.ToUserId)
 }
