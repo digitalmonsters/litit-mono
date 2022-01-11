@@ -1,0 +1,47 @@
+{
+  "HttpPort": 5212,
+  "AuthApiUrl": "http://localhost",
+  "Db": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "base_api",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "KafkaWriter": {
+    "Hosts": "",
+    "KafkaAuth": {},
+    "Tls": true
+  },
+  "NotifierCommentConfig": {
+    "KafkaTopic": "dev.comments",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierContentCommentsCounterConfig": {
+    "KafkaTopic": "dev.content_comments_counter",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierUserCommentsCounterConfig": {
+    "KafkaTopic": "dev.user_comments_counter",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierVoteConfig": {
+    "KafkaTopic": "dev.comment_votes",
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "Wrappers": {
+    "Content": {
+      "ApiUrl": ""
+    },
+    "UserInfo": {
+      "ApiUrl": ""
+    },
+    "UserBlock": {
+      "ApiUrl": ""
+    }
+  }
+}
