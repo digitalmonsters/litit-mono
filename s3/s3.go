@@ -20,7 +20,7 @@ func NewUploader(cfg *boilerplate.S3Config) *Uploader {
 	}
 	return u
 }
-func (u *Uploader) UploadObject(path string,  data []byte, contentType string) error {
+func (u *Uploader) UploadObject(path string, data []byte, contentType string) error {
 	client, err := u.getClient()
 	if err != nil {
 		return err
