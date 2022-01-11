@@ -31,7 +31,6 @@ func init() {
 	})
 
 	if err != nil {
-		log.Info().Msg(config.MasterDb.Password)
 		panic(err)
 	}
 
