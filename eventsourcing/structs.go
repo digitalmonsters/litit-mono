@@ -126,6 +126,31 @@ func (c ContentEvent) GetPublishKey() string {
 }
 
 type BaseChangeEvent struct {
-	Type               string `json:"type"`
-	EntityChangeReason string `json:"entity_change_reason"`
+	Type                ChangeEvenType `json:"type"`
+	CrudOperation       ChangeEvenType `json:"crud_operation"`
+	CrudOperationReason string         `json:"crud_operation_reason"`
 }
+
+func NewBaseChangeEvent(crudOperation ChangeEvenType) BaseChangeEvent {
+	return BaseChangeEvent{
+		Type:                crudOperation,
+		CrudOperation:       crudOperation,
+		CrudOperationReason: "",
+	}
+}
+
+func NewBaseChangeEventWithReason(crudOperation ChangeEvenType, reason string) BaseChangeEvent {
+	return BaseChangeEvent{
+		Type:                crudOperation,
+		CrudOperation:       crudOperation,
+		CrudOperationReason: reason,
+	}
+}
+
+type ChangeEvenType string
+
+const (
+	ChangeEventTypeCreated = ChangeEvenType("created")
+	ChangeEventTypeUpdated = ChangeEvenType("updated")
+	ChangeEventTypeDeleted = ChangeEvenType("deleted")
+)
