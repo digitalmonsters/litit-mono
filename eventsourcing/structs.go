@@ -118,9 +118,14 @@ type ContentEvent struct {
 	SharesCount      int64                 `json:"shares_count"`
 	CommentsCount    int64                 `json:"comments_count"`
 	RejectReason     frontend.RejectReason `json:"reject_reason"`
-	Type             string                `json:"type"`
+	BaseChangeEvent
 }
 
 func (c ContentEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v", c.Id)
+}
+
+type BaseChangeEvent struct {
+	Type               string `json:"type"`
+	EntityChangeReason string `json:"entity_change_reason"`
 }
