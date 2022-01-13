@@ -57,7 +57,7 @@ func (r *PrivateHttpServer) Ready() {
 	r.ready = true
 }
 
-func (r *PrivateHttpServer) UnHealth() {
+func (r *PrivateHttpServer) UnHealthy() {
 	r.healthy = false
 }
 
