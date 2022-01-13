@@ -15,7 +15,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"go.elastic.co/apm"
+	"net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
@@ -58,6 +60,11 @@ func (r *HttpRouter) setCors(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.SetBytesV("Access-Control-Allow-Origin", ctx.Request.Header.Peek("Origin"))
 	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
 	ctx.Response.Header.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+}
+
+func (r *HttpRouter) RegisterProfiler() {
+	r.realRouter.GET("/debug/pprof/cpu", fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Profile))
+	r.realRouter.GET("/debug/pprof/{name}", fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Index))
 }
 
 func (r *HttpRouter) RegisterDocs(apiDef map[string]swagger.ApiDescription,

@@ -163,6 +163,10 @@ func (k *kafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 		}
 	}
 
+	if k.isConsumerGroupMode {
+		partitions = []int{0}
+	}
+
 	for _, partition := range partitions {
 		p := partition
 
