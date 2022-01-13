@@ -60,7 +60,16 @@ func innerScyllaFlushTables(t *testing.T, session *gocql.Session, keyspace strin
 
 	var tables = metaData.Tables
 
+	var views []string
+
+	for _, v := range metaData.MaterializedViews {
+		views = append(views, v.Name)
+	}
+
 	for _, tbl := range tables {
+		if funk.ContainsString(views, tbl.Name) {
+			continue
+		}
 
 		tblFullName := fmt.Sprintf("%s.%s;", keyspace, tbl.Name)
 
