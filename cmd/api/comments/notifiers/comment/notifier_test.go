@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -39,7 +40,7 @@ func (s *KafkaEventPublisherMock) Publish(apmTransaction *apm.Transaction, event
 
 func TestMain(m *testing.M) {
 	config := configs.GetConfig()
-
+	gormDb = database.GetDb()
 	cfg = &config
 	kafkaPublishedEvents = nil
 
@@ -128,6 +129,9 @@ func testInsert(t *testing.T) {
 	service.Flush()
 
 	var newDict = make(map[string]database.Comment, len(kafkaPublishedEvents))
+	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
+		return kafkaPublishedEvents[i].(eventData).Id < kafkaPublishedEvents[j].(eventData).Id
+	})
 
 	i := 0
 	for _, event := range kafkaPublishedEvents {
