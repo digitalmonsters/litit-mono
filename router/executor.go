@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.elastic.co/apm"
 )
-
 
 type MethodExecutionData struct {
 	ApmTransaction *apm.Transaction
@@ -36,6 +36,7 @@ func (c *CommandExecutor) AddCommand(command *Command) error {
 		return errors.New(fmt.Sprintf("command with same name already registered [%v]", command.GetMethodName()))
 	}
 
+	promhttp.Handler()
 	c.commands[command.GetMethodName()] = command
 
 	return nil

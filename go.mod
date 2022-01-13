@@ -20,10 +20,12 @@ require (
 	github.com/jcchavezs/porto v0.4.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/lib/pq v1.10.2
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rs/zerolog v1.26.1
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect

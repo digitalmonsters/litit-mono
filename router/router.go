@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth"
 	fastRouter "github.com/fasthttp/router"
 	"github.com/pkg/errors"
@@ -28,16 +29,15 @@ type HttpRouter struct {
 	restCommands map[string]*RestCommand
 	isProd       bool
 	authWrapper  auth.IAuthWrapper
-	ready        bool
+	srv          *fasthttp.Server
 }
 
-func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper, healthContext context.Context) *HttpRouter {
+func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
 	h := &HttpRouter{
 		realRouter:   fastRouter.New(),
 		executor:     NewCommandExecutor(),
 		authWrapper:  wrapper,
 		restCommands: map[string]*RestCommand{},
-		ready:        false,
 	}
 
 	if hostname, _ := os.Hostname(); len(hostname) > 0 {
@@ -50,9 +50,6 @@ func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper, healthContext 
 
 	h.prepareRpcEndpoint(rpcEndpointPath)
 
-	h.registerHttpHealthCheck(healthContext)
-	h.registerHttpReadinessCheck()
-
 	return h
 }
 
@@ -61,6 +58,32 @@ func (r *HttpRouter) setCors(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.SetBytesV("Access-Control-Allow-Origin", ctx.Request.Header.Peek("Origin"))
 	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
 	ctx.Response.Header.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+}
+
+func (r *HttpRouter) RegisterDocs(apiDef map[string]swagger.ApiDescription,
+	constants []swagger.ConstantDescription) {
+	r.realRouter.GET("/swagger", func(ctx *fasthttp.RequestCtx) {
+		var command []swagger.IApiCommand
+
+		for _, c := range r.GetRestRegisteredCommands() {
+			command = append(command, c)
+		}
+
+		for _, c := range r.GetRpcRegisteredCommands() {
+			command = append(command, c)
+		}
+
+		res := swagger.GenerateDoc(command, apiDef, constants)
+
+		ctx.Response.Header.SetContentType("text/html; charset=utf-8")
+
+		b, _ := json.Marshal(res)
+
+		redoc := fmt.Sprintf("<!DOCTYPE html>\n<html>\n  <head>\n    <title>Doc</title>\n    <meta charset=\"utf-8\"/>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link href=\"https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700\" rel=\"stylesheet\">\n\n    <style>\n      body {\n        margin: 0;\n        padding: 0;\n      }\n    </style>\n  </head>\n  <body>\n    <div id=\"redoc-container\">\n    <redoc spec-url='http://petstore.swagger.io/v2/swagger.json'></redoc>\n    <script src=\"https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js\"> </script>\n    <script>Redoc.init(JSON.parse('%v'), {\n  scrollYOffset: 50\n}, document.getElementById('redoc-container'))</script>\n  </body>\n</html>",
+			string(b))
+
+		ctx.Response.SetBody([]byte(redoc))
+	})
 }
 
 func (r *HttpRouter) RegisterRpcCommand(command *Command) error {
@@ -321,7 +344,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 		defer func() {
 			r.setCors(ctx)
 		}()
-		
+
 		defer func() {
 			var responseBody []byte
 
@@ -488,30 +511,22 @@ func (r *HttpRouter) GetRestRegisteredCommands() []RestCommand {
 	return commands
 }
 
-func (r *HttpRouter) registerHttpHealthCheck(healthContext context.Context) {
-	r.GET("/health", func(ctx *fasthttp.RequestCtx) {
-		if healthContext.Err() == nil {
-			ctx.Response.SetStatusCode(200)
-		} else {
-			ctx.Response.SetStatusCode(500)
+func (r *HttpRouter) StartAsync(port int) *HttpRouter {
+	if r.srv != nil {
+		return r
+	}
+
+	r.srv = &fasthttp.Server{
+		Handler: r.Handler(),
+	}
+
+	go func() {
+		log.Info().Msgf("Http Server started on port [%v]", port)
+
+		if err := r.srv.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", port)); err != nil {
+			panic(err)
 		}
-	})
-}
+	}()
 
-func (r *HttpRouter) registerHttpReadinessCheck() {
-	r.GET("/readiness", func(ctx *fasthttp.RequestCtx) {
-		if r.ready {
-			ctx.Response.SetStatusCode(200)
-		} else {
-			ctx.Response.SetStatusCode(500)
-		}
-	})
-}
-
-func (r *HttpRouter) Ready() {
-	r.ready = true
-}
-
-func (r *HttpRouter) NotReady() {
-	r.ready = false
+	return r
 }
