@@ -99,6 +99,10 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 	r.restCommands[key] = targetCmd
 
+	r.realRouter.OPTIONS(targetCmd.method, func(ctx *fasthttp.RequestCtx) {
+		r.setCors(ctx)
+	})
+
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 		apmTransaction := apm_helper.StartNewApmTransaction(fmt.Sprintf("[%v] [%v]", targetCmd.method,
 			targetCmd.path), "rpc", nil, nil)
@@ -112,6 +116,10 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			Id:      "1",
 			JsonRpc: "2.0",
 		}
+
+		defer func() {
+			r.setCors(ctx)
+		}()
 
 		apm_helper.AddApmLabel(apmTransaction, "full_url", string(ctx.URI().FullURI()))
 
