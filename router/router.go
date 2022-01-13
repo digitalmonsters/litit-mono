@@ -99,7 +99,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 	r.restCommands[key] = targetCmd
 
-	r.realRouter.OPTIONS(targetCmd.method, func(ctx *fasthttp.RequestCtx) {
+	r.realRouter.OPTIONS(targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 		r.setCors(ctx)
 	})
 
