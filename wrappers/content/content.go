@@ -48,7 +48,7 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 		IncludeDeleted: includeDeleted,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -76,7 +76,7 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -89,7 +89,7 @@ func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, apmTra
 		Limit:  limit,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -117,7 +117,7 @@ func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, apmTra
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

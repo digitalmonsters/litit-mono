@@ -48,7 +48,7 @@ func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, 
 		UserIds:      userIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -76,7 +76,7 @@ func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, 
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -89,7 +89,7 @@ func (w *WatchWrapper) GetCategoriesByViews(limit int64, offset int64, apmTransa
 		Offset: offset,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, false)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -116,7 +116,7 @@ func (w *WatchWrapper) GetCategoriesByViews(limit int64, offset int64, apmTransa
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

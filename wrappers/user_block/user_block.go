@@ -44,7 +44,7 @@ func (w *UserBlockWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Tra
 	forceLog bool) chan GetBlockListResponseChan {
 	resChan := make(chan GetBlockListResponseChan, 2)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		finalResponse := GetBlockListResponseChan{}
 
 		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(
@@ -75,7 +75,7 @@ func (w *UserBlockWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Tra
 		}
 
 		resChan <- finalResponse
-	})
+	}()
 
 	return resChan
 }
@@ -84,7 +84,7 @@ func (w *UserBlockWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTra
 	forceLog bool) chan GetUserBlockResponseChan {
 	resChan := make(chan GetUserBlockResponseChan, 2)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		finalResponse := GetUserBlockResponseChan{}
 
 		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(
@@ -116,7 +116,7 @@ func (w *UserBlockWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTra
 		}
 
 		resChan <- finalResponse
-	})
+	}()
 
 	return resChan
 }

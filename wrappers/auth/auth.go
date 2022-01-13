@@ -45,7 +45,7 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 	forceLog bool) chan AuthParseTokenResponseChan {
 	resChan := make(chan AuthParseTokenResponseChan, 2)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponse(fmt.Sprintf("%v/token/parse", w.apiUrl),
 			"unpack jwt",
 			AuthParseTokenRequest{
@@ -70,7 +70,7 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 		}
 
 		resChan <- finalResponse
-	})
+	}()
 
 	return resChan
 }
@@ -79,7 +79,7 @@ func (w *AuthWrapper) GenerateToken(userId int64, apmTransaction *apm.Transactio
 	forceLog bool) chan GenerateTokenResponseChan {
 	resChan := make(chan GenerateTokenResponseChan, 2)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(fmt.Sprintf("%v/token/%v", w.apiUrl, userId),
 			"GET",
 			"application/json",
@@ -103,7 +103,7 @@ func (w *AuthWrapper) GenerateToken(userId int64, apmTransaction *apm.Transactio
 		}
 
 		resChan <- finalResponse
-	})
+	}()
 
 	return resChan
 }

@@ -48,7 +48,7 @@ func (w *UserLikesWrapper) GetUserLikes(userId int64, limit int, offset int, apm
 		Offset: offset,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -76,7 +76,7 @@ func (w *UserLikesWrapper) GetUserLikes(userId int64, limit int, offset int, apm
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

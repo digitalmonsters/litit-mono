@@ -47,7 +47,7 @@ func (w *UserHashtagWrapper) GetUserHashtagSubscriptionStateBulk(hashtags []stri
 		Hashtags: hashtags,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -75,7 +75,7 @@ func (w *UserHashtagWrapper) GetUserHashtagSubscriptionStateBulk(hashtags []stri
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

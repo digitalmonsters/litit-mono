@@ -8,7 +8,6 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/nodejs"
 	"github.com/digitalmonsters/go-common/rpc"
-	"github.com/gammazero/workerpool"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
@@ -28,17 +27,12 @@ const (
 )
 
 type BaseWrapper struct {
-	workerPool *workerpool.WorkerPool
-	client     *fasthttp.Client
-	hostName   string
+	client   *fasthttp.Client
+	hostName string
 }
 
 var mutex sync.Mutex
 var baseWrapper *BaseWrapper
-
-func (b *BaseWrapper) GetPool() *workerpool.WorkerPool {
-	return b.workerPool
-}
 
 func GetBaseWrapper() *BaseWrapper {
 	if baseWrapper != nil {
@@ -55,9 +49,8 @@ func GetBaseWrapper() *BaseWrapper {
 	hostName, _ := os.Hostname()
 
 	baseWrapper = &BaseWrapper{
-		workerPool: workerpool.New(1024),
-		client:     &fasthttp.Client{},
-		hostName:   hostName,
+		client:   &fasthttp.Client{},
+		hostName: hostName,
 	}
 
 	return baseWrapper
@@ -161,7 +154,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
-	b.workerPool.Submit(func() {
+	go func() {
 		defer func() {
 			close(responseCh)
 		}()
@@ -299,7 +292,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 		}
 
 		responseCh <- *genericResponse
-	})
+	}()
 
 	return responseCh
 }
@@ -309,7 +302,7 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
-	b.workerPool.Submit(func() {
+	go func() {
 		defer func() {
 			close(responseCh)
 		}()
@@ -476,7 +469,7 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 		genericResponse.Result = nodeJsResponse.Data
 
 		responseCh <- *genericResponse
-	})
+	}()
 
 	return responseCh
 }
@@ -486,7 +479,7 @@ func (b *BaseWrapper) GetRpcResponseFromAnyService(url string, request interface
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
-	b.workerPool.Submit(func() {
+	go func() {
 		defer func() {
 			close(responseCh)
 		}()
@@ -629,7 +622,7 @@ func (b *BaseWrapper) GetRpcResponseFromAnyService(url string, request interface
 		genericResponse.Result = unknownResponse
 
 		responseCh <- *genericResponse
-	})
+	}()
 
 	return responseCh
 }

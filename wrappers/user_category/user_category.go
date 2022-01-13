@@ -47,7 +47,7 @@ func (w *UserCategoryWrapper) GetUserCategorySubscriptionStateBulk(categoryIds [
 		CategoryIds: categoryIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -75,7 +75,7 @@ func (w *UserCategoryWrapper) GetUserCategorySubscriptionStateBulk(categoryIds [
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

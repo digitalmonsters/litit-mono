@@ -50,7 +50,7 @@ func (w *FollowWrapper) GetUserFollowingRelationBulk(userId int64, requestUserId
 		RequestUserIds: requestUserIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -80,7 +80,7 @@ func (w *FollowWrapper) GetUserFollowingRelationBulk(userId int64, requestUserId
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -93,7 +93,7 @@ func (w *FollowWrapper) GetUserFollowingRelation(userId int64, requestUserId int
 		RequestUserId: requestUserId,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -122,7 +122,7 @@ func (w *FollowWrapper) GetUserFollowingRelation(userId int64, requestUserId int
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -136,7 +136,7 @@ func (w *FollowWrapper) GetUserFollowers(userId int64, pageState string, limit i
 		Limit:     limit,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -165,7 +165,7 @@ func (w *FollowWrapper) GetUserFollowers(userId int64, pageState string, limit i
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -177,7 +177,7 @@ func (w *FollowWrapper) GetFollowersCount(userIds []int64, apmTransaction *apm.T
 		UserIds: userIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -205,7 +205,7 @@ func (w *FollowWrapper) GetFollowersCount(userIds []int64, apmTransaction *apm.T
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

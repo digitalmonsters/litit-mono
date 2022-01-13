@@ -55,7 +55,7 @@ func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int
 		ShouldHaveValidContent: shouldHaveValidContent,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -83,7 +83,7 @@ func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -96,7 +96,7 @@ func (w *Wrapper) GetAllCategories(categoryIds []int64, includeDeleted bool, apm
 		IncludeDeleted: includeDeleted,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -124,7 +124,7 @@ func (w *Wrapper) GetAllCategories(categoryIds []int64, includeDeleted bool, apm
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

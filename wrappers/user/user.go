@@ -50,7 +50,7 @@ func (w *UserWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction,
 	forceLog bool) chan GetUsersResponseChan {
 	resChan := make(chan GetUsersResponseChan, 2)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		cachedItems := map[int64]UserRecord{}
 		var userIdsToFetch []int64
 
@@ -104,7 +104,7 @@ func (w *UserWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction,
 		}
 
 		resChan <- finalResponse
-	})
+	}()
 
 	return resChan
 }
@@ -122,7 +122,7 @@ func (w *UserWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Trans
 		resChan := make(chan UsersInternalChan, 2)
 		batchChannels = append(batchChannels, resChan)
 
-		w.baseWrapper.GetPool().Submit(func() {
+		go func() {
 			finalResponse := UsersInternalChan{}
 
 			rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(fmt.Sprintf("%v/mobile/v1/profile/%v/getProfile", w.apiUrl, uid),
@@ -150,7 +150,7 @@ func (w *UserWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Trans
 			}
 
 			resChan <- finalResponse
-		})
+		}()
 	}
 
 	for _, c := range batchChannels {
@@ -170,7 +170,7 @@ func (w *UserWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Trans
 func (w *UserWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan {
 	resChan := make(chan GetProfileBulkResponseChan, 2)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromNodeJsService(fmt.Sprintf("%v/mobile/v1/profile/getProfiles", w.apiUrl),
 			"POST",
 			"application/json",
@@ -201,7 +201,7 @@ func (w *UserWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmTr
 		}
 
 		resChan <- finalResponse
-	})
+	}()
 
 	return resChan
 }

@@ -50,7 +50,7 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 		UserIds:      userIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -78,7 +78,7 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -91,7 +91,7 @@ func (w *LikeWrapper) GetInternalLikedByUser(contentIds []int64, userId int64, a
 		ContentIds: contentIds,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -119,7 +119,7 @@ func (w *LikeWrapper) GetInternalLikedByUser(contentIds []int64, userId int64, a
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
@@ -133,7 +133,7 @@ func (w *LikeWrapper) GetInternalUserLikes(userId int64, size int, pageState str
 		PageState: pageState,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -161,7 +161,7 @@ func (w *LikeWrapper) GetInternalUserLikes(userId int64, size int, pageState str
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }

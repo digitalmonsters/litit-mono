@@ -46,7 +46,7 @@ func (w *PointsCountWrapper) GetPointsCount(contentIds []int64, apmTransaction *
 	forceLog bool) chan GetPointsCountResponseChan {
 	resChan := make(chan GetPointsCountResponseChan, 2)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		cachedItems := map[int64]PointsCountRecord{}
 		var contentIdsToFetch []int64
 
@@ -100,7 +100,7 @@ func (w *PointsCountWrapper) GetPointsCount(contentIds []int64, apmTransaction *
 		}
 
 		resChan <- finalResponse
-	})
+	}()
 
 	return resChan
 }

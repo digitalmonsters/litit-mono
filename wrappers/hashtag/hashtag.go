@@ -53,7 +53,7 @@ func (w *Wrapper) GetHashtagsInternal(hashtags []string, omitHashtags []string, 
 		ShouldHaveValidContent: shouldHaveValidContent,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
-	w.baseWrapper.GetPool().Submit(func() {
+	go func() {
 		defer func() {
 			close(respCh)
 		}()
@@ -81,7 +81,7 @@ func (w *Wrapper) GetHashtagsInternal(hashtags []string, omitHashtags []string, 
 		}
 
 		respCh <- result
-	})
+	}()
 
 	return respCh
 }
