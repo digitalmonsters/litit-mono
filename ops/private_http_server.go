@@ -1,4 +1,4 @@
-package private_http_server
+package ops
 
 import (
 	"fmt"
@@ -67,7 +67,8 @@ func (r *PrivateHttpServer) StartAsync(port int) *PrivateHttpServer {
 	}
 
 	r.srv = &fasthttp.Server{
-		Handler: r.realRouter.Handler,
+		Handler: fasthttp.CompressHandlerBrotliLevel(r.realRouter.Handler,
+			fasthttp.CompressDefaultCompression, fasthttp.CompressDefaultCompression),
 	}
 
 	go func() {

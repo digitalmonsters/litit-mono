@@ -517,7 +517,8 @@ func (r *HttpRouter) StartAsync(port int) *HttpRouter {
 	}
 
 	r.srv = &fasthttp.Server{
-		Handler: r.Handler(),
+		Handler: fasthttp.CompressHandlerBrotliLevel(r.Handler(),
+			fasthttp.CompressDefaultCompression, fasthttp.CompressDefaultCompression),
 	}
 
 	go func() {
