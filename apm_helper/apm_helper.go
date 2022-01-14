@@ -52,6 +52,10 @@ func CaptureApmError(err error, transaction *apm.Transaction) {
 		return
 	}
 
+	defer func() {
+		_ = recover()
+	}()
+
 	if transaction == nil || transaction.TransactionData == nil {
 		return
 	}
@@ -60,10 +64,12 @@ func CaptureApmError(err error, transaction *apm.Transaction) {
 
 	AddApmData(transaction, "exception", err)
 
-	exx.SetTransaction(transaction)
-	exx.Context = transaction.Context
+	if exx != nil && transaction != nil {
+		exx.SetTransaction(transaction)
+		exx.Context = transaction.Context
 
-	exx.Send()
+		exx.Send()
+	}
 }
 
 func CaptureApmErrorSpan(err error, span *apm.Span) {
