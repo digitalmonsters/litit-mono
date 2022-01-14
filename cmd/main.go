@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
-	"github.com/digitalmonsters/go-common/docs"
+	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -12,7 +10,6 @@ import (
 	"github.com/digitalmonsters/music/cmd/api"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/rs/zerolog/log"
-	"github.com/valyala/fasthttp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,27 +21,15 @@ func main() {
 	boilerplate.SetupZeroLog()
 
 	cfg := configs.GetConfig()
-	healthContext, healthCancel := context.WithCancel(context.Background())
 	authWrapper := auth.NewAuthWrapper(cfg.Wrappers.Auth)
-
-	httpRouter := router.NewRouter("/rpc", authWrapper, healthContext)
+	httpRouter := router.NewRouter("/rpc", authWrapper).
+		StartAsync(cfg.HttpPort)
 
 	apiDef := map[string]swagger.ApiDescription{}
 
-	srv := &fasthttp.Server{
-		Handler: fasthttp.CompressHandlerBrotliLevel(httpRouter.Handler(),
-			fasthttp.CompressDefaultCompression, fasthttp.CompressDefaultCompression)}
-
-	go func() {
-		host := fmt.Sprintf("0.0.0.0:%v", cfg.HttpPort)
-
-		log.Logger.Info().Msgf("[HTTP] Listening on %v", host)
-
-		if err := srv.ListenAndServe(host); err != nil {
-			log.Logger.Panic().Err(err).Send()
-		}
-	}()
-
+	privateRouter := ops.NewPrivateHttpServer().StartAsync(
+		cfg.PrivateHttpPort,
+	)
 
 	if err := api.InitAuthApi(httpRouter, apiDef); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
@@ -55,23 +40,13 @@ func main() {
 		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
 		panic(err)
 	}
-
-	httpRouter.Ready()
-
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
-		var apiCmd []swagger.IApiCommand
-
-		for _, c := range httpRouter.GetRestRegisteredCommands() {
-			apiCmd = append(apiCmd, c)
-		}
-
-		for _, c := range httpRouter.GetRpcRegisteredCommands() {
-			apiCmd = append(apiCmd, c)
-		}
-
-		docs.RegisterHttpDoc(httpRouter, "/swagger", apiCmd,
-			apiDef, nil)
+		httpRouter.RegisterDocs(apiDef, nil)
+		httpRouter.RegisterProfiler()
 	}
+
+	privateRouter.Ready()
+
 
 	sg := <-sig
 	log.Logger.Info().Msgf("GOT SIGNAL %v", sg.String())
@@ -79,11 +54,10 @@ func main() {
 	sleepDuration := shutdown.GetGracefulSleepDuration()
 	shutdown.RunGracefulShutdown(sleepDuration, []func() error{
 		func() error {
-			httpRouter.NotReady()
+			privateRouter.UnHealthy()
 			return nil
 		},
 		func() error {
-			healthCancel()
 			return nil
 		},
 		func() error {

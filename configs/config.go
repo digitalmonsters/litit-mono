@@ -3,10 +3,11 @@ package configs
 import "github.com/digitalmonsters/go-common/boilerplate"
 
 type Settings struct {
-	HttpPort   int                  `json:"HttpPort"`
-	Wrappers   boilerplate.Wrappers `json:"Wrappers"`
-	MasterDb   boilerplate.DbConfig `json:"MasterDb"`
-	ReadonlyDb boilerplate.DbConfig `json:"ReadonlyDb"`
+	HttpPort        int                  `json:"HttpPort"`
+	PrivateHttpPort int                  `json:"PrivateHttpPort"`
+	Wrappers        boilerplate.Wrappers `json:"Wrappers"`
+	MasterDb        boilerplate.DbConfig `json:"MasterDb"`
+	ReadonlyDb      boilerplate.DbConfig `json:"ReadonlyDb"`
 }
 
 var settings Settings
