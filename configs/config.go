@@ -3,10 +3,18 @@ package configs
 import "github.com/digitalmonsters/go-common/boilerplate"
 
 type Settings struct {
-	HttpPort   int                  `json:"HttpPort"`
-	Wrappers   boilerplate.Wrappers `json:"Wrappers"`
-	MasterDb   boilerplate.DbConfig `json:"MasterDb"`
-	ReadonlyDb boilerplate.DbConfig `json:"ReadonlyDb"`
+	HttpPort    int                  `json:"HttpPort"`
+	Wrappers    boilerplate.Wrappers `json:"Wrappers"`
+	MasterDb    boilerplate.DbConfig `json:"MasterDb"`
+	ReadonlyDb  boilerplate.DbConfig `json:"ReadonlyDb"`
+	SoundStripe *SoundStripeConfig   `json:"SoundStripe"`
+}
+
+type SoundStripeConfig struct {
+	ApiUrl     string `json:"ApiUrl"`
+	ApiToken   string `json:"ApiToken"`
+	MaxWorkers int    `json:"MaxWorkers"`
+	MaxTimeout int    `json:"MaxTimeout"`
 }
 
 var settings Settings

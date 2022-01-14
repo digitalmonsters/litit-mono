@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/soundstripe"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 var config configs.Settings
 var gormDb *gorm.DB
+var soundStripeService *soundstripe.Service
 
 func TestMain(m *testing.M) {
 	var err error
@@ -20,6 +22,8 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
+
+	soundStripeService = soundstripe.NewService(*config.SoundStripe)
 
 	os.Exit(m.Run())
 }
@@ -54,7 +58,7 @@ func TestMethods(t *testing.T) {
 				SortOrder:  1,
 			},
 		},
-	}, gormDb)
+	}, gormDb, nil, soundStripeService)
 	assert.Nil(t, err)
 
 	var relation database.PlaylistSongRelations
@@ -79,4 +83,59 @@ func TestMethods(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, playlist.SongsCount, 0)
+}
+
+func TestPlaylistSongList(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.playlists", "public.songs", "public.playlist_song_relations"}, nil, t); err != nil {
+		t.Fatal(err)
+	}
+
+	playlist := database.Playlist{
+		Name:      "test",
+		SortOrder: 1,
+	}
+
+	err := gormDb.Create(&playlist).Error
+	assert.Nil(t, err)
+
+	song := database.Song{
+		Id:     "test_song",
+		Title:  "test",
+		Artist: "artist",
+	}
+
+	err = gormDb.Create(&song).Error
+	assert.Nil(t, err)
+
+	song2 := database.Song{
+		Id:     "test_song2",
+		Title:  "test2",
+		Artist: "artist2",
+	}
+
+	err = gormDb.Create(&song2).Error
+	assert.Nil(t, err)
+
+	songRelations := []database.PlaylistSongRelations{
+		{
+			PlaylistId: playlist.Id,
+			SongId:     song.Id,
+			SortOrder:  1,
+		},
+		{
+			PlaylistId: playlist.Id,
+			SongId:     song2.Id,
+			SortOrder:  2,
+		},
+	}
+
+	err = gormDb.Create(&songRelations).Error
+	assert.Nil(t, err)
+
+	_, err = PlaylistSongListAdmin(PlaylistSongListRequest{
+		PlaylistId: playlist.Id,
+		Limit:      1,
+		Offset:     0,
+	}, gormDb)
+	assert.Nil(t, err)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/auth"
 	"github.com/digitalmonsters/music/cmd/api"
 	"github.com/digitalmonsters/music/configs"
+	"github.com/digitalmonsters/music/pkg/soundstripe"
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"os"
@@ -45,8 +46,9 @@ func main() {
 		}
 	}()
 
+	soundStripeService := soundstripe.NewService(*cfg.SoundStripe)
 
-	if err := api.InitAuthApi(httpRouter, apiDef); err != nil {
+	if err := api.InitAdminApi(httpRouter, apiDef, soundStripeService); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
 		panic(err)
 	}
