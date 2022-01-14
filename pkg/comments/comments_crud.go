@@ -161,7 +161,7 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Take(&commentToDelete, commentId).Error; err != nil {
 		return nil, err
 	}
-
+	var commentProfileId = commentToDelete.ProfileId
 	mappedComment := MapDbCommentToComment(commentToDelete)
 
 	extenders := []chan error{
@@ -173,8 +173,10 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 			apm_helper.CaptureApmError(err, apmTransaction)
 		}
 	}
+	var profileOwnerDeleteComments = commentProfileId.Valid && commentProfileId.Int64 == currentUserId
 
-	if mappedComment.AuthorId != currentUserId && mappedComment.Content.AuthorId != currentUserId {
+	if mappedComment.AuthorId != currentUserId && mappedComment.Content.AuthorId != currentUserId &&
+		!profileOwnerDeleteComments {
 		return nil, errors.WithStack(errors.New("not allowed"))
 	}
 

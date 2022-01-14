@@ -50,6 +50,7 @@ func TestMain(m *testing.M) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		false,
 	)
 
 	os.Exit(m.Run())
@@ -125,6 +126,10 @@ func testInsert(t *testing.T) {
 		return kafkaPublishedEvents[i].(eventData).UserId < kafkaPublishedEvents[j].(eventData).UserId
 	})
 
+	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
+		return kafkaPublishedEvents[i].(eventData).UserId < kafkaPublishedEvents[j].(eventData).UserId
+	})
+
 	i := 0
 	for _, event := range kafkaPublishedEvents {
 		if i < len(dict) {
@@ -144,7 +149,6 @@ func testInsert(t *testing.T) {
 		}
 		i++
 	}
-
 	if !reflect.DeepEqual(dict, newDict) {
 		t.Fatal("Unexpected value")
 	}
@@ -167,6 +171,7 @@ func testPerformance(b *testing.B) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		false,
 	)
 
 	for i := int64(0); i < 100000; i++ {

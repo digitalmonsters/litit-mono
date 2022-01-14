@@ -49,13 +49,13 @@ func main() {
 	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
 
 	commentNotifier := comment.NewNotifier(time.Duration(cfg.NotifierCommentConfig.PollTimeMs)*time.Millisecond,
-		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic), db)
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic), db, true)
 	contentCommentsNotifier := content_comments_counter.NewNotifier(time.Duration(cfg.NotifierContentCommentsCounterConfig.PollTimeMs)*time.Millisecond,
-		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierContentCommentsCounterConfig.KafkaTopic))
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierContentCommentsCounterConfig.KafkaTopic), true)
 	userCommentsNotifier := user_comments_counter.NewNotifier(time.Duration(cfg.NotifierUserCommentsCounterConfig.PollTimeMs)*time.Millisecond,
-		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierUserCommentsCounterConfig.KafkaTopic))
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierUserCommentsCounterConfig.KafkaTopic), true)
 	voteNotifier := vote2.NewNotifier(time.Duration(cfg.NotifierVoteConfig.PollTimeMs)*time.Millisecond,
-		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierVoteConfig.KafkaTopic))
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierVoteConfig.KafkaTopic), true)
 
 	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
 		contentCommentsNotifier, userCommentsNotifier); err != nil {

@@ -8,6 +8,8 @@ import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/gocql/gocql"
+	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
@@ -53,6 +55,7 @@ func TestMain(m *testing.M) {
 		context.TODO(),
 		&publisherMock,
 		gormDb,
+		false,
 	)
 
 	os.Exit(m.Run())
@@ -126,9 +129,17 @@ func testInsert(t *testing.T) {
 		service.Enqueue(event, content.SimpleContent{}, ProfileResourceTypeCreate)
 	}
 
-	service.Flush()
+	errs := service.Flush()
+	assert.Equal(t, len(errs), 0)
+	for _, err := range errs{
+		log.Error().Err(err).Send()
+	}
 
 	var newDict = make(map[string]database.Comment, len(kafkaPublishedEvents))
+	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
+		return kafkaPublishedEvents[i].(eventData).Id < kafkaPublishedEvents[j].(eventData).Id
+	})
+
 	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
 		return kafkaPublishedEvents[i].(eventData).Id < kafkaPublishedEvents[j].(eventData).Id
 	})
@@ -177,6 +188,7 @@ func testPerformance(b *testing.B) {
 		context.TODO(),
 		&publisherMock,
 		gormDb,
+		false,
 	)
 
 	for i := int64(0); i < 100000; i++ {
