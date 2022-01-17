@@ -2,16 +2,29 @@ package song
 
 import (
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/soundstripe"
 	"github.com/pkg/errors"
+	"github.com/thoas/go-funk"
+	"go.elastic.co/apm"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB) error {
+func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransaction *apm.Transaction, soundStripeService *soundstripe.Service) error {
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	//todo: soundstripe song validation logic
+	var songIds []string
+	for _, s := range req.Songs {
+		if !funk.ContainsString(songIds, s.SongId) {
+			songIds = append(songIds, s.SongId)
+		}
+	}
+
+	err := soundStripeService.SyncSongsList(songIds, db, apmTransaction)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	for _, s := range req.Songs {
 		if err := tx.Clauses(clause.OnConflict{
@@ -56,4 +69,33 @@ func DeleteSongFromPlaylistsBulk(req DeleteSongsFromPlaylistBulkRequest, db *gor
 	}
 
 	return nil
+}
+
+func PlaylistSongListAdmin(req PlaylistSongListRequest, db *gorm.DB) (*PlaylistSongListResponse, error) {
+	if req.PlaylistId == 0 {
+		return nil, errors.New("playlist_id is required")
+	}
+
+	var totalCount int64
+
+	query := db.Table("playlist_song_relations psr").
+		Joins("join songs on psr.song_id = songs.id").
+		Where("psr.playlist_id = ?", req.PlaylistId)
+
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	var songs []database.Song
+
+	if err := query.Order("sort_order desc").
+		Limit(req.Limit).Offset(req.Offset).
+		Find(&songs).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &PlaylistSongListResponse{
+		Songs:      songs,
+		TotalCount: totalCount,
+	}, nil
 }

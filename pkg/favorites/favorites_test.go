@@ -9,19 +9,15 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"testing"
+	"time"
 )
 
 var config configs.Settings
 var gormDb *gorm.DB
 
 func TestMain(m *testing.M) {
-	var err error
 	config = configs.GetConfig()
-	gormDb, err = boilerplate_testing.GetPostgresConnection(&config.MasterDb)
-	if err != nil {
-		panic(err)
-	}
-
+	gormDb = database.GetDb(database.DbTypeMaster)
 	os.Exit(m.Run())
 }
 
@@ -64,7 +60,6 @@ func TestAddToFavorites(t *testing.T) {
 	}
 }
 
-
 func TestRemoveFromFavorites(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.favorites", "public.songs"}, nil, t); err != nil {
 		t.Fatal(err)
@@ -82,8 +77,8 @@ func TestRemoveFromFavorites(t *testing.T) {
 			t.Fatal(err)
 		}
 		favorite := database.Favorite{
-			UserId:    i,
-			SongId:    song.Id,
+			UserId: i,
+			SongId: song.Id,
 		}
 		if err := gormDb.Create(&favorite).Error; err != nil {
 			t.Fatal(err)
@@ -108,3 +103,39 @@ func TestRemoveFromFavorites(t *testing.T) {
 	a.Equal(4, len(favorites))
 }
 
+func TestFavoriteSongsList(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.favorites", "public.songs"}, nil, t); err != nil {
+		t.Fatal(err)
+	}
+
+	userId := 222
+
+	for i := int64(1); i <= 5; i++ {
+		testName := fmt.Sprintf("test%v", i)
+		song := database.Song{
+			Id:       testName,
+			Title:    testName,
+			Artist:   testName,
+			Url:      testName,
+			ImageUrl: testName,
+		}
+		if err := gormDb.Create(&song).Error; err != nil {
+			t.Fatal(err)
+		}
+		favorite := database.Favorite{
+			UserId:    int64(userId),
+			SongId:    song.Id,
+			CreatedAt: time.Date(2021, 5, int(i), 1, 1, 1, 1, time.UTC),
+		}
+		if err := gormDb.Create(&favorite).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	resp, err := FavoriteSongsList(FavoriteSongsListRequest{
+		Count:  2,
+		Cursor: "",
+	}, int64(userId), gormDb)
+	assert.Nil(t, err)
+	assert.Len(t, resp.Songs, 2)
+}

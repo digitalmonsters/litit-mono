@@ -1,12 +1,24 @@
 package configs
 
-import "github.com/digitalmonsters/go-common/boilerplate"
+import (
+	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
+)
 
 type Settings struct {
-	HttpPort   int                  `json:"HttpPort"`
-	Wrappers   boilerplate.Wrappers `json:"Wrappers"`
-	MasterDb   boilerplate.DbConfig `json:"MasterDb"`
-	ReadonlyDb boilerplate.DbConfig `json:"ReadonlyDb"`
+	HttpPort        int                  `json:"HttpPort"`
+	Wrappers        boilerplate.Wrappers `json:"Wrappers"`
+	MasterDb        boilerplate.DbConfig `json:"MasterDb"`
+	ReadonlyDb      boilerplate.DbConfig `json:"ReadonlyDb"`
+	SoundStripe     *SoundStripeConfig   `json:"SoundStripe"`
+	PrivateHttpPort int                  `json:"PrivateHttpPort"`
+}
+
+type SoundStripeConfig struct {
+	ApiUrl     string `json:"ApiUrl"`
+	ApiToken   string `json:"ApiToken"`
+	MaxWorkers int    `json:"MaxWorkers"`
+	MaxTimeout int    `json:"MaxTimeout"`
 }
 
 var settings Settings
@@ -20,6 +32,10 @@ func init() {
 
 	if _, err = boilerplate.ReadConfigByFilePaths([]string{cfg}, &settings); err != nil {
 		panic(err)
+	}
+	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
+		settings.MasterDb.Db = fmt.Sprintf("ci_%v", boilerplate.GetGenerator().Generate().String())
+		settings.ReadonlyDb.Db = settings.MasterDb.Db
 	}
 }
 
