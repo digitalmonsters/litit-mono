@@ -146,7 +146,13 @@ func (k *kafkaListener) getReaderForPartition(partition int) (*kafka.Reader, err
 		return v, nil
 	}
 
-	dialer, err := getKafkaDialer(true, *k.cfg.KafkaAuth)
+	var auth boilerplate.KafkaAuth
+
+	if k.cfg.KafkaAuth != nil {
+		auth = *k.cfg.KafkaAuth
+	}
+
+	dialer, err := getKafkaDialer(k.cfg.Tls, auth)
 
 	if err != nil {
 		return nil, errors.WithStack(err)

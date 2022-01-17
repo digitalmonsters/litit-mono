@@ -106,6 +106,10 @@ func FlushPostgresAllTables(config boilerplate.DbConfig, exceptTables []string, 
 	return flushPostgresInternal(config, nil, exceptTables)
 }
 
+func GetPostgresCiDatabaseName() string {
+	return fmt.Sprintf("ci_%v", int64(os.Getpid()))
+}
+
 func flushPostgresInternal(config boilerplate.DbConfig, tables []string, exceptTables []string) error {
 	rawStr, _ := boilerplate.GetDbConnectionString(config)
 
