@@ -113,6 +113,31 @@ func (k *kafkaListener) getPartitionsForTopic() ([]int, error) {
 	return finalPartitions, nil
 }
 
+func (k *kafkaListener) checkIfTopicExists(topic string) error {
+	var hosts = boilerplate.SplitHostsToSlice(k.cfg.Hosts)
+	client := &kafka.Client{
+		Transport: kafka.DefaultTransport,
+	}
+	meta, err := client.Metadata(k.ctx, &kafka.MetadataRequest{
+		Addr: kafka.TCP(hosts[0]),
+	})
+	if err != nil {
+		return err
+	}
+	var exists bool
+	for _, t := range meta.Topics {
+		if t.Name == topic {
+			exists = true
+			break
+		}
+	}
+	if !exists {
+		return errors.New(fmt.Sprintf("topic [%v] doesn't exist", topic))
+	}
+
+	return nil
+}
+
 func (k *kafkaListener) getReaderForPartition(partition int) (*kafka.Reader, error) {
 	readerMutex.Lock()
 	defer readerMutex.Unlock()
@@ -150,6 +175,19 @@ func (k *kafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 	var err error
 
 	for k.ctx.Err() == nil {
+		if err := k.checkIfTopicExists(k.targetTopic); err != nil {
+			log.Err(err).Msgf("listener [%v]. Topic [%v] does not exists. waiting for topic to be available with interval 10s",
+				k.listenerName, k.targetTopic)
+
+			transaction := apm_helper.StartNewApmTransaction("start-kafka-listener", "kafka", nil, nil)
+			apm_helper.AddApmLabel(transaction, "topic", k.targetTopic)
+			apm_helper.CaptureApmError(err, transaction)
+
+			transaction.End()
+			time.Sleep(10 * time.Second)
+			continue
+		}
+
 		partitions, err = k.getPartitionsForTopic()
 
 		if err != nil {

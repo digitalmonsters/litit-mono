@@ -45,6 +45,12 @@ func (e Environment) ToString() string {
 	}
 }
 
+type KafkaTopicConfig struct {
+	Name              string `json:"Name"`
+	NumPartitions     int    `json:"NumPartitions"`
+	ReplicationFactor int    `json:"ReplicationFactor"`
+}
+
 type Wrappers struct {
 	Auth           WrapperConfig `json:"Auth"`
 	Content        WrapperConfig `json:"Content"`
