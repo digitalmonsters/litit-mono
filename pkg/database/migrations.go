@@ -136,6 +136,16 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_listen_amount_060120221741",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table songs add listen_amount int default 0;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
 
