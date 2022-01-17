@@ -1,5 +1,6 @@
 {
   "HttpPort": 5212,
+  "PrivateHttpPort": 5211,
   "MasterDb": {
     "Host": "localhost",
     "Port": 5432,
@@ -13,6 +14,12 @@
     "Db": "local_music",
     "User": "postgres",
     "Password": "qwerty"
+  },
+  "SoundStripe": {
+    "ApiUrl": "",
+    "ApiToken": "",
+    "MaxWorkers": 64,
+    "MaxTimeout": 10
   },
   "Wrappers": {
     "Content": {

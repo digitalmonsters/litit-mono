@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/digitalmonsters/music/pkg/frontend"
 	"gorm.io/gorm"
 	"time"
 )
@@ -19,28 +20,60 @@ func (Playlist) TableName() string {
 	return "playlists"
 }
 
+type Playlists []Playlist
+
+func (p Playlists) ConvertToFrontendModel() (result []frontend.Playlist) {
+	for _, pl := range p {
+		result = append(result, frontend.Playlist{
+			Id:         pl.Id,
+			Name:       pl.Name,
+			Color:      pl.Color,
+			SongsCount: pl.SongsCount,
+		})
+	}
+
+	return result
+}
+
 type Song struct {
-	Id        string    `json:"id" gorm:"primaryKey"`
-	Title     string    `json:"title"`
-	Artist    string    `json:"artist"`
-	Url       string    `json:"url"`
-	ImageUrl  string    `json:"image_url"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Id           string    `json:"id" gorm:"primaryKey"`
+	Title        string    `json:"title"`
+	Artist       string    `json:"artist"`
+	Url          string    `json:"url"`
+	ImageUrl     string    `json:"image_url"`
+	Genre        string    `json:"genre"`
+	Duration     float64   `json:"duration"`
+	ListenAmount int       `json:"listen_amount"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (Song) TableName() string {
 	return "songs"
 }
 
+type Songs []Song
+
+func (s Songs) ConvertToFrontendModel() (result []frontend.Song) {
+	for _, song := range s {
+		result = append(result, frontend.Song{
+			Id:       song.Id,
+			Title:    song.Title,
+			Artist:   song.Artist,
+			Url:      song.Artist,
+			ImageUrl: song.ImageUrl,
+			Genre:    song.Genre,
+			Duration: song.Duration,
+		})
+	}
+
+	return result
+}
+
 type PlaylistSongRelations struct {
 	PlaylistId int64
 	SongId     string
 	SortOrder  int
-}
-
-func (Song) PlaylistSongRelations() string {
-	return "playlist_song_relations"
 }
 
 type Favorite struct {

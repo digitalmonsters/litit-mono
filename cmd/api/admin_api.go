@@ -9,9 +9,10 @@ import (
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/playlist"
 	"github.com/digitalmonsters/music/pkg/song"
+	"github.com/digitalmonsters/music/pkg/soundstripe"
 )
 
-func InitAuthApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
+func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, soundStripeService *soundstripe.Service) error {
 	if err := httpRouter.RegisterRpcCommand(router.NewCommand("UpsertPlaylistAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req playlist.UpsertPlaylistRequest
 
@@ -70,7 +71,7 @@ func InitAuthApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDes
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		err := song.AddSongToPlaylistBulk(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
+		err := song.AddSongToPlaylistBulk(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context), executionData.ApmTransaction, soundStripeService)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
@@ -93,6 +94,40 @@ func InitAuthApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDes
 		}
 
 		return "ok", nil
+	}, common.AccessLevelRead, false, true)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRpcCommand(router.NewCommand("PlaylistSongListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req song.PlaylistSongListRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		resp, err := song.PlaylistSongListAdmin(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, common.AccessLevelRead, false, true)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRpcCommand(router.NewCommand("AllSongsListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req soundstripe.GetSongsListRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		ch := <-soundStripeService.GetSongsList(req, executionData.ApmTransaction)
+		if ch.Error != nil {
+			return nil, error_codes.NewErrorWithCodeRef(ch.Error, error_codes.GenericServerError)
+		}
+
+		return ch.Response, nil
 	}, common.AccessLevelRead, false, true)); err != nil {
 		return err
 	}
@@ -125,6 +160,18 @@ func InitAuthApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDes
 		Request:  song.DeleteSongsFromPlaylistBulkRequest{},
 		Response: nil,
 		Tags:     []string{"song", "playlist", "delete"},
+	}
+
+	apiDef["PlaylistSongListAdmin"] = swagger.ApiDescription{
+		Request:  song.PlaylistSongListRequest{},
+		Response: song.PlaylistSongListResponse{},
+		Tags:     []string{"song", "playlist", "list"},
+	}
+
+	apiDef["AllSongsListAdmin"] = swagger.ApiDescription{
+		Request:  soundstripe.GetSongsListRequest{},
+		Response: soundstripe.GetSongsListResponse{},
+		Tags:     []string{"songs", "list", "soundstripe", "admin"},
 	}
 
 	return nil
