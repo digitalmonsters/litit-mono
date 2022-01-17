@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/digitalmonsters/comments/cmd/api/comments"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
@@ -13,8 +12,8 @@ import (
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate"
-	"github.com/digitalmonsters/go-common/docs"
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -23,7 +22,6 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/rs/zerolog/log"
-	"github.com/valyala/fasthttp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,67 +33,48 @@ func main() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
 
+	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configs.GetConfig()
 	db := database.GetDb()
 	apiDef := map[string]swagger.ApiDescription{}
-	healthContext, healthCancel := context.WithCancel(context.Background())
+	fastHttpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth)).
+		StartAsync(cfg.HttpPort)
 
-	httpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth),
-		healthContext)
-
-	srv := &fasthttp.Server{
-		Handler: fasthttp.CompressHandlerBrotliLevel(httpRouter.Handler(),
-			fasthttp.CompressDefaultCompression, fasthttp.CompressDefaultCompression),
-	}
-
-	go func() {
-		host := fmt.Sprintf("0.0.0.0:%v", cfg.HttpPort)
-
-		log.Logger.Info().Msgf("[HTTP] Listening on %v", host)
-
-		if err := srv.ListenAndServe(host); err != nil {
-			log.Logger.Panic().Err(err).Send()
-		}
-	}()
+	privateRouter := ops.NewPrivateHttpServer().StartAsync(
+		cfg.PrivateHttpPort,
+	)
 
 	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
 
 	commentNotifier := comment.NewNotifier(time.Duration(cfg.NotifierCommentConfig.PollTimeMs)*time.Millisecond,
-		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic), db)
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic), db, true)
 	contentCommentsNotifier := content_comments_counter.NewNotifier(time.Duration(cfg.NotifierContentCommentsCounterConfig.PollTimeMs)*time.Millisecond,
-		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierContentCommentsCounterConfig.KafkaTopic))
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierContentCommentsCounterConfig.KafkaTopic), true)
 	userCommentsNotifier := user_comments_counter.NewNotifier(time.Duration(cfg.NotifierUserCommentsCounterConfig.PollTimeMs)*time.Millisecond,
-		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierUserCommentsCounterConfig.KafkaTopic))
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierUserCommentsCounterConfig.KafkaTopic), true)
 	voteNotifier := vote2.NewNotifier(time.Duration(cfg.NotifierVoteConfig.PollTimeMs)*time.Millisecond,
-		healthContext, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierVoteConfig.KafkaTopic))
+		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierVoteConfig.KafkaTopic), true)
 
-	if err := comments.Init(httpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
+	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
 		contentCommentsNotifier, userCommentsNotifier); err != nil {
 		panic(err)
 	}
 
-	if err := report.Init(httpRouter, db, apiDef); err != nil {
+	if err := report.Init(fastHttpRouter, db, apiDef); err != nil {
 		panic(err)
 	}
 
-	if err := vote.Init(httpRouter, db, apiDef, commentNotifier, voteNotifier, contentWrapper); err != nil {
+	if err := vote.Init(fastHttpRouter, db, apiDef, commentNotifier, voteNotifier, contentWrapper); err != nil {
 		panic(err)
 	}
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
-		var apiCmd []swagger.IApiCommand
-
-		for _, c := range httpRouter.GetRestRegisteredCommands() {
-			apiCmd = append(apiCmd, c)
-		}
-
-		docs.RegisterHttpDoc(httpRouter, "/swagger", apiCmd,
-			apiDef, nil)
+		fastHttpRouter.RegisterDocs(apiDef, nil)
 	}
 
-	httpRouter.Ready()
+	privateRouter.Ready()
 
 	sg := <-sig
 	log.Logger.Info().Msgf("GOT SIGNAL %v", sg.String())
@@ -103,7 +82,11 @@ func main() {
 	sleepDuration := shutdown.GetGracefulSleepDuration()
 	shutdown.RunGracefulShutdown(sleepDuration, []func() error{
 		func() error {
-			healthCancel()
+			privateRouter.UnHealthy()
+			return nil
+		},
+		func() error {
+			cancel()
 			return nil
 		},
 		func() error {

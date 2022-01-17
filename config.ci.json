@@ -1,0 +1,8 @@
+{
+  "Db": {
+    "Host": "127.0.0.1",
+    "Db": "ci_base_api",
+    "User": "postgres",
+    "Password": "postgres"
+  }
+}

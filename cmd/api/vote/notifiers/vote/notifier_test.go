@@ -6,10 +6,13 @@ import (
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/gocql/gocql"
+	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -47,6 +50,7 @@ func TestMain(m *testing.M) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		false,
 	)
 
 	os.Exit(m.Run())
@@ -111,9 +115,20 @@ func testInsert(t *testing.T) {
 			event.Comment, event.ContentId, event.ProfileId)
 	}
 
-	service.Flush()
+	errs := service.Flush()
+	assert.Equal(t, len(errs), 0)
+	for _, err := range errs {
+		log.Err(err).Send()
+	}
 
 	var newDict = make(map[string]eventData, len(kafkaPublishedEvents))
+	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
+		return kafkaPublishedEvents[i].(eventData).UserId < kafkaPublishedEvents[j].(eventData).UserId
+	})
+
+	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
+		return kafkaPublishedEvents[i].(eventData).UserId < kafkaPublishedEvents[j].(eventData).UserId
+	})
 
 	i := 0
 	for _, event := range kafkaPublishedEvents {
@@ -127,11 +142,13 @@ func testInsert(t *testing.T) {
 				Upvote:          elem.FieldByName("Upvote").Interface().(null.Bool),
 				ParentId:        elem.FieldByName("ParentId").Interface().(null.Int),
 				CommentAuthorId: elem.FieldByName("CommentAuthorId").Int(),
+				ContentId:       elem.FieldByName("ContentId").Interface().(null.Int),
+				Comment:         elem.FieldByName("Comment").String(),
+				ProfileId:       elem.FieldByName("ProfileId").Interface().(null.Int),
 			}
 		}
 		i++
 	}
-
 	if !reflect.DeepEqual(dict, newDict) {
 		t.Fatal("Unexpected value")
 	}
@@ -154,6 +171,7 @@ func testPerformance(b *testing.B) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		false,
 	)
 
 	for i := int64(0); i < 100000; i++ {

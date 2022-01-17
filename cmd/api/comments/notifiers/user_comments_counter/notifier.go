@@ -15,20 +15,22 @@ type Notifier struct {
 	publisher eventsourcing.IEventPublisher
 	poolTime  time.Duration
 	ctx       context.Context
+	autoFlush bool
 }
 
 func NewNotifier(pollTime time.Duration, ctx context.Context,
-	eventPublisher eventsourcing.IEventPublisher) *Notifier {
+	eventPublisher eventsourcing.IEventPublisher, autoFlush bool) *Notifier {
 	n := &Notifier{
 		queueMap:  make(map[string]eventData),
 		publisher: eventPublisher,
 		mutex:     sync.Mutex{},
 		poolTime:  pollTime,
 		ctx:       ctx,
+		autoFlush: autoFlush,
 	}
-
-	n.initQueueListener()
-
+	if autoFlush{
+		n.initQueueListener()
+	}
 	return n
 }
 
