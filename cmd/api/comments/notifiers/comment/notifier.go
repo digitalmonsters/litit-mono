@@ -22,10 +22,11 @@ type Notifier struct {
 	poolTime  time.Duration
 	ctx       context.Context
 	db        *gorm.DB
+	autoFlush bool
 }
 
 func NewNotifier(pollTime time.Duration, ctx context.Context,
-	eventPublisher eventsourcing.IEventPublisher, db *gorm.DB) *Notifier {
+	eventPublisher eventsourcing.IEventPublisher, db *gorm.DB, autoFlush bool) *Notifier {
 	n := &Notifier{
 		queueMap:  make(map[string]eventData),
 		publisher: eventPublisher,
@@ -33,10 +34,11 @@ func NewNotifier(pollTime time.Duration, ctx context.Context,
 		poolTime:  pollTime,
 		ctx:       ctx,
 		db:        db,
+		autoFlush: autoFlush,
 	}
-
-	n.initQueueListener()
-
+	if autoFlush{
+		n.initQueueListener()
+	}
 	return n
 }
 
@@ -90,7 +92,6 @@ func (s *Notifier) Flush() []error {
 	s.mutex.Unlock()
 
 	var parentCommentIds []int64
-
 	for _, v := range queueCopy {
 		parentId := v.ParentId.ValueOrZero()
 
@@ -130,7 +131,6 @@ func (s *Notifier) Flush() []error {
 
 		indexer += 1
 	}
-
 	return s.publisher.Publish(apmTransaction, records...)
 }
 

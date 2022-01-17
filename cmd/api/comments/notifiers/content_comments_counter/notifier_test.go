@@ -46,6 +46,7 @@ func TestMain(m *testing.M) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		false,
 	)
 
 	os.Exit(m.Run())
@@ -100,6 +101,7 @@ func testPerformance(b *testing.B) {
 		pollTime,
 		context.TODO(),
 		&publisherMock,
+		false,
 	)
 
 	for i := int64(0); i < 100000; i++ {

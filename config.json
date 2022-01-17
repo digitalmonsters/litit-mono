@@ -1,5 +1,6 @@
 {
   "HttpPort": 5212,
+  "PrivateHttpPort": 5211,
   "AuthApiUrl": "http://localhost",
   "Db": {
     "Host": "localhost",

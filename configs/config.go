@@ -2,7 +2,9 @@ package configs
 
 import (
 	_ "embed"
+	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
 )
 
 type DbConfig struct {
@@ -31,6 +33,7 @@ type NotifierConfig struct {
 
 type Settings struct {
 	HttpPort                             int                                   `json:"HttpPort"`
+	PrivateHttpPort                      int                                   `json:"PrivateHttpPort"`
 	Wrappers                             boilerplate.Wrappers                  `json:"Wrappers"`
 	Db                                   DbConfig                              `json:"Db"`
 	KafkaWriter                          *boilerplate.KafkaWriterConfiguration `json:"KafkaWriter"`
@@ -52,6 +55,15 @@ func init() {
 	if _, err = boilerplate.ReadConfigByFilePaths([]string{cfg}, &settings); err != nil {
 		panic(err)
 	}
+
+	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci{
+		settings.Db.Db = fmt.Sprintf("ci_%v", boilerplate.GetGenerator().Generate().String())
+
+		if err := boilerplate_testing.EnsurePostgresDbExists(settings.Db.ToBoilerplate()); err != nil {
+			panic(err)
+		}
+	}
+
 }
 
 func GetConfig() Settings {
