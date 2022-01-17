@@ -14,7 +14,6 @@ import (
 	fastRouter "github.com/fasthttp/router"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"go.elastic.co/apm"
@@ -26,14 +25,13 @@ import (
 )
 
 type HttpRouter struct {
-	realRouter       *fastRouter.Router
-	executor         *CommandExecutor
-	hostname         string
-	restCommands     map[string]*RestCommand
-	isProd           bool
-	authWrapper      auth.IAuthWrapper
-	srv              *fasthttp.Server
-	optionsEndpoints []string
+	realRouter   *fastRouter.Router
+	executor     *CommandExecutor
+	hostname     string
+	restCommands map[string]*RestCommand
+	isProd       bool
+	authWrapper  auth.IAuthWrapper
+	srv          *fasthttp.Server
 }
 
 func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
@@ -108,13 +106,14 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 	r.restCommands[key] = targetCmd
 
-	if !funk.ContainsString(r.optionsEndpoints, targetCmd.path) {
+	go func() {
+		defer func() {
+			_ = recover()
+		}()
 		r.realRouter.OPTIONS(targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 			r.setCors(ctx)
 		})
-
-		r.optionsEndpoints = append(r.optionsEndpoints, targetCmd.path)
-	}
+	}()
 
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 		apmTransaction := apm_helper.StartNewApmTransaction(fmt.Sprintf("[%v] [%v]", targetCmd.method,
