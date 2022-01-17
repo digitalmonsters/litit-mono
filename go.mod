@@ -4,11 +4,16 @@ go 1.17
 
 require (
 	github.com/digitalmonsters/go-common v1.12.7
+	github.com/gammazero/workerpool v1.1.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/stretchr/testify v1.7.0
+	github.com/thoas/go-funk v0.9.1
+	github.com/valyala/fasthttp v1.31.0
+	go.elastic.co/apm v1.15.0
 	go.elastic.co/apm/module/apmgormv2 v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.22.4
@@ -27,6 +32,7 @@ require (
 	github.com/elastic/go-windows v1.0.1 // indirect
 	github.com/fasthttp/router v1.4.4 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/gammazero/deque v0.1.0 // indirect
 	github.com/gocql/gocql v0.0.0-20211222173705-d73e6b1002a7 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -46,10 +52,8 @@ require (
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/mattn/go-sqlite3 v1.14.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
-	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
@@ -61,8 +65,6 @@ require (
 	github.com/scylladb/gocqlx/v2 v2.6.0 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.31.0 // indirect
-	go.elastic.co/apm v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
@@ -76,6 +78,5 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/driver/postgres v1.2.3 // indirect
-	gorm.io/driver/sqlite v1.1.4 // indirect
 	howett.net/plist v1.0.0 // indirect
 )
