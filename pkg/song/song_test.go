@@ -16,13 +16,8 @@ var gormDb *gorm.DB
 var soundStripeService *soundstripe.Service
 
 func TestMain(m *testing.M) {
-	var err error
 	config = configs.GetConfig()
-	gormDb, err = boilerplate_testing.GetPostgresConnection(&config.MasterDb)
-	if err != nil {
-		panic(err)
-	}
-
+	gormDb = database.GetDb(database.DbTypeMaster)
 	soundStripeService = soundstripe.NewService(*config.SoundStripe)
 
 	os.Exit(m.Run())
