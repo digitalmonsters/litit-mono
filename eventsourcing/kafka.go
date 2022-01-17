@@ -125,7 +125,7 @@ func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTop
 			exists = true
 			if len(t.Partitions) != topicConfig.NumPartitions {
 				s.logger.Warn().Msgf("partition count mismatch for topic [%v] expected [%v] got [%v] partitions",
-					topicConfig.Name, topicConfig.NumPartitions, t.Partitions)
+					topicConfig.Name, topicConfig.NumPartitions, len(t.Partitions))
 			}
 			break
 		}
