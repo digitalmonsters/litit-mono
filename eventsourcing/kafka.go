@@ -158,8 +158,8 @@ func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTop
 			s.logger.Fatal().Err(err).Msgf("can not create topic [%v]", topicConfig.Name)
 		}
 
-		if len(res.Errors) > 0 {
-			for _, respErr := range res.Errors {
+		for _, respErr := range res.Errors {
+			if respErr != nil {
 				s.logger.Fatal().Err(respErr).Msgf("can not create topic [%v]", topicConfig.Name)
 			}
 		}
