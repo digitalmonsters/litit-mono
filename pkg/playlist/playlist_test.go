@@ -16,13 +16,8 @@ var config configs.Settings
 var gormDb *gorm.DB
 
 func TestMain(m *testing.M) {
-	var err error
 	config = configs.GetConfig()
-	gormDb, err = boilerplate_testing.GetPostgresConnection(&config.MasterDb)
-	if err != nil {
-		panic(err)
-	}
-
+	gormDb = database.GetDb(database.DbTypeMaster)
 	os.Exit(m.Run())
 }
 

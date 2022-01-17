@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/rs/zerolog/log"
@@ -22,6 +24,12 @@ var readonlyGormDb *gorm.DB
 
 func init() {
 	config := configs.GetConfig()
+
+	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
+		if err := boilerplate_testing.EnsurePostgresDbExists(config.MasterDb); err != nil {
+			panic(err)
+		}
+	}
 
 	log.Info().Msg("setup postgres database")
 

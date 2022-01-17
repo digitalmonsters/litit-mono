@@ -146,6 +146,17 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "alter_songs_170120221139",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table songs add genre text;` +
+				`alter table songs add duration numeric;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
 
