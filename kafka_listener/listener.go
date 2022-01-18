@@ -140,7 +140,7 @@ func (k *kafkaListener) checkIfTopicExists(topic string) error {
 	}
 
 	meta, err := client.Metadata(k.ctx, &kafka.MetadataRequest{
-		Addr: kafka.TCP(k.cfg.Hosts),
+		Addr: kafka.TCP(boilerplate.SplitHostsToSlice(k.cfg.Hosts)...),
 	})
 
 	if err != nil {
