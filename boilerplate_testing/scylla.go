@@ -10,13 +10,14 @@ import (
 	"github.com/scylladb/gocqlx/v2"
 	"github.com/thoas/go-funk"
 	"io/fs"
+	"os"
 	"testing"
 	"time"
 )
 
 func GetScyllaTestCluster(config *boilerplate.ScyllaConfiguration) (*gocql.ClusterConfig, *gocql.Session, error) {
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
-		config.Keyspace = fmt.Sprintf("a%v", boilerplate.GetGenerator().Generate().String())
+		config.Keyspace = GetScyllaCiKeyspaceName()
 	}
 	oldKeyspace := config.Keyspace
 
@@ -27,6 +28,10 @@ func GetScyllaTestCluster(config *boilerplate.ScyllaConfiguration) (*gocql.Clust
 	}
 
 	return getScyllaClusterInternal(*config)
+}
+
+func GetScyllaCiKeyspaceName() string {
+	return fmt.Sprintf("ci_%v", int64(os.Getpid()))
 }
 
 func RunScyllaMigrations(session *gocql.Session, migrations fs.FS) error {
