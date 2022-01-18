@@ -15,22 +15,38 @@
     "Tls": true
   },
   "NotifierCommentConfig": {
-    "KafkaTopic": "dev.comments",
+    "KafkaTopic": {
+      "Name": "local.comments",
+      "NumPartitions": 0,
+      "ReplicationFactor": 0
+    },
     "PollTimeMs": 2000,
     "WorkerPoolSize": 128
   },
   "NotifierContentCommentsCounterConfig": {
-    "KafkaTopic": "dev.content_comments_counter",
+    "KafkaTopic": {
+      "Name": "local.content_comments_counter",
+      "NumPartitions": 0,
+      "ReplicationFactor": 0
+    },
     "PollTimeMs": 2000,
     "WorkerPoolSize": 128
   },
   "NotifierUserCommentsCounterConfig": {
-    "KafkaTopic": "dev.user_comments_counter",
+    "KafkaTopic": {
+      "Name": "local.user_comments_counter",
+      "NumPartitions": 0,
+      "ReplicationFactor": 0
+    },
     "PollTimeMs": 2000,
     "WorkerPoolSize": 128
   },
   "NotifierVoteConfig": {
-    "KafkaTopic": "dev.comment_votes",
+    "KafkaTopic": {
+      "Name": "local.comment_votes",
+      "NumPartitions": 0,
+      "ReplicationFactor": 0
+    },
     "PollTimeMs": 2000,
     "WorkerPoolSize": 128
   },
