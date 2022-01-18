@@ -2,6 +2,7 @@ package kafka_listener
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -114,16 +115,38 @@ func (k *kafkaListener) getPartitionsForTopic() ([]int, error) {
 }
 
 func (k *kafkaListener) checkIfTopicExists(topic string) error {
-	var hosts = boilerplate.SplitHostsToSlice(k.cfg.Hosts)
-	client := &kafka.Client{
-		Transport: kafka.DefaultTransport,
+	transport := kafka.DefaultTransport
+
+	if k.cfg.Tls {
+		dialer := &kafka.Dialer{
+			Timeout:   10 * time.Second,
+			DualStack: true,
+		}
+
+		dialer.TLS = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+
+		transport = &kafka.Transport{
+			TLS: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+			Dial: dialer.DialFunc,
+		}
 	}
+
+	client := &kafka.Client{
+		Transport: transport,
+	}
+
 	meta, err := client.Metadata(k.ctx, &kafka.MetadataRequest{
-		Addr: kafka.TCP(hosts[0]),
+		Addr: kafka.TCP(k.cfg.Hosts),
 	})
+
 	if err != nil {
 		return err
 	}
+
 	var exists bool
 	for _, t := range meta.Topics {
 		if t.Name == topic {
@@ -131,6 +154,7 @@ func (k *kafkaListener) checkIfTopicExists(topic string) error {
 			break
 		}
 	}
+
 	if !exists {
 		return errors.New(fmt.Sprintf("topic [%v] doesn't exist", topic))
 	}
