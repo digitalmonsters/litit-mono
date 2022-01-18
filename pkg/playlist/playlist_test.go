@@ -57,6 +57,15 @@ func TestUpsertPlaylist(t *testing.T) {
 	assert.Equal(t, playlist.Name, playlistReq.Name)
 	assert.Equal(t, playlist.SortOrder, playlistReq.SortOrder)
 	assert.Equal(t, playlist.Color, playlistReq.Color)
+
+	playlistReq2 := UpsertPlaylistRequest{
+		Name:      "Test2",
+		SortOrder: 2,
+		Color:     "#ff0000",
+	}
+
+	_, err = UpsertPlaylist(playlistReq2, gormDb)
+	assert.NotNil(t, err)
 }
 
 func TestDeletePlaylistsBulk(t *testing.T) {
@@ -104,18 +113,21 @@ func TestPlaylistListingPublic(t *testing.T) {
 		{
 			Name:       "test1",
 			SortOrder:  1,
+			IsActive:   true,
 			Color:      "test1",
 			SongsCount: 5,
 		},
 		{
 			Name:       "test2",
 			SortOrder:  2,
+			IsActive:   true,
 			Color:      "test2",
 			SongsCount: 10,
 		},
 		{
 			Name:      "test3",
 			SortOrder: 3,
+			IsActive:  true,
 			Color:     "test3",
 		},
 	}
@@ -147,18 +159,20 @@ func TestPlaylistSongsListPublic(t *testing.T) {
 	assert.Nil(t, err)
 
 	song := database.Song{
-		Id:     "test_song",
-		Title:  "test",
-		Artist: "artist",
+		ExternalId: "test222",
+		Source:     database.SongSourceSoundStripe,
+		Title:      "test",
+		Artist:     "artist",
 	}
 
 	err = gormDb.Create(&song).Error
 	assert.Nil(t, err)
 
 	song2 := database.Song{
-		Id:     "test_song2",
-		Title:  "test2",
-		Artist: "artist2",
+		ExternalId: "test123",
+		Source:     database.SongSourceSoundStripe,
+		Title:      "test2",
+		Artist:     "artist2",
 	}
 
 	err = gormDb.Create(&song2).Error

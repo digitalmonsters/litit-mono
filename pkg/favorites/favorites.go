@@ -73,7 +73,7 @@ func FavoriteSongsList(req FavoriteSongsListRequest, userId int64, db *gorm.DB) 
 		return nil, errors.WithStack(result.Error)
 	}
 
-	var songIds []string
+	var songIds []int64
 	for _, f := range favorites {
 		songIds = append(songIds, f.SongId)
 	}

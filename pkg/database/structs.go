@@ -12,6 +12,7 @@ type Playlist struct {
 	SortOrder  int            `json:"sort_order"`
 	Color      string         `json:"color"`
 	SongsCount int            `json:"songs_count"`
+	IsActive   bool           `json:"is_active"`
 	CreatedAt  time.Time      `json:"created_at"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at"`
 }
@@ -36,17 +37,26 @@ func (p Playlists) ConvertToFrontendModel() (result []frontend.Playlist) {
 }
 
 type Song struct {
-	Id           string    `json:"id" gorm:"primaryKey"`
-	Title        string    `json:"title"`
-	Artist       string    `json:"artist"`
-	Url          string    `json:"url"`
-	ImageUrl     string    `json:"image_url"`
-	Genre        string    `json:"genre"`
-	Duration     float64   `json:"duration"`
-	ListenAmount int       `json:"listen_amount"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	Id           int64          `json:"id" gorm:"primaryKey"`
+	Source       SongSource     `json:"source"`
+	ExternalId   string         `json:"external_id"`
+	Title        string         `json:"title"`
+	Artist       string         `json:"artist"`
+	ImageUrl     string         `json:"image_url"`
+	Genre        string         `json:"genre"`
+	Duration     float64        `json:"duration"`
+	ListenAmount int            `json:"listen_amount"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `json:"deleted_at"`
 }
+
+type SongSource int
+
+const (
+	SongSourceOwn         = SongSource(1)
+	SongSourceSoundStripe = SongSource(2)
+)
 
 func (Song) TableName() string {
 	return "songs"
@@ -72,12 +82,12 @@ func (s Songs) ConvertToFrontendModel() (result []frontend.Song) {
 
 type PlaylistSongRelations struct {
 	PlaylistId int64
-	SongId     string
+	SongId     int64
 	SortOrder  int
 }
 
 type Favorite struct {
 	UserId    int64
-	SongId    string
+	SongId    int64
 	CreatedAt time.Time
 }

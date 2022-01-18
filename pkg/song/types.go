@@ -3,18 +3,19 @@ package song
 import "github.com/digitalmonsters/music/pkg/database"
 
 type AddSongToPlaylistRequest struct {
-	Songs []RelationItem `json:"songs"`
+	Source database.SongSource `json:"source"`
+	Songs  []RelationItem      `json:"songs"`
 }
 
 type RelationItem struct {
-	SongId     string `json:"song_id"`
-	PlaylistId int64  `json:"playlist_id"`
-	SortOrder  int    `json:"sort_order"`
+	ExternalSongId string `json:"external_song_id"`
+	PlaylistId     int64  `json:"playlist_id"`
+	SortOrder      int    `json:"sort_order"`
 }
 
 type DeleteSongsFromPlaylistBulkRequest struct {
-	PlaylistId int64    `json:"playlist_id"`
-	SongsIds   []string `json:"songs_ids"`
+	PlaylistId int64   `json:"playlist_id"`
+	SongsIds   []int64 `json:"songs_ids"`
 }
 
 type PlaylistSongListRequest struct {
