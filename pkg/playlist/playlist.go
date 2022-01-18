@@ -95,7 +95,7 @@ func PlaylistListingAdmin(req PlaylistListingAdminRequest, db *gorm.DB) (*Playli
 		return nil, errors.WithStack(err)
 	}
 
-	if err := db.Order("id desc").
+	if err := query.Order("id desc").
 		Limit(req.Limit).Offset(req.Offset).
 		Find(&playlists).Error; err != nil {
 		return nil, errors.WithStack(err)
