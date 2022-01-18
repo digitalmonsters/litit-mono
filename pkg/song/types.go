@@ -25,6 +25,6 @@ type PlaylistSongListRequest struct {
 }
 
 type PlaylistSongListResponse struct {
-	Songs      []database.Song `json:"songs"`
+	Items      []database.Song `json:"items"`
 	TotalCount int64           `json:"total_count"`
 }

@@ -37,7 +37,7 @@ const (
 )
 
 type PlaylistListingAdminResponse struct {
-	Playlists  []database.Playlist `json:"playlists"`
+	Items      []database.Playlist `json:"items"`
 	TotalCount int64               `json:"total_count"`
 }
 
@@ -48,8 +48,8 @@ type PlayListListingPublicRequest struct {
 }
 
 type PlayListListingPublicResponse struct {
-	Playlists []frontend.Playlist `json:"playlists"`
-	Cursor    string              `json:"cursor"`
+	Items  []frontend.Playlist `json:"items"`
+	Cursor string              `json:"cursor"`
 }
 
 type PlaylistSongsListPublicRequest struct {
@@ -59,6 +59,6 @@ type PlaylistSongsListPublicRequest struct {
 }
 
 type PlaylistSongsListPublicResponse struct {
-	Songs  []frontend.Song `json:"songs"`
+	Items  []frontend.Song `json:"items"`
 	Cursor string          `json:"cursor"`
 }

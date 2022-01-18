@@ -142,7 +142,7 @@ func TestPlaylistListingPublic(t *testing.T) {
 	fmt.Println(resp)
 
 	assert.Nil(t, err)
-	assert.Len(t, resp.Playlists, 2)
+	assert.Len(t, resp.Items, 2)
 }
 
 func TestPlaylistSongsListPublic(t *testing.T) {
@@ -199,5 +199,5 @@ func TestPlaylistSongsListPublic(t *testing.T) {
 		Count:      10,
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp.Songs, 2)
+	assert.Len(t, resp.Items, 2)
 }

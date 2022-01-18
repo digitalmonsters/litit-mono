@@ -102,7 +102,7 @@ func PlaylistListingAdmin(req PlaylistListingAdminRequest, db *gorm.DB) (*Playli
 	}
 
 	return &PlaylistListingAdminResponse{
-		Playlists:  playlists,
+		Items:      playlists,
 		TotalCount: totalCount,
 	}, nil
 }
@@ -149,7 +149,7 @@ func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*Play
 	}
 
 	resp := &PlayListListingPublicResponse{
-		Playlists: playlists.ConvertToFrontendModel(),
+		Items: playlists.ConvertToFrontendModel(),
 	}
 
 	if cursor.After != nil {
@@ -220,7 +220,7 @@ func PlaylistSongsListPublic(req PlaylistSongsListPublicRequest, db *gorm.DB) (*
 	}
 
 	resp := &PlaylistSongsListPublicResponse{
-		Songs: songs.ConvertToFrontendModel(),
+		Items: songs.ConvertToFrontendModel(),
 	}
 
 	if cursor.After != nil {

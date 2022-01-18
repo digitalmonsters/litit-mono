@@ -93,7 +93,7 @@ func FavoriteSongsList(req FavoriteSongsListRequest, userId int64, db *gorm.DB) 
 	}
 
 	resp := &FavoriteSongsListResponse{
-		Songs: songs.ConvertToFrontendModel(),
+		Items: songs.ConvertToFrontendModel(),
 	}
 
 	if cursor.After != nil {

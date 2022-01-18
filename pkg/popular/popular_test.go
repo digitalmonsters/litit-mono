@@ -43,5 +43,5 @@ func TestGetPopularSongs(t *testing.T) {
 		Count: 10,
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp.Songs, 10)
+	assert.Len(t, resp.Items, 10)
 }

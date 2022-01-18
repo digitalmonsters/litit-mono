@@ -142,5 +142,5 @@ func TestFavoriteSongsList(t *testing.T) {
 		Cursor: "",
 	}, int64(userId), gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp.Songs, 2)
+	assert.Len(t, resp.Items, 2)
 }

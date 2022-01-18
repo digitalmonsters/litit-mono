@@ -141,5 +141,35 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_music_storage_init_180120221913",
+			Migrate: func(db *gorm.DB) error {
+				query := `
+						create table music_storage
+						(
+							id serial
+								constraint music_storage_pk
+									primary key,
+							title text,
+							description text,
+							image_url text,
+							duration numeric,
+							url text,
+							genre text,
+							artist text,
+							hash text,
+							created_at timestamp default current_timestamp,
+							updated_at timestamp default current_timestamp,
+							deleted_at timestamp default null
+						);
+				
+						create unique index music_storage_hash_uindex
+							on music_storage (hash);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

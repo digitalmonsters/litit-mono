@@ -120,7 +120,7 @@ func PlaylistSongListAdmin(req PlaylistSongListRequest, db *gorm.DB) (*PlaylistS
 	}
 
 	return &PlaylistSongListResponse{
-		Songs:      songs,
+		Items:      songs,
 		TotalCount: totalCount,
 	}, nil
 }

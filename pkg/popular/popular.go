@@ -56,7 +56,7 @@ func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB) (*GetPopularSongsR
 	}
 
 	resp := &GetPopularSongsResponse{
-		Songs: songs.ConvertToFrontendModel(),
+		Items: songs.ConvertToFrontendModel(),
 	}
 
 	if cursor.After != nil {
