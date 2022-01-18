@@ -131,7 +131,7 @@ func testInsert(t *testing.T) {
 
 	errs := service.Flush()
 	assert.Equal(t, len(errs), 0)
-	for _, err := range errs{
+	for _, err := range errs {
 		log.Error().Err(err).Send()
 	}
 
@@ -180,8 +180,6 @@ func BenchmarkPerformance(b *testing.B) {
 
 func testPerformance(b *testing.B) {
 	var contentCount = int64(100000)
-
-	cfg.NotifierCommentConfig.KafkaTopic = "back_comment_events_test"
 
 	s := NewNotifier(
 		pollTime,

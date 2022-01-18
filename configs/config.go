@@ -26,9 +26,9 @@ func (d DbConfig) ToBoilerplate() boilerplate.DbConfig {
 }
 
 type NotifierConfig struct {
-	KafkaTopic     string `json:"KafkaTopic"`
-	PollTimeMs     int    `json:"PollTimeMs"`
-	WorkerPoolSize int    `json:"WorkerPoolSize"`
+	KafkaTopic     boilerplate.KafkaTopicConfig `json:"KafkaTopic"`
+	PollTimeMs     int                          `json:"PollTimeMs"`
+	WorkerPoolSize int                          `json:"WorkerPoolSize"`
 }
 
 type Settings struct {
@@ -56,7 +56,7 @@ func init() {
 		panic(err)
 	}
 
-	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci{
+	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
 		settings.Db.Db = fmt.Sprintf("ci_%v", boilerplate.GetGenerator().Generate().String())
 
 		if err := boilerplate_testing.EnsurePostgresDbExists(settings.Db.ToBoilerplate()); err != nil {
