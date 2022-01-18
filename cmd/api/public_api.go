@@ -24,9 +24,9 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
 		}
 
-		songId := utils.ExtractString(executionData.GetUserValue, "song_id", "")
+		songId := utils.ExtractInt64(executionData.GetUserValue, "song_id", 0, 0)
 
-		if len(songId) <= 0 {
+		if songId <= 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid song_id"), error_codes.GenericValidationError)
 		}
 
@@ -54,9 +54,9 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
 		}
 
-		songId := utils.ExtractString(executionData.GetUserValue, "song_id", "")
+		songId := utils.ExtractInt64(executionData.GetUserValue, "song_id", 0, 0)
 
-		if len(songId) <= 0 {
+		if songId <= 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid song_id"), error_codes.GenericValidationError)
 		}
 

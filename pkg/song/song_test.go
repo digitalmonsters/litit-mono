@@ -4,7 +4,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
-	"github.com/digitalmonsters/music/pkg/soundstripe"
+	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"
@@ -13,12 +13,12 @@ import (
 
 var config configs.Settings
 var gormDb *gorm.DB
-var soundStripeService *soundstripe.Service
+var musicStorageService *music_source.MusicStorageService
 
 func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	gormDb = database.GetDb(database.DbTypeMaster)
-	soundStripeService = soundstripe.NewService(*config.SoundStripe)
+	musicStorageService = music_source.NewMusicStorageService(&config)
 
 	os.Exit(m.Run())
 }
@@ -37,9 +37,10 @@ func TestMethods(t *testing.T) {
 	assert.Nil(t, err)
 
 	song := database.Song{
-		Id:     "test_song",
-		Title:  "test",
-		Artist: "artist",
+		Source:     database.SongSourceSoundStripe,
+		ExternalId: "123",
+		Title:      "test",
+		Artist:     "artist",
 	}
 
 	err = gormDb.Create(&song).Error
@@ -75,7 +76,7 @@ func TestMethods(t *testing.T) {
 
 	err = DeleteSongFromPlaylistsBulk(DeleteSongsFromPlaylistBulkRequest{
 		PlaylistId: playlist.Id,
-		SongsIds:   []string{song.Id},
+		SongsIds:   []int64{song.Id},
 	}, gormDb)
 	assert.Nil(t, err)
 
@@ -102,18 +103,20 @@ func TestPlaylistSongList(t *testing.T) {
 	assert.Nil(t, err)
 
 	song := database.Song{
-		Id:     "test_song",
-		Title:  "test",
-		Artist: "artist",
+		Source:     database.SongSourceSoundStripe,
+		ExternalId: "123",
+		Title:      "test",
+		Artist:     "artist",
 	}
 
 	err = gormDb.Create(&song).Error
 	assert.Nil(t, err)
 
 	song2 := database.Song{
-		Id:     "test_song2",
-		Title:  "test2",
-		Artist: "artist2",
+		Source:     database.SongSourceSoundStripe,
+		ExternalId: "234",
+		Title:      "test2",
+		Artist:     "artist2",
 	}
 
 	err = gormDb.Create(&song2).Error

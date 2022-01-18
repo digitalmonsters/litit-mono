@@ -28,10 +28,10 @@ func TestGetPopularSongs(t *testing.T) {
 	var songs []database.Song
 	for i := 0; i < 50; i++ {
 		songs = append(songs, database.Song{
-			Id:           fmt.Sprintf("test_%v", i),
+			ExternalId:   fmt.Sprintf("test_%v", i),
+			Source:       database.SongSourceSoundStripe,
 			Title:        fmt.Sprintf("test_%v", i),
 			Artist:       fmt.Sprintf("artist_%v", i),
-			Url:          fmt.Sprintf("url_%v", i),
 			ListenAmount: i * 100,
 		})
 	}
@@ -43,5 +43,5 @@ func TestGetPopularSongs(t *testing.T) {
 		Count: 10,
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp.Songs, 10)
+	assert.Len(t, resp.Items, 10)
 }

@@ -11,6 +11,7 @@ type UpsertPlaylistRequest struct {
 	Name      string   `json:"name"`
 	SortOrder int      `json:"sort_order"`
 	Color     string   `json:"color"`
+	IsActive  bool     `json:"is_active"`
 }
 
 type DeletePlaylistsBulkRequest struct {
@@ -18,13 +19,25 @@ type DeletePlaylistsBulkRequest struct {
 }
 
 type PlaylistListingAdminRequest struct {
-	Name   null.String `json:"name"`
-	Limit  int         `json:"limit"`
-	Offset int         `json:"offset"`
+	Name     null.String `json:"name"`
+	IsActive null.Bool   `json:"is_active"`
+	Order    OrderOption `json:"order"`
+	Limit    int         `json:"limit"`
+	Offset   int         `json:"offset"`
 }
 
+type OrderOption uint8
+
+const (
+	OrderNone           OrderOption = 0
+	OrderSortOrderAsc   OrderOption = 1
+	OrderSortOrderDesc  OrderOption = 2
+	OrderSongsCountAsc  OrderOption = 3
+	OrderSongsCountDesc OrderOption = 4
+)
+
 type PlaylistListingAdminResponse struct {
-	Playlists  []database.Playlist `json:"playlists"`
+	Items      []database.Playlist `json:"items"`
 	TotalCount int64               `json:"total_count"`
 }
 
@@ -35,8 +48,8 @@ type PlayListListingPublicRequest struct {
 }
 
 type PlayListListingPublicResponse struct {
-	Playlists []frontend.Playlist `json:"playlists"`
-	Cursor    string              `json:"cursor"`
+	Items  []frontend.Playlist `json:"items"`
+	Cursor string              `json:"cursor"`
 }
 
 type PlaylistSongsListPublicRequest struct {
@@ -46,6 +59,6 @@ type PlaylistSongsListPublicRequest struct {
 }
 
 type PlaylistSongsListPublicResponse struct {
-	Songs  []frontend.Song `json:"songs"`
+	Items  []frontend.Song `json:"items"`
 	Cursor string          `json:"cursor"`
 }

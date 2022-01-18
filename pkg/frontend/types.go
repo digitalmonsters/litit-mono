@@ -8,7 +8,7 @@ type Playlist struct {
 }
 
 type Song struct {
-	Id       string  `json:"id"`
+	Id       int64   `json:"id"`
 	Title    string  `json:"title"`
 	Artist   string  `json:"artist"`
 	Url      string  `json:"url"`

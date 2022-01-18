@@ -2,7 +2,7 @@ package song
 
 import (
 	"github.com/digitalmonsters/music/pkg/database"
-	"github.com/digitalmonsters/music/pkg/soundstripe"
+	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"go.elastic.co/apm"
@@ -10,23 +10,48 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransaction *apm.Transaction, soundStripeService *soundstripe.Service) error {
+func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransaction *apm.Transaction, musicStorageService *music_source.MusicStorageService) error {
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	var songIds []string
+	var externalSongIds []string
 	for _, s := range req.Songs {
-		if !funk.ContainsString(songIds, s.SongId) {
-			songIds = append(songIds, s.SongId)
+		if !funk.ContainsString(externalSongIds, s.ExternalSongId) {
+			externalSongIds = append(externalSongIds, s.ExternalSongId)
 		}
 	}
 
-	err := soundStripeService.SyncSongsList(songIds, db, apmTransaction)
+	err := musicStorageService.SyncMusic(externalSongIds, req.Source, db, apmTransaction)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
+	var songsRelation []struct {
+		Id         int64
+		ExternalId string
+	}
+
+	if err := tx.Model(&database.Song{}).
+		Where("external_id in ? and source = ?", externalSongIds, database.SongSourceSoundStripe).
+		Find(&songsRelation).Error; err != nil {
+		return errors.WithStack(err)
+	}
+
+	if len(externalSongIds) != len(songsRelation) {
+		return errors.New("something went wrong (sync error)")
+	}
+
+	songsRelationsMapped := map[string]int64{}
+	for _, r := range songsRelation {
+		songsRelationsMapped[r.ExternalId] = r.Id
+	}
+
 	for _, s := range req.Songs {
+		internalSongId, ok := songsRelationsMapped[s.ExternalSongId]
+		if !ok {
+			continue
+		}
+
 		if err := tx.Clauses(clause.OnConflict{
 			Columns: []clause.Column{{Name: "playlist_id"}, {Name: "song_id"}},
 			DoUpdates: clause.Assignments(map[string]interface{}{
@@ -34,7 +59,7 @@ func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransac
 			}),
 		}).Create(&database.PlaylistSongRelations{
 			PlaylistId: s.PlaylistId,
-			SongId:     s.SongId,
+			SongId:     internalSongId,
 			SortOrder:  s.SortOrder,
 		}).Error; err != nil {
 			return errors.WithStack(err)
@@ -95,7 +120,7 @@ func PlaylistSongListAdmin(req PlaylistSongListRequest, db *gorm.DB) (*PlaylistS
 	}
 
 	return &PlaylistSongListResponse{
-		Songs:      songs,
+		Items:      songs,
 		TotalCount: totalCount,
 	}, nil
 }
