@@ -165,8 +165,6 @@ func BenchmarkPerformance(b *testing.B) {
 func testPerformance(b *testing.B) {
 	var contentCount = int64(100000)
 
-	cfg.NotifierCommentConfig.KafkaTopic = "back_comment_events_test"
-
 	s := NewNotifier(
 		pollTime,
 		context.TODO(),
