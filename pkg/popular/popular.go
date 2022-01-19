@@ -1,6 +1,7 @@
 package popular
 
 import (
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
@@ -19,8 +20,8 @@ func GetAudioUrl(songId string, db *gorm.DB) (interface{}, error) {
 	return nil, nil
 }
 
-func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB) (*GetPopularSongsResponse, error) {
-	var songs database.Songs
+func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB, executionData router.MethodExecutionData) (*GetPopularSongsResponse, error) {
+	var songs []database.Song
 
 	query := db.Table("songs").Where("listen_amount  > 0")
 
@@ -64,7 +65,7 @@ func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB) (*GetPopularSongsR
 		return resp, nil
 	}
 
-	resp.Items = songs.ConvertToFrontendModel()
+	resp.Items = frontend.ConvertSongsToFrontendModel(songs, executionData.UserId, db, executionData.ApmTransaction)
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After

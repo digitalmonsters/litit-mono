@@ -123,7 +123,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 			PlaylistId: playlistId,
 			Count:      int(count),
 			Cursor:     cursor,
-		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
 
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
@@ -142,13 +142,15 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
 		}
 
+		songName := utils.ExtractString(executionData.GetUserValue, "name", "")
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		cursor := utils.ExtractString(executionData.GetUserValue, "cursor", "")
 
 		resp, err := favorites.FavoriteSongsList(favorites.FavoriteSongsListRequest{
-			Count:  int(count),
-			Cursor: cursor,
-		}, executionData.UserId, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+			SearchKeyword: null.StringFrom(songName),
+			Count:         int(count),
+			Cursor:        cursor,
+		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
 
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
@@ -173,7 +175,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		resp, err := popular.GetPopularSongs(popular.GetPopularSongsRequest{
 			Count:  int(count),
 			Cursor: cursor,
-		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
 
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)

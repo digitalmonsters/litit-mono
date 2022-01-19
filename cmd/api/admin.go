@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/music_source"
+	"github.com/digitalmonsters/music/pkg/own_storage"
 	"github.com/digitalmonsters/music/pkg/playlist"
 	"github.com/digitalmonsters/music/pkg/song"
 )
@@ -132,6 +133,56 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		return err
 	}
 
+	if err := httpRouter.RegisterRpcCommand(router.NewCommand("UpsertSongsToOwnStorageBulk", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req own_storage.AddSongsToOwnStorageRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		resp, err := own_storage.UpsertSongsToOwnStorageBulk(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, common.AccessLevelRead, false, true)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRpcCommand(router.NewCommand("DeleteSongsFromOwnStorageBulk", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req own_storage.DeleteSongsFromOwnStorageRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		if err := own_storage.DeleteSongsFromOwnStorageBulk(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context)); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return successResponse{Success: true}, nil
+	}, common.AccessLevelRead, false, true)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRpcCommand(router.NewCommand("OwnStorageMusicList", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req own_storage.OwnStorageMusicListRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		resp, err := own_storage.OwnStorageMusicList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, common.AccessLevelRead, false, true)); err != nil {
+		return err
+	}
+
 	apiDef["UpsertPlaylistAdmin"] = swagger.ApiDescription{
 		Request:  playlist.UpsertPlaylistRequest{},
 		Response: database.Playlist{},
@@ -172,6 +223,24 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		Request:  music_source.ListMusicRequest{},
 		Response: music_source.ListMusicResponse{},
 		Tags:     []string{"songs", "list", "admin"},
+	}
+
+	apiDef["UpsertSongsToOwnStorageBulk"] = swagger.ApiDescription{
+		Request:  own_storage.AddSongsToOwnStorageRequest{},
+		Response: []database.MusicStorage{},
+		Tags:     []string{"upsert", "song", "own_storage", "admin"},
+	}
+
+	apiDef["DeleteSongsFromOwnStorageBulk"] = swagger.ApiDescription{
+		Request:  own_storage.DeleteSongsFromOwnStorageRequest{},
+		Response: successResponse{},
+		Tags:     []string{"delete", "song", "own_storage", "admin"},
+	}
+
+	apiDef["OwnStorageMusicList"] = swagger.ApiDescription{
+		Request:  own_storage.OwnStorageMusicListRequest{},
+		Response: own_storage.OwnStorageMusicListResponse{},
+		Tags:     []string{"list", "song", "own_storage", "admin"},
 	}
 
 	return nil

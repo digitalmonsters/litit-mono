@@ -1,6 +1,9 @@
 package favorites
 
-import "github.com/digitalmonsters/music/pkg/frontend"
+import (
+	"github.com/digitalmonsters/music/pkg/frontend"
+	"gopkg.in/guregu/null.v4"
+)
 
 type AddToFavoritesRequest struct {
 	UserId int64 `json:"user_id"`
@@ -13,8 +16,9 @@ type RemoveFromFavoritesRequest struct {
 }
 
 type FavoriteSongsListRequest struct {
-	Count  int    `json:"count"`
-	Cursor string `json:"cursor"`
+	SearchKeyword null.String `json:"search_keyword"`
+	Count         int         `json:"count"`
+	Cursor        string      `json:"cursor"`
 }
 
 type FavoriteSongsListResponse struct {
