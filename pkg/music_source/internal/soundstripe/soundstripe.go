@@ -6,7 +6,6 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
-	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/digitalmonsters/music/pkg/music_source/internal"
 	"github.com/digitalmonsters/music/utils"
 	"github.com/gammazero/workerpool"
@@ -37,12 +36,12 @@ func NewService(cfg configs.SoundStripeConfig) internal.IMusicStorageAdapter {
 	}
 }
 
-func (s *Service) SyncSongsList(externalSongsIds []string, db *gorm.DB, apmTransaction *apm.Transaction) error {
+func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTransaction *apm.Transaction) error {
 	var missing []string
 
 	var songsInDb []string
-	if err := db.Model(database.Song{}).Where("external_id in ? and source = ?", externalSongsIds, database.SongSourceSoundStripe).
-		Pluck("external_id", &externalSongsIds).Error; err != nil {
+	if err := tx.Model(database.Song{}).Where("external_id in ? and source = ?", externalSongsIds, database.SongSourceSoundStripe).
+		Pluck("external_id", &songsInDb).Error; err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -62,7 +61,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, db *gorm.DB, apmTrans
 	for _, songId := range missing {
 		cachedItem, hasCachedItem := s.songsCache.Get(songId)
 		if hasCachedItem {
-			song := cachedItem.(frontend.Song)
+			song := cachedItem.(internal.SongModel)
 			songsToAdd = append(songsToAdd, database.Song{
 				Source:     database.SongSourceSoundStripe,
 				ExternalId: songId,
@@ -102,7 +101,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, db *gorm.DB, apmTrans
 	}
 
 	if len(songsToAdd) > 0 {
-		if err := db.Create(&songsToAdd).Error; err != nil {
+		if err := tx.Create(&songsToAdd).Error; err != nil {
 			return errors.WithStack(err)
 		}
 	}
@@ -121,7 +120,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, db *gorm.DB, apmTrans
 func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
 	resChan := make(chan internal.GetSongsListResponseChan, 2)
 	s.workerPool.Submit(func() {
-		finalResponse := internal.GetSongsListResponseChan{}
+		/*finalResponse := internal.GetSongsListResponseChan{}
 
 		queryParams := fmt.Sprintf("?size=%v&page=%v", req.Size, req.Page)
 		if req.SearchKeyword.Valid {
@@ -156,6 +155,29 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction 
 				Songs:      songs,
 				TotalCount: ssResp.Links.Meta.TotalCount,
 			}
+		}*/
+
+		var songs []internal.SongModel
+		for i := 1; i <= 10; i++ {
+			song := internal.SongModel{
+				ExternalId: fmt.Sprint(i),
+				Title:      fmt.Sprintf("test_title%v", i),
+				Artist:     fmt.Sprintf("test_artist%v", i),
+				ImageUrl:   fmt.Sprintf("test_image_url%v", i),
+				Genre:      fmt.Sprintf("test_genre%v", i),
+				Duration:   float64(10 * i),
+			}
+
+			songs = append(songs, song)
+			s.songsCache.Set(song.ExternalId, song, cache.DefaultExpiration)
+		}
+
+		finalResponse := internal.GetSongsListResponseChan{
+			Error: nil,
+			Response: internal.GetSongsListResponse{
+				Songs:      songs,
+				TotalCount: 10,
+			},
 		}
 
 		resChan <- finalResponse

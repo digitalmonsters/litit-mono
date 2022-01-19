@@ -21,7 +21,7 @@ func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransac
 		}
 	}
 
-	err := musicStorageService.SyncMusic(externalSongIds, req.Source, db, apmTransaction)
+	err := musicStorageService.SyncMusic(externalSongIds, req.Source, tx, apmTransaction)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -11,6 +11,7 @@ type Settings struct {
 	MasterDb        boilerplate.DbConfig `json:"MasterDb"`
 	ReadonlyDb      boilerplate.DbConfig `json:"ReadonlyDb"`
 	SoundStripe     *SoundStripeConfig   `json:"SoundStripe"`
+	S3              boilerplate.S3Config `json:"S3"`
 	PrivateHttpPort int                  `json:"PrivateHttpPort"`
 }
 

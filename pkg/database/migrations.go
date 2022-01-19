@@ -171,5 +171,18 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_music_storage_index_190120221346",
+			Migrate: func(db *gorm.DB) error {
+				query := `
+						drop index music_storage_hash_uindex;
+						alter table music_storage drop column hash;
+						create unique index music_storage_url_uindex on music_storage (url);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
