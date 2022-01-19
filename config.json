@@ -21,6 +21,12 @@
     "MaxWorkers": 64,
     "MaxTimeout": 10
   },
+  "S3": {
+    "CdnDirectory": "",
+    "CdnUrl": "",
+    "Region": "",
+    "Bucket": ""
+  },
   "Wrappers": {
     "Content": {
       "ApiUrl": ""

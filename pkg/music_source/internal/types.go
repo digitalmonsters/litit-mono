@@ -7,7 +7,7 @@ import (
 )
 
 type IMusicStorageAdapter interface {
-	SyncSongsList(songIds []string, db *gorm.DB, apmTransaction *apm.Transaction) error
+	SyncSongsList(songIds []string, tx *gorm.DB, apmTransaction *apm.Transaction) error
 	GetSongsList(req GetSongsListRequest, apmTransaction *apm.Transaction) chan GetSongsListResponseChan
 }
 
@@ -20,7 +20,6 @@ type SongModel struct {
 	ExternalId string  `json:"external_id"`
 	Title      string  `json:"title"`
 	Artist     string  `json:"artist"`
-	Url        string  `json:"url"`
 	ImageUrl   string  `json:"image_url"`
 	Genre      string  `json:"genre"`
 	Duration   float64 `json:"duration"`

@@ -12,12 +12,16 @@ import (
 )
 
 type MusicStorageService struct {
-	cfg *configs.Settings
+	cfg             *configs.Settings
+	implementations map[database.SongSource]internal.IMusicStorageAdapter
 }
 
 func NewMusicStorageService(configuration *configs.Settings) *MusicStorageService {
 	return &MusicStorageService{
 		cfg: configuration,
+		implementations: map[database.SongSource]internal.IMusicStorageAdapter{
+			database.SongSourceSoundStripe: soundstripe.NewService(*configuration.SoundStripe),
+		},
 	}
 }
 
@@ -43,19 +47,20 @@ func (s *MusicStorageService) ListMusic(req ListMusicRequest, apmTransaction *ap
 	}, nil
 }
 
-func (s *MusicStorageService) SyncMusic(externalMusicIds []string, source database.SongSource, db *gorm.DB, apmTransaction *apm.Transaction) error {
+func (s *MusicStorageService) SyncMusic(externalMusicIds []string, source database.SongSource, tx *gorm.DB, apmTransaction *apm.Transaction) error {
 	impl, err := s.getImplementation(source)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	return impl.SyncSongsList(externalMusicIds, db, apmTransaction)
+	return impl.SyncSongsList(externalMusicIds, tx, apmTransaction)
 }
 
 func (s *MusicStorageService) getImplementation(implType database.SongSource) (internal.IMusicStorageAdapter, error) {
+
 	switch implType {
 	case database.SongSourceSoundStripe:
-		return soundstripe.NewService(*s.cfg.SoundStripe), nil
+		return s.implementations[database.SongSourceSoundStripe], nil
 	default:
 		return nil, errors.New(fmt.Sprintf("muscic adapter [%v] not implemented", implType))
 	}

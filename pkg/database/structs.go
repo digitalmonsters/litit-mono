@@ -54,7 +54,7 @@ type Song struct {
 type SongSource int
 
 const (
-	SongSourceOwn         = SongSource(1)
+	SongSourceOwnStorage  = SongSource(1)
 	SongSourceSoundStripe = SongSource(2)
 )
 
@@ -101,7 +101,6 @@ type MusicStorage struct {
 	Genre       string         `json:"genre"`
 	Duration    float64        `json:"duration"`
 	Url         string         `json:"url"`
-	Hash        string         `json:"hash"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `json:"deleted_at"`

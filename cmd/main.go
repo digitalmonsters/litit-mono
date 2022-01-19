@@ -44,6 +44,9 @@ func main() {
 		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
 		panic(err)
 	}
+
+	api.InitUploadApi(httpRouter, &cfg)
+
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)
 		httpRouter.RegisterProfiler()

@@ -3,6 +3,7 @@ package playlist
 import (
 	"fmt"
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -95,7 +96,7 @@ func PlaylistListingAdmin(req PlaylistListingAdminRequest, db *gorm.DB) (*Playli
 		return nil, errors.WithStack(err)
 	}
 
-	if err := db.Order("id desc").
+	if err := query.Order("id desc").
 		Limit(req.Limit).Offset(req.Offset).
 		Find(&playlists).Error; err != nil {
 		return nil, errors.WithStack(err)
@@ -149,8 +150,14 @@ func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*Play
 	}
 
 	resp := &PlayListListingPublicResponse{
-		Items: playlists.ConvertToFrontendModel(),
+		Items: make([]frontend.Playlist, 0),
 	}
+
+	if len(playlists) == 0 {
+		return resp, nil
+	}
+
+	resp.Items = playlists.ConvertToFrontendModel()
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After
@@ -220,8 +227,14 @@ func PlaylistSongsListPublic(req PlaylistSongsListPublicRequest, db *gorm.DB) (*
 	}
 
 	resp := &PlaylistSongsListPublicResponse{
-		Items: songs.ConvertToFrontendModel(),
+		Items: make([]frontend.Song, 0),
 	}
+
+	if len(songs) == 0 {
+		return resp, nil
+	}
+
+	resp.Items = songs.ConvertToFrontendModel()
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After
