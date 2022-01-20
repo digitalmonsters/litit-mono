@@ -17,12 +17,20 @@ type GetSongsListResponseChan struct {
 }
 
 type SongModel struct {
-	ExternalId string  `json:"external_id"`
-	Title      string  `json:"title"`
-	Artist     string  `json:"artist"`
-	ImageUrl   string  `json:"image_url"`
-	Genre      string  `json:"genre"`
-	Duration   float64 `json:"duration"`
+	ExternalId   string            `json:"external_id"`
+	Title        string            `json:"title"`
+	Artist       string            `json:"artist"`
+	ImageUrl     string            `json:"image_url"`
+	Genre        string            `json:"genre"`
+	Duration     float64           `json:"duration"`
+	Files        map[string]string `json:"files"`
+	DateUploaded null.Time         `json:"date_uploaded"`
+	Playlists    []PlaylistModel   `json:"playlists"`
+}
+
+type PlaylistModel struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type GetSongResponseChan struct {

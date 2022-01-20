@@ -166,6 +166,9 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction 
 				ImageUrl:   fmt.Sprintf("test_image_url%v", i),
 				Genre:      fmt.Sprintf("test_genre%v", i),
 				Duration:   float64(10 * i),
+				Files: map[string]string{
+					"mp3": "https://music.cdn.dev.digitalmonster.link/a88c261b7ca42541286aeeeea39f7353.mp3",
+				},
 			}
 
 			songs = append(songs, song)

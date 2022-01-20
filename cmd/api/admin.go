@@ -123,7 +123,7 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		resp, err := musicStorageService.ListMusic(req, executionData.ApmTransaction)
+		resp, err := musicStorageService.ListMusic(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData.ApmTransaction)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
