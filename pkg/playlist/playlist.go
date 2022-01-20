@@ -35,7 +35,7 @@ func UpsertPlaylist(req UpsertPlaylistRequest, db *gorm.DB) (*database.Playlist,
 	if err := tx.Model(&playlist).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "id"}},
-			UpdateAll: true,
+			DoUpdates: clause.AssignmentColumns([]string{"name", "sort_order", "color", "is_active"}),
 		}).
 		Create(&playlist).Error; err != nil {
 		return nil, errors.WithStack(err)
