@@ -8,7 +8,8 @@ import (
 
 type IMusicStorageAdapter interface {
 	SyncSongsList(songIds []string, tx *gorm.DB, apmTransaction *apm.Transaction) error
-	GetSongsList(req GetSongsListRequest, apmTransaction *apm.Transaction) chan GetSongsListResponseChan
+	GetSongsList(req GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan GetSongsListResponseChan
+	GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error)
 }
 
 type GetSongsListResponseChan struct {

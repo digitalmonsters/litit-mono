@@ -40,7 +40,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := api.InitPublicApi(httpRouter, apiDef); err != nil {
+	if err := api.InitPublicApi(httpRouter, apiDef, musicStorageService); err != nil {
 		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
 		panic(err)
 	}

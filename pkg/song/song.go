@@ -32,7 +32,7 @@ func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransac
 	}
 
 	if err := tx.Model(&database.Song{}).
-		Where("external_id in ? and source = ?", externalSongIds, database.SongSourceSoundStripe).
+		Where("external_id in ? and source = ?", externalSongIds, req.Source).
 		Find(&songsRelation).Error; err != nil {
 		return errors.WithStack(err)
 	}
@@ -123,4 +123,30 @@ func PlaylistSongListAdmin(req PlaylistSongListRequest, db *gorm.DB) (*PlaylistS
 		Items:      songs,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func GetSongUrl(req GetSongUrlRequest, db *gorm.DB, apmTransaction *apm.Transaction, service *music_source.MusicStorageService) (map[string]string, error) {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	var song database.Song
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&song, req.SongId).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	data, err := service.GetMusicUrl(song.ExternalId, song.Source, db, apmTransaction)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err = tx.Model(&song).Where("id = ?", song.Id).
+		Update("listen_amount", gorm.Expr("listen_amount + 1")).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return data, nil
 }

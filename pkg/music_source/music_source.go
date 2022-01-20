@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/music_source/internal"
+	"github.com/digitalmonsters/music/pkg/music_source/internal/lit"
 	"github.com/digitalmonsters/music/pkg/music_source/internal/soundstripe"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
@@ -23,6 +24,7 @@ func NewMusicStorageService(configuration *configs.Settings) *MusicStorageServic
 	return &MusicStorageService{
 		cfg: configuration,
 		implementations: map[database.SongSource]internal.IMusicStorageAdapter{
+			database.SongSourceOwnStorage:  lit.NewService(),
 			database.SongSourceSoundStripe: soundstripe.NewService(*configuration.SoundStripe),
 		},
 	}
@@ -38,7 +40,7 @@ func (s *MusicStorageService) ListMusic(req ListMusicRequest, db *gorm.DB, apmTr
 		SearchKeyword: req.SearchKeyword,
 		Page:          req.Page,
 		Size:          req.Size,
-	}, apmTransaction)
+	}, db, apmTransaction)
 
 	if respCh.Error != nil {
 		return nil, errors.WithStack(respCh.Error)
@@ -107,12 +109,25 @@ func (s *MusicStorageService) SyncMusic(externalMusicIds []string, source databa
 	return impl.SyncSongsList(externalMusicIds, tx, apmTransaction)
 }
 
-func (s *MusicStorageService) getImplementation(implType database.SongSource) (internal.IMusicStorageAdapter, error) {
-
-	switch implType {
-	case database.SongSourceSoundStripe:
-		return s.implementations[database.SongSourceSoundStripe], nil
-	default:
-		return nil, errors.New(fmt.Sprintf("muscic adapter [%v] not implemented", implType))
+func (s *MusicStorageService) GetMusicUrl(externalId string, source database.SongSource, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error) {
+	impl, err := s.getImplementation(source)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
+
+	data, err := impl.GetSongUrl(externalId, db, apmTransaction)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return data, nil
+}
+
+func (s *MusicStorageService) getImplementation(implType database.SongSource) (internal.IMusicStorageAdapter, error) {
+	impl, ok := s.implementations[implType]
+	if ok {
+		return impl, nil
+	}
+
+	return nil, errors.New(fmt.Sprintf("muscic adapter [%v] not implemented", implType))
 }

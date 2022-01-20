@@ -117,7 +117,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTrans
 	return nil
 }
 
-func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
+func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
 	resChan := make(chan internal.GetSongsListResponseChan, 2)
 	s.workerPool.Submit(func() {
 		/*finalResponse := internal.GetSongsListResponseChan{}
@@ -187,6 +187,12 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction 
 	})
 
 	return resChan
+}
+
+func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error) {
+	return map[string]string{
+		"mp3": "https://music.cdn.dev.digitalmonster.link/a88c261b7ca42541286aeeeea39f7353.mp3",
+	}, nil
 }
 
 func (s *Service) getSong(externalId string, apmTransaction *apm.Transaction) chan internal.GetSongResponseChan {

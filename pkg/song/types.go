@@ -28,3 +28,7 @@ type PlaylistSongListResponse struct {
 	Items      []database.Song `json:"items"`
 	TotalCount int64           `json:"total_count"`
 }
+
+type GetSongUrlRequest struct {
+	SongId int64 `json:"song_id"`
+}
