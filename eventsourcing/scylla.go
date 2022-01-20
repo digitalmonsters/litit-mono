@@ -2,26 +2,22 @@ package eventsourcing
 
 import (
 	"github.com/digitalmonsters/go-common/apm_helper"
-	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/gammazero/workerpool"
 	"github.com/gocql/gocql"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
-	"sync"
 )
 
 type ScyllaEventPublisher struct {
-	cluster       *gocql.ClusterConfig
 	session       *gocql.Session
-	sesMutex      sync.Mutex
 	workerPoll    *workerpool.WorkerPool
 	batchSize     int
 	publisherType PublisherType
 }
 
-func NewScyllaEventPublisher(configuration boilerplate.ScyllaConfiguration, batchSize int, workerPoolSize int) *ScyllaEventPublisher {
+func NewScyllaEventPublisher(session *gocql.Session, batchSize int, workerPoolSize int) *ScyllaEventPublisher {
 	return &ScyllaEventPublisher{
-		cluster:       boilerplate.GetScyllaCluster(configuration),
+		session:       session,
 		batchSize:     batchSize,
 		workerPoll:    workerpool.New(workerPoolSize),
 		publisherType: PublisherTypeScylla,
@@ -33,20 +29,7 @@ func (s *ScyllaEventPublisher) getSession() (*gocql.Session, error) {
 		return s.session, nil
 	}
 
-	s.sesMutex.Lock()
-	defer s.sesMutex.Unlock()
-
-	if s.session != nil {
-		return s.session, nil
-	}
-
-	if session, err := s.cluster.CreateSession(); err != nil {
-		return nil, errors.WithStack(err)
-	} else {
-		s.session = session
-	}
-
-	return s.session, nil
+	return nil, errors.New("session is nil")
 }
 
 type ScylaQuery string
