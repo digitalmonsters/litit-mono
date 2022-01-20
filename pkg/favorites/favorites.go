@@ -84,18 +84,22 @@ func FavoriteSongsList(req FavoriteSongsListRequest, db *gorm.DB, executionData 
 		return nil, errors.WithStack(result.Error)
 	}
 
+	resp := &FavoriteSongsListResponse{
+		Items: make([]frontend.Song, 0),
+	}
+
+	if len(favorites) == 0 {
+		return resp, nil
+	}
+
 	var songIds []int64
 	for _, f := range favorites {
 		songIds = append(songIds, f.SongId)
 	}
 
 	var dbSongs []database.Song
-	if err := db.Find(&dbSongs, songIds).Error; err != nil {
+	if err = db.Find(&dbSongs, songIds).Error; err != nil {
 		return nil, errors.WithStack(err)
-	}
-
-	resp := &FavoriteSongsListResponse{
-		Items: make([]frontend.Song, 0),
 	}
 
 	if len(dbSongs) == 0 {
