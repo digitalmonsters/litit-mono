@@ -74,19 +74,21 @@ func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransac
 }
 
 func DeleteSongFromPlaylistsBulk(req DeleteSongsFromPlaylistBulkRequest, db *gorm.DB) error {
-	if req.PlaylistId == 0 {
-		return errors.New("playlist is required")
-	}
-
-	if len(req.SongsIds) == 0 {
-		return errors.New("songs_ids is required")
-	}
-
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	if err := tx.Where("playlist_id = ? and song_id in ?", req.PlaylistId, req.SongsIds).Debug().Delete(&database.PlaylistSongRelations{}).Error; err != nil {
-		return errors.WithStack(err)
+	for _, item := range req.Items {
+		if item.PlaylistId == 0 {
+			continue
+		}
+
+		if len(item.SongsIds) == 0 {
+			continue
+		}
+
+		if err := tx.Where("playlist_id = ? and song_id in ?", item.PlaylistId, item.SongsIds).Delete(&database.PlaylistSongRelations{}).Error; err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {

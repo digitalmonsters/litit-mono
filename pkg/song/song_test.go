@@ -75,8 +75,12 @@ func TestMethods(t *testing.T) {
 	assert.Equal(t, playlist.SongsCount, 1)
 
 	err = DeleteSongFromPlaylistsBulk(DeleteSongsFromPlaylistBulkRequest{
-		PlaylistId: playlist.Id,
-		SongsIds:   []int64{song.Id},
+		Items: []itemForDeletion{
+			{
+				PlaylistId: playlist.Id,
+				SongsIds:   []int64{song.Id},
+			},
+		},
 	}, gormDb)
 	assert.Nil(t, err)
 
