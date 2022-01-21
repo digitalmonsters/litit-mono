@@ -29,6 +29,7 @@ type UserRecord struct {
 	Lastname                   string      `json:"lastname"`
 	Verified                   bool        `json:"verified"`
 	EnableAgeRestrictedContent bool        `json:"enable_age_restricted_content"`
+	IsTipEnabled               bool        `json:"is_tip_enabled"`
 }
 
 type GetUsersRequest struct {
@@ -46,21 +47,22 @@ type GetProfileBulkResponseChan struct {
 }
 
 type UserDetailRecord struct {
-	Id          int64       `json:"id"`
-	Username    null.String `json:"username"`
-	Firstname   string      `json:"firstname"`
-	Lastname    string      `json:"lastname"`
-	CountryCode string      `json:"country_code"`
-	Gender      null.String `json:"gender"`
-	Following   int         `json:"following"`
-	Followers   int         `json:"followers"`
-	VideosCount int         `json:"videos_count"`
-	IsFollowing bool        `json:"is_following"`
-	IsFollower  bool        `json:"is_follower"`
-	Privacy     UerPrivacy  `json:"privacy"`
-	Profile     UserProfile `json:"profile"`
-	CountryName string      `json:"country_name"`
-	Avatar      null.String `json:"avatar"`
+	Id           int64       `json:"id"`
+	Username     null.String `json:"username"`
+	Firstname    string      `json:"firstname"`
+	Lastname     string      `json:"lastname"`
+	CountryCode  string      `json:"country_code"`
+	Gender       null.String `json:"gender"`
+	Following    int         `json:"following"`
+	Followers    int         `json:"followers"`
+	VideosCount  int         `json:"videos_count"`
+	IsFollowing  bool        `json:"is_following"`
+	IsFollower   bool        `json:"is_follower"`
+	Privacy      UerPrivacy  `json:"privacy"`
+	Profile      UserProfile `json:"profile"`
+	CountryName  string      `json:"country_name"`
+	Avatar       null.String `json:"avatar"`
+	IsTipEnabled bool        `json:"is_tip_enabled"`
 }
 
 type UerPrivacy struct {
