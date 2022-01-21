@@ -117,6 +117,8 @@ func (k *kafkaListener) getPartitionsForTopic() ([]int, error) {
 func (k *kafkaListener) checkIfTopicExists(topic string) error {
 	transport := kafka.DefaultTransport
 
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+
 	if k.cfg.Tls {
 		dialer := &kafka.Dialer{
 			Timeout:   10 * time.Second,
@@ -131,7 +133,8 @@ func (k *kafkaListener) checkIfTopicExists(topic string) error {
 			TLS: &tls.Config{
 				InsecureSkipVerify: true,
 			},
-			Dial: dialer.DialFunc,
+			Context: ctx,
+			Dial:    dialer.DialFunc,
 		}
 	}
 
@@ -140,8 +143,6 @@ func (k *kafkaListener) checkIfTopicExists(topic string) error {
 	}
 
 	tcp := kafka.TCP(boilerplate.SplitHostsToSlice(k.cfg.Hosts)...)
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 
 	defer func() {
 		cancel()
