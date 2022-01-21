@@ -330,8 +330,14 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 	messageIndex := 0
 	var successfullyProcessedMessages []kafka.Message
 
-	for k.ctx.Err() == nil {
-		message2, err := reader.FetchMessage(k.ctx)
+	listenCtx, cancel := context.WithCancel(k.ctx)
+
+	defer func() {
+		cancel()
+	}()
+
+	for listenCtx.Err() == nil {
+		message2, err := reader.FetchMessage(listenCtx)
 
 		apmTransaction := apm_helper.StartNewApmTransaction(k.listenerName, "kafka_listener", nil,
 			nil)
@@ -342,11 +348,7 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 				return err
 			}
 
-			log.Err(err).Send()
-			apm_helper.CaptureApmError(err, apmTransaction)
-			apmTransaction.End()
-
-			continue
+			return err
 		}
 
 		k.hasRunningRequest = true
@@ -355,7 +357,7 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		messageIndex = 1
 
 		if maxBatchSize > 1 {
-			innerCtx, innerCancelFn := context.WithTimeout(k.ctx, maxDuration)
+			innerCtx, innerCancelFn := context.WithTimeout(listenCtx, maxDuration)
 			kafkaReadSpan := apmTransaction.StartSpan(fmt.Sprintf("kafka batching [%v]", k.cfg.Topic),
 				"kafka", nil)
 
@@ -407,7 +409,7 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			break // discard messages
 		}
 
-		commandExecutionContext := apm.ContextWithTransaction(context.TODO(), apmTransaction)
+		commandExecutionContext := apm.ContextWithTransaction(listenCtx, apmTransaction)
 
 		b := backoff.NewExponentialBackOff()
 		b.MaxElapsedTime = time.Duration(k.cfg.MaxBackOffTimeMilliseconds) * time.Millisecond
