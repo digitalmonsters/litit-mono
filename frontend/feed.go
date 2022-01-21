@@ -15,12 +15,13 @@ type VideoSubcategoryModel struct {
 }
 
 type VideoUserModel struct {
-	Avatar    string `json:"avatar"`
-	FirstName string `json:"firstname"`
-	Id        int64  `json:"id"`
-	LastName  string `json:"lastname"`
-	UserName  string `json:"username"`
-	Verified  bool   `json:"verified"`
+	Avatar       string `json:"avatar"`
+	FirstName    string `json:"firstname"`
+	Id           int64  `json:"id"`
+	LastName     string `json:"lastname"`
+	UserName     string `json:"username"`
+	Verified     bool   `json:"verified"`
+	IsTipEnabled bool   `json:"is_tip_enabled"`
 }
 
 type ContentModel struct {
