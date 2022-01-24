@@ -30,10 +30,62 @@ func NewMusicStorageService(configuration *configs.Settings) *MusicStorageServic
 	}
 }
 
+func (s *MusicStorageService) findMusicInPlaylists(playlistIds []int64, source database.SongSource, page int, size int, db *gorm.DB, transaction *apm.Transaction) (*ListMusicResponse, error) {
+	limit, offset := 0, 0
+	limit = size
+	offset = (page - 1) * size
+
+	var dbSong []database.Song
+
+	query := db.Model(dbSong).
+		Joins("join playlist_song_relations psr on psr.song_id = songs.id").
+		Joins("join playlists p on p.id = psr.playlist_id and p.deleted_at is null").
+		Where("p.id in ? and songs.source = ? and songs.deleted_at is null", playlistIds, source)
+
+	var totalCount int64
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err := query.Limit(limit).Offset(offset).Find(&dbSong).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	var songs []internal.SongModel
+	for _, song := range dbSong {
+		songs = append(songs, internal.SongModel{
+			ExternalId:   song.ExternalId,
+			Title:        song.Title,
+			Artist:       song.Artist,
+			ImageUrl:     song.ImageUrl,
+			Genre:        song.Genre,
+			Duration:     song.Duration,
+			Files:        nil,
+			DateUploaded: null.TimeFrom(song.CreatedAt),
+			Playlists:    nil,
+		})
+	}
+
+	songs, err := s.fillPlaylists(songs, source, db)
+	if err != nil {
+		apm_helper.CaptureApmError(err, transaction)
+	}
+
+	return &ListMusicResponse{
+		Songs:      songs,
+		TotalCount: totalCount,
+	}, nil
+
+}
+
 func (s *MusicStorageService) ListMusic(req ListMusicRequest, db *gorm.DB, apmTransaction *apm.Transaction) (*ListMusicResponse, error) {
 	impl, err := s.getImplementation(req.Source)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+
+	if len(req.PlaylistIds) > 0 {
+		return s.findMusicInPlaylists(req.PlaylistIds, req.Source, req.Page, req.Size, db, apmTransaction)
 	}
 
 	respCh := <-impl.GetSongsList(internal.GetSongsListRequest{

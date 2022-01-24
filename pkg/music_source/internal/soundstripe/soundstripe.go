@@ -120,7 +120,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTrans
 func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
 	resChan := make(chan internal.GetSongsListResponseChan, 2)
 	s.workerPool.Submit(func() {
-		/*finalResponse := internal.GetSongsListResponseChan{}
+		finalResponse := internal.GetSongsListResponseChan{}
 
 		queryParams := fmt.Sprintf("?size=%v&page=%v", req.Size, req.Page)
 		if req.SearchKeyword.Valid {
@@ -155,9 +155,9 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 				Songs:      songs,
 				TotalCount: ssResp.Links.Meta.TotalCount,
 			}
-		}*/
+		}
 
-		var songs []internal.SongModel
+		/*var songs []internal.SongModel
 		for i := 1; i <= 10; i++ {
 			song := internal.SongModel{
 				ExternalId: fmt.Sprint(i),
@@ -181,7 +181,7 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 				Songs:      songs,
 				TotalCount: 10,
 			},
-		}
+		}*/
 
 		resChan <- finalResponse
 	})
