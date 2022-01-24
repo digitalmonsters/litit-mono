@@ -46,8 +46,9 @@ func FavoriteSongsList(req FavoriteSongsListRequest, db *gorm.DB, executionData 
 
 	if req.SearchKeyword.Valid {
 		query = query.Joins("join songs s on s.id = favorites.song_id").
-			Where("s.title ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)).
-			Or("s.artist ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String))
+			Where(db.Where("s.title ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)).
+				Or("s.artist ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)))
+
 	}
 
 	query = query.Where("user_id = ?", executionData.UserId)

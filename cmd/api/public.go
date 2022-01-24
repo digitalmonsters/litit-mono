@@ -148,11 +148,16 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		cursor := utils.ExtractString(executionData.GetUserValue, "cursor", "")
 
-		resp, err := favorites.FavoriteSongsList(favorites.FavoriteSongsListRequest{
-			SearchKeyword: null.StringFrom(songName),
-			Count:         int(count),
-			Cursor:        cursor,
-		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
+		req := favorites.FavoriteSongsListRequest{
+			Count:  int(count),
+			Cursor: cursor,
+		}
+
+		if len(songName) > 0 {
+			req.SearchKeyword = null.StringFrom(songName)
+		}
+
+		resp, err := favorites.FavoriteSongsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
 
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
