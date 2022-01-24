@@ -81,7 +81,7 @@ type ContentEvent struct {
 	Description      string                `json:"description"`
 	CategoryId       null.Int              `json:"category_id"`
 	SubcategoryId    null.Int              `json:"subcategory_id"`
-	Duration         float64               `json:"duration"`
+	Duration         null.Float            `json:"duration"`
 	AgeRestricted    bool                  `json:"age_restricted"`
 	Whitelisted      bool                  `json:"whitelisted"`
 	WhitelistedById  null.Int              `json:"whitelisted_by_id"`
