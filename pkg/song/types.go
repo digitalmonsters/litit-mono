@@ -18,10 +18,14 @@ type DeleteSongsFromPlaylistBulkRequest struct {
 }
 
 type itemForDeletion struct {
-	PlaylistId int64   `json:"playlist_id"`
-	SongsIds   []int64 `json:"songs_ids"`
+	PlaylistId int64       `json:"playlist_id"`
+	Songs      []songShort `json:"songs"`
 }
 
+type songShort struct {
+	ExternalId string              `json:"external_id"`
+	Source     database.SongSource `json:"source"`
+}
 type PlaylistSongListRequest struct {
 	PlaylistId int64 `json:"playlist_id"`
 	Limit      int   `json:"limit"`

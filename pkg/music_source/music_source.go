@@ -40,7 +40,11 @@ func (s *MusicStorageService) findMusicInPlaylists(playlistIds []int64, source d
 	query := db.Model(dbSong).
 		Joins("join playlist_song_relations psr on psr.song_id = songs.id").
 		Joins("join playlists p on p.id = psr.playlist_id and p.deleted_at is null").
-		Where("p.id in ? and songs.source = ? and songs.deleted_at is null", playlistIds, source)
+		Where("p.id in ? and songs.deleted_at is null", playlistIds)
+
+	if source > 0 {
+		query = query.Where("songs.source = ?", source)
+	}
 
 	var totalCount int64
 	if err := query.Count(&totalCount).Error; err != nil {
@@ -54,6 +58,7 @@ func (s *MusicStorageService) findMusicInPlaylists(playlistIds []int64, source d
 	var songs []internal.SongModel
 	for _, song := range dbSong {
 		songs = append(songs, internal.SongModel{
+			Source:       song.Source,
 			ExternalId:   song.ExternalId,
 			Title:        song.Title,
 			Artist:       song.Artist,
@@ -118,6 +123,7 @@ func (s *MusicStorageService) fillPlaylists(songs []internal.SongModel, source d
 	}
 
 	var playlists []struct {
+		Id           int64
 		ExternalId   string
 		PlaylistId   int64
 		PlaylistName string
@@ -126,12 +132,13 @@ func (s *MusicStorageService) fillPlaylists(songs []internal.SongModel, source d
 
 	if err := db.Model(&database.Song{}).
 		Select("songs.external_id",
+			"songs.id",
 			"playlists.id as playlist_id",
 			"playlists.name as playlist_name",
 			"songs.created_at").
 		Joins("left join playlist_song_relations psr on psr.song_id = songs.id").
-		Joins("left join playlists on playlists.id = psr.playlist_id and playlists.deleted_at is null").
-		Where("source = ? and external_id in ?", source, externalIds).
+		Joins("left join playlists on playlists.id = psr.playlist_id").
+		Where("source = ? and external_id in ? and playlists.deleted_at is null", source, externalIds).
 		Find(&playlists).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}

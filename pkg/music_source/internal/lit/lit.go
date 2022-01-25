@@ -123,6 +123,7 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 				}
 
 				songs = append(songs, internal.SongModel{
+					Source:     database.SongSourceOwnStorage,
 					ExternalId: fmt.Sprint(song.Id),
 					Title:      song.Title,
 					Artist:     song.Artist,

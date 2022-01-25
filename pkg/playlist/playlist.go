@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"strings"
 	"time"
 )
 
@@ -38,6 +39,10 @@ func UpsertPlaylist(req UpsertPlaylistRequest, db *gorm.DB) (*database.Playlist,
 			DoUpdates: clause.AssignmentColumns([]string{"name", "sort_order", "color", "is_active"}),
 		}).
 		Create(&playlist).Error; err != nil {
+		if contain := strings.Contains(err.Error(), "duplicate key value violates unique constraint"); contain {
+			return nil, errors.New("playlist with the given name has been already created")
+		}
+
 		return nil, errors.WithStack(err)
 	}
 

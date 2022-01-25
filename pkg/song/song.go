@@ -77,16 +77,38 @@ func DeleteSongFromPlaylistsBulk(req DeleteSongsFromPlaylistBulkRequest, db *gor
 	tx := db.Begin()
 	defer tx.Rollback()
 
+	type plShort struct {
+		PlaylistIds []int64
+		ExternalIds []string
+	}
+
+	itemsMapped := map[database.SongSource]*plShort{}
 	for _, item := range req.Items {
-		if item.PlaylistId == 0 {
-			continue
-		}
+		for _, song := range item.Songs {
+			if _, ok := itemsMapped[song.Source]; !ok {
+				itemsMapped[song.Source] = &plShort{
+					PlaylistIds: make([]int64, 0),
+					ExternalIds: make([]string, 0),
+				}
+			}
 
-		if len(item.SongsIds) == 0 {
-			continue
-		}
+			if v, ok := itemsMapped[song.Source]; ok {
+				if !funk.ContainsInt64(v.PlaylistIds, item.PlaylistId) {
+					v.PlaylistIds = append(v.PlaylistIds, item.PlaylistId)
+				}
 
-		if err := tx.Where("playlist_id = ? and song_id in ?", item.PlaylistId, item.SongsIds).Delete(&database.PlaylistSongRelations{}).Error; err != nil {
+				if !funk.ContainsString(v.ExternalIds, song.ExternalId) {
+					v.ExternalIds = append(v.ExternalIds, song.ExternalId)
+				}
+			}
+		}
+	}
+
+	for source, plSong := range itemsMapped {
+		if err := tx.Table("playlist_song_relations psr").
+			Where("psr.song_id in (select songs.id from songs where songs.external_id in ? and source = ?)", plSong.ExternalIds, source).
+			Where("psr.playlist_id in ? ", plSong.PlaylistIds).
+			Delete(&database.PlaylistSongRelations{}).Error; err != nil {
 			return errors.WithStack(err)
 		}
 	}
