@@ -4,20 +4,28 @@ import "github.com/digitalmonsters/music/pkg/database"
 
 type AddSongToPlaylistRequest struct {
 	Source database.SongSource `json:"source"`
-	Songs  []RelationItem      `json:"songs"`
+	Songs  []relationItem      `json:"songs"`
 }
 
-type RelationItem struct {
+type relationItem struct {
 	ExternalSongId string `json:"external_song_id"`
 	PlaylistId     int64  `json:"playlist_id"`
 	SortOrder      int    `json:"sort_order"`
 }
 
 type DeleteSongsFromPlaylistBulkRequest struct {
-	PlaylistId int64   `json:"playlist_id"`
-	SongsIds   []int64 `json:"songs_ids"`
+	Items []itemForDeletion `json:"items"`
 }
 
+type itemForDeletion struct {
+	PlaylistId int64       `json:"playlist_id"`
+	Songs      []songShort `json:"songs"`
+}
+
+type songShort struct {
+	ExternalId string              `json:"external_id"`
+	Source     database.SongSource `json:"source"`
+}
 type PlaylistSongListRequest struct {
 	PlaylistId int64 `json:"playlist_id"`
 	Limit      int   `json:"limit"`
@@ -27,4 +35,8 @@ type PlaylistSongListRequest struct {
 type PlaylistSongListResponse struct {
 	Items      []database.Song `json:"items"`
 	TotalCount int64           `json:"total_count"`
+}
+
+type GetSongUrlRequest struct {
+	SongId int64 `json:"song_id"`
 }

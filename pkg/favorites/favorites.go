@@ -1,6 +1,8 @@
 package favorites
 
 import (
+	"fmt"
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
@@ -37,10 +39,19 @@ func RemoveFromFavorites(req RemoveFromFavoritesRequest, db *gorm.DB) error {
 	return nil
 }
 
-func FavoriteSongsList(req FavoriteSongsListRequest, userId int64, db *gorm.DB) (*FavoriteSongsListResponse, error) {
+func FavoriteSongsList(req FavoriteSongsListRequest, db *gorm.DB, executionData router.MethodExecutionData) (*FavoriteSongsListResponse, error) {
 	var favorites []database.Favorite
 
-	query := db.Model(&database.Favorite{}).Where("user_id = ?", userId).Debug()
+	query := db.Model(&database.Favorite{})
+
+	if req.SearchKeyword.Valid {
+		query = query.Joins("join songs s on s.id = favorites.song_id").
+			Where(db.Where("s.title ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)).
+				Or("s.artist ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)))
+
+	}
+
+	query = query.Where("user_id = ?", executionData.UserId)
 
 	paginatorRules := []paginator.Rule{
 		{
@@ -74,34 +85,29 @@ func FavoriteSongsList(req FavoriteSongsListRequest, userId int64, db *gorm.DB) 
 		return nil, errors.WithStack(result.Error)
 	}
 
+	resp := &FavoriteSongsListResponse{
+		Items: make([]frontend.Song, 0),
+	}
+
+	if len(favorites) == 0 {
+		return resp, nil
+	}
+
 	var songIds []int64
 	for _, f := range favorites {
 		songIds = append(songIds, f.SongId)
 	}
 
-	var dbSongs database.Songs
-	if err := db.Find(&dbSongs, songIds).Error; err != nil {
+	var dbSongs []database.Song
+	if err = db.Find(&dbSongs, songIds).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	var songs database.Songs
-	for _, songId := range songIds {
-		for _, s := range dbSongs {
-			if s.Id == songId {
-				songs = append(songs, s)
-			}
-		}
-	}
-
-	resp := &FavoriteSongsListResponse{
-		Items: make([]frontend.Song, 0),
-	}
-
-	if len(songs) == 0 {
+	if len(dbSongs) == 0 {
 		return resp, nil
 	}
 
-	resp.Items = songs.ConvertToFrontendModel()
+	resp.Items = frontend.ConvertSongsToFrontendModel(dbSongs, executionData.UserId, db, executionData.ApmTransaction)
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After

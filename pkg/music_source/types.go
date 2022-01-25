@@ -8,6 +8,7 @@ import (
 
 type ListMusicRequest struct {
 	SearchKeyword null.String         `json:"search_keyword"`
+	PlaylistIds   []int64             `json:"playlist_ids"`
 	Source        database.SongSource `json:"source"`
 	Page          int                 `json:"page"`
 	Size          int                 `json:"size"`

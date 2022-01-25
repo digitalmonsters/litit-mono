@@ -1,6 +1,8 @@
 package popular
 
 import (
+	"fmt"
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
@@ -8,21 +10,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetAudioUrl(songId string, db *gorm.DB) (interface{}, error) {
-	//todo: audio url parse logic
+func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB, executionData router.MethodExecutionData) (*GetPopularSongsResponse, error) {
+	var songs []database.Song
 
-	if err := db.Model(&database.Song{}).Where("id = ?", songId).
-		Update("listen_amount", gorm.Expr("listen_amount + 1")).Error; err != nil {
-		return nil, errors.WithStack(err)
+	query := db.Table("songs").Debug()
+
+	if req.SearchKeyword.Valid {
+		query = query.Joins("join playlist_song_relations psr on psr.song_id = songs.id").
+			Joins("join playlists on playlists.id = psr.playlist_id and playlists.deleted_at is null").
+			Where("title ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)).
+			Or("artist ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String))
 	}
-
-	return nil, nil
-}
-
-func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB) (*GetPopularSongsResponse, error) {
-	var songs database.Songs
-
-	query := db.Table("songs").Where("listen_amount  > 0")
 
 	paginatorRules := []paginator.Rule{
 		{
@@ -64,7 +62,7 @@ func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB) (*GetPopularSongsR
 		return resp, nil
 	}
 
-	resp.Items = songs.ConvertToFrontendModel()
+	resp.Items = frontend.ConvertSongsToFrontendModel(songs, executionData.UserId, db, executionData.ApmTransaction)
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After

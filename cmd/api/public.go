@@ -7,15 +7,17 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/favorites"
+	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/digitalmonsters/music/pkg/playlist"
 	"github.com/digitalmonsters/music/pkg/popular"
+	"github.com/digitalmonsters/music/pkg/song"
 	"github.com/digitalmonsters/music/utils"
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v4"
 	"net/http"
 )
 
-func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
+func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, musicStorageService *music_source.MusicStorageService) error {
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
@@ -123,7 +125,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 			PlaylistId: playlistId,
 			Count:      int(count),
 			Cursor:     cursor,
-		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
 
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
@@ -142,13 +144,20 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
 		}
 
+		songName := utils.ExtractString(executionData.GetUserValue, "name", "")
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		cursor := utils.ExtractString(executionData.GetUserValue, "cursor", "")
 
-		resp, err := favorites.FavoriteSongsList(favorites.FavoriteSongsListRequest{
+		req := favorites.FavoriteSongsListRequest{
 			Count:  int(count),
 			Cursor: cursor,
-		}, executionData.UserId, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		}
+
+		if len(songName) > 0 {
+			req.SearchKeyword = null.StringFrom(songName)
+		}
+
+		resp, err := favorites.FavoriteSongsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
 
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
@@ -169,18 +178,52 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 
 		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
 		cursor := utils.ExtractString(executionData.GetUserValue, "cursor", "")
+		name := utils.ExtractString(executionData.GetUserValue, "name", "")
 
-		resp, err := popular.GetPopularSongs(popular.GetPopularSongsRequest{
+		req := popular.GetPopularSongsRequest{
 			Count:  int(count),
 			Cursor: cursor,
-		}, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		}
 
+		if len(name) > 0 {
+			req.SearchKeyword = null.StringFrom(name)
+		}
+
+		resp, err := popular.GetPopularSongs(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), executionData)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
 		return resp, nil
 	}, "/song/popular", http.MethodGet, common.AccessLevelPublic, true, false)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		userId := executionData.UserId
+
+		if userId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
+		}
+
+		songId := utils.ExtractInt64(executionData.GetUserValue, "song_id", 0, 0)
+
+		if songId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid song_id"), error_codes.GenericValidationError)
+		}
+
+		resp, err := song.GetSongUrl(song.GetSongUrlRequest{SongId: songId},
+			database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
+			executionData.ApmTransaction,
+			musicStorageService)
+
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, "/song/url/{song_id}", http.MethodGet, common.AccessLevelPublic, true, false)); err != nil {
 		return err
 	}
 
@@ -288,6 +331,13 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 				Required:    false,
 				Type:        "string",
 			},
+			{
+				Name:        "name",
+				In:          swagger.ParameterInQuery,
+				Description: "name filter for songs",
+				Required:    false,
+				Type:        "string",
+			},
 		},
 		Response:          favorites.FavoriteSongsListResponse{},
 		MethodDescription: "favorite songs list",
@@ -310,10 +360,32 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 				Required:    false,
 				Type:        "string",
 			},
+			{
+				Name:        "name",
+				In:          swagger.ParameterInQuery,
+				Description: "name filter for songs",
+				Required:    false,
+				Type:        "string",
+			},
 		},
 		Response:          popular.GetPopularSongsResponse{},
 		MethodDescription: "popular songs list",
 		Tags:              []string{"popular", "song", "list", "public"},
+	}
+
+	apiDef["/song/url/{song_id}"] = swagger.ApiDescription{
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "song_id",
+				In:          swagger.ParameterInPath,
+				Description: "song_id",
+				Required:    true,
+				Type:        "string",
+			},
+		},
+		Response:          map[string]string{},
+		MethodDescription: "get song url",
+		Tags:              []string{"song", "url", "public"},
 	}
 
 	return nil

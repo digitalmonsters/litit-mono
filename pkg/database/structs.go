@@ -1,7 +1,6 @@
 package database
 
 import (
-	"github.com/digitalmonsters/music/pkg/frontend"
 	"gorm.io/gorm"
 	"time"
 )
@@ -19,21 +18,6 @@ type Playlist struct {
 
 func (Playlist) TableName() string {
 	return "playlists"
-}
-
-type Playlists []Playlist
-
-func (p Playlists) ConvertToFrontendModel() (result []frontend.Playlist) {
-	for _, pl := range p {
-		result = append(result, frontend.Playlist{
-			Id:         pl.Id,
-			Name:       pl.Name,
-			Color:      pl.Color,
-			SongsCount: pl.SongsCount,
-		})
-	}
-
-	return result
 }
 
 type Song struct {
@@ -60,24 +44,6 @@ const (
 
 func (Song) TableName() string {
 	return "songs"
-}
-
-type Songs []Song
-
-func (s Songs) ConvertToFrontendModel() (result []frontend.Song) {
-	for _, song := range s {
-		result = append(result, frontend.Song{
-			Id:       song.Id,
-			Title:    song.Title,
-			Artist:   song.Artist,
-			Url:      song.Artist,
-			ImageUrl: song.ImageUrl,
-			Genre:    song.Genre,
-			Duration: song.Duration,
-		})
-	}
-
-	return result
 }
 
 type PlaylistSongRelations struct {

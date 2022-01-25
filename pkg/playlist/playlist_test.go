@@ -3,6 +3,7 @@ package playlist
 import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/stretchr/testify/assert"
@@ -197,7 +198,11 @@ func TestPlaylistSongsListPublic(t *testing.T) {
 	resp, err := PlaylistSongsListPublic(PlaylistSongsListPublicRequest{
 		PlaylistId: playlist.Id,
 		Count:      10,
-	}, gormDb)
+	}, gormDb, router.MethodExecutionData{
+		ApmTransaction: nil,
+		Context:        nil,
+		UserId:         0,
+	})
 	assert.Nil(t, err)
 	assert.Len(t, resp.Items, 2)
 }

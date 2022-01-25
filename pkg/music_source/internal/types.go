@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/digitalmonsters/music/pkg/database"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
@@ -8,7 +9,8 @@ import (
 
 type IMusicStorageAdapter interface {
 	SyncSongsList(songIds []string, tx *gorm.DB, apmTransaction *apm.Transaction) error
-	GetSongsList(req GetSongsListRequest, apmTransaction *apm.Transaction) chan GetSongsListResponseChan
+	GetSongsList(req GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan GetSongsListResponseChan
+	GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error)
 }
 
 type GetSongsListResponseChan struct {
@@ -17,12 +19,21 @@ type GetSongsListResponseChan struct {
 }
 
 type SongModel struct {
-	ExternalId string  `json:"external_id"`
-	Title      string  `json:"title"`
-	Artist     string  `json:"artist"`
-	ImageUrl   string  `json:"image_url"`
-	Genre      string  `json:"genre"`
-	Duration   float64 `json:"duration"`
+	Source       database.SongSource `json:"source"`
+	ExternalId   string              `json:"external_id"`
+	Title        string              `json:"title"`
+	Artist       string              `json:"artist"`
+	ImageUrl     string              `json:"image_url"`
+	Genre        string              `json:"genre"`
+	Duration     float64             `json:"duration"`
+	Files        map[string]string   `json:"files"`
+	DateUploaded null.Time           `json:"date_uploaded"`
+	Playlists    []PlaylistModel     `json:"playlists"`
+}
+
+type PlaylistModel struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type GetSongResponseChan struct {

@@ -11,6 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/stretchr/testify v1.7.0
+	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/thoas/go-funk v0.9.1
 	github.com/valyala/fasthttp v1.31.0
 	go.elastic.co/apm v1.15.0
@@ -66,7 +67,6 @@ require (
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.6.0 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
-	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
