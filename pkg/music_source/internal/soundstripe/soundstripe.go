@@ -117,10 +117,10 @@ func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTrans
 	return nil
 }
 
-func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
+func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
 	resChan := make(chan internal.GetSongsListResponseChan, 2)
 	s.workerPool.Submit(func() {
-		/*finalResponse := internal.GetSongsListResponseChan{}
+		finalResponse := internal.GetSongsListResponseChan{}
 
 		queryParams := fmt.Sprintf("?size=%v&page=%v", req.Size, req.Page)
 		if req.SearchKeyword.Valid {
@@ -155,9 +155,9 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction 
 				Songs:      songs,
 				TotalCount: ssResp.Links.Meta.TotalCount,
 			}
-		}*/
+		}
 
-		var songs []internal.SongModel
+		/*var songs []internal.SongModel
 		for i := 1; i <= 10; i++ {
 			song := internal.SongModel{
 				ExternalId: fmt.Sprint(i),
@@ -166,6 +166,9 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction 
 				ImageUrl:   fmt.Sprintf("test_image_url%v", i),
 				Genre:      fmt.Sprintf("test_genre%v", i),
 				Duration:   float64(10 * i),
+				Files: map[string]string{
+					"mp3": "https://music.cdn.dev.digitalmonster.link/a88c261b7ca42541286aeeeea39f7353.mp3",
+				},
 			}
 
 			songs = append(songs, song)
@@ -178,12 +181,18 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, apmTransaction 
 				Songs:      songs,
 				TotalCount: 10,
 			},
-		}
+		}*/
 
 		resChan <- finalResponse
 	})
 
 	return resChan
+}
+
+func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error) {
+	return map[string]string{
+		"mp3": "https://music.cdn.dev.digitalmonster.link/a88c261b7ca42541286aeeeea39f7353.mp3",
+	}, nil
 }
 
 func (s *Service) getSong(externalId string, apmTransaction *apm.Transaction) chan internal.GetSongResponseChan {

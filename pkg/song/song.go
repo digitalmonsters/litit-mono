@@ -32,7 +32,7 @@ func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransac
 	}
 
 	if err := tx.Model(&database.Song{}).
-		Where("external_id in ? and source = ?", externalSongIds, database.SongSourceSoundStripe).
+		Where("external_id in ? and source = ?", externalSongIds, req.Source).
 		Find(&songsRelation).Error; err != nil {
 		return errors.WithStack(err)
 	}
@@ -74,19 +74,43 @@ func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransac
 }
 
 func DeleteSongFromPlaylistsBulk(req DeleteSongsFromPlaylistBulkRequest, db *gorm.DB) error {
-	if req.PlaylistId == 0 {
-		return errors.New("playlist is required")
-	}
-
-	if len(req.SongsIds) == 0 {
-		return errors.New("songs_ids is required")
-	}
-
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	if err := tx.Where("playlist_id = ? and song_id in ?", req.PlaylistId, req.SongsIds).Debug().Delete(&database.PlaylistSongRelations{}).Error; err != nil {
-		return errors.WithStack(err)
+	type plShort struct {
+		PlaylistIds []int64
+		ExternalIds []string
+	}
+
+	itemsMapped := map[database.SongSource]*plShort{}
+	for _, item := range req.Items {
+		for _, song := range item.Songs {
+			if _, ok := itemsMapped[song.Source]; !ok {
+				itemsMapped[song.Source] = &plShort{
+					PlaylistIds: make([]int64, 0),
+					ExternalIds: make([]string, 0),
+				}
+			}
+
+			if v, ok := itemsMapped[song.Source]; ok {
+				if !funk.ContainsInt64(v.PlaylistIds, item.PlaylistId) {
+					v.PlaylistIds = append(v.PlaylistIds, item.PlaylistId)
+				}
+
+				if !funk.ContainsString(v.ExternalIds, song.ExternalId) {
+					v.ExternalIds = append(v.ExternalIds, song.ExternalId)
+				}
+			}
+		}
+	}
+
+	for source, plSong := range itemsMapped {
+		if err := tx.Table("playlist_song_relations psr").
+			Where("psr.song_id in (select songs.id from songs where songs.external_id in ? and source = ?)", plSong.ExternalIds, source).
+			Where("psr.playlist_id in ? ", plSong.PlaylistIds).
+			Delete(&database.PlaylistSongRelations{}).Error; err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -123,4 +147,30 @@ func PlaylistSongListAdmin(req PlaylistSongListRequest, db *gorm.DB) (*PlaylistS
 		Items:      songs,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func GetSongUrl(req GetSongUrlRequest, db *gorm.DB, apmTransaction *apm.Transaction, service *music_source.MusicStorageService) (map[string]string, error) {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	var song database.Song
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&song, req.SongId).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	data, err := service.GetMusicUrl(song.ExternalId, song.Source, db, apmTransaction)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err = tx.Model(&song).Where("id = ?", song.Id).
+		Update("listen_amount", gorm.Expr("listen_amount + 1")).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return data, nil
 }

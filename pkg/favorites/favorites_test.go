@@ -1,11 +1,14 @@
 package favorites
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
 	"testing"
@@ -140,7 +143,23 @@ func TestFavoriteSongsList(t *testing.T) {
 	resp, err := FavoriteSongsList(FavoriteSongsListRequest{
 		Count:  2,
 		Cursor: "",
-	}, int64(userId), gormDb)
+	}, gormDb, router.MethodExecutionData{
+		ApmTransaction: nil,
+		Context:        context.TODO(),
+		UserId:         int64(userId),
+	})
 	assert.Nil(t, err)
 	assert.Len(t, resp.Items, 2)
+
+	resp, err = FavoriteSongsList(FavoriteSongsListRequest{
+		Count:         20,
+		Cursor:        "",
+		SearchKeyword: null.StringFrom("2"),
+	}, gormDb, router.MethodExecutionData{
+		ApmTransaction: nil,
+		Context:        context.TODO(),
+		UserId:         int64(userId),
+	})
+	assert.Nil(t, err)
+	assert.Len(t, resp.Items, 1)
 }

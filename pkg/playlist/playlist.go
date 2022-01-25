@@ -2,12 +2,14 @@ package playlist
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"strings"
 	"time"
 )
 
@@ -34,9 +36,13 @@ func UpsertPlaylist(req UpsertPlaylistRequest, db *gorm.DB) (*database.Playlist,
 	if err := tx.Model(&playlist).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "id"}},
-			UpdateAll: true,
+			DoUpdates: clause.AssignmentColumns([]string{"name", "sort_order", "color", "is_active"}),
 		}).
 		Create(&playlist).Error; err != nil {
+		if contain := strings.Contains(err.Error(), "duplicate key value violates unique constraint"); contain {
+			return nil, errors.New("playlist with the given name has been already created")
+		}
+
 		return nil, errors.WithStack(err)
 	}
 
@@ -109,7 +115,7 @@ func PlaylistListingAdmin(req PlaylistListingAdminRequest, db *gorm.DB) (*Playli
 }
 
 func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*PlayListListingPublicResponse, error) {
-	var playlists database.Playlists
+	var playlists []database.Playlist
 
 	query := db.Model(&database.Playlist{}).Where("songs_count > 0 and is_active = true")
 
@@ -157,7 +163,7 @@ func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*Play
 		return resp, nil
 	}
 
-	resp.Items = playlists.ConvertToFrontendModel()
+	resp.Items = frontend.ConvertPlaylistsToFrontendModel(playlists)
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After
@@ -166,7 +172,7 @@ func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*Play
 	return resp, nil
 }
 
-func PlaylistSongsListPublic(req PlaylistSongsListPublicRequest, db *gorm.DB) (*PlaylistSongsListPublicResponse, error) {
+func PlaylistSongsListPublic(req PlaylistSongsListPublicRequest, db *gorm.DB, executionData router.MethodExecutionData) (*PlaylistSongsListPublicResponse, error) {
 	if req.PlaylistId == 0 {
 		return nil, errors.New("playlist is required")
 	}
@@ -212,29 +218,20 @@ func PlaylistSongsListPublic(req PlaylistSongsListPublicRequest, db *gorm.DB) (*
 		songIds = append(songIds, sr.SongId)
 	}
 
-	var dbSongs database.Songs
+	var dbSongs []database.Song
 	if err := db.Find(&dbSongs, songIds).Error; err != nil {
 		return nil, errors.WithStack(err)
-	}
-
-	var songs database.Songs
-	for _, songId := range songIds {
-		for _, s := range dbSongs {
-			if songId == s.Id {
-				songs = append(songs, s)
-			}
-		}
 	}
 
 	resp := &PlaylistSongsListPublicResponse{
 		Items: make([]frontend.Song, 0),
 	}
 
-	if len(songs) == 0 {
+	if len(dbSongs) == 0 {
 		return resp, nil
 	}
 
-	resp.Items = songs.ConvertToFrontendModel()
+	resp.Items = frontend.ConvertSongsToFrontendModel(dbSongs, executionData.UserId, db, executionData.ApmTransaction)
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After
