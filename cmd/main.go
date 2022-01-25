@@ -6,7 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
-	"github.com/digitalmonsters/go-common/wrappers/auth"
+	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/music/cmd/api"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/music_source"
@@ -23,8 +23,8 @@ func main() {
 	boilerplate.SetupZeroLog()
 
 	cfg := configs.GetConfig()
-	authWrapper := auth.NewAuthWrapper(cfg.Wrappers.Auth)
-	httpRouter := router.NewRouter("/rpc", authWrapper).
+	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
+	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
 
 	apiDef := map[string]swagger.ApiDescription{}
@@ -35,7 +35,7 @@ func main() {
 
 	musicStorageService := music_source.NewMusicStorageService(&cfg)
 
-	if err := api.InitAdminApi(httpRouter, apiDef, musicStorageService); err != nil {
+	if err := api.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, musicStorageService); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
 		panic(err)
 	}

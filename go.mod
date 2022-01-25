@@ -3,7 +3,7 @@ module github.com/digitalmonsters/music
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.12.7
+	github.com/digitalmonsters/go-common v1.15.2
 	github.com/gammazero/workerpool v1.1.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
