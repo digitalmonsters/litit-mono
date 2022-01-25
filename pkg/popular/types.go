@@ -8,6 +8,6 @@ type GetPopularSongsRequest struct {
 }
 
 type GetPopularSongsResponse struct {
-	Songs  []frontend.Song `json:"songs"`
+	Items  []frontend.Song `json:"items"`
 	Cursor string          `json:"cursor"`
 }

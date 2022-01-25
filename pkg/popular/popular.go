@@ -2,6 +2,7 @@ package popular
 
 import (
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -56,8 +57,14 @@ func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB) (*GetPopularSongsR
 	}
 
 	resp := &GetPopularSongsResponse{
-		Songs: songs.ConvertToFrontendModel(),
+		Items: make([]frontend.Song, 0),
 	}
+
+	if len(songs) == 0 {
+		return resp, nil
+	}
+
+	resp.Items = songs.ConvertToFrontendModel()
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After

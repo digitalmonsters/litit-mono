@@ -9,7 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/auth"
 	"github.com/digitalmonsters/music/cmd/api"
 	"github.com/digitalmonsters/music/configs"
-	"github.com/digitalmonsters/music/pkg/soundstripe"
+	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
@@ -33,9 +33,9 @@ func main() {
 		cfg.PrivateHttpPort,
 	)
 
-	soundStripeService := soundstripe.NewService(*cfg.SoundStripe)
+	musicStorageService := music_source.NewMusicStorageService(&cfg)
 
-	if err := api.InitAdminApi(httpRouter, apiDef, soundStripeService); err != nil {
+	if err := api.InitAdminApi(httpRouter, apiDef, musicStorageService); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
 		panic(err)
 	}
@@ -44,13 +44,15 @@ func main() {
 		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
 		panic(err)
 	}
+
+	api.InitUploadApi(httpRouter, &cfg)
+
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)
 		httpRouter.RegisterProfiler()
 	}
 
 	privateRouter.Ready()
-
 
 	sg := <-sig
 	log.Logger.Info().Msgf("GOT SIGNAL %v", sg.String())

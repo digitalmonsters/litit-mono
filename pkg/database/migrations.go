@@ -12,16 +12,21 @@ func getMigrations() []*gormigrate.Migration {
 			Migrate: func(db *gorm.DB) error {
 				query := `create table playlists
 						(
-							id serial
+							id          serial
 								constraint playlists_pk
 									primary key,
-							name text,
-							color varchar,
-							sort_order int,
-							songs_count int default 0,
-							created_at timestamp default current_timestamp,
-							deleted_at timestamp default null
-						);`
+							name        text,
+							color       varchar,
+							is_active   boolean,
+							songs_count integer,
+							sort_order  integer,
+							created_at  timestamp default CURRENT_TIMESTAMP,
+							updated_at  timestamp default CURRENT_TIMESTAMP,
+							deleted_at  timestamp
+						);
+						
+						create unique index playlists_name_uindex
+							on playlists (name);`
 				return db.Exec(query).Error
 			},
 			Rollback: func(db *gorm.DB) error {
@@ -33,16 +38,26 @@ func getMigrations() []*gormigrate.Migration {
 			Migrate: func(db *gorm.DB) error {
 				query := `create table songs
 						(
-							id text
+							id serial
 								constraint songs_pk
 									primary key,
+							source int,
+							external_id text,
 							title text,
 							artist text,
-							url text,
 							image_url text,
+							genre text,
+							duration numeric,
+							listen_amount bigint,
 							created_at timestamp default current_timestamp,
-							updated_at timestamp default current_timestamp
-						);`
+							updated_at timestamp default current_timestamp,
+							deleted_at timestamp default null
+						);
+						
+						create unique index songs_external_id_source_uindex
+							on songs (external_id, source);
+						
+						`
 				return db.Exec(query).Error
 			},
 			Rollback: func(db *gorm.DB) error {
@@ -54,11 +69,15 @@ func getMigrations() []*gormigrate.Migration {
 			Migrate: func(db *gorm.DB) error {
 				query := `create table playlist_song_relations
 						(
-						playlist_id bigint,
-						song_id text,
-						sort_order int,
-						constraint playlist_song_relations_pk
-						primary key (playlist_id, song_id)
+							playlist_id bigint not null
+								constraint playlist_song_relations_playlists_id_fk
+									references playlists,
+							song_id     bigint not null
+								constraint playlist_song_relations_songs_id_fk
+									references songs,
+							sort_order  integer,
+							constraint playlist_song_relations_pk
+								primary key (song_id, playlist_id)
 						);`
 				return db.Exec(query).Error
 			},
@@ -105,31 +124,47 @@ func getMigrations() []*gormigrate.Migration {
 			},
 		},
 		{
-			ID: "feat_playlist_song_relations_fk_050120221859",
-			Migrate: func(db *gorm.DB) error {
-				query := `alter table playlist_song_relations add constraint playlist_song_relations_playlists_id_fk foreign key (playlist_id) references playlists;
-						  alter table playlist_song_relations add constraint playlist_song_relations_songs_id_fk foreign key (song_id) references songs;`
-				return db.Exec(query).Error
-			},
-			Rollback: func(db *gorm.DB) error {
-				return nil
-			},
-		},
-		{
 			ID: "feat_favorites_init_060120221134",
 			Migrate: func(db *gorm.DB) error {
 				query := `
 						create table favorites
+					(
+						user_id    bigint not null,
+						song_id    bigint not null,
+						created_at timestamp default CURRENT_TIMESTAMP,
+						constraint favorites_pk
+							primary key (user_id, song_id)
+					);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "feat_music_storage_init_180120221913",
+			Migrate: func(db *gorm.DB) error {
+				query := `
+						create table music_storage
 						(
-							user_id bigint,
-							song_id text
-								constraint favorites_songs_id_fk
-									references songs,
+							id serial
+								constraint music_storage_pk
+									primary key,
+							title text,
+							description text,
+							image_url text,
+							duration numeric,
+							url text,
+							genre text,
+							artist text,
+							hash text,
 							created_at timestamp default current_timestamp,
-							constraint favorites_pk
-								primary key (user_id, song_id)
+							updated_at timestamp default current_timestamp,
+							deleted_at timestamp default null
 						);
-				`
+				
+						create unique index music_storage_hash_uindex
+							on music_storage (hash);`
 				return db.Exec(query).Error
 			},
 			Rollback: func(db *gorm.DB) error {
@@ -137,20 +172,12 @@ func getMigrations() []*gormigrate.Migration {
 			},
 		},
 		{
-			ID: "feat_listen_amount_060120221741",
+			ID: "feat_music_storage_index_190120221346",
 			Migrate: func(db *gorm.DB) error {
-				query := `alter table songs add listen_amount int default 0;`
-				return db.Exec(query).Error
-			},
-			Rollback: func(db *gorm.DB) error {
-				return nil
-			},
-		},
-		{
-			ID: "alter_songs_170120221139",
-			Migrate: func(db *gorm.DB) error {
-				query := `alter table songs add genre text;` +
-				`alter table songs add duration numeric;`
+				query := `
+						drop index music_storage_hash_uindex;
+						alter table music_storage drop column hash;
+						create unique index music_storage_url_uindex on music_storage (url);`
 				return db.Exec(query).Error
 			},
 			Rollback: func(db *gorm.DB) error {
@@ -159,7 +186,3 @@ func getMigrations() []*gormigrate.Migration {
 		},
 	}
 }
-
-/*
-
- */

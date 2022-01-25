@@ -3,6 +3,7 @@ package playlist
 import (
 	"fmt"
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -22,6 +23,7 @@ func UpsertPlaylist(req UpsertPlaylistRequest, db *gorm.DB) (*database.Playlist,
 		Name:      req.Name,
 		SortOrder: req.SortOrder,
 		Color:     req.Color,
+		IsActive:  req.IsActive,
 		CreatedAt: time.Now(),
 	}
 
@@ -30,7 +32,10 @@ func UpsertPlaylist(req UpsertPlaylistRequest, db *gorm.DB) (*database.Playlist,
 	}
 
 	if err := tx.Model(&playlist).
-		Clauses(clause.OnConflict{UpdateAll: true}).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "id"}},
+			UpdateAll: true,
+		}).
 		Create(&playlist).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -69,19 +74,36 @@ func PlaylistListingAdmin(req PlaylistListingAdminRequest, db *gorm.DB) (*Playli
 		query = query.Where("name ilike ?", fmt.Sprintf("%%%v%%", req.Name.String))
 	}
 
+	if req.IsActive.Valid {
+		query = query.Where("is_active = ?", req.IsActive.Bool)
+	}
+
+	if req.Order > 0 {
+		switch req.Order {
+		case OrderSortOrderAsc:
+			query = query.Order("sort_order asc")
+		case OrderSortOrderDesc:
+			query = query.Order("sort_order desc")
+		case OrderSongsCountAsc:
+			query = query.Order("songs_count asc")
+		case OrderSongsCountDesc:
+			query = query.Order("songs_count desc")
+		}
+	}
+
 	var totalCount int64
 	if err := query.Count(&totalCount).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	if err := db.Order("id desc").
+	if err := query.Order("id desc").
 		Limit(req.Limit).Offset(req.Offset).
 		Find(&playlists).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	return &PlaylistListingAdminResponse{
-		Playlists:  playlists,
+		Items:      playlists,
 		TotalCount: totalCount,
 	}, nil
 }
@@ -89,7 +111,7 @@ func PlaylistListingAdmin(req PlaylistListingAdminRequest, db *gorm.DB) (*Playli
 func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*PlayListListingPublicResponse, error) {
 	var playlists database.Playlists
 
-	query := db.Model(&database.Playlist{}).Where("songs_count > 0")
+	query := db.Model(&database.Playlist{}).Where("songs_count > 0 and is_active = true")
 
 	if req.Name.Valid {
 		query = query.Where("name ilike ?", fmt.Sprintf("%%%v%%", req.Name.String))
@@ -128,8 +150,14 @@ func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*Play
 	}
 
 	resp := &PlayListListingPublicResponse{
-		Playlists: playlists.ConvertToFrontendModel(),
+		Items: make([]frontend.Playlist, 0),
 	}
+
+	if len(playlists) == 0 {
+		return resp, nil
+	}
+
+	resp.Items = playlists.ConvertToFrontendModel()
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After
@@ -179,7 +207,7 @@ func PlaylistSongsListPublic(req PlaylistSongsListPublicRequest, db *gorm.DB) (*
 		return nil, errors.WithStack(result.Error)
 	}
 
-	var songIds []string
+	var songIds []int64
 	for _, sr := range relations {
 		songIds = append(songIds, sr.SongId)
 	}
@@ -199,8 +227,14 @@ func PlaylistSongsListPublic(req PlaylistSongsListPublicRequest, db *gorm.DB) (*
 	}
 
 	resp := &PlaylistSongsListPublicResponse{
-		Songs: songs.ConvertToFrontendModel(),
+		Items: make([]frontend.Song, 0),
 	}
+
+	if len(songs) == 0 {
+		return resp, nil
+	}
+
+	resp.Items = songs.ConvertToFrontendModel()
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After

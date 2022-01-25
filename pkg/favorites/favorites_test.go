@@ -28,18 +28,18 @@ func TestAddToFavorites(t *testing.T) {
 	for i := int64(1); i <= 5; i++ {
 		testName := fmt.Sprintf("test%v", i)
 		song := database.Song{
-			Id:       testName,
-			Title:    testName,
-			Artist:   testName,
-			Url:      testName,
-			ImageUrl: testName,
+			Source:     database.SongSourceSoundStripe,
+			ExternalId: testName,
+			Title:      testName,
+			Artist:     testName,
+			ImageUrl:   testName,
 		}
 		if err := gormDb.Create(&song).Error; err != nil {
 			t.Fatal(err)
 		}
 		if err := AddToFavorites(AddToFavoritesRequest{
 			UserId: i,
-			SongId: testName,
+			SongId: song.Id,
 		}, gormDb); err != nil {
 			t.Fatal(err)
 		}
@@ -56,7 +56,7 @@ func TestAddToFavorites(t *testing.T) {
 	a.Equal(5, len(favorites))
 
 	for _, favorite := range favorites {
-		a.Equal(fmt.Sprintf("test%v", favorite.UserId), favorite.SongId)
+		a.Equal(favorite.SongId, favorite.SongId)
 	}
 }
 
@@ -64,20 +64,25 @@ func TestRemoveFromFavorites(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.favorites", "public.songs"}, nil, t); err != nil {
 		t.Fatal(err)
 	}
+
+	var songs []database.Song
 	for i := int64(1); i <= 5; i++ {
 		testName := fmt.Sprintf("test%v", i)
 		song := database.Song{
-			Id:       testName,
-			Title:    testName,
-			Artist:   testName,
-			Url:      testName,
-			ImageUrl: testName,
+			Source:     database.SongSourceSoundStripe,
+			ExternalId: testName,
+			Title:      testName,
+			Artist:     testName,
+			ImageUrl:   testName,
 		}
 		if err := gormDb.Create(&song).Error; err != nil {
 			t.Fatal(err)
 		}
+
+		songs = append(songs, song)
+
 		favorite := database.Favorite{
-			UserId: i,
+			UserId: song.Id,
 			SongId: song.Id,
 		}
 		if err := gormDb.Create(&favorite).Error; err != nil {
@@ -86,8 +91,8 @@ func TestRemoveFromFavorites(t *testing.T) {
 	}
 
 	if err := RemoveFromFavorites(RemoveFromFavoritesRequest{
-		UserId: 1,
-		SongId: "test1",
+		UserId: songs[0].Id,
+		SongId: songs[0].Id,
 	}, gormDb); err != nil {
 		t.Fatal(err)
 	}
@@ -113,11 +118,11 @@ func TestFavoriteSongsList(t *testing.T) {
 	for i := int64(1); i <= 5; i++ {
 		testName := fmt.Sprintf("test%v", i)
 		song := database.Song{
-			Id:       testName,
-			Title:    testName,
-			Artist:   testName,
-			Url:      testName,
-			ImageUrl: testName,
+			Source:     database.SongSourceSoundStripe,
+			ExternalId: testName,
+			Title:      testName,
+			Artist:     testName,
+			ImageUrl:   testName,
 		}
 		if err := gormDb.Create(&song).Error; err != nil {
 			t.Fatal(err)
@@ -137,5 +142,5 @@ func TestFavoriteSongsList(t *testing.T) {
 		Cursor: "",
 	}, int64(userId), gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp.Songs, 2)
+	assert.Len(t, resp.Items, 2)
 }

@@ -2,6 +2,7 @@ package favorites
 
 import (
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/frontend"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -73,7 +74,7 @@ func FavoriteSongsList(req FavoriteSongsListRequest, userId int64, db *gorm.DB) 
 		return nil, errors.WithStack(result.Error)
 	}
 
-	var songIds []string
+	var songIds []int64
 	for _, f := range favorites {
 		songIds = append(songIds, f.SongId)
 	}
@@ -93,8 +94,14 @@ func FavoriteSongsList(req FavoriteSongsListRequest, userId int64, db *gorm.DB) 
 	}
 
 	resp := &FavoriteSongsListResponse{
-		Songs: songs.ConvertToFrontendModel(),
+		Items: make([]frontend.Song, 0),
 	}
+
+	if len(songs) == 0 {
+		return resp, nil
+	}
+
+	resp.Items = songs.ConvertToFrontendModel()
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After
