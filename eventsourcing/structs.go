@@ -10,10 +10,10 @@ import (
 )
 
 type LikeEvent struct {
-	UserId    int64     `json:"user_id"`
-	ContentId int64     `json:"content_id"`
-	Like      bool      `json:"like"`
-	CreatedAt time.Time `json:"created_at"`
+	UserId    int64 `json:"user_id"`
+	ContentId int64 `json:"content_id"`
+	Like      bool  `json:"like"`
+	CreatedAt int64 `json:"created_at"`
 }
 
 func (l LikeEvent) GetPublishKey() string {
@@ -21,10 +21,10 @@ func (l LikeEvent) GetPublishKey() string {
 }
 
 type UserCategoryEvent struct {
-	UserId     int64     `json:"user_id"`
-	CategoryId int64     `json:"category_id"`
-	Subscribed bool      `json:"subscribed"`
-	CreatedAt  time.Time `json:"created_at"`
+	UserId     int64 `json:"user_id"`
+	CategoryId int64 `json:"category_id"`
+	Subscribed bool  `json:"subscribed"`
+	CreatedAt  int64 `json:"created_at"`
 }
 
 func (l UserCategoryEvent) GetPublishKey() string {
@@ -53,7 +53,7 @@ type ViewEvent struct {
 	SharerId  null.Int    `json:"sharer_id"`
 	ShareCode null.String `json:"share_code"`
 	AdsId     null.Int    `json:"ads_id"`
-	CreatedAt time.Time   `json:"created_at"`
+	CreatedAt int64       `json:"created_at"`
 }
 
 func (l ViewEvent) GetPublishKey() string {
@@ -61,10 +61,10 @@ func (l ViewEvent) GetPublishKey() string {
 }
 
 type FollowEvent struct {
-	ToUserId  int64     `json:"to_user_id"`
-	UserId    int64     `json:"user_id"`
-	Followed  bool      `json:"followed"`
-	CreatedAt time.Time `json:"created_at"`
+	ToUserId  int64 `json:"to_user_id"`
+	UserId    int64 `json:"user_id"`
+	Followed  bool  `json:"followed"`
+	CreatedAt int64 `json:"created_at"`
 }
 
 func (l FollowEvent) GetPublishKey() string {
