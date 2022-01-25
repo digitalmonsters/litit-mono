@@ -5,7 +5,7 @@ import "go.elastic.co/apm"
 type AuthWrapperMock struct {
 	ParseTokenFn func(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan AuthParseTokenResponseChan
-	GenerateTokenFn func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GenerateTokenResponseChan
+	GenerateTokenFn     func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GenerateTokenResponseChan
 }
 
 func (w *AuthWrapperMock) ParseToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,

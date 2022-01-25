@@ -10,7 +10,7 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/swagger"
-	"github.com/digitalmonsters/go-common/wrappers/auth"
+	auth_go "github.com/digitalmonsters/go-common/wrappers/auth_go"
 	fastRouter "github.com/fasthttp/router"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -19,40 +19,93 @@ import (
 	"go.elastic.co/apm"
 	"net/http/pprof"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
 type HttpRouter struct {
-	realRouter   *fastRouter.Router
-	executor     *CommandExecutor
-	hostname     string
-	restCommands map[string]*RestCommand
-	isProd       bool
-	authWrapper  auth.IAuthWrapper
-	srv          *fasthttp.Server
+	realRouter             *fastRouter.Router
+	hostname               string
+	restCommands           map[string]*RestCommand
+	isProd                 bool
+	authGoWrapper          auth_go.IAuthGoWrapper
+	srv                    *fasthttp.Server
+	rpcEndpointPublic      IRpcEndpoint
+	rpcEndpointAdmin       IRpcEndpoint
+	rpcEndpointAdminLegacy IRpcEndpoint
+	rpcEndpointService     IRpcEndpoint
 }
 
-func NewRouter(rpcEndpointPath string, wrapper auth.IAuthWrapper) *HttpRouter {
+var hostName string
+
+// user auth -> node js -> creates tokens using forward-auth (rpc public, rest)
+// user admin (same user) -> node js -> admin or super admin
+// admin (rbac) -> auth go ->creates tokens using forward-auth (additional api)
+// service -> no auth
+
+// /rpc (user token or without token, if require identity validation = false) (auth method 1, 1.5)
+// rest api -> /sddfsdf_fdsfsd/dsfds (auth method 1, 1.5)
+// /rpc-admin -> (rbac) (3)
+// /rpc-admin-legacy -> legacy admin command (command should use auth method 1.5)
+// /rpc-service - internal services -> (will not be available for external use)
+
+func NewRouter(rpcEndpointPath string, auth auth_go.IAuthGoWrapper) *HttpRouter {
 	h := &HttpRouter{
-		realRouter:   fastRouter.New(),
-		executor:     NewCommandExecutor(),
-		authWrapper:  wrapper,
-		restCommands: map[string]*RestCommand{},
+		realRouter:    fastRouter.New(),
+		authGoWrapper: auth,
+		restCommands:  map[string]*RestCommand{},
 	}
 
 	if hostname, _ := os.Hostname(); len(hostname) > 0 {
 		h.hostname = hostname
+		hostName = hostname
 	}
 
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Prod {
 		h.isProd = true
 	}
 
-	h.prepareRpcEndpoint(rpcEndpointPath)
-
 	return h
+}
+
+func (r *HttpRouter) GetRpcAdminLegacyEndpoint() IRpcEndpoint {
+	if r.rpcEndpointAdminLegacy == nil {
+		r.rpcEndpointAdminLegacy = newRpcEndpointPublic()
+
+		r.prepareRpcEndpoint("/rpc-admin-legacy", r.rpcEndpointAdminLegacy)
+	}
+
+	return r.rpcEndpointAdminLegacy
+}
+
+func (r *HttpRouter) GetRpcPublicEndpoint() IRpcEndpoint {
+	if r.rpcEndpointPublic == nil {
+		r.rpcEndpointPublic = newRpcEndpointPublic()
+
+		r.prepareRpcEndpoint("/rpc", r.rpcEndpointPublic)
+	}
+
+	return r.rpcEndpointPublic
+}
+
+func (r *HttpRouter) GetRpcAdminEndpoint() IRpcEndpoint {
+	if r.rpcEndpointAdmin == nil {
+		r.rpcEndpointAdmin = newRpcEndpointAdmin()
+
+		r.prepareRpcEndpoint("/rpc-admin", r.rpcEndpointAdmin)
+	}
+
+	return r.rpcEndpointAdmin
+}
+
+func (r *HttpRouter) GetRpcServiceEndpoint() IRpcEndpoint {
+	if r.rpcEndpointService == nil {
+		r.rpcEndpointService = newRpcEndpointService()
+
+		r.prepareRpcEndpoint("/rpc-service", r.rpcEndpointService)
+	}
+
+	return r.rpcEndpointService
 }
 
 func (r *HttpRouter) setCors(ctx *fasthttp.RequestCtx) {
@@ -69,32 +122,59 @@ func (r *HttpRouter) RegisterProfiler() {
 
 func (r *HttpRouter) RegisterDocs(apiDef map[string]swagger.ApiDescription,
 	constants []swagger.ConstantDescription) {
-	r.realRouter.GET("/swagger", func(ctx *fasthttp.RequestCtx) {
-		var command []swagger.IApiCommand
+	routes := map[string][]swagger.IApiCommand{}
 
-		for _, c := range r.GetRestRegisteredCommands() {
-			command = append(command, c)
+	for _, c := range r.GetRestRegisteredCommands() {
+		routes["/swagger"] = append(routes["/swagger"], c)
+	}
+
+	if r.rpcEndpointPublic != nil {
+		for _, c := range r.rpcEndpointPublic.GetRegisteredCommands() {
+			routes["/swagger"] = append(routes["/swagger"], c)
 		}
+	}
 
-		for _, c := range r.GetRpcRegisteredCommands() {
-			command = append(command, c)
+	if r.rpcEndpointAdmin != nil {
+		for _, c := range r.rpcEndpointAdmin.GetRegisteredCommands() {
+			routes["/swagger-admin"] = append(routes["/swagger-admin"], c)
 		}
+	}
 
-		res := swagger.GenerateDoc(command, apiDef, constants)
+	if r.rpcEndpointService != nil {
+		for _, c := range r.rpcEndpointService.GetRegisteredCommands() {
+			routes["/swagger-service"] = append(routes["/swagger-service"], c)
+		}
+	}
 
+	if r.rpcEndpointAdminLegacy != nil {
+		for _, c := range r.rpcEndpointAdminLegacy.GetRegisteredCommands() {
+			routes["/swagger-admin-legacy"] = append(routes["/swagger-admin-legacy"], c)
+		}
+	}
+
+	r.realRouter.GET("/swag", func(ctx *fasthttp.RequestCtx) {
 		ctx.Response.Header.SetContentType("text/html; charset=utf-8")
 
-		b, _ := json.Marshal(res)
-
-		redoc := fmt.Sprintf("<!DOCTYPE html>\n<html>\n  <head>\n    <title>Doc</title>\n    <meta charset=\"utf-8\"/>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link href=\"https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700\" rel=\"stylesheet\">\n\n    <style>\n      body {\n        margin: 0;\n        padding: 0;\n      }\n    </style>\n  </head>\n  <body>\n    <div id=\"redoc-container\">\n    <redoc spec-url='http://petstore.swagger.io/v2/swagger.json'></redoc>\n    <script src=\"https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js\"> </script>\n    <script>Redoc.init(JSON.parse('%v'), {\n  scrollYOffset: 50\n}, document.getElementById('redoc-container'))</script>\n  </body>\n</html>",
-			string(b))
-
-		ctx.Response.SetBody([]byte(redoc))
+		ctx.Response.SetBodyRaw([]byte("<ul>\n<li><a href=\"/swagger\">public</a></li>\n<li><a href=\"/swagger-admin\">admin</a></li>\n<li><a href=\"/swagger-admin-legacy\">admin-legacy</a></li>\n<li><a href=\"/swagger-service\">service</a></li>\n</ul>"))
 	})
-}
 
-func (r *HttpRouter) RegisterRpcCommand(command *Command) error {
-	return r.executor.AddCommand(command)
+	for path, commands := range routes {
+		cPath := path
+		cCommands := commands
+
+		r.realRouter.GET(cPath, func(ctx *fasthttp.RequestCtx) {
+			res := swagger.GenerateDoc(cCommands, apiDef, constants)
+
+			ctx.Response.Header.SetContentType("text/html; charset=utf-8")
+
+			b, _ := json.Marshal(res)
+
+			redoc := fmt.Sprintf("<!DOCTYPE html>\n<html>\n  <head>\n    <title>Doc</title>\n    <meta charset=\"utf-8\"/>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link href=\"https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700\" rel=\"stylesheet\">\n\n    <style>\n      body {\n        margin: 0;\n        padding: 0;\n      }\n    </style>\n  </head>\n  <body>\n    <div id=\"redoc-container\">\n    <redoc spec-url='http://petstore.swagger.io/v2/swagger.json'></redoc>\n    <script src=\"https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js\"> </script>\n    <script>Redoc.init(JSON.parse('%v'), {\n  scrollYOffset: 50\n}, document.getElementById('redoc-container'))</script>\n  </body>\n</html>",
+				string(b))
+
+			ctx.Response.SetBody([]byte(redoc))
+		})
+	}
 }
 
 func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
@@ -265,56 +345,36 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	shouldLog = forceLog
 
-	userId := int64(0)
+	userId, rpcError := cmd.CanExecute(ctx, apmTransaction, r.authGoWrapper)
 
-	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
-		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
-			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
-				apm_helper.CaptureApmError(err, apmTransaction)
-			} else {
-				userId = userIdParsed
-			}
-		}
-	}
+	if rpcError != nil {
+		rpcResponse.Error = rpcError
 
-	if userId == 0 {
-		if authHeaderValue := ctx.Request.Header.Peek("Authorization"); len(authHeaderValue) > 0 {
-			jwtStr := string(authHeaderValue)
-
-			if len(jwtStr) > 0 {
-				jwtStr = strings.TrimSpace(strings.ReplaceAll(jwtStr, "Bearer", ""))
-			}
-
-			resp := <-r.authWrapper.ParseToken(jwtStr, false, apmTransaction, true)
-
-			if resp.Error != nil {
-				rpcResponse.Error = resp.Error
-				return
-			}
-
-			userId = resp.Resp.UserId
-		}
-	}
-
-	if userId > 0 {
-		if apmTransaction != nil {
-			apmTransaction.Context.SetUserID(fmt.Sprint(userId))
-		}
+		return
 	}
 
 	if userId == 0 && (cmd.RequireIdentityValidation() || cmd.AccessLevel() > common.AccessLevelPublic) {
 		err := errors.New("missing jwt token for auth")
 
-		rpcResponse.Error = &rpc.RpcError{
+		rpcError = &rpc.RpcError{
 			Code:     error_codes.MissingJwtToken,
 			Message:  "missing jwt token for auth",
 			Hostname: r.hostname,
 		}
 
 		if !r.isProd {
-			rpcResponse.Error.Stack = fmt.Sprintf("%+v", err)
+			rpcError.Stack = fmt.Sprintf("%+v", err)
 		}
+
+		rpcResponse.Error = rpcError
+
 		return
+	}
+
+	if userId > 0 {
+		if apmTransaction != nil {
+			apmTransaction.Context.SetUserID(fmt.Sprint(userId))
+		}
 	}
 
 	executionTiming := time.Now()
@@ -349,7 +409,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 	return
 }
 
-func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
+func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEndpoint) {
 	r.realRouter.OPTIONS(rpcEndpointPath, func(ctx *fasthttp.RequestCtx) {
 		r.setCors(ctx)
 	})
@@ -424,7 +484,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 		apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, "rpc", nil, nil)
 		defer apmTransaction.End()
 
-		cmd, err := r.executor.GetCommand(rpcRequest.Method)
+		cmd, err := endpoint.GetCommand(rpcRequest.Method)
 
 		if err != nil {
 			rpcResponse.Error = &rpc.RpcError{
@@ -441,7 +501,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string) {
 			return
 		}
 
-		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd, ctx, apmTransaction, cmd.forceLog, nil)
+		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd, ctx, apmTransaction, cmd.ForceLog(), nil)
 	})
 }
 
@@ -507,17 +567,17 @@ func (r *HttpRouter) Handler() func(ctx *fasthttp.RequestCtx) {
 	return fasthttp.CompressHandlerBrotliLevel(r.realRouter.Handler, 11, 9)
 }
 
-func (r *HttpRouter) GetRpcRegisteredCommands() []Command {
-	var commands []Command
-
-	if r.executor.commands != nil {
-		for _, c := range r.executor.commands {
-			commands = append(commands, *c)
-		}
-	}
-
-	return commands
-}
+//func (r *HttpRouter) GetRpcRegisteredCommands() []Command {
+//	var commands []Command
+//
+//	if r.executor.commands != nil {
+//		for _, c := range r.executor.commands {
+//			commands = append(commands, *c)
+//		}
+//	}
+//
+//	return commands
+//}
 
 func (r *HttpRouter) GetRestRegisteredCommands() []RestCommand {
 	var commands []RestCommand

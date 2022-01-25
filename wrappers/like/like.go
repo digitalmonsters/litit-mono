@@ -36,7 +36,7 @@ func NewLikeWrapper(config boilerplate.WrapperConfig) ILikeWrapper {
 	return &LikeWrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
-		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
+		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "likes",
 	}
 }

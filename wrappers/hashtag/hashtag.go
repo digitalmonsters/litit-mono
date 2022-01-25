@@ -35,7 +35,7 @@ func NewHashtagWrapper(config boilerplate.WrapperConfig) IHashtagWrapper {
 	return &Wrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
-		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
+		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "content",
 	}
 }

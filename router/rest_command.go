@@ -1,6 +1,12 @@
 package router
 
-import "github.com/digitalmonsters/go-common/common"
+import (
+	"github.com/digitalmonsters/go-common/common"
+	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/wrappers/auth_go"
+	"github.com/valyala/fasthttp"
+	"go.elastic.co/apm"
+)
 
 type HttpMethodType string
 
@@ -33,10 +39,22 @@ func (r RestCommand) AccessLevel() common.AccessLevel {
 	return r.accessLevel
 }
 
-func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodType, accessLevel common.AccessLevel, requiredIdentityValidation bool,
-	forceLog bool) *RestCommand {
-	return &RestCommand{commandFn: commandFn, path: path, method: string(httpMethod), forceLog: forceLog, accessLevel: accessLevel,
+func (r RestCommand) GetMethodName() string {
+	return r.method
+}
+
+func (r RestCommand) ForceLog() bool {
+	return r.forceLog
+}
+
+func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodType, requiredIdentityValidation bool,
+	forceLog bool) ICommand {
+	return &RestCommand{commandFn: commandFn, path: path, method: string(httpMethod), forceLog: forceLog, accessLevel: common.AccessLevelPublic,
 		requireIdentityValidation: requiredIdentityValidation}
+}
+
+func (r RestCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
+	return publicCanExecuteLogic(ctx, r.requireIdentityValidation)
 }
 
 func (r RestCommand) GetPath() string {

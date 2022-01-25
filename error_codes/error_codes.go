@@ -8,20 +8,21 @@ import (
 type ErrorCode int
 
 const (
-	None                    ErrorCode = 200
-	GenericValidationError  ErrorCode = 400
-	GenericServerError      ErrorCode = 500
-	Timeout                 ErrorCode = 408
-	MissingJwtToken         ErrorCode = 401
-	ExpiredJwtToken         ErrorCode = 401
-	InvalidJwtToken         ErrorCode = 401
-	InvalidMethodPermission ErrorCode = 401
-	GenericMappingError     ErrorCode = -32700
-	GenericDuplicateError   ErrorCode = 409
-	GenericNotFoundError    ErrorCode = 404
-	CommandNotFoundError    ErrorCode = -32601
-	GenericTimeoutError     ErrorCode = 502
-	GenericPanicError       ErrorCode = -32603
+	None                        ErrorCode = 200
+	GenericValidationError      ErrorCode = 400
+	GenericServerError          ErrorCode = 500
+	Timeout                     ErrorCode = 408
+	MissingJwtToken             ErrorCode = 401
+	ExpiredJwtToken             ErrorCode = 401
+	InvalidJwtToken             ErrorCode = 401
+	InvalidMethodPermission     ErrorCode = 401
+	GenericMappingError         ErrorCode = -32700
+	GenericDuplicateError       ErrorCode = 409
+	GenericNotFoundError        ErrorCode = 404
+	CommandNotFoundError        ErrorCode = -32601
+	GenericTimeoutError         ErrorCode = 502
+	GenericPanicError           ErrorCode = -32603
+	UserHasNoPermissionToMethod ErrorCode = 601
 )
 
 type ErrorWithCode struct {

@@ -34,7 +34,7 @@ func NewUserCategoryWrapper(config boilerplate.WrapperConfig) IUserCategoryWrapp
 	return &UserCategoryWrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
-		apiUrl:         fmt.Sprintf("%v/rpc", common.StripSlashFromUrl(config.ApiUrl)),
+		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "user-categories",
 	}
 }

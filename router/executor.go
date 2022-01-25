@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.elastic.co/apm"
 )
 
@@ -24,25 +23,24 @@ func (m MethodExecutionData) GetUserValue(key string) interface{} {
 }
 
 type CommandExecutor struct {
-	commands map[string]*Command
+	commands map[string]ICommand
 }
 
 func NewCommandExecutor() *CommandExecutor {
-	return &CommandExecutor{commands: map[string]*Command{}}
+	return &CommandExecutor{commands: map[string]ICommand{}}
 }
 
-func (c *CommandExecutor) AddCommand(command *Command) error {
+func (c *CommandExecutor) AddCommand(command ICommand) error {
 	if _, ok := c.commands[command.GetMethodName()]; ok {
 		return errors.New(fmt.Sprintf("command with same name already registered [%v]", command.GetMethodName()))
 	}
 
-	promhttp.Handler()
 	c.commands[command.GetMethodName()] = command
 
 	return nil
 }
 
-func (c *CommandExecutor) GetCommand(methodName string) (*Command, error) {
+func (c *CommandExecutor) GetCommand(methodName string) (ICommand, error) {
 	if v, ok := c.commands[methodName]; ok {
 		return v, nil
 	}
