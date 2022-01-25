@@ -48,7 +48,7 @@ func (r RestCommand) ForceLog() bool {
 }
 
 func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodType, requiredIdentityValidation bool,
-	forceLog bool) ICommand {
+	forceLog bool) *RestCommand {
 	return &RestCommand{commandFn: commandFn, path: path, method: string(httpMethod), forceLog: forceLog, accessLevel: common.AccessLevelPublic,
 		requireIdentityValidation: requiredIdentityValidation}
 }
