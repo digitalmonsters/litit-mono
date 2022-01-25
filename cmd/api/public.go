@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -17,8 +16,9 @@ import (
 	"net/http"
 )
 
-func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, musicStorageService *music_source.MusicStorageService) error {
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, musicStorageService *music_source.MusicStorageService) error {
+
+	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
 
@@ -44,11 +44,11 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 				Success: true,
 			}, nil
 		}
-	}, "/song/favorites/add/{song_id}", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/song/favorites/add/{song_id}", http.MethodPost, true, false)); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
 
@@ -74,11 +74,11 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 				Success: true,
 			}, nil
 		}
-	}, "/song/favorites/remove/{song_id}", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/song/favorites/remove/{song_id}", http.MethodPost, true, false)); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
 
@@ -101,11 +101,11 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, "/playlist", http.MethodGet, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/playlist", http.MethodGet, true, false)); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
 
@@ -132,11 +132,11 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, "/playlist/{playlist_id}", http.MethodGet, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/playlist/{playlist_id}", http.MethodGet, true, false)); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
 
@@ -164,11 +164,11 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, "/song/favorites", http.MethodGet, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/song/favorites", http.MethodGet, true, false)); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
 
@@ -195,11 +195,11 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, "/song/popular", http.MethodGet, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/song/popular", http.MethodGet, true, false)); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		userId := executionData.UserId
 
@@ -223,7 +223,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, "/song/url/{song_id}", http.MethodGet, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/song/url/{song_id}", http.MethodGet, true, false)); err != nil {
 		return err
 	}
 

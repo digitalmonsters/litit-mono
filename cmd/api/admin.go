@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -13,8 +12,8 @@ import (
 	"github.com/digitalmonsters/music/pkg/song"
 )
 
-func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, musicStorageService *music_source.MusicStorageService) error {
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("UpsertPlaylistAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription, musicStorageService *music_source.MusicStorageService) error {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("UpsertPlaylistAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req playlist.UpsertPlaylistRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -27,11 +26,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return res, nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("DeletePlaylistsBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("DeletePlaylistsBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req playlist.DeletePlaylistsBulkRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -44,11 +43,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return "ok", nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("PlaylistListingAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("PlaylistListingAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req playlist.PlaylistListingAdminRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -61,11 +60,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return resp, nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("AddSongToPlaylistBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("AddSongToPlaylistBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req song.AddSongToPlaylistRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -78,11 +77,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return "ok", nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("DeleteSongFromPlaylistsBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("DeleteSongFromPlaylistsBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req song.DeleteSongsFromPlaylistBulkRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -95,11 +94,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return "ok", nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("PlaylistSongListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("PlaylistSongListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req song.PlaylistSongListRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -112,11 +111,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return resp, nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("AllSongsListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("AllSongsListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req music_source.ListMusicRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -129,11 +128,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return resp, nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("UpsertSongsToOwnStorageBulk", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("UpsertSongsToOwnStorageBulk", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req own_storage.AddSongsToOwnStorageRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -146,11 +145,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return resp, nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("DeleteSongsFromOwnStorageBulk", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("DeleteSongsFromOwnStorageBulk", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req own_storage.DeleteSongsFromOwnStorageRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -162,11 +161,11 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return successResponse{Success: true}, nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := httpRouter.RegisterRpcCommand(router.NewCommand("OwnStorageMusicList", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("OwnStorageMusicList", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req own_storage.OwnStorageMusicListRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -179,7 +178,7 @@ func InitAdminApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return resp, nil
-	}, common.AccessLevelRead, false, true)); err != nil {
+	})); err != nil {
 		return err
 	}
 

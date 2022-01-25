@@ -13,12 +13,12 @@ import (
 func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB, executionData router.MethodExecutionData) (*GetPopularSongsResponse, error) {
 	var songs []database.Song
 
-	query := db.Table("songs").Debug()
+	query := db.Table("songs").Distinct().
+		Joins("join playlist_song_relations psr on psr.song_id = songs.id").
+		Joins("join playlists on playlists.id = psr.playlist_id and playlists.deleted_at is null")
 
 	if req.SearchKeyword.Valid {
-		query = query.Joins("join playlist_song_relations psr on psr.song_id = songs.id").
-			Joins("join playlists on playlists.id = psr.playlist_id and playlists.deleted_at is null").
-			Where("title ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)).
+		query = query.Where("title ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String)).
 			Or("artist ilike ?", fmt.Sprintf("%%%v%%", req.SearchKeyword.String))
 	}
 
