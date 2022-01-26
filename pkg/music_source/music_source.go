@@ -146,10 +146,12 @@ func (s *MusicStorageService) fillPlaylists(songs []internal.SongModel, source d
 	for ind, song := range songs {
 		for _, p := range playlists {
 			if song.ExternalId == p.ExternalId {
-				songs[ind].Playlists = append(songs[ind].Playlists, internal.PlaylistModel{
-					Id:   p.PlaylistId,
-					Name: p.PlaylistName,
-				})
+				if p.PlaylistId > 0 {
+					songs[ind].Playlists = append(songs[ind].Playlists, internal.PlaylistModel{
+						Id:   p.PlaylistId,
+						Name: p.PlaylistName,
+					})
+				}
 
 				songs[ind].DateUploaded = null.TimeFrom(p.CreatedAt)
 			}

@@ -184,5 +184,15 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "drop_index_260120221945",
+			Migrate: func(db *gorm.DB) error {
+				query := `drop index if exists music_storage_url_uindex;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
