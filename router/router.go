@@ -72,7 +72,7 @@ func (r *HttpRouter) GetRpcAdminLegacyEndpoint() IRpcEndpoint {
 	if r.rpcEndpointAdminLegacy == nil {
 		r.rpcEndpointAdminLegacy = newRpcEndpointPublic()
 
-		r.prepareRpcEndpoint("/rpc-admin-legacy", r.rpcEndpointAdminLegacy)
+		r.prepareRpcEndpoint("/rpc-admin-legacy", r.rpcEndpointAdminLegacy, "rpc-admin-legacy")
 	}
 
 	return r.rpcEndpointAdminLegacy
@@ -82,7 +82,7 @@ func (r *HttpRouter) GetRpcPublicEndpoint() IRpcEndpoint {
 	if r.rpcEndpointPublic == nil {
 		r.rpcEndpointPublic = newRpcEndpointPublic()
 
-		r.prepareRpcEndpoint("/rpc", r.rpcEndpointPublic)
+		r.prepareRpcEndpoint("/rpc", r.rpcEndpointPublic, "rpc")
 	}
 
 	return r.rpcEndpointPublic
@@ -92,7 +92,7 @@ func (r *HttpRouter) GetRpcAdminEndpoint() IRpcEndpoint {
 	if r.rpcEndpointAdmin == nil {
 		r.rpcEndpointAdmin = newRpcEndpointAdmin()
 
-		r.prepareRpcEndpoint("/rpc-admin", r.rpcEndpointAdmin)
+		r.prepareRpcEndpoint("/rpc-admin", r.rpcEndpointAdmin, "rpc-admin")
 	}
 
 	return r.rpcEndpointAdmin
@@ -102,7 +102,7 @@ func (r *HttpRouter) GetRpcServiceEndpoint() IRpcEndpoint {
 	if r.rpcEndpointService == nil {
 		r.rpcEndpointService = newRpcEndpointService()
 
-		r.prepareRpcEndpoint("/rpc-service", r.rpcEndpointService)
+		r.prepareRpcEndpoint("/rpc-service", r.rpcEndpointService, "rpc-service")
 	}
 
 	return r.rpcEndpointService
@@ -197,7 +197,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 		apmTransaction := apm_helper.StartNewApmTransaction(fmt.Sprintf("[%v] [%v]", targetCmd.method,
-			targetCmd.path), "rpc", nil, nil)
+			targetCmd.path), "rest", nil, nil)
 		defer apmTransaction.End()
 
 		requestBody := ctx.PostBody()
@@ -414,7 +414,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 	return
 }
 
-func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEndpoint) {
+func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEndpoint, apmTxType string) {
 	r.realRouter.OPTIONS(rpcEndpointPath, func(ctx *fasthttp.RequestCtx) {
 		r.setCors(ctx)
 	})
@@ -486,7 +486,8 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			return
 		}
 
-		apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, "rpc", nil, nil)
+
+		apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, apmTxType, nil, nil)
 		defer apmTransaction.End()
 
 		cmd, err := endpoint.GetCommand(rpcRequest.Method)
