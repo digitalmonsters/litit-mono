@@ -430,6 +430,11 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 			processingSpan.Context.SetLabel("messages_to_process", len(messagesToProcess))
 
+			if retryCount > 1 {
+				apm_helper.AddApmData(apmTransaction, fmt.Sprintf("not_processed_messages%v", retryCount), messagesToProcess)
+
+			}
+			
 			successfullyProcessedMessages = k.command.Execute(ExecutionData{
 				ApmTransaction: apmTransaction,
 				Context:        commandExecutionContext,
