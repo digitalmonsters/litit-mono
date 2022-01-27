@@ -30,6 +30,19 @@ type CategoryGetInternalResponseChan struct {
 	Data  *ResponseData `json:"data"`
 }
 
+type GetUserBlacklistedCategoriesRequest struct {
+	UserId int64 `json:"user_id"`
+}
+
+type GetUserBlacklistedCategoriesChan struct {
+	Error *rpc.RpcError                         `json:"error"`
+	Data  *GetUserBlacklistedCategoriesResponse `json:"data"`
+}
+
+type GetUserBlacklistedCategoriesResponse struct {
+	CategoryIds []int64 `json:"category_ids"`
+}
+
 type GetCategoryInternalRequest struct {
 	CategoryIds            []int64   `json:"category_ids"`
 	Limit                  int       `json:"limit"`
