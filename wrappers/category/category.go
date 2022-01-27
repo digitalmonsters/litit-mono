@@ -24,6 +24,7 @@ type ICategoryWrapper interface {
 	GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool,
 		apmTransaction *apm.Transaction, shouldHaveValidContent bool, forceLog bool) chan CategoryGetInternalResponseChan
 	GetAllCategories(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan GetAllCategoriesResponseChan
+	GetUserBlacklistedCategories(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlacklistedCategoriesChan
 }
 
 func NewCategoryWrapper(config boilerplate.WrapperConfig) ICategoryWrapper {
@@ -39,6 +40,45 @@ func NewCategoryWrapper(config boilerplate.WrapperConfig) ICategoryWrapper {
 		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "content",
 	}
+}
+
+func (w *Wrapper) GetUserBlacklistedCategories(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlacklistedCategoriesChan {
+	respCh := make(chan GetUserBlacklistedCategoriesChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetUserBlacklistedCategoriesInternal", GetUserBlacklistedCategoriesRequest{
+		UserId: userId,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetUserBlacklistedCategoriesChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := &GetUserBlacklistedCategoriesResponse{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Data = data
+			}
+		}
+		respCh <- result
+	}()
+
+	return respCh
 }
 
 func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool,
