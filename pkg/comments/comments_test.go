@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"fmt"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/comments/utils"
@@ -14,6 +15,7 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"testing"
+	"time"
 )
 
 var db *gorm.DB
@@ -110,10 +112,10 @@ func baseSetup(t *testing.T) {
 		[]string{"public.comment", "public.comment_vote", "public.content", "public.profile"}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
-
 	if err := utils.PollutePostgresDatabase(db, "./test_data/seed.json"); err != nil {
 		t.Fatal(err)
 	}
+
 }
 
 func TestGetCommentsByContent(t *testing.T) {
@@ -179,6 +181,108 @@ func TestGetCommentById(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func TestGetCommentById_ChildrenComments(t *testing.T) {
+	cfg := configs.GetConfig()
+
+	if err := boilerplate_testing.FlushPostgresTables(cfg.Db.ToBoilerplate(),
+		[]string{"public.comment"}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	userId := int64(10511)
+	profileId := int64(9716)
+
+	var parentComments []database.Comment
+
+	for i := 0; i < 4; i++ {
+		var minute = 2 * (i + 1)
+		parentComments = append(parentComments, database.Comment{
+			AuthorId:  userId,
+			Comment:   fmt.Sprintf("test parent comments_%v", i+1),
+			ProfileId: null.IntFrom(profileId),
+			CreatedAt: time.Now().UTC().Add(time.Duration(minute) * time.Minute),
+		})
+	}
+	if err := db.Create(&parentComments).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	var comments []database.Comment
+
+	for i := 0; i < 3; i++ {
+		var minute = - 2 * (i + 1)
+		comments = append(comments, database.Comment{
+			AuthorId:  userId,
+			Comment:   "test comments",
+			ProfileId: null.IntFrom(profileId),
+			ParentId:  null.IntFrom(parentComments[0].Id),
+			CreatedAt: time.Now().UTC().Add(time.Duration(minute) * time.Minute),
+		})
+	}
+
+	if err := db.Create(&comments).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := GetCommentById(db, parentComments[0].Id, userId, userWrapperMock, nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
+		ResourceId: parentComments[0].ProfileId.Int64,
+		After:      resp.Cursor,
+		Count:      2,
+		SortOrder:  "newest",
+	}, userId, db, userWrapperMock, nil, ResourceTypeProfile)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, len(result.Comments), 2)
+	assert.NotEqual(t, result.Paging.After, "")
+
+	for _, c := range result.Comments {
+		var isFound = false
+
+		for _, p := range parentComments {
+			if p.Id == c.Id {
+				isFound = true
+			}
+		}
+		assert.True(t, isFound)
+	}
+	resp, err = GetCommentById(db, comments[1].Id, userId, userWrapperMock, nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err = GetCommentsByResourceId(GetCommentsByTypeWithResourceRequest{
+		After:      resp.Cursor,
+		Count:      2,
+		ResourceId: comments[1].ParentId.Int64,
+		SortOrder:  "newest",
+	}, userId, db, userWrapperMock, nil, ResourceTypeParentComment)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, len(result.Comments), 1)
+	assert.Equal(t, result.Paging.After, "")
+
+	for _, c := range result.Comments {
+		var isFound = false
+
+		for _, p := range comments {
+			if p.Id == c.Id {
+				isFound = true
+			}
+		}
+		assert.True(t, isFound)
+	}
 }
 
 func TestGetCommentsByProfile(t *testing.T) {

@@ -187,7 +187,9 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 		resourceType = ResourceTypeProfile
 		resourceId = comment.ProfileId.ValueOrZero()
 		resourceTypeString = "profile_id"
-	} else if comment.ParentId.Valid {
+	}
+
+	if comment.ParentId.Valid {
 		resourceType = ResourceTypeParentComment
 		resourceId = comment.ParentId.ValueOrZero()
 		resourceTypeString = "parent_id"
