@@ -52,21 +52,22 @@ type KafkaTopicConfig struct {
 }
 
 type Wrappers struct {
-	Auth           WrapperConfig `json:"Auth"`
-	Content        WrapperConfig `json:"Content"`
-	Likes          WrapperConfig `json:"Likes"`
-	Follows        WrapperConfig `json:"Follows"`
-	Views          WrapperConfig `json:"Views"`
-	UserCategories WrapperConfig `json:"UserCategories"`
-	UserHashtags   WrapperConfig `json:"UserHashtags"`
-	UserLikes      WrapperConfig `json:"UserLikes"`
-	UserDislikes   WrapperConfig `json:"UserDislikes"`
-	UserInfo       WrapperConfig `json:"UserInfo"`
-	UserBlock      WrapperConfig `json:"UserBlock"`
-	Categories     WrapperConfig `json:"Categories"`
-	Hashtags       WrapperConfig `json:"Hashtags"`
-	PointsCount    WrapperConfig `json:"PointsCount"`
-	AuthGo         WrapperConfig `json:"AuthGo"`
+	Auth                WrapperConfig `json:"Auth"`
+	Content             WrapperConfig `json:"Content"`
+	Likes               WrapperConfig `json:"Likes"`
+	Follows             WrapperConfig `json:"Follows"`
+	Views               WrapperConfig `json:"Views"`
+	UserCategories      WrapperConfig `json:"UserCategories"`
+	UserHashtags        WrapperConfig `json:"UserHashtags"`
+	UserLikes           WrapperConfig `json:"UserLikes"`
+	UserDislikes        WrapperConfig `json:"UserDislikes"`
+	UserInfo            WrapperConfig `json:"UserInfo"`
+	UserBlock           WrapperConfig `json:"UserBlock"`
+	Categories          WrapperConfig `json:"Categories"`
+	Hashtags            WrapperConfig `json:"Hashtags"`
+	PointsCount         WrapperConfig `json:"PointsCount"`
+	AuthGo              WrapperConfig `json:"AuthGo"`
+	NotificationGateway WrapperConfig `json:"NotificationGateway"`
 }
 
 type WrapperConfig struct {
