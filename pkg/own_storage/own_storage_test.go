@@ -64,7 +64,7 @@ func TestUpsertSongsToOwnStorageBulk(t *testing.T) {
 }
 
 func TestDeleteSongsFromOwnStorageBulk(t *testing.T) {
-	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.music_storage"}, nil, t); err != nil {
+	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.music_storage", "public.playlists", "public.playlist_song_relations"}, nil, t); err != nil {
 		t.Fatal(err)
 	}
 

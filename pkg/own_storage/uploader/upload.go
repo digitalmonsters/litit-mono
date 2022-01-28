@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/s3"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/tcolgate/mp3"
 	"github.com/valyala/fasthttp"
 	"gopkg.in/guregu/null.v4"
@@ -21,6 +22,8 @@ func FileUpload(cfg *configs.Settings, ctx *fasthttp.RequestCtx) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Info().Msg("[FileUpload] from Multipart")
 	files := m.File["File"]
 
 	if len(files) == 0 {
@@ -38,10 +41,12 @@ func FileUpload(cfg *configs.Settings, ctx *fasthttp.RequestCtx) ([]byte, error)
 
 	f := strings.Split(header.Filename, ".")
 
+	log.Info().Msg("[FileUpload] file format")
 	if len(f) < 2 {
 		return nil, errors.New("invalid file format")
 	}
 
+	log.Info().Msg("[FileUpload] try open")
 	openedFile, err := header.Open()
 	if err != nil {
 		return nil, err
@@ -51,6 +56,7 @@ func FileUpload(cfg *configs.Settings, ctx *fasthttp.RequestCtx) ([]byte, error)
 
 	body := make([]byte, size)
 
+	log.Info().Msg("[FileUpload] try read")
 	_, err = openedFile.Read(body)
 	if err != nil {
 		return nil, err
@@ -62,6 +68,7 @@ func FileUpload(cfg *configs.Settings, ctx *fasthttp.RequestCtx) ([]byte, error)
 	filePath := filepath.Join(cfg.S3.CdnDirectory, filename)
 	fileUrl = fmt.Sprintf("%v/%v", cfg.S3.CdnUrl, filename)
 
+	log.Info().Msg("[FileUpload] try upload")
 	uploader := s3.NewUploader(&cfg.S3)
 	if err := uploader.UploadObject(filePath, body, "application/octet-stream"); err != nil {
 		return nil, err

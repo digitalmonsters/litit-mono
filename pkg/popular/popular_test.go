@@ -40,6 +40,30 @@ func TestGetPopularSongs(t *testing.T) {
 	err := gormDb.Create(&songs).Error
 	assert.Nil(t, err)
 
+	playlist := database.Playlist{
+		Name:      "test",
+		SortOrder: 1,
+	}
+
+	err = gormDb.Create(&playlist).Error
+	assert.Nil(t, err)
+
+	songRelations := []database.PlaylistSongRelations{
+		{
+			PlaylistId: playlist.Id,
+			SongId:     songs[0].Id,
+			SortOrder:  1,
+		},
+		{
+			PlaylistId: playlist.Id,
+			SongId:     songs[1].Id,
+			SortOrder:  2,
+		},
+	}
+
+	err = gormDb.Create(&songRelations).Error
+	assert.Nil(t, err)
+
 	resp, err := GetPopularSongs(GetPopularSongsRequest{
 		Count: 10,
 	}, gormDb, router.MethodExecutionData{
@@ -48,5 +72,5 @@ func TestGetPopularSongs(t *testing.T) {
 		UserId:         0,
 	})
 	assert.Nil(t, err)
-	assert.Len(t, resp.Items, 10)
+	assert.Len(t, resp.Items, 2)
 }

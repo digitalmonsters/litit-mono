@@ -51,6 +51,18 @@ func DeleteSongsFromOwnStorageBulk(req DeleteSongsFromOwnStorageRequest, db *gor
 	tx := db.Begin()
 	defer tx.Rollback()
 
+	var relations []database.PlaylistSongRelations
+	if err := tx.Table("playlist_song_relations").
+		Joins("join playlists on playlists.id = playlist_song_relations.playlist_id and playlists.deleted_at is null").
+		Joins("join songs on songs.id = playlist_song_relations.song_id").
+		Where("songs.external_id in ? and source = ?", toStringSlice(req.SongIds), database.SongSourceOwnStorage).Find(&relations).Error; err != nil {
+		return errors.WithStack(err)
+	}
+
+	if len(relations) > 0 {
+		return errors.New("the song cannot be deleted, it is used in playlists")
+	}
+
 	if err := tx.Delete(&database.MusicStorage{}, req.SongIds).Error; err != nil {
 		return errors.WithStack(err)
 	}
@@ -94,4 +106,13 @@ func OwnStorageMusicList(req OwnStorageMusicListRequest, db *gorm.DB) (*OwnStora
 		Items:      songs,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func toStringSlice(input []int64) []string {
+	var result []string
+	for _, i := range input {
+		result = append(result, fmt.Sprint(i))
+	}
+
+	return result
 }
