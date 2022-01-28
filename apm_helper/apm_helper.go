@@ -31,6 +31,20 @@ func StartNewApmTransaction(methodName string, transactionType string, request i
 	return transaction
 }
 
+func StartNewApmTransactionWithTraceData(methodName string, transactionType string, request interface{}, parentCtx apm.TraceContext) *apm.Transaction {
+	transaction := apm.DefaultTracer.StartTransactionOptions(methodName, transactionType,
+		apm.TransactionOptions{
+			TraceContext: parentCtx,
+			Start:        time.Now(),
+		})
+
+	if request != nil {
+		AddApmData(transaction, "request", request)
+	}
+
+	return transaction
+}
+
 func AppendRequestBody(request interface{}, transaction *apm.Transaction) {
 	if transaction == nil || request == nil {
 		return

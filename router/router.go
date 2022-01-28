@@ -17,6 +17,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
 	"net/http/pprof"
 	"os"
 	"strings"
@@ -196,8 +197,17 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 	}()
 
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
-		apmTransaction := apm_helper.StartNewApmTransaction(fmt.Sprintf("[%v] [%v]", targetCmd.method,
-			targetCmd.path), "rest", nil, nil)
+		var apmTransaction *apm.Transaction
+
+		if traceHeader := ctx.Request.Header.Peek("trace"); len(traceHeader) > 0 {
+			traceContext, _ := apmhttp.ParseTraceparentHeader(string(traceHeader))
+			apmTransaction = apm_helper.StartNewApmTransactionWithTraceData(fmt.Sprintf("[%v] [%v]", targetCmd.method,
+				targetCmd.path), "rest", nil, traceContext)
+		} else {
+			apmTransaction = apm_helper.StartNewApmTransaction(fmt.Sprintf("[%v] [%v]", targetCmd.method,
+				targetCmd.path), "rest", nil, nil)
+		}
+
 		defer apmTransaction.End()
 
 		requestBody := ctx.PostBody()
@@ -230,7 +240,6 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 				if v := ctx.Request.Header.Peek(key); len(v) > 0 {
 					return string(v)
 				}
-
 
 				return nil
 			})
@@ -486,8 +495,13 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			return
 		}
 
+		if traceHeader := ctx.Request.Header.Peek("trace"); len(traceHeader) > 0 {
+			traceContext, _ := apmhttp.ParseTraceparentHeader(string(traceHeader))
+			apmTransaction = apm_helper.StartNewApmTransactionWithTraceData(rpcRequest.Method, apmTxType, nil, traceContext)
+		} else {
+			apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, apmTxType, nil, nil)
+		}
 
-		apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, apmTxType, nil, nil)
 		defer apmTransaction.End()
 
 		cmd, err := endpoint.GetCommand(rpcRequest.Method)

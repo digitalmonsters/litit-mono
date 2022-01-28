@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
 	"net/http"
 	"os"
 	"strings"
@@ -127,8 +128,7 @@ func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request inte
 	}, name, timeout, apmTransaction, externalServiceName, forceLog)
 }
 
-func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, apmTransaction *apm.Transaction,
-	externalServiceName string) {
+func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, apmTransaction *apm.Transaction) {
 	if rqSpan != nil && !rqSpan.Dropped() {
 		r, err := http.NewRequest(
 			string(req.Header.Method()),
@@ -140,10 +140,7 @@ func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Reques
 			rqSpan.Context.SetHTTPRequest(r)
 		}
 
-		rqSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
-			Name:     externalServiceName,
-			Resource: externalServiceName,
-		})
+		req.Header.Set("trace", apmhttp.FormatTraceparentHeader(rqSpan.TraceContext()))
 
 		rqSpan.Context.SetTag("path", string(req.URI().Path()))
 		rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
@@ -207,7 +204,7 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 			}
 		}
 
-		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction)
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
 			code := error_codes.GenericServerError
@@ -357,7 +354,7 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 			}
 		}
 
-		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction)
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
 			code := error_codes.GenericServerError
@@ -534,7 +531,7 @@ func (b *BaseWrapper) GetRpcResponseFromAnyService(url string, request interface
 			}
 		}
 
-		b.addDataToSpanTrance(rqSpan, req, apmTransaction, externalServiceName)
+		b.addDataToSpanTrance(rqSpan, req, apmTransaction)
 
 		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
 			code := error_codes.GenericServerError

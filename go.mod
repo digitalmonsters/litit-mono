@@ -40,6 +40,7 @@ require (
 	github.com/xdg/scram v1.0.3 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
 	go.elastic.co/apm v1.15.0
+	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	golang.org/x/tools v0.1.8 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/guregu/null.v4 v4.0.0
