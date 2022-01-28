@@ -199,7 +199,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 		var apmTransaction *apm.Transaction
 
-		if traceHeader := ctx.Request.Header.Peek("trace"); len(traceHeader) > 0 {
+		if traceHeader := ctx.Request.Header.Peek(apmhttp.W3CTraceparentHeader); len(traceHeader) > 0 {
 			traceContext, _ := apmhttp.ParseTraceparentHeader(string(traceHeader))
 			apmTransaction = apm_helper.StartNewApmTransactionWithTraceData(fmt.Sprintf("[%v] [%v]", targetCmd.method,
 				targetCmd.path), "rest", nil, traceContext)
@@ -253,6 +253,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 			r.logRequestBody(requestBody, apmTransaction)
 			r.logResponseBody(responseBody, apmTransaction)
+			r.logRpcResponseError(rpcResponse, apmTransaction)
 		}()
 
 		finalStatusCode := int(error_codes.None)
@@ -475,6 +476,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			if shouldLog {
 				r.logRequestBody(requestBody, apmTransaction)
 				r.logResponseBody(responseBody, apmTransaction)
+				r.logRpcResponseError(rpcResponse, apmTransaction)
 			}
 		}()
 
@@ -495,7 +497,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			return
 		}
 
-		if traceHeader := ctx.Request.Header.Peek("trace"); len(traceHeader) > 0 {
+		if traceHeader := ctx.Request.Header.Peek(apmhttp.W3CTraceparentHeader); len(traceHeader) > 0 {
 			traceContext, _ := apmhttp.ParseTraceparentHeader(string(traceHeader))
 			apmTransaction = apm_helper.StartNewApmTransactionWithTraceData(rpcRequest.Method, apmTxType, nil, traceContext)
 		} else {
@@ -543,6 +545,12 @@ func (r *HttpRouter) logResponseBody(responseBody []byte,
 	apmTransaction *apm.Transaction) {
 	if body := responseBody; len(body) > 0 {
 		apm_helper.AddApmData(apmTransaction, "response_body", body)
+	}
+}
+
+func (r *HttpRouter) logRpcResponseError(rpcResponse rpc.RpcResponse, apmTransaction *apm.Transaction) {
+	if rpcResponse.Error != nil {
+		apm_helper.CaptureApmError(rpcResponse.Error.ToError(), apmTransaction)
 	}
 }
 

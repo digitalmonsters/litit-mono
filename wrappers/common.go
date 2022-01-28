@@ -140,7 +140,7 @@ func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Reques
 			rqSpan.Context.SetHTTPRequest(r)
 		}
 
-		req.Header.Set("trace", apmhttp.FormatTraceparentHeader(rqSpan.TraceContext()))
+		req.Header.Set(apmhttp.W3CTraceparentHeader, apmhttp.FormatTraceparentHeader(rqSpan.TraceContext()))
 
 		rqSpan.Context.SetTag("path", string(req.URI().Path()))
 		rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
