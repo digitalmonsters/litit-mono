@@ -1,4 +1,4 @@
-package category
+package notification_gateway
 
 import (
 	"go.elastic.co/apm"

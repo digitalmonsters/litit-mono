@@ -1,4 +1,4 @@
-package category
+package notification_gateway
 
 import (
 	"github.com/digitalmonsters/go-common/rpc"

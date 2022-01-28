@@ -1,4 +1,4 @@
-package category
+package notification_gateway
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificati
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
-		serviceName:    "notification-gateway",
+		serviceName:    "notification_gateway",
 	}
 }
 
