@@ -46,8 +46,8 @@ func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.T
 				if a.accessLevel == common.AccessLevelPublic {
 					return userIdParsed, nil
 				}
-				
-				ch := <-auth.CheckAdminPermissions(userIdParsed, a.obj, a.AccessLevel(), apmTransaction, false)
+
+				ch := <-auth.CheckAdminPermissions(userIdParsed, a.obj, apmTransaction, false)
 
 				if ch.Error != nil {
 					return 0, ch.Error

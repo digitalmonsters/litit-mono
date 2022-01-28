@@ -1,14 +1,12 @@
 package auth_go
 
 import (
-	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/rpc"
 )
 
 type CheckAdminPermissionsRequest struct {
-	UserId      int64              `json:"jwt"`
-	Method      string             `json:"method"`
-	AccessLevel common.AccessLevel `json:"access_level"`
+	UserId int64  `json:"user_id"`
+	Object string `json:"object"`
 }
 
 type CheckLegacyAdminResponseChan struct {

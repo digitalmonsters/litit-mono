@@ -13,7 +13,7 @@ import (
 )
 
 type IAuthGoWrapper interface {
-	CheckAdminPermissions(userId int64, obj string, action common.AccessLevel, transaction *apm.Transaction, forceLog bool) chan CheckAdminPermissionsResponseChan
+	CheckAdminPermissions(userId int64, obj string, transaction *apm.Transaction, forceLog bool) chan CheckAdminPermissionsResponseChan
 	CheckLegacyAdmin(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan
 }
 
@@ -70,14 +70,13 @@ func (w *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transact
 	return respCh
 }
 
-func (w *AuthGoWrapper) CheckAdminPermissions(userId int64, obj string, action common.AccessLevel, transaction *apm.Transaction,
+func (w *AuthGoWrapper) CheckAdminPermissions(userId int64, obj string, transaction *apm.Transaction,
 	forceLog bool) chan CheckAdminPermissionsResponseChan {
 	respCh := make(chan CheckAdminPermissionsResponseChan, 2)
 
 	rpcInternalResponseCh := w.baseWrapper.SendRpcRequest(w.apiUrl, "CheckUserAdminPermissions", CheckAdminPermissionsRequest{
-		UserId:      userId,
-		Method:      obj,
-		AccessLevel: action,
+		UserId: userId,
+		Object: obj,
 	}, w.defaultTimeout, transaction, w.serviceName, forceLog)
 
 	go func() {
