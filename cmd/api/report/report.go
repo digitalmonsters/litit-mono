@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/digitalmonsters/comments/pkg/report"
 	"github.com/digitalmonsters/comments/utils"
-	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -14,7 +13,10 @@ import (
 )
 
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.ApiDescription) error {
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+
+	var publicEndpoint = httpRouter.GetRpcPublicEndpoint()
+
+	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
 
@@ -36,7 +38,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 				Success: true,
 			}, nil
 		}
-	}, "/{comment_id}/report", http.MethodPost, common.AccessLevelPublic, true, false)); err != nil {
+	}, "/{comment_id}/report", http.MethodPost, true, false)); err != nil {
 		return err
 	}
 
