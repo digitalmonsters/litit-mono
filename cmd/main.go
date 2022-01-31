@@ -17,7 +17,7 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
-	"github.com/digitalmonsters/go-common/wrappers/auth"
+	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
@@ -38,7 +38,7 @@ func main() {
 	cfg := configs.GetConfig()
 	db := database.GetDb()
 	apiDef := map[string]swagger.ApiDescription{}
-	fastHttpRouter := router.NewRouter("/rpc", auth.NewAuthWrapper(cfg.Wrappers.Auth)).
+	fastHttpRouter := router.NewRouter("/rpc", auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)).
 		StartAsync(cfg.HttpPort)
 
 	privateRouter := ops.NewPrivateHttpServer().StartAsync(
