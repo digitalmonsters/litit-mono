@@ -24,6 +24,7 @@ const (
 	Staging Environment = 3
 	Prod    Environment = 4
 	Ci      Environment = 5
+	Uat     Environment = 6
 )
 
 func (e Environment) ToString() string {
@@ -40,6 +41,8 @@ func (e Environment) ToString() string {
 		return "prod"
 	case Ci:
 		return "ci"
+	case Uat:
+		return "uat"
 	default:
 		return "unk"
 	}
