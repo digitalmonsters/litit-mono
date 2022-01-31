@@ -63,7 +63,7 @@ func (l ViewEvent) GetPublishKey() string {
 type FollowEvent struct {
 	ToUserId  int64 `json:"to_user_id"`
 	UserId    int64 `json:"user_id"`
-	Followed  bool  `json:"followed"`
+	Follow    bool  `json:"follow"`
 	CreatedAt int64 `json:"created_at"`
 }
 
