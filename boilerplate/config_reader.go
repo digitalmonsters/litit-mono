@@ -71,6 +71,8 @@ type Wrappers struct {
 	PointsCount         WrapperConfig `json:"PointsCount"`
 	AuthGo              WrapperConfig `json:"AuthGo"`
 	NotificationGateway WrapperConfig `json:"NotificationGateway"`
+	UserGo              WrapperConfig `json:"UserGo"`
+	BaseApi             WrapperConfig `json:"BaseApi"`
 }
 
 type WrapperConfig struct {
