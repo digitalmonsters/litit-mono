@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/gocql/gocql"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
@@ -19,7 +18,6 @@ import (
 
 var cfg *configs.Settings
 var service *Notifier
-var cluster *gocql.ClusterConfig
 var kafkaPublishedEvents []eventsourcing.IEventData
 var pollTime time.Duration
 var publisherMock KafkaEventPublisherMock
@@ -186,8 +184,4 @@ func testPerformance(b *testing.B) {
 
 	fmt.Printf("Per second : %v", float64(contentCount)/duration.Seconds())
 	fmt.Printf("Duration in seconds: %v", duration.Seconds())
-	fmt.Printf("Cluster Page Size: %v", cluster.PageSize)
-	fmt.Printf("Cluster Connections Number: %v", cluster.NumConns)
-	fmt.Printf("Cluster Max Routing Key Info: %v", cluster.MaxRoutingKeyInfo)
-	fmt.Printf("Cluster Max Prepared Statements: %v", cluster.MaxPreparedStmts)
 }
