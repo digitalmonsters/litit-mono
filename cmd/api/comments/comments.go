@@ -24,9 +24,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) error {
 
-	var publicEndpoint = httpRouter.GetRpcPublicEndpoint()
-
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
 
@@ -59,7 +57,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		Tags: []string{"comment"},
 	}
 
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "delete_comment_id", 0, 0)
 
@@ -94,7 +92,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		Tags: []string{"comment"},
 	}
 
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "update_comment_id", 0, 0)
 
@@ -139,7 +137,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		Tags: []string{"comment"},
 	}
 
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
 
@@ -211,7 +209,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		Tags: []string{"comment"},
 	}
 
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		resourceId := utils.ExtractInt64(executionData.GetUserValue, "resource_id", 0, 0)
 		resourceType := utils.ExtractString(executionData.GetUserValue, "type", "content")
@@ -297,7 +295,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		Tags: []string{"comment"},
 	}
 
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		contentId := utils.ExtractInt64(executionData.GetUserValue, "content_id_to_create_comment_on", 0, 0)
 
@@ -342,7 +340,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		Tags: []string{"comment"},
 	}
 
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		profileId := utils.ExtractInt64(executionData.GetUserValue, "profile_id_to_create_comment_on", 0, 0)
 

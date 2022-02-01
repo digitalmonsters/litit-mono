@@ -18,9 +18,7 @@ import (
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.ApiDescription, commentNotifier *comment.Notifier,
 	voteNotifier *vote2.Notifier, contentWrapper content.IContentWrapper) error {
 
-	var publicEndpoint = httpRouter.GetRpcPublicEndpoint()
-
-	if err := publicEndpoint.RegisterRpcCommand(router.NewRestCommand(func(request []byte,
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
 
