@@ -1,12 +1,33 @@
 package database
 
 import (
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )
 
 func getMigrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
+		{
+			ID: "re_migrate_in_prod_2022022",
+			Migrate: func(db *gorm.DB) error {
+				if boilerplate.GetCurrentEnvironment() == boilerplate.Prod {
+					query := `drop table if exists migrations, playlist_song_relations, playlists, songs, favorites, music_storage cascade;
+							create table migrations
+							(
+								id varchar(255) not null
+									constraint migrations_pkey
+										primary key
+							)`
+					return db.Exec(query).Error
+				}
+
+				return nil
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 		{
 			ID: "feat_playlists_init_050120221603",
 			Migrate: func(db *gorm.DB) error {
