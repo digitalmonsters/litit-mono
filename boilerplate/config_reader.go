@@ -73,6 +73,7 @@ type Wrappers struct {
 	NotificationGateway WrapperConfig `json:"NotificationGateway"`
 	UserGo              WrapperConfig `json:"UserGo"`
 	BaseApi             WrapperConfig `json:"BaseApi"`
+	GoTokenomics        WrapperConfig `json:"GoTokenomics"`
 }
 
 type WrapperConfig struct {
