@@ -215,5 +215,16 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "playlists_name_uindex_03022022",
+			Migrate: func(db *gorm.DB) error {
+				query := `drop index playlists_name_uindex;
+						  create unique index playlists_name_uindex on playlists (name) where deleted_at is null;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
