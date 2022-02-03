@@ -17,7 +17,8 @@ type Wrapper struct {
 }
 
 type INotificationGatewayWrapper interface {
-	SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendMessageResponseChan
+	SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan
+	SendEmailInternal(ccAddresses, toAddresses []string, htmlBody, textBody, subject string, apmTransaction *apm.Transaction, forceLog bool) chan SendEmailMessageResponseChan
 }
 
 func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificationGatewayWrapper {
@@ -35,10 +36,10 @@ func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificati
 	}
 }
 
-func (w *Wrapper) SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendMessageResponseChan {
-	respCh := make(chan SendMessageResponseChan, 2)
+func (w *Wrapper) SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan {
+	respCh := make(chan SendSmsMessageResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "SendSmsInternal", SendMessageRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "SendSmsInternal", SendSmsMessageRequest{
 		Message:     message,
 		PhoneNumber: phoneNumber,
 	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
@@ -50,7 +51,34 @@ func (w *Wrapper) SendSmsInternal(message string, phoneNumber string, apmTransac
 
 		resp := <-respChan
 
-		result := SendMessageResponseChan{
+		result := SendSmsMessageResponseChan{
+			Error: resp.Error,
+		}
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (w *Wrapper) SendEmailInternal(ccAddresses, toAddresses []string, htmlBody, textBody, subject string, apmTransaction *apm.Transaction, forceLog bool) chan SendEmailMessageResponseChan {
+	respCh := make(chan SendEmailMessageResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "SendEmailInternal", SendEmailMessageRequest{
+		CcAddresses: ccAddresses,
+		ToAddresses: toAddresses,
+		HtmlBody:    htmlBody,
+		TextBody:    textBody,
+		Subject:     subject,
+	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := SendEmailMessageResponseChan{
 			Error: resp.Error,
 		}
 		respCh <- result
