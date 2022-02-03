@@ -8,27 +8,33 @@ import (
 type ErrorCode int
 
 const (
-	None                                ErrorCode = 200
-	GenericValidationError              ErrorCode = 400
-	GenericServerError                  ErrorCode = 500
-	Timeout                             ErrorCode = 408
-	MissingJwtToken                     ErrorCode = 401
-	ExpiredJwtToken                     ErrorCode = 401
-	InvalidJwtToken                     ErrorCode = 401
-	InvalidMethodPermission             ErrorCode = 401
-	GenericMappingError                 ErrorCode = -32700
-	GenericDuplicateError               ErrorCode = 409
-	GenericNotFoundError                ErrorCode = 404
-	CommandNotFoundError                ErrorCode = -32601
-	GenericTimeoutError                 ErrorCode = 502
-	GenericPanicError                   ErrorCode = -32603
-	UserHasNoPermissionToMethod         ErrorCode = 601
-	AdminAuthAdminNotFoundError         ErrorCode = 701
-	AdminAuthInvalidPasswordError       ErrorCode = 702
-	AdminAuthSendSmsCodeError           ErrorCode = 703
-	AdminAuthInvalidMobileAuthCodeError ErrorCode = 704
-	AdminAuthInvalidMFATokenError       ErrorCode = 705
-	AdminAuthJWTError                   ErrorCode = 705
+	None                        ErrorCode = 200
+	GenericValidationError      ErrorCode = 400
+	GenericServerError          ErrorCode = 500
+	Timeout                     ErrorCode = 408
+	MissingJwtToken             ErrorCode = 401
+	ExpiredJwtToken             ErrorCode = 401
+	InvalidJwtToken             ErrorCode = 401
+	InvalidMethodPermission     ErrorCode = 401
+	GenericMappingError         ErrorCode = -32700
+	GenericDuplicateError       ErrorCode = 409
+	GenericNotFoundError        ErrorCode = 404
+	CommandNotFoundError        ErrorCode = -32601
+	GenericTimeoutError         ErrorCode = 502
+	GenericPanicError           ErrorCode = -32603
+	UserHasNoPermissionToMethod ErrorCode = 601
+)
+
+const (
+	AdminAuthAdminNotFoundError ErrorCode = iota + 701
+	AdminAuthInvalidPasswordError
+	AdminAuthSendSmsCodeError
+	AdminAuthInvalidMobileAuthCodeError
+	AdminAuthInvalidMFATokenError
+	AdminAuthJWTError
+	AdminAuthNotUniqueEmailError
+	AdminAuthNotUniqueMobilePhoneError
+	AdminAuthPasswordsDoNotMatchError
 )
 
 type ErrorWithCode struct {
