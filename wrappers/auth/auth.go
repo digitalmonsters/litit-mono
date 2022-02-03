@@ -15,6 +15,8 @@ import (
 type IAuthWrapper interface {
 	ParseToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan AuthParseTokenResponseChan
+	ParseNewAdminToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
+		forceLog bool) chan AuthParseTokenResponseChan
 	GenerateToken(userId int64, apmTransaction *apm.Transaction,
 		forceLog bool) chan GenerateTokenResponseChan
 }
@@ -48,6 +50,40 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 	go func() {
 		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponse(fmt.Sprintf("%v/token/parse", w.apiUrl),
 			"unpack jwt",
+			AuthParseTokenRequest{
+				Token:            token,
+				IgnoreExpiration: ignoreExpiration,
+			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+		finalResponse := AuthParseTokenResponseChan{
+			Error: rpcInternalResponse.Error,
+		}
+
+		if len(rpcInternalResponse.Result) > 0 {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Resp); err != nil {
+				finalResponse.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			}
+		}
+
+		resChan <- finalResponse
+	}()
+
+	return resChan
+}
+
+func (w *AuthWrapper) ParseNewAdminToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
+	forceLog bool) chan AuthParseTokenResponseChan {
+	resChan := make(chan AuthParseTokenResponseChan, 2)
+
+	go func() {
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponse(fmt.Sprintf("%v/token-admin/parse", w.apiUrl),
+			"unpack new admin jwt",
 			AuthParseTokenRequest{
 				Token:            token,
 				IgnoreExpiration: ignoreExpiration,

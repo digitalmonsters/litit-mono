@@ -2,9 +2,11 @@ package router
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/wrappers/auth"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
@@ -32,8 +34,10 @@ func NewAdminCommand(methodName string, fn CommandFunc, accessLevel common.Acces
 	}
 }
 
-func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
-	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
+func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, authWrapper auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
+	currentUserId := int64(0)
+
+	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") { // external auth
 		if userIdHead := ctx.Request.Header.Peek("Admin-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
 				return 0, &rpc.RpcError{
@@ -43,33 +47,54 @@ func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.T
 					ServiceName: hostName,
 				}
 			} else {
-				if a.accessLevel == common.AccessLevelPublic {
-					return userIdParsed, nil
-				}
-
-				ch := <-auth.CheckAdminPermissions(userIdParsed, a.obj, apmTransaction, false)
-
-				if ch.Error != nil {
-					return 0, ch.Error
-				}
-
-				if ch.Resp.HasAccess {
-					return userIdParsed, nil
-				}
-
-				return 0, &rpc.RpcError{
-					Code:        error_codes.InvalidJwtToken,
-					Message:     "admin user does not have access to this method",
-					Hostname:    hostName,
-					ServiceName: hostName,
-				}
+				currentUserId = userIdParsed
 			}
 		}
 	}
 
+	if currentUserId == 0 { // TODO temporary remove after fix for istio fallback auth
+		if jwtAuthData := ctx.Request.Header.Peek("Authorization-Admin"); len(jwtAuthData) > 0 {
+			forwardAuthWrapper := auth.NewAuthWrapper(boilerplate.WrapperConfig{
+				ApiUrl:     "http://forward-auth",
+				TimeoutSec: 3,
+			})
+
+			resp := <-forwardAuthWrapper.ParseNewAdminToken(string(jwtAuthData), false, apmTransaction, false)
+
+			if resp.Error != nil {
+				return 0, resp.Error
+			}
+
+			currentUserId = resp.Resp.UserId
+		}
+	}
+
+	if currentUserId == 0 {
+		return 0, &rpc.RpcError{
+			Code:        error_codes.MissingJwtToken,
+			Message:     "new admin method requires new admin authorization header",
+			Hostname:    hostName,
+			ServiceName: hostName,
+		}
+	}
+
+	if a.accessLevel == common.AccessLevelPublic {
+		return currentUserId, nil
+	}
+
+	ch := <-authWrapper.CheckAdminPermissions(currentUserId, a.obj, apmTransaction, false)
+
+	if ch.Error != nil {
+		return 0, ch.Error
+	}
+
+	if ch.Resp.HasAccess {
+		return currentUserId, nil
+	}
+
 	return 0, &rpc.RpcError{
-		Code:        error_codes.MissingJwtToken,
-		Message:     "new admin method requires new admin authorization header",
+		Code:        error_codes.InvalidJwtToken,
+		Message:     "admin user does not have access to this method",
 		Hostname:    hostName,
 		ServiceName: hostName,
 	}

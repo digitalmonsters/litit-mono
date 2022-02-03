@@ -13,8 +13,8 @@ type AuthParseTokenResponseChan struct {
 }
 
 type AuthParseTokenResponse struct {
-	UserId       int64 `json:"user_id"`
-	Expired      bool  `json:"expired"`
+	UserId  int64 `json:"user_id"`
+	Expired bool  `json:"expired"`
 }
 
 type GenerateTokenResponseChan struct {
@@ -25,4 +25,17 @@ type GenerateTokenResponseChan struct {
 type GenerateTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type ParseAdminJwtTokenRequest struct {
+	Jwt string `json:"jwt"`
+}
+
+type ParseAdminJwtTokenResponse struct {
+	UserId int64 `json:"user_id"`
+}
+
+type ParseAdminJwtTokenResponseChan struct {
+	Error *rpc.RpcError
+	Resp  ParseAdminJwtTokenResponse
 }
