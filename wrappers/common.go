@@ -2,6 +2,7 @@ package wrappers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -9,6 +10,7 @@ import (
 	"github.com/digitalmonsters/go-common/nodejs"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
@@ -147,23 +149,36 @@ func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Reques
 	}
 }
 
-func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName string, timeout time.Duration,
-	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
-	responseCh := make(chan rpc.RpcResponseInternal, 2)
+type httpResponseChan struct {
+	rawBodyRequest  []byte
+	rawBodyResponse []byte
+	error           error
+	statusCode      int
+	span            *apm.Span
+	forceLog        bool
+}
+
+func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, methodName string, request interface{},
+	forceLog bool, timeout time.Duration, contentType string, httpMethod string) chan httpResponseChan {
+	resultChan := make(chan httpResponseChan, 2)
+
+	result := httpResponseChan{
+		forceLog: forceLog,
+	}
 
 	go func() {
 		defer func() {
-			close(responseCh)
+			resultChan <- result
+			close(resultChan)
 		}()
 
-		var rawBodyRequest []byte
-		var rawBodyResponse []byte
-		var genericResponse *rpc.RpcResponseInternal
-		var rqSpan *apm.Span
+		apmTransaction := apm.TransactionFromContext(ctx)
 
 		if apmTransaction != nil {
-			rqSpan = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
+			result.span = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
 				"rpc_internal", nil)
+
+			ctx = apm.ContextWithSpan(ctx, result.span)
 		}
 
 		req := fasthttp.AcquireRequest()
@@ -172,123 +187,132 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 		defer fasthttp.ReleaseResponse(resp)
 
 		defer func() {
-			if rqSpan != nil && !rqSpan.Dropped() {
-				rqSpan.Context.SetHTTPStatusCode(resp.StatusCode())
+			if resp.StatusCode() != 200 {
+				result.forceLog = true
 			}
 
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqSpan, forceLog)
+			if result.span != nil && !result.span.Dropped() {
+				result.span.Context.SetHTTPStatusCode(resp.StatusCode())
+			}
 		}()
 
 		req.SetRequestURI(url)
-		req.Header.SetMethod("POST")
-		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli, ContentEncodingGzip, ContentEncodingDeflate))
+		req.Header.SetMethod(httpMethod)
+		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli,
+			ContentEncodingGzip, ContentEncodingDeflate))
+		req.Header.SetContentType(contentType)
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        error_codes.GenericMappingError,
-						Message:     err.Error(),
-						Data:        nil,
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-					},
-				}
+				result.error = errors.WithStack(err)
+				result.forceLog = true
 
-				responseCh <- *genericResponse
 				return
 			} else {
-				rawBodyRequest = data
+				result.rawBodyRequest = data
 
-				req.SetBodyRaw(rawBodyRequest)
+				req.SetBodyRaw(result.rawBodyRequest)
 			}
 		}
 
-		b.addDataToSpanTrance(rqSpan, req, apmTransaction)
+		b.addDataToSpanTrance(result.span, req, apmTransaction)
 
-		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
+		err := b.client.DoTimeout(req, resp, timeout)
+
+		result.statusCode = resp.StatusCode()
+		rawBodyResponse, err2 := UnpackFastHttpBody(resp)
+
+		if err2 != nil {
+			result.forceLog = true
+
+			if err := apm.CaptureError(ctx, err); err != nil {
+				log.Err(err).Send()
+			}
+		}
+
+		result.rawBodyResponse = rawBodyResponse
+
+		if err != nil {
+			result.forceLog = true
+
+			result.error = errors.Wrap(err, fmt.Sprintf("error during sending request to service [%v]. Err: [%v]. StatusCode: [%v]",
+				url,
+				err.Error(),
+				resp.StatusCode()))
+
+			return
+		}
+	}()
+
+	return resultChan
+}
+
+func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName string, timeout time.Duration,
+	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+	responseCh := make(chan rpc.RpcResponseInternal, 2)
+
+	ctx := apm.ContextWithTransaction(context.Background(), apmTransaction)
+
+	go func() {
+		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, forceLog, timeout,
+			"application/json", "POST")
+
+		defer func() {
+			close(responseCh)
+
+			endRpcSpan(apiResponse.rawBodyRequest, apiResponse.rawBodyResponse, externalServiceName, apiResponse.span,
+				apiResponse.forceLog)
+		}()
+
+		if apiResponse.error != nil { // its timeout, or some internal error, not logical error
 			code := error_codes.GenericServerError
 
-			if errors.Is(err, fasthttp.ErrTimeout) {
+			if errors.Is(apiResponse.error, fasthttp.ErrTimeout) {
 				code = error_codes.GenericTimeoutError
 			}
 
-			rawBodyResponse, err = UnpackFastHttpBody(resp)
-
-			if err != nil {
-				code = error_codes.GenericValidationError
-
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        code,
-						Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-						Data: map[string]interface{}{
-							"raw_response": err.Error(),
-						},
-					},
-				}
-
-				responseCh <- *genericResponse
-
-				return
-			} else {
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        code,
-						Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-						Data: map[string]interface{}{
-							"raw_response": string(rawBodyResponse),
-						},
-					},
-				}
-			}
-
-			responseCh <- *genericResponse
-
-			return
-		}
-
-		rawBodyResponse, err := UnpackFastHttpBody(resp)
-
-		if err != nil {
-			genericResponse = &rpc.RpcResponseInternal{
+			responseCh <- rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:        error_codes.GenericValidationError,
-					Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
+					Code:        code,
+					Message:     apiResponse.error.Error(),
+					Stack:       fmt.Sprintf("%+v", apiResponse.error),
+					Data:        nil,
 					Hostname:    b.hostName,
 					ServiceName: externalServiceName,
-					Data: map[string]interface{}{
-						"raw_response": err.Error(),
-					},
 				},
 			}
 
-			responseCh <- *genericResponse
-
 			return
 		}
 
-		genericResponse = &rpc.RpcResponseInternal{}
+		genericResponse := rpc.RpcResponseInternal{}
 
-		if err = json.Unmarshal(rawBodyResponse, genericResponse); err != nil {
+		if err := json.Unmarshal(apiResponse.rawBodyResponse, &genericResponse); err != nil {
+			wrapped := errors.Wrapf(err, "remote server status code [%v] can not unmarshal to rpc response internal",
+				apiResponse.statusCode)
+
 			genericResponse.Error = &rpc.RpcError{
 				Code:        error_codes.GenericMappingError,
-				Message:     err.Error(),
+				Message:     wrapped.Error(),
+				Stack:       fmt.Sprintf("%+v", wrapped),
 				Data:        nil,
 				Hostname:    b.hostName,
 				ServiceName: externalServiceName,
 			}
 
-			responseCh <- *genericResponse
-
-			return
+			apiResponse.forceLog = true
 		}
 
-		responseCh <- *genericResponse
+		if genericResponse.Error != nil {
+			apiResponse.forceLog = true
+
+			genericResponse.Result = nil
+
+			genericResponse.Error.Message = fmt.Sprintf("remote server [%v] returned rpc error. [%v]", externalServiceName,
+				genericResponse.Error.Message)
+		}
+
+		responseCh <- genericResponse
 	}()
 
 	return responseCh
@@ -299,158 +323,78 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
+	ctx := apm.ContextWithTransaction(context.Background(), apmTransaction)
+
 	go func() {
+		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, forceLog, timeout, contentType,
+			httpMethod)
+
 		defer func() {
 			close(responseCh)
+
+			endRpcSpan(apiResponse.rawBodyRequest, apiResponse.rawBodyResponse, externalServiceName, apiResponse.span,
+				apiResponse.forceLog)
 		}()
 
-		var rawBodyRequest []byte
-		var rawBodyResponse []byte
-		var genericResponse *rpc.RpcResponseInternal
-
-		var rqSpan *apm.Span
-
-		if apmTransaction != nil {
-			rqSpan = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
-				"rpc_internal", nil)
-		}
-
-		req := fasthttp.AcquireRequest()
-		defer fasthttp.ReleaseRequest(req)
-		resp := fasthttp.AcquireResponse()
-		defer fasthttp.ReleaseResponse(resp)
-
-		defer func() {
-			if rqSpan != nil && !rqSpan.Dropped() {
-				rqSpan.Context.SetHTTPStatusCode(resp.StatusCode())
-			}
-
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqSpan, forceLog)
-		}()
-
-		req.SetRequestURI(url)
-		req.Header.SetMethod(httpMethod)
-		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli, ContentEncodingGzip, ContentEncodingDeflate))
-
-		if request != nil {
-			if data, err := json.Marshal(request); err != nil {
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        error_codes.GenericMappingError,
-						Message:     err.Error(),
-						Data:        nil,
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-					},
-				}
-
-				responseCh <- *genericResponse
-				return
-			} else {
-				rawBodyRequest = data
-
-				req.Header.SetContentType(contentType)
-				req.SetBodyRaw(rawBodyRequest)
-			}
-		}
-
-		b.addDataToSpanTrance(rqSpan, req, apmTransaction)
-
-		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
+		if apiResponse.error != nil { // its timeout, or some internal error, not logical error
 			code := error_codes.GenericServerError
 
-			if errors.Is(err, fasthttp.ErrTimeout) {
+			if errors.Is(apiResponse.error, fasthttp.ErrTimeout) {
 				code = error_codes.GenericTimeoutError
 			}
 
-			rawBodyResponse, err = UnpackFastHttpBody(resp)
-
-			if err != nil {
-				code = error_codes.GenericValidationError
-
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        code,
-						Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-						Data: map[string]interface{}{
-							"raw_response": err.Error(),
-						},
-					},
-				}
-
-				responseCh <- *genericResponse
-
-				return
-			} else {
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        code,
-						Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-						Data: map[string]interface{}{
-							"raw_response": string(rawBodyResponse),
-						},
-					},
-				}
-			}
-
-			responseCh <- *genericResponse
-
-			return
-		}
-
-		rawBodyResponse, err := UnpackFastHttpBody(resp)
-
-		if err != nil {
-			genericResponse = &rpc.RpcResponseInternal{
+			responseCh <- rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:        error_codes.GenericValidationError,
-					Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
+					Code:        code,
+					Message:     apiResponse.error.Error(),
+					Stack:       fmt.Sprintf("%+v", apiResponse.error),
+					Data:        nil,
 					Hostname:    b.hostName,
 					ServiceName: externalServiceName,
-					Data: map[string]interface{}{
-						"raw_response": err.Error(),
-					},
 				},
 			}
 
-			responseCh <- *genericResponse
-
 			return
 		}
 
-		nodeJsResponse := &nodejs.Response{}
-		genericResponse = &rpc.RpcResponseInternal{}
+		nodeJsResponse := nodejs.Response{}
+		genericResponse := rpc.RpcResponseInternal{}
 
-		if err := json.Unmarshal(rawBodyResponse, nodeJsResponse); err != nil {
+		if err := json.Unmarshal(apiResponse.rawBodyResponse, &nodeJsResponse); err != nil {
+			wrapped := errors.Wrapf(err, "remote server status code [%v] can not unmarshal to nodejs response",
+				apiResponse.statusCode)
+
 			genericResponse.Error = &rpc.RpcError{
 				Code:        error_codes.GenericMappingError,
-				Message:     err.Error(),
+				Message:     wrapped.Error(),
+				Stack:       fmt.Sprintf("%+v", wrapped),
 				Data:        nil,
 				Hostname:    b.hostName,
 				ServiceName: externalServiceName,
 			}
 
-			responseCh <- *genericResponse
+			apiResponse.forceLog = true
+
+			responseCh <- genericResponse
 
 			return
 		}
 
 		if !nodeJsResponse.Success {
+			apiResponse.forceLog = true
+
 			if nodeJsResponse.Error != nil {
 				genericResponse.Error = &rpc.RpcError{
-					Code:        error_codes.GenericServerError,
-					Message:     errors.New(fmt.Sprintf("status: %v, error: %s", nodeJsResponse.Error.Status, nodeJsResponse.Error.Message)).Error(),
+					Code: error_codes.ErrorCode(apiResponse.statusCode),
+					Message: errors.New(fmt.Sprintf("remote server [%v] replied with status: [%v] and error: [%v]", externalServiceName,
+						nodeJsResponse.Error.Status, nodeJsResponse.Error.Message)).Error(),
 					Data:        nil,
 					Hostname:    b.hostName,
 					ServiceName: externalServiceName,
 				}
 			} else {
 				genericResponse.Error = &rpc.RpcError{
-					Code:        error_codes.GenericServerError,
+					Code:        error_codes.ErrorCode(apiResponse.statusCode),
 					Message:     errors.New("unknown error").Error(),
 					Data:        nil,
 					Hostname:    b.hostName,
@@ -458,14 +402,14 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 				}
 			}
 
-			responseCh <- *genericResponse
+			responseCh <- genericResponse
 
 			return
 		}
 
 		genericResponse.Result = nodeJsResponse.Data
 
-		responseCh <- *genericResponse
+		responseCh <- genericResponse
 	}()
 
 	return responseCh
@@ -476,155 +420,71 @@ func (b *BaseWrapper) GetRpcResponseFromAnyService(url string, request interface
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
+	ctx := apm.ContextWithTransaction(context.Background(), apmTransaction)
+
 	go func() {
+		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, forceLog, timeout, contentType,
+			httpMethod)
+
 		defer func() {
 			close(responseCh)
+
+			endRpcSpan(apiResponse.rawBodyRequest, apiResponse.rawBodyResponse, externalServiceName, apiResponse.span,
+				apiResponse.forceLog)
 		}()
 
-		var rawBodyRequest []byte
-		var rawBodyResponse []byte
-		var genericResponse *rpc.RpcResponseInternal
-
-		var rqSpan *apm.Span
-
-		if apmTransaction != nil {
-			rqSpan = apmTransaction.StartSpan(fmt.Sprintf("HTTP [%v] [%v]", url, methodName),
-				"rpc_internal", nil)
-		}
-
-		req := fasthttp.AcquireRequest()
-		defer fasthttp.ReleaseRequest(req)
-		resp := fasthttp.AcquireResponse()
-		defer fasthttp.ReleaseResponse(resp)
-
-		defer func() {
-			if rqSpan != nil && !rqSpan.Dropped() {
-				rqSpan.Context.SetHTTPStatusCode(resp.StatusCode())
-			}
-
-			endRpcTransaction(genericResponse, rawBodyRequest, rawBodyResponse, externalServiceName, rqSpan, forceLog)
-		}()
-
-		req.SetRequestURI(url)
-		req.Header.SetMethod(httpMethod)
-		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli, ContentEncodingGzip, ContentEncodingDeflate))
-
-		if request != nil {
-			if data, err := json.Marshal(request); err != nil {
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        error_codes.GenericMappingError,
-						Message:     err.Error(),
-						Data:        nil,
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-					},
-				}
-
-				responseCh <- *genericResponse
-				return
-			} else {
-				rawBodyRequest = data
-
-				req.Header.SetContentType(contentType)
-				req.SetBodyRaw(rawBodyRequest)
-			}
-		}
-
-		b.addDataToSpanTrance(rqSpan, req, apmTransaction)
-
-		if err := b.client.DoTimeout(req, resp, timeout); err != nil {
+		if apiResponse.error != nil { // its timeout, or some internal error, not logical error
 			code := error_codes.GenericServerError
 
-			if errors.Is(err, fasthttp.ErrTimeout) {
+			if errors.Is(apiResponse.error, fasthttp.ErrTimeout) {
 				code = error_codes.GenericTimeoutError
 			}
 
-			rawBodyResponse, err = UnpackFastHttpBody(resp)
-
-			if err != nil {
-				code = error_codes.GenericValidationError
-
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        code,
-						Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-						Data: map[string]interface{}{
-							"raw_response": err.Error(),
-						},
-					},
-				}
-
-				responseCh <- *genericResponse
-
-				return
-			} else {
-				genericResponse = &rpc.RpcResponseInternal{
-					Error: &rpc.RpcError{
-						Code:        code,
-						Message:     fmt.Sprintf("error during sending request. Remote server status code [%v]", resp.StatusCode()),
-						Hostname:    b.hostName,
-						ServiceName: externalServiceName,
-						Data: map[string]interface{}{
-							"raw_response": string(rawBodyResponse),
-						},
-					},
-				}
-			}
-
-			responseCh <- *genericResponse
-
-			return
-		}
-
-		rawBodyResponse, err := UnpackFastHttpBody(resp)
-
-		if err != nil {
-			genericResponse = &rpc.RpcResponseInternal{
+			responseCh <- rpc.RpcResponseInternal{
 				Error: &rpc.RpcError{
-					Code:        error_codes.GenericValidationError,
-					Message:     fmt.Sprintf("error during unpacking response. %s", err.Error()),
+					Code:        code,
+					Message:     apiResponse.error.Error(),
+					Stack:       fmt.Sprintf("%+v", apiResponse.error),
+					Data:        nil,
 					Hostname:    b.hostName,
 					ServiceName: externalServiceName,
-					Data: map[string]interface{}{
-						"raw_response": err.Error(),
-					},
 				},
 			}
-
-			responseCh <- *genericResponse
 
 			return
 		}
 
 		unknownResponse := json.RawMessage{}
-		genericResponse = &rpc.RpcResponseInternal{}
+		genericResponse := rpc.RpcResponseInternal{}
 
-		if err := json.Unmarshal(rawBodyResponse, &unknownResponse); err != nil {
+		if err := json.Unmarshal(apiResponse.rawBodyResponse, &unknownResponse); err != nil {
+			apiResponse.forceLog = true
+			wrapped := errors.Wrapf(err, "remote server status code [%v] can not unmarshal to raw message",
+				apiResponse.statusCode)
+
 			genericResponse.Error = &rpc.RpcError{
 				Code:        error_codes.GenericMappingError,
-				Message:     err.Error(),
+				Message:     wrapped.Error(),
+				Stack:       fmt.Sprintf("%+v", wrapped),
 				Data:        nil,
 				Hostname:    b.hostName,
 				ServiceName: externalServiceName,
 			}
 
-			responseCh <- *genericResponse
+			responseCh <- genericResponse
 
 			return
 		}
 
 		genericResponse.Result = unknownResponse
 
-		responseCh <- *genericResponse
+		responseCh <- genericResponse
 	}()
 
 	return responseCh
 }
 
-func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest []byte, rawBodyResponse []byte,
+func endRpcSpan(rawBodyRequest []byte, rawBodyResponse []byte,
 	externalServiceName string, rqSpan *apm.Span, forceLog bool) {
 	if rqSpan == nil {
 		return
@@ -632,35 +492,23 @@ func endRpcTransaction(genericResponse *rpc.RpcResponseInternal, rawBodyRequest 
 
 	shouldLog := forceLog
 
-	if genericResponse != nil && genericResponse.Error != nil {
-		shouldLog = true // we have an error
-	}
-
-	instance := externalServiceName
 	finalStatement := ""
 
 	if shouldLog && rqSpan != nil {
-		finalStatement = string(rawBodyResponse)
+		if data, err := json.Marshal(map[string]interface{}{
+			"request":  rawBodyRequest,
+			"response": rawBodyResponse,
+		}); err != nil {
+			log.Err(err).Send()
 
-		if len(finalStatement) == 0 && genericResponse != nil {
-			if data, err := json.Marshal(map[string]interface{}{
-				"fake_response": genericResponse,
-			}); err != nil {
-				finalStatement = fmt.Sprintf("can not serialize generic response %+v", errors.WithStack(err))
-			} else {
-				finalStatement = string(data)
-			}
-		}
-
-		instance = string(rawBodyRequest)
-
-		if len(instance) == 0 {
-			instance = "<empty request>"
+			finalStatement = fmt.Sprintf("request [%v] || response [%v]", rawBodyRequest, rawBodyResponse)
+		} else {
+			finalStatement = string(data)
 		}
 	}
 
 	rqSpan.Context.SetDatabase(apm.DatabaseSpanContext{
-		Instance:  instance,
+		Instance:  externalServiceName,
 		Type:      externalServiceName,
 		Statement: finalStatement,
 	})
