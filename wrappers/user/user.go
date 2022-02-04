@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
 )
@@ -35,6 +36,12 @@ func NewUserWrapper(config boilerplate.WrapperConfig) IUserWrapper {
 
 	if config.TimeoutSec > 0 {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	if len(config.ApiUrl) == 0 {
+		config.ApiUrl = "http://user-info"
+
+		log.Warn().Msgf("Api Url is missing for User. Setting as default : %v", config.ApiUrl)
 	}
 
 	return &UserWrapper{

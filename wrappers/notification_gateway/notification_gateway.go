@@ -5,6 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
 )
@@ -26,6 +27,12 @@ func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificati
 
 	if config.TimeoutSec > 0 {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	if len(config.ApiUrl) == 0 {
+		config.ApiUrl = "http://notification-gateway"
+
+		log.Warn().Msgf("Api Url is missing for NotificationGateway. Setting as default : %v", config.ApiUrl)
 	}
 
 	return &Wrapper{
