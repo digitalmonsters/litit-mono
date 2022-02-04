@@ -391,8 +391,10 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			break // discard messages
 		}
 
-		apmTransaction := apm_helper.StartNewApmTransaction(k.listenerName, "kafka_listener", nil,
+		apmTransaction := apm_helper.StartNewApmTransaction(fmt.Sprintf("[%v] [%v]", k.command.GetFancyName(), k.listenerName),
+			"kafka_listener", nil,
 			nil)
+
 		commandExecutionContext := apm.ContextWithTransaction(listenCtx, apmTransaction)
 
 		apm_helper.AddApmData(apmTransaction, "messages_count", messageIndex)
