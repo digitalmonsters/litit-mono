@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
 )
@@ -32,6 +33,12 @@ func NewFollowWrapper(config boilerplate.WrapperConfig) IFollowWrapper {
 
 	if config.TimeoutSec > 0 {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	if len(config.ApiUrl) == 0 {
+		config.ApiUrl = "http://follows"
+
+		log.Warn().Msgf("Api Url is missing for Follow. Setting as default : %v", config.ApiUrl)
 	}
 
 	return &FollowWrapper{

@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
 )
@@ -29,6 +30,12 @@ func NewUserCategoryWrapper(config boilerplate.WrapperConfig) IUserCategoryWrapp
 
 	if config.TimeoutSec > 0 {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	if len(config.ApiUrl) == 0 {
+		config.ApiUrl = "http://user-categories"
+
+		log.Warn().Msgf("Api Url is missing for UserCategories. Setting as default : %v", config.ApiUrl)
 	}
 
 	return &UserCategoryWrapper{

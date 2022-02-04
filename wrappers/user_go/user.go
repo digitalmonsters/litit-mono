@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/patrickmn/go-cache"
+	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
 )
@@ -33,6 +34,12 @@ func NewUserGoWrapper(config boilerplate.WrapperConfig) IUserGoWrapper {
 
 	if config.TimeoutSec > 0 {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	if len(config.ApiUrl) == 0 {
+		config.ApiUrl = "http://user-go"
+
+		log.Warn().Msgf("Api Url is missing for UserGo. Setting as default : %v", config.ApiUrl)
 	}
 
 	return &UserGoWrapper{
@@ -190,5 +197,3 @@ func (u UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmT
 
 	return respCh
 }
-
-

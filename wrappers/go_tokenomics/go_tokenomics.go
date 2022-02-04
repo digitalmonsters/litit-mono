@@ -5,6 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
 )
@@ -25,6 +26,12 @@ func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapp
 
 	if config.TimeoutSec > 0 {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
+	}
+
+	if len(config.ApiUrl) == 0 {
+		config.ApiUrl = "http://go-tokenomics"
+
+		log.Warn().Msgf("Api Url is missing for GoTokenomics. Setting as default : %v", config.ApiUrl)
 	}
 
 	return &Wrapper{
