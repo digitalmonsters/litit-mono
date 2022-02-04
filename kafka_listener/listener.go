@@ -414,7 +414,7 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 				retryCount), "internal", nil, apmTransaction)
 
 			if retryCount > 1 {
-				apm_helper.AddApmData(apmTransaction, fmt.Sprintf("not_processed_messages_iteration_%v", retryCount),
+				apm_helper.AddApmData(processingSpan, "not_processed_messages",
 					messagesToProcess)
 
 				apm_helper.AddApmLabel(processingSpan, "retry_count", retryCount)
@@ -433,13 +433,13 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			innerContext = apm.ContextWithTransaction(innerContext, processingSpan)
 
 			successfullyProcessedMessages = k.command.Execute(ExecutionData{
-				ApmTransaction: apmTransaction,
+				ApmTransaction: processingSpan,
 				Context:        innerContext,
 			}, messagesToProcess...)
 
 			processingSpan.Context.SetLabel("successfully_processed_messages", len(successfullyProcessedMessages))
 
-			if err = k.commitMessages(successfullyProcessedMessages, apmTransaction,
+			if err = k.commitMessages(successfullyProcessedMessages, processingSpan,
 				reader, innerContext); err != nil {
 				return &backoff.PermanentError{Err: err}
 			}
