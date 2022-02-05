@@ -7,6 +7,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -177,7 +179,7 @@ func stringify(value interface{}) string {
 	return ""
 }
 
-func SendHttpRequest(client *fasthttp.Client, request *fasthttp.Request, response *fasthttp.Response, parentTx *apm.Transaction,
+func SendHttpRequestWithClient(client *fasthttp.Client, request *fasthttp.Request, response *fasthttp.Response, parentTx *apm.Transaction,
 	timeout time.Duration, logResponse bool) error {
 	if request == nil {
 		return errors.New("request should not be nil")
@@ -219,4 +221,23 @@ func SendHttpRequest(client *fasthttp.Client, request *fasthttp.Request, respons
 	}
 
 	return nil
+}
+
+func AddDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, apmTransaction *apm.Transaction) {
+	if rqSpan != nil && !rqSpan.Dropped() {
+		r, err := http.NewRequest(
+			string(req.Header.Method()),
+			string(req.URI().FullURI()), nil)
+
+		if err != nil {
+			CaptureApmError(err, apmTransaction)
+		} else {
+			rqSpan.Context.SetHTTPRequest(r)
+		}
+
+		req.Header.Set(apmhttp.W3CTraceparentHeader, apmhttp.FormatTraceparentHeader(rqSpan.TraceContext()))
+
+		rqSpan.Context.SetTag("path", string(req.URI().Path()))
+		rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
+	}
 }
