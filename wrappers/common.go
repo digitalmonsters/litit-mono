@@ -1,11 +1,11 @@
 package wrappers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/nodejs"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -13,20 +13,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
-	"go.elastic.co/apm/module/apmhttp"
-	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
-)
-
-type ContentEncodingType string
-
-const (
-	ContentEncodingGzip    ContentEncodingType = "gzip"
-	ContentEncodingBrotli  ContentEncodingType = "br"
-	ContentEncodingDeflate ContentEncodingType = "deflate"
 )
 
 type BaseWrapper struct {
@@ -57,38 +47,6 @@ func GetBaseWrapper() *BaseWrapper {
 	}
 
 	return baseWrapper
-}
-
-func UnpackFastHttpBody(response *fasthttp.Response) ([]byte, error) {
-	encoding := response.Header.Peek("Content-Encoding")
-
-	if len(encoding) == 0 {
-		b := make([]byte, len(response.Body()))
-		copy(b, response.Body())
-
-		return b, nil
-	}
-
-	var err error
-	var buf bytes.Buffer
-	encodingStr := ContentEncodingType(strings.ToLower(string(encoding)))
-
-	switch encodingStr {
-	case ContentEncodingGzip:
-		_, err = fasthttp.WriteGunzip(&buf, response.Body())
-	case ContentEncodingBrotli:
-		_, err = fasthttp.WriteUnbrotli(&buf, response.Body())
-	case ContentEncodingDeflate:
-		_, err = fasthttp.WriteInflate(&buf, response.Body())
-	default:
-		err = errors.New(fmt.Sprintf("Cannot decompress response. Unknown Content-Encoding value: %s", encodingStr))
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
 
 func (b *BaseWrapper) GetHostName() string {
@@ -128,25 +86,6 @@ func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request inte
 		Id:      "1",
 		JsonRpc: "2.0",
 	}, name, timeout, apmTransaction, externalServiceName, forceLog)
-}
-
-func (b *BaseWrapper) addDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, apmTransaction *apm.Transaction) {
-	if rqSpan != nil && !rqSpan.Dropped() {
-		r, err := http.NewRequest(
-			string(req.Header.Method()),
-			string(req.URI().FullURI()), nil)
-
-		if err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
-		} else {
-			rqSpan.Context.SetHTTPRequest(r)
-		}
-
-		req.Header.Set(apmhttp.W3CTraceparentHeader, apmhttp.FormatTraceparentHeader(rqSpan.TraceContext()))
-
-		rqSpan.Context.SetTag("path", string(req.URI().Path()))
-		rqSpan.Context.SetTag("full_url", string(req.URI().FullURI()))
-	}
 }
 
 type httpResponseChan struct {
@@ -198,8 +137,8 @@ func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, meth
 
 		req.SetRequestURI(url)
 		req.Header.SetMethod(httpMethod)
-		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", ContentEncodingBrotli,
-			ContentEncodingGzip, ContentEncodingDeflate))
+		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", common.ContentEncodingBrotli,
+			common.ContentEncodingGzip, common.ContentEncodingDeflate))
 		req.Header.SetContentType(contentType)
 
 		if request != nil {
@@ -215,12 +154,12 @@ func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, meth
 			}
 		}
 
-		b.addDataToSpanTrance(result.span, req, apmTransaction)
+		apm_helper.AddDataToSpanTrance(result.span, req, apmTransaction)
 
 		err := b.client.DoTimeout(req, resp, timeout)
 
 		result.statusCode = resp.StatusCode()
-		rawBodyResponse, err2 := UnpackFastHttpBody(resp)
+		rawBodyResponse, err2 := common.UnpackFastHttpBody(resp)
 
 		if err2 != nil {
 			result.forceLog = true
