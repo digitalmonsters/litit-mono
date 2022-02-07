@@ -21,20 +21,22 @@ import (
 	"net/http/pprof"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
 type HttpRouter struct {
-	realRouter             *fastRouter.Router
-	hostname               string
-	restCommands           map[string]*RestCommand
-	isProd                 bool
-	authGoWrapper          auth_go.IAuthGoWrapper
-	srv                    *fasthttp.Server
-	rpcEndpointPublic      IRpcEndpoint
-	rpcEndpointAdmin       IRpcEndpoint
-	rpcEndpointAdminLegacy IRpcEndpoint
-	rpcEndpointService     IRpcEndpoint
+	realRouter               *fastRouter.Router
+	hostname                 string
+	restCommands             map[string]*RestCommand
+	isProd                   bool
+	authGoWrapper            auth_go.IAuthGoWrapper
+	srv                      *fasthttp.Server
+	rpcEndpointPublic        IRpcEndpoint
+	rpcEndpointAdmin         IRpcEndpoint
+	rpcEndpointAdminLegacy   IRpcEndpoint
+	rpcEndpointService       IRpcEndpoint
+	endpointRegistratorMutex sync.Mutex
 }
 
 var hostName string
@@ -52,9 +54,10 @@ var hostName string
 
 func NewRouter(rpcEndpointPath string, auth auth_go.IAuthGoWrapper) *HttpRouter {
 	h := &HttpRouter{
-		realRouter:    fastRouter.New(),
-		authGoWrapper: auth,
-		restCommands:  map[string]*RestCommand{},
+		realRouter:               fastRouter.New(),
+		endpointRegistratorMutex: sync.Mutex{},
+		authGoWrapper:            auth,
+		restCommands:             map[string]*RestCommand{},
 	}
 
 	if hostname, _ := os.Hostname(); len(hostname) > 0 {
@@ -117,6 +120,9 @@ func (r *HttpRouter) setCors(ctx *fasthttp.RequestCtx) {
 }
 
 func (r *HttpRouter) RegisterProfiler() {
+	r.endpointRegistratorMutex.Lock()
+	defer r.endpointRegistratorMutex.Unlock()
+
 	r.realRouter.GET("/debug/pprof/cpu", fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Profile))
 	r.realRouter.GET("/debug/pprof/{name}", fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Index))
 }
@@ -152,6 +158,9 @@ func (r *HttpRouter) RegisterDocs(apiDef map[string]swagger.ApiDescription,
 			routes["/swagger-admin-legacy"] = append(routes["/swagger-admin-legacy"], c)
 		}
 	}
+
+	r.endpointRegistratorMutex.Lock()
+	defer r.endpointRegistratorMutex.Unlock()
 
 	r.realRouter.GET("/swag", func(ctx *fasthttp.RequestCtx) {
 		ctx.Response.Header.SetContentType("text/html; charset=utf-8")
@@ -189,12 +198,20 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 	go func() {
 		defer func() {
+			r.endpointRegistratorMutex.Unlock()
+
 			_ = recover()
 		}()
+
+		r.endpointRegistratorMutex.Lock()
+
 		r.realRouter.OPTIONS(targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 			r.setCors(ctx)
 		})
 	}()
+
+	r.endpointRegistratorMutex.Lock()
+	defer r.endpointRegistratorMutex.Unlock()
 
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 		var apmTransaction *apm.Transaction
@@ -425,6 +442,9 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 }
 
 func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEndpoint, apmTxType string) {
+	r.endpointRegistratorMutex.Lock()
+	defer r.endpointRegistratorMutex.Unlock()
+
 	r.realRouter.OPTIONS(rpcEndpointPath, func(ctx *fasthttp.RequestCtx) {
 		r.setCors(ctx)
 	})
@@ -528,6 +548,9 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 }
 
 func (r *HttpRouter) GET(path string, handler fasthttp.RequestHandler) {
+	r.endpointRegistratorMutex.Lock()
+	defer r.endpointRegistratorMutex.Unlock()
+
 	r.realRouter.GET(path, handler)
 }
 
