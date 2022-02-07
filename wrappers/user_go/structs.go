@@ -2,6 +2,7 @@ package user_go
 
 import (
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -47,22 +48,23 @@ type GetProfileBulkResponseChan struct {
 }
 
 type UserDetailRecord struct {
-	Id           int64       `json:"id"`
-	Username     null.String `json:"username"`
-	Firstname    string      `json:"firstname"`
-	Lastname     string      `json:"lastname"`
-	Birthdate    null.Time   `json:"birthdate"`
-	KycStatus    string      `json:"kyc_status"`
-	CountryCode  string      `json:"country_code"`
-	Gender       null.String `json:"gender"`
-	Following    int         `json:"following"`
-	Followers    int         `json:"followers"`
-	VideosCount  int         `json:"videos_count"`
-	Privacy      UerPrivacy  `json:"privacy"`
-	Profile      UserProfile `json:"profile"`
-	CountryName  string      `json:"country_name"`
-	Avatar       null.String `json:"avatar"`
-	IsTipEnabled bool        `json:"is_tip_enabled"`
+	Id           int64           `json:"id"`
+	Username     null.String     `json:"username"`
+	Firstname    string          `json:"firstname"`
+	Lastname     string          `json:"lastname"`
+	Birthdate    null.Time       `json:"birthdate"`
+	KycStatus    string          `json:"kyc_status"`
+	CountryCode  string          `json:"country_code"`
+	VaultPoints  decimal.Decimal `json:"vault_points"`
+	Gender       null.String     `json:"gender"`
+	Following    int             `json:"following"`
+	Followers    int             `json:"followers"`
+	VideosCount  int             `json:"videos_count"`
+	Privacy      UerPrivacy      `json:"privacy"`
+	Profile      UserProfile     `json:"profile"`
+	CountryName  string          `json:"country_name"`
+	Avatar       null.String     `json:"avatar"`
+	IsTipEnabled bool            `json:"is_tip_enabled"`
 }
 
 type UserProfileDetailRecord struct {
