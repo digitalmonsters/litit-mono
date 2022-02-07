@@ -51,6 +51,8 @@ type UserDetailRecord struct {
 	Username     null.String `json:"username"`
 	Firstname    string      `json:"firstname"`
 	Lastname     string      `json:"lastname"`
+	Birthdate    null.Time   `json:"birthdate"`
+	KycStatus    string      `json:"kyc_status"`
 	CountryCode  string      `json:"country_code"`
 	Gender       null.String `json:"gender"`
 	Following    int         `json:"following"`
