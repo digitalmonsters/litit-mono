@@ -19,6 +19,7 @@ require (
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jcchavezs/porto v0.4.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
+	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mitchellh/mapstructure v1.4.3

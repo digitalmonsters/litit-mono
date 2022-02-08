@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/jackc/pgx/v4"
+	"github.com/juju/fslock"
 	"github.com/rs/zerolog/log"
 	"github.com/thoas/go-funk"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"os"
+	path2 "path"
 	"strings"
 	"testing"
 )
@@ -32,7 +34,21 @@ func GetPostgresConnection(config *boilerplate.DbConfig) (*gorm.DB, error) {
 	return gorm.Open(postgres.Open(str), &gorm.Config{})
 }
 
+func getLock() *fslock.Lock {
+	return fslock.New(path2.Join(os.TempDir(), "go_fs_lock"))
+}
+
 func EnsurePostgresDbExists(config boilerplate.DbConfig) error {
+	lock := getLock()
+
+	if err := lock.Lock(); err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = lock.Unlock()
+	}()
+	
 	oldDbName := config.Db
 
 	config.Db = "postgres"
