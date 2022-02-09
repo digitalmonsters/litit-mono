@@ -75,7 +75,7 @@ func (w *BaseApiWrapper) GetCountriesWithAgeLimit(apmTransaction *apm.Transactio
 			"GET",
 			"application/json",
 			"get countries",
-			nil, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			nil, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse.Error = rpcInternalResponse.Error
 

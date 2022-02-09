@@ -55,7 +55,7 @@ func (w *LikeWrapper) GetLastLikesByUsers(userIds []int64, limitPerUser int, apm
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetLastLikesByUsers", GetLatestLikedByUserRequest{
 		LimitPerUser: limitPerUser,
 		UserIds:      userIds,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -96,7 +96,7 @@ func (w *LikeWrapper) GetInternalLikedByUser(contentIds []int64, userId int64, a
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalLikedByUserBulk", GetInternalLikedByUserRequest{
 		UserId:     userId,
 		ContentIds: contentIds,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -138,7 +138,7 @@ func (w *LikeWrapper) GetInternalUserLikes(userId int64, size int, pageState str
 		UserId:    userId,
 		Size:      size,
 		PageState: pageState,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

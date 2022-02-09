@@ -73,17 +73,17 @@ func endRpcSpan(rawBodyRequest []byte, rawBodyResponse []byte,
 }
 
 func SendHttpRequestAsync(ctx context.Context, url string, methodName string, contentType string, httpMethod string,
-	request interface{}, forceLog bool, timeout time.Duration) chan HttpResult {
-	return sendHttpRequestAsync(ctx, url, methodName, contentType, httpMethod, request, forceLog, timeout, false, 0)
+	request interface{}, headers map[string]string, forceLog bool, timeout time.Duration) chan HttpResult {
+	return sendHttpRequestAsync(ctx, url, methodName, contentType, httpMethod, request, headers, forceLog, timeout, false, 0)
 }
 
 func SendHttpRequestAsyncWithRedirects(ctx context.Context, url string, methodName string, contentType string, httpMethod string,
-	request interface{}, forceLog bool, timeout time.Duration, maxRedirectCount int) chan HttpResult {
-	return sendHttpRequestAsync(ctx, url, methodName, contentType, httpMethod, request, forceLog, timeout, true, maxRedirectCount)
+	request interface{}, headers map[string]string, forceLog bool, timeout time.Duration, maxRedirectCount int) chan HttpResult {
+	return sendHttpRequestAsync(ctx, url, methodName, contentType, httpMethod, request, headers, forceLog, timeout, true, maxRedirectCount)
 }
 
 func sendHttpRequestAsync(ctx context.Context, url string, methodName string, contentType string, httpMethod string,
-	request interface{}, forceLog bool, timeout time.Duration, allowedRedirects bool, maxRedirectCount int) chan HttpResult {
+	request interface{}, headers map[string]string, forceLog bool, timeout time.Duration, allowedRedirects bool, maxRedirectCount int) chan HttpResult {
 	ch := make(chan HttpResult, 2)
 
 	go func() {
@@ -135,6 +135,10 @@ func sendHttpRequestAsync(ctx context.Context, url string, methodName string, co
 			common.ContentEncodingGzip, common.ContentEncodingDeflate))
 		req.Header.SetContentType(contentType)
 
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
 				result.error = errors.WithStack(err)
@@ -150,9 +154,9 @@ func sendHttpRequestAsync(ctx context.Context, url string, methodName string, co
 
 		apm_helper.AddDataToSpanTrance(span, req, apmTransaction)
 
-		if allowedRedirects{
+		if allowedRedirects {
 			err = defaultClient.DoRedirects(req, resp, maxRedirectCount)
-		}else{
+		} else {
 			err = defaultClient.DoTimeout(req, resp, timeout)
 		}
 		result.statusCode = resp.StatusCode()

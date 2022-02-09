@@ -53,7 +53,7 @@ func (w *WatchWrapper) GetLastWatchesByUsers(userIds []int64, limitPerUser int, 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetLastWatchesByUsers", GetLatestWatchesByUserRequest{
 		LimitPerUser: limitPerUser,
 		UserIds:      userIds,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -94,7 +94,7 @@ func (w *WatchWrapper) GetCategoriesByViews(limit int64, offset int64, apmTransa
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetCategoriesByViews", GetCategoriesByViewsRequest{
 		Limit:  limit,
 		Offset: offset,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, false)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, false)
 
 	go func() {
 		defer func() {

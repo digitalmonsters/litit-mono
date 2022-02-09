@@ -51,7 +51,7 @@ func (w *UserDislikesWrapper) GetAllUserDislikes(userId int64, apmTransaction *a
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalGetAllUserDislikes", GetAllUserDislikesRequest{
 		UserId: userId,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

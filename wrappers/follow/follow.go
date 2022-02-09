@@ -55,7 +55,7 @@ func (w *FollowWrapper) GetUserFollowingRelationBulk(userId int64, requestUserId
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalUserFollowRelationBulk", GetUserFollowingRelationBulkRequest{
 		UserId:         userId,
 		RequestUserIds: requestUserIds,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -98,7 +98,7 @@ func (w *FollowWrapper) GetUserFollowingRelation(userId int64, requestUserId int
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalUserFollowRelation", GetUserFollowingRelationRequest{
 		UserId:        userId,
 		RequestUserId: requestUserId,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -141,7 +141,7 @@ func (w *FollowWrapper) GetUserFollowers(userId int64, pageState string, limit i
 		UserId:    userId,
 		PageState: pageState,
 		Limit:     limit,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -182,7 +182,7 @@ func (w *FollowWrapper) GetFollowersCount(userIds []int64, apmTransaction *apm.T
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "InternalGetFollowersCount", GetFollowersCountRequest{
 		UserIds: userIds,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

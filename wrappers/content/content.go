@@ -53,7 +53,7 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "ContentGetInternal", ContentGetInternalRequest{
 		ContentIds:     contentIds,
 		IncludeDeleted: includeDeleted,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -94,7 +94,7 @@ func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, apmTra
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetTopNotFollowingUsers", GetTopNotFollowingUsersRequest{
 		UserId: userId,
 		Limit:  limit,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

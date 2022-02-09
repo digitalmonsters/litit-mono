@@ -81,7 +81,7 @@ func (w *PointsCountWrapper) GetPointsCount(contentIds []int64, apmTransaction *
 			"get points count",
 			GetPointsCountRequest{
 				ContentIds: contentIdsToFetch,
-			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse.Error = rpcInternalResponse.Error
 

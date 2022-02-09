@@ -61,7 +61,7 @@ func (w *UserBlockWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Tra
 			"get block list",
 			GetBlockListRequest{
 				UserIds: userIds,
-			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse.Error = rpcInternalResponse.Error
 
@@ -102,7 +102,7 @@ func (w *UserBlockWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTra
 			GetUserBlockRequest{
 				BlockBy:   blockedBy,
 				BlockedTo: blockedTo,
-			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse.Error = rpcInternalResponse.Error
 

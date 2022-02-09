@@ -53,31 +53,31 @@ func (b *BaseWrapper) GetHostName() string {
 	return b.hostName
 }
 
-func (b *BaseWrapper) SendRequestWithRpcResponse(url string, methodName string, request interface{}, timeout time.Duration,
+func (b *BaseWrapper) SendRequestWithRpcResponse(url string, methodName string, request interface{}, headers map[string]string, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 
-	return b.GetRpcResponse(url, request, methodName, timeout, apmTransaction, externalServiceName, forceLog)
+	return b.GetRpcResponse(url, request, methodName, headers, timeout, apmTransaction, externalServiceName, forceLog)
 }
 
 func (b *BaseWrapper) SendRequestWithRpcResponseFromNodeJsService(url string, httpMethod string, contentType string,
-	methodName string, request interface{}, timeout time.Duration, apmTransaction *apm.Transaction,
+	methodName string, request interface{}, headers map[string]string, timeout time.Duration, apmTransaction *apm.Transaction,
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 
 	return b.GetRpcResponseFromNodeJsService(
-		url, request, httpMethod, contentType, methodName, timeout, apmTransaction, externalServiceName, forceLog,
+		url, request, httpMethod, contentType, methodName, headers, timeout, apmTransaction, externalServiceName, forceLog,
 	)
 }
 
 func (b *BaseWrapper) SendRequestWithRpcResponseFromAnyService(url string, httpMethod string, contentType string,
-	methodName string, request interface{}, timeout time.Duration, apmTransaction *apm.Transaction,
+	methodName string, request interface{}, headers map[string]string, timeout time.Duration, apmTransaction *apm.Transaction,
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 
 	return b.GetRpcResponseFromAnyService(
-		url, request, httpMethod, contentType, methodName, timeout, apmTransaction, externalServiceName, forceLog,
+		url, request, httpMethod, contentType, methodName, headers, timeout, apmTransaction, externalServiceName, forceLog,
 	)
 }
 
-func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request interface{}, timeout time.Duration,
+func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request interface{}, headers map[string]string, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	name := strings.ToLower(methodName)
 	return b.GetRpcResponse(url, rpc.RpcRequestInternal{
@@ -85,7 +85,7 @@ func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request inte
 		Params:  request,
 		Id:      "1",
 		JsonRpc: "2.0",
-	}, name, timeout, apmTransaction, externalServiceName, forceLog)
+	}, name, headers, timeout, apmTransaction, externalServiceName, forceLog)
 }
 
 type httpResponseChan struct {
@@ -98,7 +98,7 @@ type httpResponseChan struct {
 }
 
 func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, methodName string, request interface{},
-	forceLog bool, timeout time.Duration, contentType string, httpMethod string) chan httpResponseChan {
+	headers map[string]string, forceLog bool, timeout time.Duration, contentType string, httpMethod string) chan httpResponseChan {
 	resultChan := make(chan httpResponseChan, 2)
 
 	result := httpResponseChan{
@@ -140,6 +140,10 @@ func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, meth
 		req.Header.Set("Accept-Encoding", fmt.Sprintf("%s,%s,%s", common.ContentEncodingBrotli,
 			common.ContentEncodingGzip, common.ContentEncodingDeflate))
 		req.Header.SetContentType(contentType)
+
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
 
 		if request != nil {
 			if data, err := json.Marshal(request); err != nil {
@@ -186,14 +190,14 @@ func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, meth
 	return resultChan
 }
 
-func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName string, timeout time.Duration,
+func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName string, headers map[string]string, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
 	ctx := apm.ContextWithTransaction(context.Background(), apmTransaction)
 
 	go func() {
-		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, forceLog, timeout,
+		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, headers, forceLog, timeout,
 			"application/json", "POST")
 
 		defer func() {
@@ -258,14 +262,14 @@ func (b *BaseWrapper) GetRpcResponse(url string, request interface{}, methodName
 }
 
 func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interface{}, httpMethod string,
-	contentType string, methodName string, timeout time.Duration, apmTransaction *apm.Transaction,
+	contentType string, methodName string, headers map[string]string, timeout time.Duration, apmTransaction *apm.Transaction,
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
 	ctx := apm.ContextWithTransaction(context.Background(), apmTransaction)
 
 	go func() {
-		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, forceLog, timeout, contentType,
+		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, headers, forceLog, timeout, contentType,
 			httpMethod)
 
 		defer func() {
@@ -355,14 +359,14 @@ func (b *BaseWrapper) GetRpcResponseFromNodeJsService(url string, request interf
 }
 
 func (b *BaseWrapper) GetRpcResponseFromAnyService(url string, request interface{}, httpMethod string,
-	contentType string, methodName string, timeout time.Duration, apmTransaction *apm.Transaction,
+	contentType string, methodName string, headers map[string]string, timeout time.Duration, apmTransaction *apm.Transaction,
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	responseCh := make(chan rpc.RpcResponseInternal, 2)
 
 	ctx := apm.ContextWithTransaction(context.Background(), apmTransaction)
 
 	go func() {
-		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, forceLog, timeout, contentType,
+		apiResponse := <-b.sendHttpRequestAsync(ctx, url, methodName, request, headers, forceLog, timeout, contentType,
 			httpMethod)
 
 		defer func() {

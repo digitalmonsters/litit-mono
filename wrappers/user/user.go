@@ -85,7 +85,7 @@ func (w *UserWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction,
 			"get users",
 			GetUsersRequest{
 				UserIds: userIdsToFetch,
-			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse.Error = rpcInternalResponse.Error
 
@@ -136,7 +136,7 @@ func (w *UserWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Trans
 				"GET",
 				"application/json",
 				"get users details",
-				nil, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+				nil, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 			finalResponse.Error = rpcInternalResponse.Error
 
@@ -185,7 +185,7 @@ func (w *UserWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmTr
 			GetProfileBulkRequest{
 				UserIds:       userIds,
 				CurrentUserId: currentUserId,
-			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := GetProfileBulkResponseChan{
 			Error: rpcInternalResponse.Error,

@@ -49,7 +49,7 @@ func (w *Wrapper) SendSmsInternal(message string, phoneNumber string, apmTransac
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "SendSmsInternal", SendSmsMessageRequest{
 		Message:     message,
 		PhoneNumber: phoneNumber,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -76,7 +76,7 @@ func (w *Wrapper) SendEmailInternal(ccAddresses, toAddresses []string, htmlBody,
 		HtmlBody:    htmlBody,
 		TextBody:    textBody,
 		Subject:     subject,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

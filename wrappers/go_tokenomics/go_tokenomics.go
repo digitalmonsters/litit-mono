@@ -48,7 +48,7 @@ func (w *Wrapper) GetUsersTokenomicsInfo(userIds []int64, filters []Filter, apmT
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetUsersTokenomicsInfo", GetUsersTokenomicsInfoRequest{
 		UserIds: userIds,
 		Filters: filters,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

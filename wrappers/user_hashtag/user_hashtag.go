@@ -52,7 +52,7 @@ func (w *UserHashtagWrapper) GetUserHashtagSubscriptionStateBulk(hashtags []stri
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalUserHashtagSubscriptionStateBulk", GetUserHashtagSubscriptionStateBulkRequest{
 		UserId:   userId,
 		Hashtags: hashtags,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

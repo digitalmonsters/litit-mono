@@ -78,7 +78,7 @@ func (u UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction
 
 	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetUsersInternal", GetUsersRequest{
 		UserIds: userIdsToFetch,
-	}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -122,7 +122,7 @@ func (u UserGoWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Tran
 
 	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetUsersDetailsInternal", GetUsersDetailRequest{
 		UserIds: userIds,
-	}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -163,7 +163,7 @@ func (u UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmT
 	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetProfileBulkInternal", GetProfileBulkRequest{
 		CurrentUserId: currentUserId,
 		UserIds:       userIds,
-	}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 
 	go func() {
 		defer func() {

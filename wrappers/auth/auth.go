@@ -63,7 +63,7 @@ func (w *AuthWrapper) ParseToken(token string, ignoreExpiration bool, apmTransac
 			AuthParseTokenRequest{
 				Token:            token,
 				IgnoreExpiration: ignoreExpiration,
-			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := AuthParseTokenResponseChan{
 			Error: rpcInternalResponse.Error,
@@ -97,7 +97,7 @@ func (w *AuthWrapper) ParseNewAdminToken(token string, ignoreExpiration bool, ap
 			AuthParseTokenRequest{
 				Token:            token,
 				IgnoreExpiration: ignoreExpiration,
-			}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := AuthParseTokenResponseChan{
 			Error: rpcInternalResponse.Error,
@@ -130,7 +130,7 @@ func (w *AuthWrapper) GenerateToken(userId int64, apmTransaction *apm.Transactio
 			"GET",
 			"application/json",
 			"generate token",
-			nil, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			nil, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := GenerateTokenResponseChan{
 			Error: rpcInternalResponse.Error,
@@ -163,7 +163,7 @@ func (w *AuthWrapper) GenerateNewAdminToken(userId int64, ctx context.Context,
 			"GET",
 			"application/json",
 			"generate new admin token",
-			nil, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+			nil, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 
 		finalResponse := GenerateTokenResponseChan{
 			Error: rpcInternalResponse.Error,

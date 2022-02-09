@@ -58,7 +58,7 @@ func (w *Wrapper) GetHashtagsInternal(hashtags []string, omitHashtags []string, 
 		WithViews:              withViews,
 		Offset:                 offset,
 		ShouldHaveValidContent: shouldHaveValidContent,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

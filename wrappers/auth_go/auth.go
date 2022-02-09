@@ -51,7 +51,7 @@ func (w *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transact
 
 	rpcInternalResponseCh := w.baseWrapper.SendRpcRequest(w.apiUrl, "CheckLegacyAdmin", CheckLegacyAdminRequest{
 		UserId: userId,
-	}, w.defaultTimeout, transaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, transaction, w.serviceName, forceLog)
 
 	go func() {
 		resp := <-rpcInternalResponseCh
@@ -84,7 +84,7 @@ func (w *AuthGoWrapper) CheckAdminPermissions(userId int64, obj string, transact
 	rpcInternalResponseCh := w.baseWrapper.SendRpcRequest(w.apiUrl, "CheckUserAdminPermissions", CheckAdminPermissionsRequest{
 		UserId: userId,
 		Object: obj,
-	}, w.defaultTimeout, transaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, transaction, w.serviceName, forceLog)
 
 	go func() {
 

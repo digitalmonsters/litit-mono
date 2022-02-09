@@ -54,7 +54,7 @@ func (w *Wrapper) GetUserBlacklistedCategories(userId int64, apmTransaction *apm
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetUserBlacklistedCategoriesInternal", GetUserBlacklistedCategoriesRequest{
 		UserId: userId,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -100,7 +100,7 @@ func (w *Wrapper) GetCategoryInternal(categoryIds []int64, omitCategoryIds []int
 		WithViews:              withViews,
 		OnlyParent:             onlyParent,
 		ShouldHaveValidContent: shouldHaveValidContent,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -141,7 +141,7 @@ func (w *Wrapper) GetAllCategories(categoryIds []int64, includeDeleted bool, apm
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetAllCategories", GetAllCategoriesRequest{
 		CategoryIds:    categoryIds,
 		IncludeDeleted: includeDeleted,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

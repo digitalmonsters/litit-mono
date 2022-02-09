@@ -53,7 +53,7 @@ func (w *UserLikesWrapper) GetUserLikes(userId int64, limit int, offset int, apm
 		UserId: userId,
 		Limit:  limit,
 		Offset: offset,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {

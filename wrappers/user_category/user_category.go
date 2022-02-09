@@ -52,7 +52,7 @@ func (w *UserCategoryWrapper) GetUserCategorySubscriptionStateBulk(categoryIds [
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalUserCategorySubscriptionStateBulk", GetUserCategorySubscriptionStateBulkRequest{
 		UserId:      userId,
 		CategoryIds: categoryIds,
-	}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
