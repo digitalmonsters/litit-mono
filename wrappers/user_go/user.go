@@ -45,7 +45,7 @@ func NewUserGoWrapper(config boilerplate.WrapperConfig) IUserGoWrapper {
 	return &UserGoWrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
-		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
+		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "user-go",
 		cache:          cache.New(4*time.Minute, 5*time.Minute),
 	}
