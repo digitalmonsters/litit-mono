@@ -7,20 +7,20 @@ import (
 )
 
 type Message struct {
-	Id                 int64
-	Title              string
-	Description        string
-	Countries          pq.StringArray `gorm:"type:text[]"`
-	VerificationStatus VerificationStatus
-	AgeFrom            int8
-	AgeTo              int8
-	PointsFrom         float64
-	PointsTo           float64
-	IsActive           bool
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	DeactivatedAt      *time.Time
-	DeletedAt          gorm.DeletedAt
+	Id                 int64              `json:"id"`
+	Title              string             `json:"title"`
+	Description        string             `json:"description"`
+	Countries          pq.StringArray     `json:"countries" gorm:"type:text[]"`
+	VerificationStatus VerificationStatus `json:"verification_status"`
+	AgeFrom            int8               `json:"age_from"`
+	AgeTo              int8               `json:"age_to"`
+	PointsFrom         float64            `json:"points_from"`
+	PointsTo           float64            `json:"points_to"`
+	IsActive           bool               `json:"is_active"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+	DeactivatedAt      *time.Time         `json:"deactivated_at"`
+	DeletedAt          gorm.DeletedAt     `json:"deleted_at"`
 }
 
 func (Message) TableName() string {
