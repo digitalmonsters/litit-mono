@@ -74,6 +74,16 @@ func endRpcSpan(rawBodyRequest []byte, rawBodyResponse []byte,
 
 func SendHttpRequestAsync(ctx context.Context, url string, methodName string, contentType string, httpMethod string,
 	request interface{}, forceLog bool, timeout time.Duration) chan HttpResult {
+	return sendHttpRequestAsync(ctx, url, methodName, contentType, httpMethod, request, forceLog, timeout, false, 0)
+}
+
+func SendHttpRequestAsyncWithRedirects(ctx context.Context, url string, methodName string, contentType string, httpMethod string,
+	request interface{}, forceLog bool, timeout time.Duration, maxRedirectCount int) chan HttpResult {
+	return sendHttpRequestAsync(ctx, url, methodName, contentType, httpMethod, request, forceLog, timeout, true, maxRedirectCount)
+}
+
+func sendHttpRequestAsync(ctx context.Context, url string, methodName string, contentType string, httpMethod string,
+	request interface{}, forceLog bool, timeout time.Duration, allowedRedirects bool, maxRedirectCount int) chan HttpResult {
 	ch := make(chan HttpResult, 2)
 
 	go func() {
@@ -140,8 +150,11 @@ func SendHttpRequestAsync(ctx context.Context, url string, methodName string, co
 
 		apm_helper.AddDataToSpanTrance(span, req, apmTransaction)
 
-		err = defaultClient.DoTimeout(req, resp, timeout)
-
+		if allowedRedirects{
+			err = defaultClient.DoRedirects(req, resp, maxRedirectCount)
+		}else{
+			err = defaultClient.DoTimeout(req, resp, timeout)
+		}
 		result.statusCode = resp.StatusCode()
 
 		rawBodyResponse, err2 := common.UnpackFastHttpBody(resp)
