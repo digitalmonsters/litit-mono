@@ -3,11 +3,12 @@ module github.com/digitalmonsters/ads-manager
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.16.5
+	github.com/digitalmonsters/go-common v1.16.9
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/lib/pq v1.10.2
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
+	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.7.0
 	github.com/valyala/fasthttp v1.31.0
 	go.elastic.co/apm v1.15.0
@@ -46,6 +47,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect
+	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/mattn/go-sqlite3 v1.14.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
@@ -60,7 +62,6 @@ require (
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.6.0 // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/thoas/go-funk v0.9.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

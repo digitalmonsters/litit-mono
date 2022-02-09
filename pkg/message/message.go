@@ -25,6 +25,10 @@ func UpsertMessageBulkAdmin(req UpsertMessageAdminRequest, db *gorm.DB) ([]datab
 			Where("countries && ?::text[]", item.Countries).
 			Where("verification_status = ?", item.VerificationStatus)
 
+		if item.Id.Valid {
+			query = query.Where("id <> ?", item.Id.Int64)
+		}
+
 		if item.AgeFrom > 0 && item.AgeTo > 0 {
 			query = query.Where(db.Where("int4range(messages.age_from, messages.age_to) && int4range(?,?)", item.AgeFrom, item.AgeTo).
 				Or("messages.age_from = ?", item.AgeTo).Or("messages.age_to = ?", item.AgeFrom))
