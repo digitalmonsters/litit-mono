@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/ads-manager/pkg/message"
-	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/pkg/errors"
 )
 
-func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription) error {
-	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("UpsertMessageBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+func InitLegacyAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription) error {
+	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("UpsertMessageBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req message.UpsertMessageAdminRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -61,11 +60,11 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return resp, nil
-	}, common.AccessLevelWrite, "ads:messages:upsert")); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("DeleteMessagesBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("DeleteMessagesBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req message.DeleteMessagesBulkAdminRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -81,11 +80,11 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return "ok", nil
-	}, common.AccessLevelWrite, "ads:messages:delete")); err != nil {
+	})); err != nil {
 		return err
 	}
 
-	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("MessagesListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("MessagesListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req message.MessagesListAdminRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -98,7 +97,7 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return resp, nil
-	}, common.AccessLevelRead, "ads:messages:list")); err != nil {
+	})); err != nil {
 		return err
 	}
 
