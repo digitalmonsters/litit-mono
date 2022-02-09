@@ -1,13 +1,17 @@
 package auth
 
-import "go.elastic.co/apm"
+import (
+	"context"
+	"go.elastic.co/apm"
+)
 
 type AuthWrapperMock struct {
 	ParseTokenFn func(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan AuthParseTokenResponseChan
 	ParseNewAdminTokenFn func(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan AuthParseTokenResponseChan
-	GenerateTokenFn func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GenerateTokenResponseChan
+	GenerateTokenFn         func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GenerateTokenResponseChan
+	GenerateNewAdminTokenFn func(userId int64, ctx context.Context, forceLog bool) chan GenerateTokenResponseChan
 }
 
 func (w *AuthWrapperMock) ParseToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
@@ -23,6 +27,11 @@ func (w *AuthWrapperMock) ParseNewAdminToken(token string, ignoreExpiration bool
 func (w *AuthWrapperMock) GenerateToken(userId int64, apmTransaction *apm.Transaction,
 	forceLog bool) chan GenerateTokenResponseChan {
 	return w.GenerateTokenFn(userId, apmTransaction, forceLog)
+}
+
+func (w *AuthWrapperMock) GenerateNewAdminToken(userId int64, ctx context.Context,
+	forceLog bool) chan GenerateTokenResponseChan {
+	return w.GenerateNewAdminTokenFn(userId, ctx, forceLog)
 }
 
 func GetMock() IAuthWrapper { // for compiler errors

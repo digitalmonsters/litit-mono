@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -19,6 +20,8 @@ type IAuthWrapper interface {
 	ParseNewAdminToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan AuthParseTokenResponseChan
 	GenerateToken(userId int64, apmTransaction *apm.Transaction,
+		forceLog bool) chan GenerateTokenResponseChan
+	GenerateNewAdminToken(userId int64, ctx context.Context,
 		forceLog bool) chan GenerateTokenResponseChan
 }
 
@@ -128,6 +131,39 @@ func (w *AuthWrapper) GenerateToken(userId int64, apmTransaction *apm.Transactio
 			"application/json",
 			"generate token",
 			nil, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+		finalResponse := GenerateTokenResponseChan{
+			Error: rpcInternalResponse.Error,
+		}
+
+		if len(rpcInternalResponse.Result) > 0 {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Resp); err != nil {
+				finalResponse.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			}
+		}
+
+		resChan <- finalResponse
+	}()
+
+	return resChan
+}
+
+func (w *AuthWrapper) GenerateNewAdminToken(userId int64, ctx context.Context,
+	forceLog bool) chan GenerateTokenResponseChan {
+	resChan := make(chan GenerateTokenResponseChan, 2)
+
+	go func() {
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(fmt.Sprintf("%v/token-admin/%v", w.apiUrl, userId),
+			"GET",
+			"application/json",
+			"generate new admin token",
+			nil, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 
 		finalResponse := GenerateTokenResponseChan{
 			Error: rpcInternalResponse.Error,
