@@ -35,5 +35,15 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_title_ui_09022022",
+			Migrate: func(db *gorm.DB) error {
+				query := `create unique index messages_title_uindex on messages (title);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

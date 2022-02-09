@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func UpsertMessageBulkAdmin(req UpsertMessageAdminRequest, db *gorm.DB) ([]datab
 		var duplicates []int64
 
 		query := tx.Model(&database.Message{}).
-			Where("countries && ARRAY[?]", item.Countries).
+			Where("countries && ?::text[]", item.Countries).
 			Where("verification_status = ?", item.VerificationStatus)
 
 		if item.AgeFrom > 0 && item.AgeTo > 0 {
@@ -87,8 +88,14 @@ func UpsertMessageBulkAdmin(req UpsertMessageAdminRequest, db *gorm.DB) ([]datab
 		records = append(records, r)
 	}
 
-	if err := tx.Clauses(clause.OnConflict{UpdateAll: true}).
-		Create(&records).Error; err != nil {
+	if err := tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		UpdateAll: true,
+	}).Create(&records).Error; err != nil {
+		if contain := strings.Contains(err.Error(), "duplicate key value violates unique constraint"); contain {
+			return nil, errors.New("message with the given name has been already created")
+		}
+
 		return nil, errors.WithStack(err)
 	}
 
