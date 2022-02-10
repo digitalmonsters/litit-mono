@@ -74,6 +74,7 @@ type Wrappers struct {
 	UserGo              WrapperConfig `json:"UserGo"`
 	BaseApi             WrapperConfig `json:"BaseApi"`
 	GoTokenomics        WrapperConfig `json:"GoTokenomics"`
+	SolanaApiGate       WrapperConfig `json:"SolanaApiGate"`
 }
 
 type WrapperConfig struct {
