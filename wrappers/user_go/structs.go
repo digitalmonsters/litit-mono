@@ -107,3 +107,34 @@ type UserProfile struct {
 type GetUsersDetailRequest struct {
 	UserIds []int64 `json:"user_ids"`
 }
+
+type GetUsersActiveThresholdsRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
+type GetUsersActiveThresholdsResponseChan struct {
+	Error *rpc.RpcError
+	Items map[int64]*ThresholdsStruct `json:"items"`
+}
+
+type ThresholdsStruct struct {
+	DailyThreshold                null.Int            `json:"daily_threshold"`
+	DailyThresholdEntityType      EntityThresholdType `json:"daily_threshold_entity_type"`
+	WithdrawalThreshold           null.Int            `json:"withdrawal_threshold"`
+	WithdrawalThresholdEntityType EntityThresholdType `json:"withdrawal_threshold_entity_type"`
+}
+
+type ThresholdType int
+
+const (
+	DailyThreshold      ThresholdType = 1
+	WithdrawalThreshold ThresholdType = 2
+)
+
+type EntityThresholdType int
+
+const (
+	PersonalThresholdEntity EntityThresholdType = 1
+	SegmentThresholdEntity  EntityThresholdType = 2
+	SystemThresholdEntity   EntityThresholdType = 3
+)

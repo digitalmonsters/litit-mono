@@ -18,6 +18,7 @@ type IUserGoWrapper interface {
 	GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
 	GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
 	GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
+	GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -178,6 +179,46 @@ func (u UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmT
 
 		if len(resp.Result) > 0 {
 			data := map[int64]UserProfileDetailRecord{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			} else {
+				result.Items = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (u UserGoWrapper) GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan {
+	respCh := make(chan GetUsersActiveThresholdsResponseChan, 2)
+
+	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetUsersActiveThresholds", GetUsersActiveThresholdsRequest{
+		UserIds: userIds,
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetUsersActiveThresholdsResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := map[int64]*ThresholdsStruct{}
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{

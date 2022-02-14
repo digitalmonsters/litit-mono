@@ -4,9 +4,10 @@ import "go.elastic.co/apm"
 
 //goland:noinspection ALL
 type UserGoWrapperMock struct {
-	GetUsersFn       func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
-	GetUsersDetailFn func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
-	GetProfileBulkFn func(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
+	GetUsersFn                 func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
+	GetUsersDetailFn           func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
+	GetProfileBulkFn           func(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
+	GetUsersActiveThresholdsFn func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
 }
 
 func (m *UserGoWrapperMock) GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan {
@@ -21,7 +22,10 @@ func (m *UserGoWrapperMock) GetProfileBulk(currentUserId int64, userIds []int64,
 	return m.GetProfileBulkFn(currentUserId, userIds, apmTransaction, forceLog)
 }
 
+func (m *UserGoWrapperMock) GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan {
+	return m.GetUsersActiveThresholdsFn(userIds, apmTransaction, forceLog)
+}
+
 func GetMock() IUserGoWrapper { // for compiler errors
 	return &UserGoWrapperMock{}
 }
-
