@@ -15,6 +15,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"gorm.io/gorm"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -125,12 +126,12 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 
 		queryParams := fmt.Sprintf("?page[size]=%v&page[number]=%v", req.Size, req.Page)
 		if req.SearchKeyword.Valid {
-			queryParams = fmt.Sprintf("%v&filter[q]=?", req.SearchKeyword.Valid)
+			queryParams += fmt.Sprintf("&filter[q]=%v", url.QueryEscape(req.SearchKeyword.String))
 		}
 
-		url := fmt.Sprintf("songs%v", queryParams)
+		link := fmt.Sprintf("songs%v", queryParams)
 
-		internalResp, err := s.makeApiRequestInternal(url, "GET", nil, apmTransaction)
+		internalResp, err := s.makeApiRequestInternal(link, "GET", nil, apmTransaction)
 		if err != nil {
 			finalResponse.Error = err
 			resChan <- finalResponse
