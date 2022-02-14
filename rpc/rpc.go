@@ -68,3 +68,9 @@ func (r *RpcError) ToError() error {
 
 	return errors.New(builder.String())
 }
+
+type CustomFile struct {
+	Data     []byte `json:"data"`
+	Filename string `json:"filename"`
+	MimeType string `json:"mime_type"`
+}
