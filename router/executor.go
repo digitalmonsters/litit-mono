@@ -11,6 +11,7 @@ type MethodExecutionData struct {
 	ApmTransaction *apm.Transaction
 	Context        context.Context
 	UserId         int64
+	UserIp         string
 	getUserValueFn func(key string) interface{}
 }
 

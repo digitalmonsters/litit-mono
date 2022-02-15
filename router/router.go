@@ -418,10 +418,16 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	executionTiming := time.Now()
 
+	var userIp string
+	if val := ctx.Request.Header.Peek("x-envoy-external-address"); len(val) > 0 {
+		userIp = string(val)
+	}
+
 	if resp, err := cmd.GetFn()(rpcRequest.Params, MethodExecutionData{
 		ApmTransaction: apmTransaction,
 		Context:        newCtx,
 		UserId:         userId,
+		UserIp:         userIp,
 		getUserValueFn: getUserValue,
 	}); err != nil {
 		rpcResponse.Error = &rpc.RpcError{
