@@ -35,6 +35,7 @@ const (
 	AdminAuthNotUniqueEmailError
 	AdminAuthNotUniqueMobilePhoneError
 	AdminAuthPasswordsDoNotMatchError
+	AdminAuthInactiveError
 )
 
 type ErrorWithCode struct {
