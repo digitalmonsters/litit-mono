@@ -28,15 +28,13 @@ type Filter struct {
 }
 
 type UserTokenomicsInfo struct {
-	TotalPoints         decimal.Decimal `json:"total_points"`
-	CurrentPoints       decimal.Decimal `json:"current_points"`
-	CollectedPoints     decimal.Decimal `json:"collected_points"`
-	VaultPoints         decimal.Decimal `json:"vault_points"`
-	AllTimeVaultPoints  decimal.Decimal `json:"all_time_vault_points"`
-	CurrentWalletPoints decimal.Decimal `json:"current_wallet_points"`
-	CurrentWalletTokens decimal.Decimal `json:"current_wallet_tokens"`
-	CurrentWalletRate   decimal.Decimal `json:"current_wallet_rate"`
-	WithdrawnTokens     decimal.Decimal `json:"withdrawn_tokens"`
+	TotalPoints        decimal.Decimal `json:"total_points"`
+	CurrentPoints      decimal.Decimal `json:"current_points"`
+	VaultPoints        decimal.Decimal `json:"vault_points"`
+	AllTimeVaultPoints decimal.Decimal `json:"all_time_vault_points"`
+	CurrentTokens      decimal.Decimal `json:"current_tokens"`
+	CurrentRate        decimal.Decimal `json:"current_rate"`
+	WithdrawnTokens    decimal.Decimal `json:"withdrawn_tokens"`
 }
 
 type SendMessageResponseChan struct {
@@ -44,15 +42,13 @@ type SendMessageResponseChan struct {
 }
 
 const (
-	TotalPoints         FilterField = "total_points"
-	CurrentPoints       FilterField = "current_points"
-	CollectedPoints     FilterField = "collected_points"
-	VaultPoints         FilterField = "vault_points"
-	AllTimeVaultPoints  FilterField = "all_time_vault_points"
-	CurrentWalletPoints FilterField = "current_wallet_points"
-	CurrentWalletTokens FilterField = "current_wallet_tokens"
-	CurrentWalletRate   FilterField = "current_wallet_rate"
-	WithdrawnTokens     FilterField = "withdrawn_tokens"
+	TotalPoints        FilterField = "total_points"
+	CurrentPoints      FilterField = "current_points"
+	VaultPoints        FilterField = "vault_points"
+	AllTimeVaultPoints FilterField = "all_time_vault_points"
+	CurrentTokens      FilterField = "current_tokens"
+	CurrentRate        FilterField = "current_rate"
+	WithdrawnTokens    FilterField = "withdrawn_tokens"
 )
 
 const (
