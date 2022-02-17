@@ -15,6 +15,8 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"gorm.io/gorm"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -122,14 +124,14 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 	s.workerPool.Submit(func() {
 		finalResponse := internal.GetSongsListResponseChan{}
 
-		queryParams := fmt.Sprintf("?size=%v&page=%v", req.Size, req.Page)
+		queryParams := fmt.Sprintf("?page[size]=%v&page[number]=%v", req.Size, req.Page)
 		if req.SearchKeyword.Valid {
-			queryParams = fmt.Sprintf("%v&q=?", req.SearchKeyword.Valid)
+			queryParams += fmt.Sprintf("&filter[q]=%v", url.QueryEscape(req.SearchKeyword.String))
 		}
 
-		url := fmt.Sprintf("songs%v", queryParams)
+		link := fmt.Sprintf("songs%v", queryParams)
 
-		internalResp, err := s.makeApiRequestInternal(url, "GET", nil, apmTransaction)
+		internalResp, err := s.makeApiRequestInternal(link, "GET", nil, apmTransaction)
 		if err != nil {
 			finalResponse.Error = err
 			resChan <- finalResponse
@@ -144,44 +146,13 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 				return
 			}
 
-			//todo: sounstripe models parsing
-
-			var songs []internal.SongModel
-			for _, song := range songs {
-				s.songsCache.Set(song.ExternalId, song, cache.DefaultExpiration)
-			}
+			songs := s.mapToOurModel(ssResp, apmTransaction)
 
 			finalResponse.Response = internal.GetSongsListResponse{
 				Songs:      songs,
-				TotalCount: ssResp.Links.Meta.TotalCount,
+				TotalCount: ssResp.Pagination.Meta.TotalCount,
 			}
 		}
-
-		/*var songs []internal.SongModel
-		for i := 1; i <= 10; i++ {
-			song := internal.SongModel{
-				ExternalId: fmt.Sprint(i),
-				Title:      fmt.Sprintf("test_title%v", i),
-				Artist:     fmt.Sprintf("test_artist%v", i),
-				ImageUrl:   fmt.Sprintf("test_image_url%v", i),
-				Genre:      fmt.Sprintf("test_genre%v", i),
-				Duration:   float64(10 * i),
-				Files: map[string]string{
-					"mp3": "https://music.cdn.dev.digitalmonster.link/a88c261b7ca42541286aeeeea39f7353.mp3",
-				},
-			}
-
-			songs = append(songs, song)
-			s.songsCache.Set(song.ExternalId, song, cache.DefaultExpiration)
-		}
-
-		finalResponse := internal.GetSongsListResponseChan{
-			Error: nil,
-			Response: internal.GetSongsListResponse{
-				Songs:      songs,
-				TotalCount: 10,
-			},
-		}*/
 
 		resChan <- finalResponse
 	})
@@ -189,10 +160,64 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 	return resChan
 }
 
+func (s *Service) mapToOurModel(ssResp soundstripeSongsResp, apmTransaction *apm.Transaction) []internal.SongModel {
+	includedMapped := map[string]map[string]includedData{}
+	for _, song := range ssResp.Included {
+		if _, ok := includedMapped[song.Type]; !ok {
+			includedMapped[song.Type] = map[string]includedData{}
+		}
+
+		includedMapped[song.Type][song.Id] = song
+	}
+
+	var songs []internal.SongModel
+	for _, song := range ssResp.MusicData {
+
+		var artist *includedData
+		var audioFiles *includedData
+
+		for _, artistsData := range song.Relationships.Artists.Data {
+			if artistMapped, ok := includedMapped[IncludedTypeArtists][artistsData.Id]; ok {
+				artist = &artistMapped
+			}
+		}
+
+		for _, audioData := range song.Relationships.AudioFiles.Data {
+			if audioFilesMapped, ok := includedMapped[IncludedTypeAudioFiles][audioData.Id]; ok {
+				audioFiles = &audioFilesMapped
+			}
+		}
+
+		if artist == nil || audioFiles == nil {
+			apm_helper.CaptureApmError(errors.New("can not map artist or audio files"), apmTransaction)
+			continue
+		}
+
+		ss := internal.SongModel{
+			Source:     database.SongSourceSoundStripe,
+			ExternalId: song.Id,
+			Title:      song.Attributes.Title,
+			Artist:     artist.Attributes.Name,
+			ImageUrl:   artist.Attributes.Image,
+			Genre:      strings.Join(song.Attributes.Tags.Genre, ","),
+			Duration:   audioFiles.Attributes.Duration,
+			Files:      audioFiles.Attributes.Versions,
+		}
+
+		songs = append(songs, ss)
+		s.songsCache.Set(ss.ExternalId, ss, cache.DefaultExpiration)
+	}
+
+	return songs
+}
+
 func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error) {
-	return map[string]string{
-		"mp3": "https://music.cdn.dev.digitalmonster.link/a88c261b7ca42541286aeeeea39f7353.mp3",
-	}, nil
+	songResp := <-s.getSong(externalSongId, apmTransaction)
+	if songResp.Error != nil {
+		return nil, songResp.Error
+	}
+
+	return songResp.Song.Files, nil
 }
 
 func (s *Service) getSong(externalId string, apmTransaction *apm.Transaction) chan internal.GetSongResponseChan {
@@ -208,14 +233,26 @@ func (s *Service) getSong(externalId string, apmTransaction *apm.Transaction) ch
 		}
 
 		if finalResponse.Error == nil && len(internalResp) > 0 {
-			var song internal.SongModel
-			if err = json.Unmarshal(internalResp, &song); err != nil {
+			var songResp soundstripeSingleSongsResp
+			if err = json.Unmarshal(internalResp, &songResp); err != nil {
 				finalResponse.Error = err
 				resChan <- finalResponse
 				return
 			}
 
-			finalResponse.Song = song
+			songs := s.mapToOurModel(soundstripeSongsResp{
+				MusicData:  []musicData{songResp.MusicData},
+				Pagination: songResp.Pagination,
+				Included:   songResp.Included,
+			}, apmTransaction)
+
+			if len(songs) == 0 {
+				finalResponse.Error = errors.New("can not map song")
+				resChan <- finalResponse
+				return
+			}
+
+			finalResponse.Song = songs[0]
 		}
 
 		resChan <- finalResponse
@@ -239,8 +276,11 @@ func (s *Service) makeApiRequestInternal(apiMethod string, httpMethod string, bo
 		httpReq.SetBody(body)
 	}
 
-	err := apm_helper.SendHttpRequest(cl, httpReq, httpRes, apmTransaction, s.timeout, true)
+	httpReq.Header.Set("Authorization", fmt.Sprintf("Token %v", s.apiToken))
 
+	utils.AppendBrowserHeaders(httpReq)
+
+	err := apm_helper.SendHttpRequest(cl, httpReq, httpRes, apmTransaction, s.timeout, true)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
