@@ -1,0 +1,34 @@
+package api
+
+import (
+	"github.com/digitalmonsters/ads-manager/pkg/database"
+	"github.com/digitalmonsters/ads-manager/pkg/message"
+	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
+)
+
+func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper) error {
+	getAdsMessagePath := "/ads/message/me"
+
+	getAdsMessageRoute := router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		resp, err := message.GetMessageForUser(executionData.UserId, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), userGoWrapper, executionData.ApmTransaction)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, getAdsMessagePath, router.MethodGet, true, false)
+
+	if err := httpRouter.RegisterRestCmd(getAdsMessageRoute); err != nil {
+		return err
+	}
+
+	apiDef[getAdsMessagePath] = swagger.ApiDescription{
+		Response: message.NotificationMessage{},
+		Tags:     []string{"ads", "message"},
+	}
+
+	return nil
+}
