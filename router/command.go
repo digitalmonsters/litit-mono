@@ -99,7 +99,7 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 		}
 	}
 
-	return 0, nil
+	return userId, nil
 }
 
 func (c Command) ForceLog() bool {
