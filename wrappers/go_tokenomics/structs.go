@@ -77,3 +77,12 @@ func GetFilterString(filter Filter) string {
 	}
 	return filterString
 }
+
+type GetWithdrawalsAmountsByAdminIdsRequest struct {
+	AdminIds []int64 `json:"admin_ids"`
+}
+
+type GetWithdrawalsAmountsByAdminIdsResponseChan struct {
+	Items map[int64]decimal.Decimal
+	Error *rpc.RpcError
+}

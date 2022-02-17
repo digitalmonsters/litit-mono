@@ -19,6 +19,7 @@ type Wrapper struct {
 
 type IGoTokenomicsWrapper interface {
 	GetUsersTokenomicsInfo(userIds []int64, filters []Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan
+	GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
@@ -58,6 +59,29 @@ func (w *Wrapper) GetUsersTokenomicsInfo(userIds []int64, filters []Filter, apmT
 		resp := <-respChan
 
 		result := GetUsersTokenomicsInfoResponseChan{
+			Error: resp.Error,
+		}
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (w *Wrapper) GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan {
+	respCh := make(chan GetWithdrawalsAmountsByAdminIdsResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetWithdrawalsAmountsByAdminIds", GetWithdrawalsAmountsByAdminIdsRequest{
+		AdminIds: adminIds,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetWithdrawalsAmountsByAdminIdsResponseChan{
 			Error: resp.Error,
 		}
 		respCh <- result

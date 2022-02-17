@@ -3,11 +3,16 @@ package go_tokenomics
 import "go.elastic.co/apm"
 
 type GoTokenomicsWrapperMock struct {
-	GetUsersTokenomicsInfoFn func(userIds []int64, filters []Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan
+	GetUsersTokenomicsInfoFn          func(userIds []int64, filters []Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan
+	GetWithdrawalsAmountsByAdminIdsFn func(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan
 }
 
 func (w *GoTokenomicsWrapperMock) GetUsersTokenomicsInfo(userIds []int64, filters []Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan {
 	return w.GetUsersTokenomicsInfoFn(userIds, filters, apmTransaction, forceLog)
+}
+
+func (w *GoTokenomicsWrapperMock) GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan {
+	return w.GetWithdrawalsAmountsByAdminIdsFn(adminIds, apmTransaction, forceLog)
 }
 
 func GetMock() IGoTokenomicsWrapper {
