@@ -3,7 +3,7 @@ module github.com/digitalmonsters/ads-manager
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.16.18
+	github.com/digitalmonsters/go-common v1.16.19
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/lib/pq v1.10.2
 	github.com/pkg/errors v0.9.1
