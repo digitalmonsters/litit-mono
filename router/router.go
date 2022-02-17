@@ -392,7 +392,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 		return
 	}
 
-	if userId == 0 && (cmd.RequireIdentityValidation() || cmd.AccessLevel() > common.AccessLevelPublic) {
+	if userId <= 0 && (cmd.RequireIdentityValidation() || cmd.AccessLevel() > common.AccessLevelPublic) {
 		err := errors.New("missing jwt token for auth")
 
 		rpcError = &rpc.RpcError{

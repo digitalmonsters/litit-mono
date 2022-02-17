@@ -74,6 +74,7 @@ func (c Command) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transa
 }
 
 func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation bool) (int64, *rpc.RpcError) {
+	var userId int64
 	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
 		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
@@ -84,12 +85,12 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 					ServiceName: hostName,
 				}
 			} else {
-				return userIdParsed, nil
+				userId = userIdParsed
 			}
 		}
 	}
 
-	if requireIdentityValidation {
+	if requireIdentityValidation && userId <= 0 {
 		return 0, &rpc.RpcError{
 			Code:        error_codes.MissingJwtToken,
 			Message:     "public method requires identity validation",
