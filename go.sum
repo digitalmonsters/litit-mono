@@ -44,8 +44,8 @@ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc h1:VRRKCwnzqk8QCaRC4os14xoKDdbHqqlJtJA0oc1ZAjg=
 github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
-github.com/digitalmonsters/go-common v1.16.9 h1:uGeX/qiUvqUfZsiavZGdcybTySSjV4YMUuRuFWab+Gg=
-github.com/digitalmonsters/go-common v1.16.9/go.mod h1:B6YvSlxM9a6BzD3yBR75t2LmQ4OullGcvJjwqRnclCk=
+github.com/digitalmonsters/go-common v1.16.18 h1:LS6J5LzuoYAyWqdrfKP7R1LtQuecI5f9dAxbYC/Xn4I=
+github.com/digitalmonsters/go-common v1.16.18/go.mod h1:B6YvSlxM9a6BzD3yBR75t2LmQ4OullGcvJjwqRnclCk=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
 github.com/elastic/go-licenser v0.3.1/go.mod h1:D8eNQk70FOCVBl3smCGQt/lv7meBeQno2eI1S5apiHQ=
 github.com/elastic/go-licenser v0.4.0 h1:jLq6A5SilDS/Iz1ABRkO6BHy91B9jBora8FwGRsDqUI=

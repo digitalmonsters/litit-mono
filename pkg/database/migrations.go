@@ -45,5 +45,16 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_index_change_17022022",
+			Migrate: func(db *gorm.DB) error {
+				query := `drop index messages_title_uindex;
+						  create unique index messages_title_uindex on messages (title) where deleted_at is null;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
