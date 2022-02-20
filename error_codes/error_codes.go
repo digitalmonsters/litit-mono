@@ -23,6 +23,7 @@ const (
 	GenericTimeoutError         ErrorCode = 502
 	GenericPanicError           ErrorCode = -32603
 	UserHasNoPermissionToMethod ErrorCode = 601
+	KYCRequiredError                      = ErrorCode(602)
 )
 
 const (
