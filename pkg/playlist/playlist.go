@@ -125,7 +125,7 @@ func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*Play
 	paginatorRules := []paginator.Rule{
 		{
 			Key:   "SortOrder",
-			Order: paginator.DESC,
+			Order: paginator.ASC,
 		},
 		{
 			Key:   "Id",
