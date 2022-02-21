@@ -1,9 +1,10 @@
-package api
+package music
 
 import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/music/cmd/api"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/favorites"
 	"github.com/digitalmonsters/music/pkg/music_source"
@@ -40,7 +41,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		if err := favorites.AddToFavorites(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context)); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
-			return successResponse{
+			return api.SuccessResponse{
 				Success: true,
 			}, nil
 		}
@@ -70,7 +71,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		if err := favorites.RemoveFromFavorites(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context)); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
-			return successResponse{
+			return api.SuccessResponse{
 				Success: true,
 			}, nil
 		}
@@ -237,7 +238,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 				Type:        "string",
 			},
 		},
-		Response:          successResponse{},
+		Response:          api.SuccessResponse{},
 		MethodDescription: "add song ro favorites",
 		Tags:              []string{"favorites", "public"},
 	}
@@ -252,7 +253,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 				Type:        "string",
 			},
 		},
-		Response:          successResponse{},
+		Response:          api.SuccessResponse{},
 		MethodDescription: "remove song from favorites",
 		Tags:              []string{"favorites", "public"},
 	}
