@@ -226,5 +226,118 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "creator_init_080220221909",
+			Migrate: func(db *gorm.DB) error {
+				query := `create table creators
+							(
+								id serial
+								constraint creators_pk
+								primary key,
+								user_id bigint,
+								status int,
+								reject_reason text,
+								library_url text,
+								created_at timestamp default current_timestamp,
+								approved_at timestamp,
+								deleted_at timestamp
+							);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "reject_reasons_init_10022022",
+			Migrate: func(db *gorm.DB) error {
+				query := `create table creator_reject_reasons
+						(
+							id serial
+							constraint reject_reasons_pk
+							primary key,
+							reason text,
+							created_at timestamp default current_timestamp,
+							deleted_at timestamp
+						);
+					
+							create unique index creator_reject_reasons_reason_uindex
+							on creator_reject_reasons (reason);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "new_fk_reject_reason_10022022",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creators alter column reject_reason type int using reject_reason::int;
+						  alter table creators add constraint creators_creator_reject_reasons_id_fk
+						  foreign key (reject_reason) references creator_reject_reasons;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "categories_init_11022022",
+			Migrate: func(db *gorm.DB) error {
+				query := `create table categories
+						(
+							id serial
+							constraint categories_pk
+							primary key,
+							name text,
+							sort_order int,
+							songs_count int,
+							created_at timestamp default current_timestamp,
+							updated_at timestamp,
+							deleted_at timestamp
+						);
+					
+							create unique index categories_name_uindex
+							on categories (name);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "creator_songs_init_11022022",
+			Migrate: func(db *gorm.DB) error {
+				query := `create table creator_songs
+						(
+							id serial
+								constraint creator_songs_pk
+									primary key,
+							user_id bigint,
+							name text,
+							status int,
+							lyric_author text,
+							music_author text,
+							category_id bigint,
+							full_song_url text,
+							short_song_url text,
+							image_url text,
+							hashtags text[],
+							short_listens int,
+							full_listens int,
+							likes int,
+							comments int,
+							used_in_video int,
+							points_earned numeric,
+							created_at timestamp default current_timestamp,
+							updated_at timestamp,
+							deleted_at timestamp
+						);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

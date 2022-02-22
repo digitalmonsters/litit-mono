@@ -1,5 +1,5 @@
 package api
 
-type successResponse struct {
+type SuccessResponse struct {
 	Success bool `json:"success"`
 }
