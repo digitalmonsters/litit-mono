@@ -51,7 +51,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, cfg); err != nil {
+	if err := creator.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef, cfg); err != nil {
 		log.Panic().Err(err).Msg("[Creators Admin API] Cannot initialize api")
 		panic(err)
 	}

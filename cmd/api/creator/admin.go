@@ -2,6 +2,7 @@ package creator
 
 import (
 	"encoding/json"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -12,7 +13,7 @@ import (
 )
 
 func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription, cfg configs.Settings) error {
-	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CreatorRequestsListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRequestsListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req creators.CreatorRequestsListRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
@@ -24,11 +25,11 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return res, nil
-	})); err != nil {
+	}, common.AccessLevelRead, "music:creator:list")); err != nil {
 		return err
 	}
 
-	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CreatorRequestApproveAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRequestApproveAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req creators.CreatorRequestApproveRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
@@ -40,11 +41,11 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return res, nil
-	})); err != nil {
+	}, common.AccessLevelRead, "music:creator:crud:approve")); err != nil {
 		return err
 	}
 
-	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CreatorRequestRejectAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRequestRejectAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req creators.CreatorRequestRejectRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
@@ -56,11 +57,11 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return res, nil
-	})); err != nil {
+	}, common.AccessLevelRead, "music:creator:crud:reject")); err != nil {
 		return err
 	}
 
-	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CreatorRejectReasonUpsertAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRejectReasonUpsertAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req reject_reasons.UpsertRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
@@ -72,11 +73,11 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return res, nil
-	})); err != nil {
+	}, common.AccessLevelWrite, "music:creator:crud:upsert")); err != nil {
 		return err
 	}
 
-	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CreatorRejectReasonListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRejectReasonListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req reject_reasons.ListRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
@@ -88,11 +89,11 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return res, nil
-	})); err != nil {
+	}, common.AccessLevelPublic, "music:reason:list")); err != nil {
 		return err
 	}
 
-	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CreatorRejectReasonDeleteAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRejectReasonDeleteAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req reject_reasons.DeleteRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
@@ -104,7 +105,7 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return "ok", nil
-	})); err != nil {
+	}, common.AccessLevelPublic, "music:reason:crud:delete")); err != nil {
 		return err
 	}
 
