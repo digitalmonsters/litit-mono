@@ -88,21 +88,6 @@ func (w *Wrapper) GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransacti
 		result := GetWithdrawalsAmountsByAdminIdsResponseChan{
 			Error: resp.Error,
 		}
-		if len(resp.Result) > 0 {
-			data := map[int64]decimal.Decimal{}
-
-			if err := json.Unmarshal(resp.Result, &data); err != nil {
-				result.Error = &rpc.RpcError{
-					Code:        error_codes.GenericMappingError,
-					Message:     err.Error(),
-					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
-				}
-			} else {
-				result.Items = data
-			}
-		}
 
 		respCh <- result
 	}()
@@ -127,6 +112,22 @@ func (w *Wrapper) GetContentEarningsTotalByContentIds(contentIds []int64, apmTra
 		result := GetContentEarningsTotalByContentIdsResponseChan{
 			Error: resp.Error,
 		}
+		if len(resp.Result) > 0 {
+			data := map[int64]decimal.Decimal{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Items = data
+			}
+		}
+
 		respCh <- result
 	}()
 
