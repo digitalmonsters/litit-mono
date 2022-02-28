@@ -339,5 +339,17 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "add_reasons_28021992",
+			Migrate: func(db *gorm.DB) error {
+				query := `INSERT INTO creator_reject_reasons (id, reason, created_at, deleted_at) VALUES (DEFAULT, 'we have identified copyright issues'::text, DEFAULT, null::timestamp);
+						  INSERT INTO creator_reject_reasons (id, reason, created_at, deleted_at) VALUES (DEFAULT, 'the music wasn''t fully produced by you'::text, DEFAULT, null::timestamp);
+						  INSERT INTO creator_reject_reasons (id, reason, created_at, deleted_at) VALUES (DEFAULT, 'currently your music cannot be added to lit.it music library'::text, DEFAULT, null::timestamp);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
