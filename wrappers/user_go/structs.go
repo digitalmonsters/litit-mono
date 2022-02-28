@@ -114,14 +114,15 @@ type GetUsersActiveThresholdsRequest struct {
 
 type GetUsersActiveThresholdsResponseChan struct {
 	Error *rpc.RpcError
-	Items map[int64]*ThresholdsStruct `json:"items"`
+	Items map[int64]ThresholdsStruct `json:"items"`
 }
 
 type ThresholdsStruct struct {
-	DailyThreshold                null.Int            `json:"daily_threshold"`
-	DailyThresholdEntityType      EntityThresholdType `json:"daily_threshold_entity_type"`
-	WithdrawalThreshold           null.Int            `json:"withdrawal_threshold"`
-	WithdrawalThresholdEntityType EntityThresholdType `json:"withdrawal_threshold_entity_type"`
+	Id            int64               `json:"id"`
+	ThresholdType ThresholdType       `json:"threshold_type"`
+	EntityType    EntityThresholdType `json:"entity_type"`
+	EntityId      int64               `json:"entity_id"`
+	Amount        null.Int            `json:"amount"`
 }
 
 type ThresholdType int

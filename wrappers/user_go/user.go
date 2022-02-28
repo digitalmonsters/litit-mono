@@ -218,7 +218,7 @@ func (u UserGoWrapper) GetUsersActiveThresholds(userIds []int64, apmTransaction 
 		}
 
 		if len(resp.Result) > 0 {
-			data := map[int64]*ThresholdsStruct{}
+			var data = make(map[int64]ThresholdsStruct)
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{
