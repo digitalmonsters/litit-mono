@@ -1,15 +1,19 @@
 package boilerplate_testing
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/jackc/pgx/v4"
 	"github.com/juju/fslock"
+	"github.com/pkg/errors"
+	"github.com/romanyx/polluter"
 	"github.com/rs/zerolog/log"
 	"github.com/thoas/go-funk"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"io/ioutil"
 	"os"
 	path2 "path"
 	"strings"
@@ -48,7 +52,7 @@ func EnsurePostgresDbExists(config boilerplate.DbConfig) error {
 	defer func() {
 		_ = lock.Unlock()
 	}()
-	
+
 	oldDbName := config.Db
 
 	config.Db = "postgres"
@@ -203,6 +207,39 @@ func randStringRunes() string {
 func ExecutePostgresSql(db *gorm.DB, sql ...string) error {
 	for _, s := range sql {
 		if err := db.Exec(s).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func PollutePostgresDatabase(gormDb *gorm.DB, filePaths ...string) error {
+	var found []string
+
+	for _, fileToFind := range filePaths {
+		if path, err := boilerplate.RecursiveFindFile(fileToFind, "./", 30); err != nil {
+			return errors.WithStack(err)
+		} else {
+			found = append(found, path)
+		}
+	}
+
+	db, err := gormDb.DB()
+	if err != nil {
+		return err
+	}
+
+	seeder := polluter.
+		New(polluter.JSONParser, polluter.PostgresEngine(db))
+
+	for _, f := range found {
+		data, err := ioutil.ReadFile(f)
+		if err != nil {
+			return err
+		}
+
+		if err = seeder.Pollute(bytes.NewReader(data)); err != nil {
 			return err
 		}
 	}

@@ -28,6 +28,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/romanyx/polluter v1.2.2
 	github.com/rs/zerolog v1.26.1
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/scylladb/gocqlx/v2 v2.6.0
