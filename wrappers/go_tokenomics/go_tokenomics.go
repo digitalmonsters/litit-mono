@@ -1,11 +1,15 @@
 package go_tokenomics
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
+	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 	"go.elastic.co/apm"
 	"time"
 )
@@ -82,6 +86,45 @@ func (w *Wrapper) GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransacti
 		resp := <-respChan
 
 		result := GetWithdrawalsAmountsByAdminIdsResponseChan{
+			Error: resp.Error,
+		}
+		if len(resp.Result) > 0 {
+			data := map[int64]decimal.Decimal{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Items = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (w *Wrapper) GetContentEarningsTotalByContentIds(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetContentEarningsTotalByContentIdsResponseChan {
+	respCh := make(chan GetContentEarningsTotalByContentIdsResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetContentEarningsTotal", GetContentEarningsTotalByContentIdsRequest{
+		ContentIds: contentIds,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetContentEarningsTotalByContentIdsResponseChan{
 			Error: resp.Error,
 		}
 		respCh <- result

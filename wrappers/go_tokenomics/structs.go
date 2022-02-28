@@ -86,3 +86,12 @@ type GetWithdrawalsAmountsByAdminIdsResponseChan struct {
 	Items map[int64]decimal.Decimal
 	Error *rpc.RpcError
 }
+
+type GetContentEarningsTotalByContentIdsRequest struct {
+	ContentIds []int64 `json:"content_ids"`
+}
+
+type GetContentEarningsTotalByContentIdsResponseChan struct {
+	Items map[int64]decimal.Decimal
+	Error *rpc.RpcError
+}
