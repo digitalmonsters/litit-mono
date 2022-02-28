@@ -2,6 +2,7 @@ package extract
 
 import (
 	"fmt"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"strconv"
 )
@@ -52,6 +53,24 @@ func Int64(getFn func(key string) interface{}, key string, defaultValue int64, m
 			}
 
 			return finalVal
+		}
+	}
+}
+
+func Decimal(getFn func(key string) interface{}, key string, defaultValue decimal.Decimal) decimal.Decimal {
+	val := getFn(key)
+
+	if val == nil {
+		return defaultValue
+	}
+
+	if v, ok := val.(string); !ok {
+		return defaultValue
+	} else {
+		if n, err := decimal.NewFromString(v); err != nil {
+			return defaultValue
+		} else {
+			return n
 		}
 	}
 }
