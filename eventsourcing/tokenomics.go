@@ -3,6 +3,7 @@ package eventsourcing
 import (
 	"fmt"
 	"github.com/shopspring/decimal"
+	"time"
 )
 
 type UserBalanceChangeEvent struct {
@@ -20,5 +21,17 @@ type UserBalanceChangeEvent struct {
 }
 
 func (u UserBalanceChangeEvent) GetPublishKey() string {
+	return fmt.Sprintf("%v", u.UserId)
+}
+
+type PaidFeatureUpdateEvent struct {
+	Id        int       `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Feature   string    `json:"feature"`
+	UserId    int64     `json:"userId"`
+}
+
+func (u PaidFeatureUpdateEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v", u.UserId)
 }
