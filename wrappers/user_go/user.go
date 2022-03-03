@@ -19,6 +19,8 @@ type IUserGoWrapper interface {
 	GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
 	GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 	GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
+	GetUserIdsFilterByUsername(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
+	GetUsersTags(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -219,6 +221,87 @@ func (u UserGoWrapper) GetUsersActiveThresholds(userIds []int64, apmTransaction 
 
 		if len(resp.Result) > 0 {
 			var data = make(map[int64]ThresholdsStruct)
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			} else {
+				result.Items = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (u UserGoWrapper) GetUserIdsFilterByUsername(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan {
+	respCh := make(chan GetUserIdsFilterByUsernameResponseChan, 2)
+
+	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetUserIdsFilterByUsername", GetUserIdsFilterByUsernameRequest{
+		UserIds:     userIds,
+		SearchQuery: searchQuery,
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetUserIdsFilterByUsernameResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			var data = make([]int64, 0)
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			} else {
+				result.UserIds = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (u UserGoWrapper) GetUsersTags(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan {
+	respCh := make(chan GetUsersTagsResponseChan, 2)
+
+	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetUsersTags", GetUsersTagsRequest{
+		UserIds: userIds,
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetUsersTagsResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			var data = make(map[int64][]Tag)
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{

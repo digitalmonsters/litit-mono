@@ -16,6 +16,8 @@ import (
 type IAuthGoWrapper interface {
 	CheckAdminPermissions(userId int64, obj string, transaction *apm.Transaction, forceLog bool) chan CheckAdminPermissionsResponseChan
 	CheckLegacyAdmin(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan
+	GetAdminIdsFilterByEmail(adminIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminIdsFilterByEmailResponseChan
+	GetAdminsInfoById(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
 }
 
 type AuthGoWrapper struct {
@@ -107,6 +109,87 @@ func (w *AuthGoWrapper) CheckAdminPermissions(userId int64, obj string, transact
 		}
 
 		respCh <- finalResponse
+	}()
+
+	return respCh
+}
+
+func (u AuthGoWrapper) GetAdminIdsFilterByEmail(adminIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminIdsFilterByEmailResponseChan {
+	respCh := make(chan GetAdminIdsFilterByEmailResponseChan, 2)
+
+	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetAdminIdsFilterByEmail", GetAdminIdsFilterByEmailRequest{
+		AdminIds:    adminIds,
+		SearchQuery: searchQuery,
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetAdminIdsFilterByEmailResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			var data = make([]int64, 0)
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			} else {
+				result.AdminIds = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (u AuthGoWrapper) GetAdminsInfoById(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan {
+	respCh := make(chan GetAdminsInfoByIdResponseChan, 2)
+
+	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "GetAdminsInfoById", GetAdminsInfoByIdRequest{
+		AdminIds: adminIds,
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetAdminsInfoByIdResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			var data = make(map[int64]AdminGeneralInfo)
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			} else {
+				result.Items = data
+			}
+		}
+
+		respCh <- result
 	}()
 
 	return respCh

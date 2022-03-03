@@ -139,3 +139,32 @@ const (
 	SegmentThresholdEntity  EntityThresholdType = 2
 	SystemThresholdEntity   EntityThresholdType = 3
 )
+
+type GetUserIdsFilterByUsernameRequest struct {
+	UserIds     []int64 `json:"user_ids"`
+	SearchQuery string  `json:"search_query"`
+}
+
+type GetUserIdsFilterByUsernameResponseChan struct {
+	Error   *rpc.RpcError
+	UserIds []int64 `json:"user_ids"`
+}
+
+type GetUsersTagsRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
+type GetUsersTagsResponseChan struct {
+	Error *rpc.RpcError
+	Items map[int64][]Tag `json:"items"`
+}
+
+type Tag int
+
+const (
+	JunkActivity              Tag = 1 << 0
+	LotsOfInvites             Tag = 1 << 1
+	ConstantExceedingOfLimits Tag = 1 << 2
+	LargeWalletBalance        Tag = 1 << 3
+	SuspiciousUser            Tag = 1 << 4
+)
