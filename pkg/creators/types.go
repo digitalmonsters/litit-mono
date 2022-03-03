@@ -27,8 +27,17 @@ const (
 )
 
 type CreatorRequestsListResponse struct {
-	Items      []database.Creator `json:"items"`
-	TotalCount int64              `json:"total_count"`
+	Items      []creatorListItem `json:"items"`
+	TotalCount int64             `json:"total_count"`
+}
+
+type creatorListItem struct {
+	database.Creator
+	UserId    int64       `json:"user_id"`
+	FirstName string      `json:"first_name"`
+	LastName  string      `json:"last_name"`
+	UserName  string      `json:"user_name"`
+	Avatar    null.String `json:"avatar"`
 }
 
 type CreatorRequestApproveRequest struct {

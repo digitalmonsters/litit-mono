@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/stretchr/testify/assert"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
@@ -17,10 +19,32 @@ import (
 
 var config configs.Settings
 var gormDb *gorm.DB
+var userWrapper *user.UserWrapperMock
 
 func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	gormDb = database.GetDb(database.DbTypeMaster)
+	userWrapper = &user.UserWrapperMock{}
+
+	userWrapper.GetUsersFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUsersResponseChan {
+		ch := make(chan user.GetUsersResponseChan, 2)
+		resp := map[int64]user.UserRecord{}
+
+		for _, userId := range userIds {
+			resp[userId] = user.UserRecord{
+				UserId: userId,
+			}
+		}
+
+		ch <- user.GetUsersResponseChan{
+			Error: nil,
+			Items: resp,
+		}
+		close(ch)
+
+		return ch
+	}
+
 	os.Exit(m.Run())
 }
 
@@ -89,7 +113,7 @@ func TestCreatorRequestsList(t *testing.T) {
 		MaxThresholdExceeded: false,
 		Limit:                10,
 		Offset:               0,
-	}, gormDb, config.Creators.MaxThresholdHours)
+	}, gormDb, config.Creators.MaxThresholdHours, nil, userWrapper)
 
 	assert.Nil(t, err)
 	assert.Len(t, resp.Items, 6)
@@ -98,7 +122,7 @@ func TestCreatorRequestsList(t *testing.T) {
 		MaxThresholdExceeded: true,
 		Limit:                10,
 		Offset:               0,
-	}, gormDb, config.Creators.MaxThresholdHours)
+	}, gormDb, config.Creators.MaxThresholdHours, nil, userWrapper)
 
 	assert.Nil(t, err)
 	assert.Len(t, resp.Items, 1)

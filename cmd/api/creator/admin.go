@@ -6,20 +6,21 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/creators"
 	"github.com/digitalmonsters/music/pkg/creators/reject_reasons"
 	"github.com/digitalmonsters/music/pkg/database"
 )
 
-func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription, cfg configs.Settings) error {
+func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription, cfg configs.Settings, userWrapper user.IUserWrapper) error {
 	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRequestsListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req creators.CreatorRequestsListRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		res, err := creators.CreatorRequestsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), cfg.Creators.MaxThresholdHours)
+		res, err := creators.CreatorRequestsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), cfg.Creators.MaxThresholdHours, executionData.ApmTransaction, userWrapper)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
