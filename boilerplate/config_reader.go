@@ -127,6 +127,12 @@ type KafkaListenerConfiguration struct {
 	BackOffTimeIntervalMilliseconds int        `json:"BackOffTimeIntervalMilliseconds"`
 }
 
+type KafkaBatchListenerConfiguration struct {
+	KafkaListenerConfiguration
+	MaxDuration  int `json:"MaxDuration"`
+	MaxBatchSize int `json:"MaxBatchSize"`
+}
+
 type KafkaWriterConfiguration struct {
 	Hosts     string    `json:"Hosts"`
 	KafkaAuth KafkaAuth `json:"KafkaAuth"`
