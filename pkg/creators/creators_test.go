@@ -28,6 +28,20 @@ func TestMain(m *testing.M) {
 
 	userWrapper.GetUsersFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUsersResponseChan {
 		ch := make(chan user.GetUsersResponseChan, 2)
+		resp := map[int64]user.UserRecord{}
+
+		for _, userId := range userIds {
+			resp[userId] = user.UserRecord{
+				UserId: userId,
+			}
+		}
+
+		ch <- user.GetUsersResponseChan{
+			Error: nil,
+			Items: resp,
+		}
+		close(ch)
+
 		return ch
 	}
 
