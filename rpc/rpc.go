@@ -70,7 +70,8 @@ func (r *RpcError) ToError() error {
 }
 
 type CustomFile struct {
-	Data     []byte `json:"data"`
-	Filename string `json:"filename"`
-	MimeType string `json:"mime_type"`
+	Data                         []byte `json:"data"`
+	Filename                     string `json:"filename"`
+	MimeType                     string `json:"mime_type"`
+	ContentDispositionFirstParam string `json:"content_disposition_first_param"`
 }

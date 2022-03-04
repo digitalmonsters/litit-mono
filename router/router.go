@@ -309,7 +309,14 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		if d, ok := restResponse.Data.(*rpc.CustomFile); ok {
 			responseBody = d.Data
 			ctx.Response.Header.SetContentType(d.MimeType)
-			ctx.Response.Header.Set(fasthttp.HeaderContentDisposition, fmt.Sprintf("attachment; filename=\"%v\"", d.Filename))
+			contentDispositionFirstParam := d.ContentDispositionFirstParam
+
+			if len(contentDispositionFirstParam) == 0 {
+				contentDispositionFirstParam = "attachment"
+			}
+
+			ctx.Response.Header.Set(fasthttp.HeaderContentDisposition,
+				fmt.Sprintf("%v; filename=\"%v\"", contentDispositionFirstParam, d.Filename))
 			ctx.Response.Header.Set(fasthttp.HeaderAcceptRanges, "bytes")
 		} else {
 			if responseBody, err = json.Marshal(restResponse); err != nil {
