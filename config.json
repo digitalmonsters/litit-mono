@@ -1,0 +1,16 @@
+{
+  "HttpPort": 5212,
+  "PrivateHttpPort": 5211,
+  "Db": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "base_api",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "Wrappers": {
+    "UserInfo": {
+      "ApiUrl": ""
+    }
+  }
+}
