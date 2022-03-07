@@ -24,7 +24,7 @@ func (w *AuthWrapperMock) ParseNewAdminToken(token string, ignoreExpiration bool
 	return w.ParseNewAdminTokenFn(token, ignoreExpiration, apmTransaction, forceLog)
 }
 
-func (w *AuthWrapperMock) GenerateToken(userId int64, apmTransaction *apm.Transaction,
+func (w *AuthWrapperMock) GenerateToken(userId int64, isGuest bool, apmTransaction *apm.Transaction,
 	forceLog bool) chan GenerateTokenResponseChan {
 	return w.GenerateTokenFn(userId, apmTransaction, forceLog)
 }

@@ -19,7 +19,7 @@ type IAuthWrapper interface {
 		forceLog bool) chan AuthParseTokenResponseChan
 	ParseNewAdminToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan AuthParseTokenResponseChan
-	GenerateToken(userId int64, apmTransaction *apm.Transaction,
+	GenerateToken(userId int64, isGuest bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan GenerateTokenResponseChan
 	GenerateNewAdminToken(userId int64, ctx context.Context,
 		forceLog bool) chan GenerateTokenResponseChan
@@ -121,12 +121,17 @@ func (w *AuthWrapper) ParseNewAdminToken(token string, ignoreExpiration bool, ap
 	return resChan
 }
 
-func (w *AuthWrapper) GenerateToken(userId int64, apmTransaction *apm.Transaction,
+func (w *AuthWrapper) GenerateToken(userId int64, isGuest bool, apmTransaction *apm.Transaction,
 	forceLog bool) chan GenerateTokenResponseChan {
 	resChan := make(chan GenerateTokenResponseChan, 2)
 
 	go func() {
-		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(fmt.Sprintf("%v/token/%v", w.apiUrl, userId),
+		link := fmt.Sprintf("%v/token/%v", w.apiUrl, userId)
+		if isGuest {
+			link = fmt.Sprintf("%v?guest=true", link)
+		}
+
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
 			"GET",
 			"application/json",
 			"generate token",
