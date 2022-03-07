@@ -95,3 +95,28 @@ type GetContentEarningsTotalByContentIdsResponseChan struct {
 	Items map[int64]decimal.Decimal
 	Error *rpc.RpcError
 }
+
+type GetTokenomicsStatsByUserIdRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
+type GetTokenomicsStatsByUserIdResponseChan struct {
+	Items map[int64]*UserTokenomicsStats `json:"items"`
+	Error *rpc.RpcError
+}
+
+type UserTokenomicsStats struct {
+	LITITBalance                  decimal.Decimal `json:"litit_balance"`
+	PointsForViews                decimal.Decimal `json:"points_for_views"`
+	TipsNumber                    int             `json:"tips_number"`
+	PointsForTips                 decimal.Decimal `json:"points_for_tips"`
+	TapjoyActivityNumber          int             `json:"tapjoy_activity_number"`
+	PointsForTapjoyActivity       decimal.Decimal `json:"points_for_tapjoy_activity"`
+	PointsForInviting             decimal.Decimal `json:"points_for_inviting"`
+	ApprovedTransactionsNumber    int             `json:"approved_transactions_number"`
+	PointsForApprovedTransactions decimal.Decimal `json:"points_for_approved_transactions"`
+	RejectedTransactionsNumber    int             `json:"rejected_transactions_number"`
+	PointsForRejectedTransactions decimal.Decimal `json:"points_for_rejected_transactions"`
+	PendingTransactionsNumber     int             `json:"pending_transactions_number"`
+	PointsForPendingTransactions  decimal.Decimal `json:"points_for_pending_transactions"`
+}
