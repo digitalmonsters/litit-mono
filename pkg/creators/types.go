@@ -3,6 +3,8 @@ package creators
 import (
 	"github.com/digitalmonsters/music/pkg/database"
 	"gopkg.in/guregu/null.v4"
+	"gorm.io/gorm"
+	"time"
 )
 
 type BecomeMusicCreatorRequest struct {
@@ -27,8 +29,23 @@ const (
 )
 
 type CreatorRequestsListResponse struct {
-	Items      []database.Creator `json:"items"`
-	TotalCount int64              `json:"total_count"`
+	Items      []creatorListItem `json:"items"`
+	TotalCount int64             `json:"total_count"`
+}
+
+type creatorListItem struct {
+	Id           int64                  `json:"id"`
+	Status       database.CreatorStatus `json:"status"`
+	RejectReason null.String            `json:"reject_reason"`
+	LibraryUrl   string                 `json:"library_url"`
+	UserId       int64                  `json:"user_id"`
+	FirstName    string                 `json:"first_name"`
+	LastName     string                 `json:"last_name"`
+	UserName     string                 `json:"user_name"`
+	Avatar       null.String            `json:"avatar"`
+	CreatedAt    time.Time              `json:"created_at"`
+	ApprovedAt   null.Time              `json:"approved_at"`
+	DeletedAt    gorm.DeletedAt         `json:"deleted_at"`
 }
 
 type CreatorRequestApproveRequest struct {

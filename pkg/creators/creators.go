@@ -2,9 +2,13 @@ package creators
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/pkg/errors"
+	"github.com/thoas/go-funk"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -43,8 +47,8 @@ func BecomeMusicCreator(req BecomeMusicCreatorRequest, db *gorm.DB, executionDat
 	return tx.Commit().Error
 }
 
-func CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThreshold int) (*CreatorRequestsListResponse, error) {
-	query := db.Model(database.Creator{})
+func CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThreshold int, apmTransaction *apm.Transaction, userWrapper user.IUserWrapper) (*CreatorRequestsListResponse, error) {
+	query := db.Model(database.Creator{}).Preload("Reason")
 
 	if req.UserId.Valid {
 		query = query.Where("user_id = ?", req.UserId.Int64)
@@ -77,8 +81,51 @@ func CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThresho
 		return nil, errors.WithStack(err)
 	}
 
+	var userIds []int64
+
+	for _, c := range creators {
+		if !funk.ContainsInt64(userIds, c.UserId) {
+			userIds = append(userIds, c.UserId)
+		}
+	}
+
+	userResp := <-userWrapper.GetUsers(userIds, apmTransaction, false)
+	if userResp.Error != nil {
+		apm_helper.CaptureApmError(userResp.Error.ToError(), apmTransaction)
+	}
+
+	var respItems []creatorListItem
+	for _, c := range creators {
+		respItem := creatorListItem{
+			Id:         c.Id,
+			Status:     c.Status,
+			LibraryUrl: c.LibraryUrl,
+			UserId:     c.UserId,
+			CreatedAt:  c.CreatedAt,
+			ApprovedAt: c.ApprovedAt,
+			DeletedAt:  c.DeletedAt,
+		}
+
+		if c.Reason != nil && c.RejectReason.Valid {
+			respItem.RejectReason = null.StringFrom(c.Reason.Reason)
+		}
+
+		userModel, ok := userResp.Items[c.UserId]
+		if !ok {
+			continue
+		}
+
+		respItem.UserId = userModel.UserId
+		respItem.UserName = userModel.Username
+		respItem.FirstName = userModel.Firstname
+		respItem.LastName = userModel.Lastname
+		respItem.Avatar = userModel.Avatar
+
+		respItems = append(respItems, respItem)
+	}
+
 	return &CreatorRequestsListResponse{
-		Items:      creators,
+		Items:      respItems,
 		TotalCount: totalCount,
 	}, nil
 }

@@ -280,7 +280,7 @@ func (s *Service) makeApiRequestInternal(apiMethod string, httpMethod string, bo
 
 	utils.AppendBrowserHeaders(httpReq)
 
-	err := apm_helper.SendHttpRequest(cl, httpReq, httpRes, apmTransaction, s.timeout, true)
+	err := apm_helper.SendHttpRequestWithClient(cl, httpReq, httpRes, apmTransaction, s.timeout, true)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
