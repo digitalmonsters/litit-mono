@@ -27,6 +27,9 @@
     "Region": "",
     "Bucket": ""
   },
+  "Creators": {
+    "MaxThresholdHours": 48
+  },
   "Wrappers": {
     "Content": {
       "ApiUrl": ""

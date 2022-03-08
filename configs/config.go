@@ -13,6 +13,11 @@ type Settings struct {
 	SoundStripe     *SoundStripeConfig   `json:"SoundStripe"`
 	S3              boilerplate.S3Config `json:"S3"`
 	PrivateHttpPort int                  `json:"PrivateHttpPort"`
+	Creators        CreatorsConfig       `json:"Creators"`
+}
+
+type CreatorsConfig struct {
+	MaxThresholdHours int `json:"MaxThresholdHours"`
 }
 
 type SoundStripeConfig struct {

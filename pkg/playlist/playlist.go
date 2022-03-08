@@ -37,8 +37,7 @@ func UpsertPlaylist(req UpsertPlaylistRequest, db *gorm.DB) (*database.Playlist,
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "id"}},
 			DoUpdates: clause.AssignmentColumns([]string{"name", "sort_order", "color", "is_active"}),
-		}).
-		Create(&playlist).Error; err != nil {
+		}).Create(&playlist).Error; err != nil {
 		if contain := strings.Contains(err.Error(), "duplicate key value violates unique constraint"); contain {
 			return nil, errors.New("playlist with the given name has been already created")
 		}
@@ -126,7 +125,7 @@ func PlaylistListingPublic(req PlayListListingPublicRequest, db *gorm.DB) (*Play
 	paginatorRules := []paginator.Rule{
 		{
 			Key:   "SortOrder",
-			Order: paginator.DESC,
+			Order: paginator.ASC,
 		},
 		{
 			Key:   "Id",

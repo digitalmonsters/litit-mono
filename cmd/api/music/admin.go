@@ -1,10 +1,12 @@
-package api
+package music
 
 import (
 	"encoding/json"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/music/cmd/api"
+	"github.com/digitalmonsters/music/pkg/creators/categories"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/digitalmonsters/music/pkg/own_storage"
@@ -160,7 +162,7 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
-		return successResponse{Success: true}, nil
+		return api.SuccessResponse{Success: true}, nil
 	})); err != nil {
 		return err
 	}
@@ -178,6 +180,54 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		}
 
 		return resp, nil
+	})); err != nil {
+		return err
+	}
+
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CategoriesUpsertAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req categories.UpsertRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		res, err := categories.Upsert(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return res, nil
+	})); err != nil {
+		return err
+	}
+
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CategoriesListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req categories.ListRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		res, err := categories.List(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return res, nil
+	})); err != nil {
+		return err
+	}
+
+	if err := adminEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("CategoriesDeleteAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req categories.DeleteRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		err := categories.Delete(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return "ok", nil
 	})); err != nil {
 		return err
 	}
@@ -232,7 +282,7 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 
 	apiDef["DeleteSongsFromOwnStorageBulk"] = swagger.ApiDescription{
 		Request:  own_storage.DeleteSongsFromOwnStorageRequest{},
-		Response: successResponse{},
+		Response: api.SuccessResponse{},
 		Tags:     []string{"delete", "song", "own_storage", "admin"},
 	}
 
@@ -240,6 +290,24 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		Request:  own_storage.OwnStorageMusicListRequest{},
 		Response: own_storage.OwnStorageMusicListResponse{},
 		Tags:     []string{"list", "song", "own_storage", "admin"},
+	}
+
+	apiDef["CategoriesUpsertAdmin"] = swagger.ApiDescription{
+		Request:  categories.UpsertRequest{},
+		Response: []database.Category{},
+		Tags:     []string{"categories"},
+	}
+
+	apiDef["CategoriesListAdmin"] = swagger.ApiDescription{
+		Request:  categories.ListRequest{},
+		Response: categories.ListResponse{},
+		Tags:     []string{"categories"},
+	}
+
+	apiDef["CategoriesDeleteAdmin"] = swagger.ApiDescription{
+		Request:  categories.DeleteRequest{},
+		Response: nil,
+		Tags:     []string{"categories"},
 	}
 
 	return nil

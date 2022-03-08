@@ -7,7 +7,9 @@ import (
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
-	"github.com/digitalmonsters/music/cmd/api"
+	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/music/cmd/api/creator"
+	"github.com/digitalmonsters/music/cmd/api/music"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/rs/zerolog/log"
@@ -17,13 +19,15 @@ import (
 )
 
 func main() {
-	// trigger build1
+	// trigger build111
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
 
 	cfg := configs.GetConfig()
 	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
+	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
+
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
 
@@ -35,17 +39,28 @@ func main() {
 
 	musicStorageService := music_source.NewMusicStorageService(&cfg)
 
-	if err := api.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, musicStorageService); err != nil {
-		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
+	if err := music.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, musicStorageService); err != nil {
+		log.Panic().Err(err).Msg("[Music Admin API] Cannot initialize api")
 		panic(err)
 	}
 
-	if err := api.InitPublicApi(httpRouter, apiDef, musicStorageService); err != nil {
-		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
+	if err := music.InitPublicApi(httpRouter, apiDef, musicStorageService); err != nil {
+		log.Panic().Err(err).Msg("[Music Public API] Cannot initialize api")
 		panic(err)
 	}
 
-	api.InitUploadApi(httpRouter, &cfg)
+	if err := creator.InitPublicApi(httpRouter, apiDef); err != nil {
+		log.Panic().Err(err).Msg("[Creators Public API] Cannot initialize api")
+		panic(err)
+	}
+
+	if err := creator.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef, cfg, userWrapper); err != nil {
+		log.Panic().Err(err).Msg("[Creators Admin API] Cannot initialize api")
+		panic(err)
+	}
+
+	music.InitUploadApi(httpRouter, &cfg)
+	creator.InitUploadApi(httpRouter, &cfg)
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)
