@@ -75,6 +75,6 @@ type genericRestResponse struct {
 	Error             string      `json:"error,omitempty"`
 	Stack             string      `json:"stack,omitempty"`
 	Hostname          string      `json:"hostname"`
-	Status            int         `json:"status"`
+	Code              int         `json:"code"`
 	ExecutionTimingMs int64       `json:"execution_timing"`
 }

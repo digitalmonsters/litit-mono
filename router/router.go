@@ -282,7 +282,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		restResponse.Success = true
 		restResponse.ExecutionTimingMs = rpcResponse.ExecutionTimingMs
 		restResponse.Hostname = rpcResponse.Hostname
-		restResponse.Status = -1
+		restResponse.Code = -1
 
 		if rpcResponse.Result != nil {
 			restResponse.Data = rpcResponse.Result
@@ -294,7 +294,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			restResponse.Stack = rpcResponse.Error.Stack
 
 			if strings.EqualFold(restResponse.Error, "max threshold without kyc exceeded") {
-				restResponse.Status = 2 // todo find a better way
+				restResponse.Code = 2 // todo find a better way
 			}
 
 			if originalCode > 0 {
