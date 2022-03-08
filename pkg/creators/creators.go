@@ -48,7 +48,7 @@ func BecomeMusicCreator(req BecomeMusicCreatorRequest, db *gorm.DB, executionDat
 }
 
 func CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThreshold int, apmTransaction *apm.Transaction, userWrapper user.IUserWrapper) (*CreatorRequestsListResponse, error) {
-	query := db.Model(database.Creator{})
+	query := db.Model(database.Creator{}).Preload("Reason")
 
 	if req.UserId.Valid {
 		query = query.Where("user_id = ?", req.UserId.Int64)
@@ -97,7 +97,17 @@ func CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThresho
 	var respItems []creatorListItem
 	for _, c := range creators {
 		respItem := creatorListItem{
-			Creator: c,
+			Id:         c.Id,
+			Status:     c.Status,
+			LibraryUrl: c.LibraryUrl,
+			UserId:     c.UserId,
+			CreatedAt:  c.CreatedAt,
+			ApprovedAt: c.ApprovedAt,
+			DeletedAt:  c.DeletedAt,
+		}
+
+		if c.Reason != nil && c.RejectReason.Valid {
+			respItem.RejectReason = null.StringFrom(c.Reason.Reason)
 		}
 
 		userModel, ok := userResp.Items[c.UserId]

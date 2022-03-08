@@ -36,13 +36,13 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		res, err := creators.CreatorRequestApprove(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		res, err := creators.CreatorRequestApprove(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
 		return res, nil
-	}, common.AccessLevelRead, "music:creator:crud:approve")); err != nil {
+	}, common.AccessLevelWrite, "music:creator:crud:approve")); err != nil {
 		return err
 	}
 
@@ -52,13 +52,13 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		res, err := creators.CreatorRequestReject(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		res, err := creators.CreatorRequestReject(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
 		return res, nil
-	}, common.AccessLevelRead, "music:creator:crud:reject")); err != nil {
+	}, common.AccessLevelWrite, "music:creator:crud:reject")); err != nil {
 		return err
 	}
 
