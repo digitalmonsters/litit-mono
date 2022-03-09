@@ -412,6 +412,10 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		requestProcessingErrors := backoff.Retry(func() error {
 			retryCount += 1
 
+			if k.ctx.Err() != nil {
+				return nil
+			}
+
 			processingSpan := apm_helper.StartNewApmTransaction(fmt.Sprintf("%v with retry #%v", k.command.GetFancyName(),
 				retryCount), "internal", nil, apmTransaction)
 
