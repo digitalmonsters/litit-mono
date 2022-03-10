@@ -70,6 +70,7 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithTemplate(templateNam
 
 		if h.publisher == nil {
 			resp.Error = errors.New("publisher is nil")
+			return
 		}
 
 		id := boilerplate.GetGenerator().Generate().String()
