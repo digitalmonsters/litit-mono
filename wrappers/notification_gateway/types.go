@@ -50,4 +50,9 @@ type SendPushRequest struct {
 	Title      string            `json:"title"`
 	Body       string            `json:"body"`
 	ExtraData  map[string]string `json:"extra_data"`
+	PublishKey string            `json:"publish_key"`
+}
+
+func (v SendPushRequest) GetPublishKey() string {
+	return fmt.Sprintf("%v", v.PublishKey)
 }
