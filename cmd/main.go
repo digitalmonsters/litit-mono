@@ -1,6 +1,10 @@
 package main
 
 import (
+	"context"
+	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/sending_queue"
+	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,14 +36,23 @@ func main() {
 		cfg.PrivateHttpPort,
 	)
 
+	ctx := context.Background()
+
+	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
+		cfg.Wrappers.NotificationGateway))
+
+	sendingQueueListener := sending_queue.InitListener(ctx,
+		cfg.SendingQueueListener, notificationSender).ListenAsync()
+
 	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, cfg); err != nil {
-		log.Panic().Err(err).Msg("[Creators Admin API] Cannot initialize api")
+		log.Panic().Err(err).Msg("cannot initialize api")
 		panic(err)
 	}
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)
 	}
+
 	privateRouter.Ready()
 	sg := <-sig
 	log.Logger.Info().Msgf("GOT SIGNAL %v", sg.String())
@@ -51,7 +64,7 @@ func main() {
 			return nil
 		},
 		func() error {
-			return nil
+			return sendingQueueListener.Close()
 		},
 	})
 }

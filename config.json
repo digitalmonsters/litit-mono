@@ -1,12 +1,31 @@
 {
   "HttpPort": 5212,
   "PrivateHttpPort": 5211,
-  "Db": {
+  "MasterDb": {
     "Host": "localhost",
     "Port": 5432,
-    "Db": "base_api",
+    "Db": "local_notification",
     "User": "postgres",
     "Password": "qwerty"
+  },
+  "ReadonlyDb": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "local_notification",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "KafkaWriter": {
+    "Hosts": "127.0.0.1",
+    "Tls": true
+  },
+  "SendingQueueListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_sending_queue_listener",
+    "Topic": "local.handler_sending_queue"
   },
   "Wrappers": {
     "UserInfo": {

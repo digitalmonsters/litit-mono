@@ -1,40 +1,81 @@
 package database
 
 import (
-	"fmt"
-
-	"github.com/digitalmonsters/comments/configs"
+	"context"
+	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/rs/zerolog/log"
-	postgres "go.elastic.co/apm/module/apmgormv2/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var gormDb *gorm.DB
+type DbType int
+
+const (
+	DbTypeMaster   = DbType(1)
+	DbTypeReadonly = DbType(2)
+)
+
+var masterGormDb *gorm.DB
+var readonlyGormDb *gorm.DB
 
 func init() {
 	config := configs.GetConfig()
 
-	db, err := gorm.Open(postgres.Open(fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v",
-		config.Db.Host, config.Db.User, config.Db.Password, config.Db.Db, config.Db.Port)), &gorm.Config{
-		QueryFields: true,
-	})
+	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
+		if err := boilerplate_testing.EnsurePostgresDbExists(config.MasterDb); err != nil {
+			panic(err)
+		}
+	}
+
+	log.Info().Msg("setup postgres database")
+
+	mainDb, err := boilerplate.GetGormConnection(config.MasterDb)
 
 	if err != nil {
 		panic(err)
 	}
 
-	gormDb = db
+	masterGormDb = mainDb
 
-	m := gormigrate.New(db, gormigrate.DefaultOptions, getMigrations())
+	readOnlyConfig := config.ReadonlyDb
 
-	log.Info().Msg("start migrations")
+	if len(readOnlyConfig.Host) == 0 || len(readOnlyConfig.Db) == 0 {
+		readOnlyConfig = config.MasterDb
+		log.Warn().Msgf("[DB Connection] no configuration for read-only db. Will use Master DB")
+	}
+
+	readDb, err := boilerplate.GetGormConnection(readOnlyConfig)
+
+	if err != nil {
+		log.Err(err).Msg("[Db Connection] can not setup connection to read-only db, will use master")
+
+		readonlyGormDb = masterGormDb
+	} else {
+		readonlyGormDb = readDb
+	}
+
+	m := gormigrate.New(mainDb, gormigrate.DefaultOptions, getMigrations())
+
+	log.Info().Msg("[Db] start migrations")
 
 	if err = m.Migrate(); err != nil {
 		panic(err)
 	}
 }
 
-func GetDb() *gorm.DB {
-	return gormDb
+func GetDb(t DbType) *gorm.DB {
+	switch t {
+	case DbTypeMaster:
+		return masterGormDb
+	case DbTypeReadonly:
+		return readonlyGormDb
+	default:
+		return masterGormDb
+	}
+}
+
+func GetDbWithContext(t DbType, ctx context.Context) *gorm.DB {
+	return GetDb(t).WithContext(ctx)
 }
