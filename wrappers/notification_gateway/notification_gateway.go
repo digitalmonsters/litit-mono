@@ -24,8 +24,7 @@ type Wrapper struct {
 type INotificationGatewayWrapper interface {
 	SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan
 	SendEmailInternal(ccAddresses, toAddresses []string, htmlBody, textBody, subject string, apmTransaction *apm.Transaction, forceLog bool) chan SendEmailMessageResponseChan
-	EnqueuePushForUser(tokens []string, deviceType DeviceType, title string, body string, extraData map[string]string,
-		userId int64, ctx context.Context) chan error
+	EnqueuePushForUser(msg []SendPushRequest, ctx context.Context) chan error
 }
 
 func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificationGatewayWrapper {
@@ -63,8 +62,7 @@ func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificati
 	return w
 }
 
-func (w *Wrapper) EnqueuePushForUser(tokens []string, deviceType DeviceType, title string, body string, extraData map[string]string,
-	userId int64, ctx context.Context) chan error {
+func (w *Wrapper) EnqueuePushForUser(msg []SendPushRequest, ctx context.Context) chan error {
 	ch := make(chan error, 2)
 
 	go func() {
@@ -75,16 +73,14 @@ func (w *Wrapper) EnqueuePushForUser(tokens []string, deviceType DeviceType, tit
 		if w.pushPublisher == nil {
 			ch <- errors.New("publisher is nil")
 		}
+		var i []eventsourcing.IEventData
+
+		for _, m := range msg {
+			i = append(i, m)
+		}
 
 		if err := w.pushPublisher.Publish(apm.TransactionFromContext(ctx),
-			SendPushRequest{
-				Tokens:     tokens,
-				DeviceType: deviceType,
-				Title:      title,
-				Body:       body,
-				ExtraData:  extraData,
-				PublishKey: fmt.Sprint(userId),
-			}); len(err) > 0 {
+			i...); len(err) > 0 {
 			ch <- err[0]
 
 			return

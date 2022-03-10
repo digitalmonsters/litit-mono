@@ -8,13 +8,11 @@ import (
 type NotificationGatewayWrapperMock struct {
 	SendSmsInternalFn    func(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan
 	SendEmailInternalFn  func(ccAddresses, toAddresses []string, htmlBody, textBody, subject string, apmTransaction *apm.Transaction, forceLog bool) chan SendEmailMessageResponseChan
-	EnqueuePushForUserFn func(tokens []string, deviceType DeviceType, title string, body string, extraData map[string]string,
-		userId int64, ctx context.Context) chan error
+	EnqueuePushForUserFn func(msg []SendPushRequest, ctx context.Context) chan error
 }
 
-func (w *NotificationGatewayWrapperMock) EnqueuePushForUser(tokens []string, deviceType DeviceType, title string, body string, extraData map[string]string,
-	userId int64, ctx context.Context) chan error {
-	return w.EnqueuePushForUserFn(tokens, deviceType, title, body, extraData, userId, ctx)
+func (w *NotificationGatewayWrapperMock) EnqueuePushForUser(msg []SendPushRequest, ctx context.Context) chan error {
+	return w.EnqueuePushForUserFn(msg, ctx)
 }
 
 func (w *NotificationGatewayWrapperMock) SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan {
