@@ -90,5 +90,4 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithTemplate(templateNam
 	}()
 
 	return ch
-
 }

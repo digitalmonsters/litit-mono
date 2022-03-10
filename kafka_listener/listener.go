@@ -421,9 +421,13 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 			if retryCount > 1 {
 				apm_helper.AddApmData(processingSpan, "not_processed_messages",
-					messagesToProcess)
+					kafkaMessageToFancyLog(messagesToProcess))
 
 				apm_helper.AddApmLabel(processingSpan, "retry_count", retryCount)
+			}
+
+			if retryCount == 1 && k.command.ForceLog() {
+				apm_helper.AddApmData(processingSpan, "request", kafkaMessageToFancyLog(messagesToProcess))
 			}
 
 			innerContext, cancelInnerCtx := context.WithCancel(commandExecutionContext)
@@ -522,6 +526,16 @@ func (k *kafkaListener) commitMessages(messages []kafka.Message, apmTransaction 
 	kafkaCommitSpan.End()
 
 	return nil
+}
+
+func kafkaMessageToFancyLog(messages []kafka.Message) []string {
+	var r []string
+
+	for _, m := range messages {
+		r = append(r, string(m.Value))
+	}
+
+	return r
 }
 
 func extractKeyFromKafkaMessage(message kafka.Message) string {

@@ -1,10 +1,13 @@
 package notification_gateway
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
@@ -15,11 +18,14 @@ type Wrapper struct {
 	defaultTimeout time.Duration
 	apiUrl         string
 	serviceName    string
+	pushPublisher  *eventsourcing.KafkaEventPublisher
 }
 
 type INotificationGatewayWrapper interface {
 	SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan
 	SendEmailInternal(ccAddresses, toAddresses []string, htmlBody, textBody, subject string, apmTransaction *apm.Transaction, forceLog bool) chan SendEmailMessageResponseChan
+	EnqueuePushForUser(tokens []string, deviceType DeviceType, title string, body string, extraData map[string]string,
+		userId int64, ctx context.Context) chan error
 }
 
 func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificationGatewayWrapper {
@@ -35,12 +41,59 @@ func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificati
 		log.Warn().Msgf("Api Url is missing for NotificationGateway. Setting as default : %v", config.ApiUrl)
 	}
 
-	return &Wrapper{
+	env := boilerplate.GetCurrentEnvironment().ToString()
+
+	w := &Wrapper{
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "notification_gateway",
 	}
+
+	w.pushPublisher = eventsourcing.NewKafkaEventPublisher(
+		boilerplate.KafkaWriterConfiguration{
+			Hosts: "kafka-notifications-1.infra.svc.cluster.local:9094,kafka-notifications-2.infra.svc.cluster.local:9094",
+			Tls:   true,
+		}, boilerplate.KafkaTopicConfig{
+			Name:              fmt.Sprintf("%v.push_messages", env),
+			NumPartitions:     24,
+			ReplicationFactor: 2,
+		})
+
+	return w
+}
+
+func (w *Wrapper) EnqueuePushForUser(tokens []string, deviceType DeviceType, title string, body string, extraData map[string]string,
+	userId int64, ctx context.Context) chan error {
+	ch := make(chan error, 2)
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+
+		if w.pushPublisher == nil {
+			ch <- errors.New("publisher is nil")
+		}
+
+		if err := w.pushPublisher.Publish(apm.TransactionFromContext(ctx),
+			SendPushRequest{
+				Tokens:     tokens,
+				DeviceType: deviceType,
+				Title:      title,
+				Body:       body,
+				ExtraData:  extraData,
+				PublishKey: fmt.Sprint(userId),
+			}); len(err) > 0 {
+			ch <- err[0]
+
+			return
+		}
+
+		ch <- nil
+	}()
+
+	return ch
 }
 
 func (w *Wrapper) SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan {

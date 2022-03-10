@@ -16,6 +16,7 @@ type IKafkaListener interface {
 type ICommand interface {
 	Execute(executionData ExecutionData, request ...kafka.Message) (successfullyProcessed []kafka.Message)
 	GetFancyName() string
+	ForceLog() bool
 }
 
 type ExecutionData struct {
