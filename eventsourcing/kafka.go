@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
 	"time"
 )
 
@@ -20,13 +21,16 @@ type KafkaEventPublisher struct {
 	topic         string
 	publisherType PublisherType
 	logger        zerolog.Logger
+	firstHost     string
 }
 
 func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topicConfig boilerplate.KafkaTopicConfig) *KafkaEventPublisher {
+	hosts := boilerplate.SplitHostsToSlice(cfg.Hosts)
+
 	h := &KafkaEventPublisher{
 		cfg: cfg,
 		writer: &kafka.Writer{
-			Addr:         kafka.TCP(boilerplate.SplitHostsToSlice(cfg.Hosts)...),
+			Addr:         kafka.TCP(hosts...),
 			Topic:        topicConfig.Name,
 			Balancer:     &kafka.Hash{},
 			BatchTimeout: 10 * time.Millisecond,
@@ -34,6 +38,7 @@ func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topicConfi
 		topic:         topicConfig.Name,
 		publisherType: PublisherTypeKafka,
 		logger:        log.Logger.With().Str("topic", topicConfig.Name).Logger(),
+		firstHost:     hosts[0],
 	}
 
 	if cfg.Tls {
@@ -63,16 +68,19 @@ func (s *KafkaEventPublisher) Publish(apmTransaction *apm.Transaction, events ..
 	var sp *apm.Span
 
 	if apmTransaction != nil {
-		sp = apmTransaction.StartSpan(fmt.Sprintf("kafka publish [%v]", s.topic), "kafka", nil)
+		serviceName := fmt.Sprintf("%v [%v]", s.firstHost, s.topic)
+
+		sp = apmTransaction.StartSpan(fmt.Sprintf("kafka publish [%v]", serviceName), "kafka", nil)
 		sp.Context.SetLabel("count", len(events))
 
 		sp.Context.SetMessage(apm.MessageSpanContext{
-			QueueName: s.topic,
+			QueueName: serviceName,
 		})
+
 		sp.Context.SetDatabaseRowsAffected(int64(len(events)))
 		sp.Context.SetDestinationService(apm.DestinationServiceSpanContext{
 			Name:     "kafka",
-			Resource: s.topic,
+			Resource: serviceName,
 		})
 
 		defer func() {
@@ -89,10 +97,20 @@ func (s *KafkaEventPublisher) Publish(apmTransaction *apm.Transaction, events ..
 			return []error{errors.WithStack(err)}
 		}
 
+		var headers []kafka.Header
+
+		if apmTransaction != nil {
+			headers = append(headers, kafka.Header{
+				Key:   apmhttp.W3CTraceparentHeader,
+				Value: []byte(apmhttp.FormatTraceparentHeader(apmTransaction.TraceContext())),
+			})
+		}
+
 		eventsMarshalled = append(eventsMarshalled, kafka.Message{
-			Key:   []byte(event.GetPublishKey()),
-			Value: value,
-			Time:  time.Now().UTC(),
+			Key:     []byte(event.GetPublishKey()),
+			Value:   value,
+			Time:    time.Now().UTC(),
+			Headers: headers,
 		})
 	}
 

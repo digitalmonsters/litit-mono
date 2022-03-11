@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
 	"io"
 	"sync"
 	"time"
@@ -391,9 +392,37 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			break // discard messages
 		}
 
-		apmTransaction := apm_helper.StartNewApmTransaction(fmt.Sprintf("[%v] [%v]", k.command.GetFancyName(), k.listenerName),
+		messagesToProcess := messagePool[:messageIndex]
+
+		var traceContext apm.TraceContext
+		var traceContextFound bool
+
+		if maxBatchSize == 1 { // todo will not properly work for batch.
+			for _, m := range messagesToProcess {
+				if traceContextFound {
+					break
+				}
+
+				for _, h := range m.Headers {
+					if h.Key != apmhttp.W3CTraceparentHeader {
+						continue
+					}
+
+					if parsed, err := apmhttp.ParseTraceparentHeader(string(h.Value)); err != nil {
+						log.Err(err).Send()
+						continue
+					} else {
+						traceContext = parsed
+						traceContextFound = true
+						break
+					}
+				}
+			}
+		}
+
+		apmTransaction := apm_helper.StartNewApmTransactionWithTraceData(fmt.Sprintf("[%v] [%v]", k.command.GetFancyName(), k.listenerName),
 			"kafka_listener", nil,
-			nil)
+			traceContext)
 
 		commandExecutionContext := apm.ContextWithTransaction(listenCtx, apmTransaction)
 
@@ -406,8 +435,8 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		b.Reset()
 
 		retryCount := 0
-
-		messagesToProcess := messagePool[:messageIndex]
+		//Key:   apmhttp.W3CTraceparentHeader,
+		//	Value: []byte(apmhttp.FormatTraceparentHeader(apmTransaction.TraceContext())),
 
 		requestProcessingErrors := backoff.Retry(func() error {
 			retryCount += 1
