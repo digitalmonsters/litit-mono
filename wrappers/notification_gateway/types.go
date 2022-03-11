@@ -2,6 +2,7 @@ package notification_gateway
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/rpc"
 )
 
@@ -26,27 +27,9 @@ type SendEmailMessageResponseChan struct {
 	Error *rpc.RpcError `json:"error"`
 }
 
-type DeviceType int
-
-const (
-	DeviceTypeIos     = DeviceType(1)
-	DeviceTypeAndroid = DeviceType(2)
-)
-
-func (d DeviceType) ToString() string {
-	switch d {
-	case DeviceTypeIos:
-		return "ios"
-	case DeviceTypeAndroid:
-		return "android"
-	default:
-		return fmt.Sprintf("unk %v", d)
-	}
-}
-
 type SendPushRequest struct {
 	Tokens     []string          `json:"tokens"`
-	DeviceType DeviceType        `json:"device_type"`
+	DeviceType common.DeviceType `json:"device_type"`
 	Title      string            `json:"title"`
 	Body       string            `json:"body"`
 	ExtraData  map[string]string `json:"extra_data"`
