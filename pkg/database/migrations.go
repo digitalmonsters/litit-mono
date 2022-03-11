@@ -50,11 +50,11 @@ func getMigrations() []*gormigrate.Migration {
 			},
 		},
 		{
-			ID: "add_kind_to_template_20220311",
+			ID: "additional_render_templates_20220310",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
-					"alter table render_templates add column if not exists kind text;",
-					"update render_templates set kind = 'popup' where 1 = 1 ",
+					"UPDATE public.render_templates as rt SET rt.title = 'You earned your first {{.verify_reward_amount}} LIT points for joining Lit.it' WHERE rt.id = 'registration_verify_bonus';",
+					"UPDATE public.render_templates as rt SET rt.title = ('Congratulations! ' || rt.title) WHERE rt.id in ('registration_verify_bonus', 'first_x_paid_views', 'first_referral_joined', 'first_video_shared', 'first_x_paid_views_as_content_owner', 'top_x_in_subcategory');",
 				)
 			},
 		},

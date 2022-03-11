@@ -3,13 +3,14 @@ module github.com/digitalmonsters/notification-handler
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.19.1
+	github.com/digitalmonsters/go-common v1.18.4
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/google/uuid v1.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/segmentio/kafka-go v0.4.25
+	go.elastic.co/apm v1.15.0
 	gorm.io/gorm v1.22.4
 )
 
@@ -71,7 +72,6 @@ require (
 	github.com/valyala/fasthttp v1.32.0 // indirect
 	github.com/xdg/scram v1.0.3 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
-	go.elastic.co/apm v1.15.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect

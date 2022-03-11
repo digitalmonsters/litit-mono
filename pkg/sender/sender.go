@@ -3,7 +3,6 @@ package sender
 import (
 	"context"
 	"fmt"
-	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
@@ -56,7 +55,7 @@ func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64
 
 func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, template database.RenderTemplate,
 	key string) []notification_gateway.SendPushRequest {
-	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
+	mm := map[notification_gateway.DeviceType]*notification_gateway.SendPushRequest{}
 
 	for _, t := range tokens {
 		if _, ok := mm[t.Platform]; !ok {
@@ -66,8 +65,7 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 				Title:      title,
 				Body:       body,
 				ExtraData: map[string]string{
-					"type": template.Id,
-					"kind": template.Kind,
+					"rendering_template_id": template.Id,
 				},
 				PublishKey: key,
 			}
