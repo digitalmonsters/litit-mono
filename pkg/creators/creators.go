@@ -101,6 +101,7 @@ func CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThresho
 			Status:     c.Status,
 			LibraryUrl: c.LibraryUrl,
 			UserId:     c.UserId,
+			SlaExpired: time.Now().After(c.CreatedAt.Add(time.Hour * time.Duration(maxThreshold))),
 			CreatedAt:  c.CreatedAt,
 			ApprovedAt: c.ApprovedAt,
 			DeletedAt:  c.DeletedAt,

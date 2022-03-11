@@ -38,6 +38,7 @@ type creatorListItem struct {
 	Status       database.CreatorStatus `json:"status"`
 	RejectReason null.String            `json:"reject_reason"`
 	LibraryUrl   string                 `json:"library_url"`
+	SlaExpired   bool                   `json:"sla_expired"`
 	UserId       int64                  `json:"user_id"`
 	FirstName    string                 `json:"first_name"`
 	LastName     string                 `json:"last_name"`
