@@ -49,5 +49,14 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_kind_to_template_20220311",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"alter table render_templates add column if not exists kind text;",
+					"update render_templates set kind = 'popup' where 1 = 1 ",
+				)
+			},
+		},
 	}
 }
