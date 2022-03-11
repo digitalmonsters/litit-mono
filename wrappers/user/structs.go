@@ -28,6 +28,7 @@ type UserRecord struct {
 	Firstname                  string      `json:"firstname"`
 	Lastname                   string      `json:"lastname"`
 	Verified                   bool        `json:"verified"`
+	Guest                      bool        `json:"guest"`
 	EnableAgeRestrictedContent bool        `json:"enable_age_restricted_content"`
 	IsTipEnabled               bool        `json:"is_tip_enabled"`
 }
@@ -63,6 +64,7 @@ type UserDetailRecord struct {
 	CountryName  string      `json:"country_name"`
 	Avatar       null.String `json:"avatar"`
 	IsTipEnabled bool        `json:"is_tip_enabled"`
+	Guest        bool        `json:"guest"`
 }
 
 type UerPrivacy struct {
