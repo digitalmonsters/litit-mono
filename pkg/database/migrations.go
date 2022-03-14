@@ -50,7 +50,7 @@ func getMigrations() []*gormigrate.Migration {
 			},
 		},
 		{
-			ID: "additional_render_templates_20220310",
+			ID: "update_render_templates_20220312",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
 					"UPDATE public.render_templates as rt SET rt.title = 'You earned your first {{.verify_reward_amount}} LIT points for joining Lit.it' WHERE rt.id = 'registration_verify_bonus';",
