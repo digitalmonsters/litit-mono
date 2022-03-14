@@ -58,5 +58,14 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "creator_status_templates_20220312",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at)\nVALUES ('creator_status_rejected',\n        'Rejected creator approval.',\n        'Your Creator approval process has been rejected.',\n        '2022-03-10 12:32:42.000000',\n        '2022-03-10 12:32:42.000000');",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at)\nVALUES ('creator_status_approved',\n        'Creator status approved.',\n         'Your Creator status has been approved',\n        '2022-03-10 12:32:42.000000',\n        '2022-03-10 12:32:42.000000');",
+				)
+			},
+		},
 	}
 }

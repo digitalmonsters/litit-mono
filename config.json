@@ -19,6 +19,14 @@
     "Hosts": "127.0.0.1",
     "Tls": true
   },
+  "CreatorsListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_creators_listener",
+    "Topic": "local.creators"
+  },
   "SendingQueueListener": {
     "Hosts": "127.0.0.1",
     "MinBytes": 100,

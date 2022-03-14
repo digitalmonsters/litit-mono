@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/creators"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/sending_queue"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"os"
@@ -41,8 +42,9 @@ func main() {
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
 		cfg.Wrappers.NotificationGateway))
 
-	sendingQueueListener := sending_queue.InitListener(ctx,
-		cfg.SendingQueueListener, notificationSender).ListenAsync()
+	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender).ListenAsync()
+
+	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
 
 	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, cfg); err != nil {
 		log.Panic().Err(err).Msg("cannot initialize api")
@@ -65,6 +67,9 @@ func main() {
 		},
 		func() error {
 			return sendingQueueListener.Close()
+		},
+		func() error {
+			return creatorsListener.Close()
 		},
 	})
 }
