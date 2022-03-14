@@ -39,6 +39,12 @@ const (
 	AdminAuthInactiveError
 )
 
+const (
+	TokenomicsNotEnoughBalance ErrorCode = 1500
+)
+
+var TokenomicsNotEnoughBalanceError = errors.New("user doesn't have enough money to execute operation")
+
 type ErrorWithCode struct {
 	error error
 	code  ErrorCode

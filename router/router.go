@@ -296,7 +296,9 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			if strings.EqualFold(restResponse.Error, "max threshold without kyc exceeded") {
 				restResponse.Code = 2 // todo find a better way
 			}
-
+			if strings.EqualFold(restResponse.Error, error_codes.TokenomicsNotEnoughBalanceError.Error()) {
+				restResponse.Code = int(error_codes.TokenomicsNotEnoughBalance)
+			}
 			if originalCode > 0 {
 				finalStatusCode = originalCode
 			} else {
