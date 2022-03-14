@@ -66,7 +66,8 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 				Title:      title,
 				Body:       body,
 				ExtraData: map[string]string{
-					"rendering_template_id": template.Id,
+					"type": template.Id,
+					"kind": template.Kind,
 				},
 				PublishKey: key,
 			}
