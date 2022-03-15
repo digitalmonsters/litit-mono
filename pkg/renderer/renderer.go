@@ -13,22 +13,34 @@ import (
 var templateCache = cache.New(30*time.Minute, 11*time.Minute)
 var TemplateRenderingError = errors.New("template rendering error")
 
-func Render(renderTemplate database.RenderTemplate, renderingData map[string]string) (title string, body string, err error) {
+func Render(renderTemplate database.RenderTemplate, renderingData map[string]string) (title string, body string, headline string, err error) {
 	prefix := fmt.Sprintf("%v_%v", renderTemplate.Id, renderTemplate.UpdatedAt)
 
-	title, err = RenderText(fmt.Sprintf("%v_title", prefix), renderTemplate.Title, renderingData)
+	if len(renderTemplate.Title) > 0 {
+		title, err = RenderText(fmt.Sprintf("%v_title", prefix), renderTemplate.Title, renderingData)
 
-	if err != nil {
-		return "", "", err
+		if err != nil {
+			return "", "", "", err
+		}
 	}
 
-	body, err = RenderText(fmt.Sprintf("%v_body", prefix), renderTemplate.Body, renderingData)
+	if len(renderTemplate.Body) > 0 {
+		body, err = RenderText(fmt.Sprintf("%v_body", prefix), renderTemplate.Body, renderingData)
 
-	if err != nil {
-		return "", "", err
+		if err != nil {
+			return "", "", "", err
+		}
 	}
 
-	return title, body, err
+	if len(renderTemplate.Headline) > 0 {
+		headline, err = RenderText(fmt.Sprintf("%v_headline", prefix), renderTemplate.Headline, renderingData)
+
+		if err != nil {
+			return "", "", "", err
+		}
+	}
+
+	return title, body, headline, err
 }
 
 func RenderText(templateName string, templateBody string, renderingData map[string]string) (string, error) {
