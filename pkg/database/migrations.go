@@ -76,5 +76,24 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "guest_notifications_templates_150320221520",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('first_guest_x_paid_views', 'Create your account and get your first {{.signup_bonus}}  LIT points', 'On Lit.it you earn rewards for watching & sharing videos or inviting people', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('first_guest_x_earned_points', 'You just earned your first {{.earned_points}} LIT points. Create your account to transfer them to your points wallet.', 'On Lit.it you earn rewards for watching & sharing videos or inviting people', '2022-03-15 15:16:35.000000', '2022-03-15 15:16:37.000000', 'popup') on conflict do nothing;")
+			},
+		},
+		{
+			ID: "add_headline_20220315",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, "UPDATE public.render_templates\nSET title = 'You just got to the TOP {{.top_in_category_bonus_place}} creators in {{.category_name}} category on Lit.it. You got {{.top_in_category_bonus}} LIT points.'\nWHERE id LIKE 'top#_x#_in#_subcategory' ESCAPE '#';\n\nUPDATE public.render_templates\nSET title = 'Your first friend just joined Lit.it! You earned {{.referral_bonus}} LIT points.'\nWHERE id LIKE 'first#_referral#_joined' ESCAPE '#';\n\nUPDATE public.render_templates\nSET title = 'You shared your first video on Lit.it. You earned {{.share_bonus}} LIT points.'\nWHERE id LIKE 'first#_video#_shared' ESCAPE '#';\n\nUPDATE public.render_templates\nSET title = 'You earned your first {{.verify_reward_amount}} LIT points for joining Lit.it'\nWHERE id LIKE 'registration#_verify#_bonus' ESCAPE '#';\n\nUPDATE public.render_templates\nSET title = 'Your videos just generated your first {{.views_content_owner_bonus_count}} views on Lit.it. You got {{.views_content_owner_bonus_total_earned}} LIT points.'\nWHERE id LIKE 'first#_x#_paid#_views#_as#_content#_owner' ESCAPE '#';\n\nUPDATE public.render_templates\nSET title = 'You earned your first {{.total_earned}} LIT points for watching video '\nWHERE id LIKE 'first#_x#_paid#_views' ESCAPE '#';",
+					"alter table render_templates add column if not exists headline text;",
+					"update render_templates set headline = 'Congratulations!' where id in ('first_x_paid_views', 'first_referral_joined', 'first_video_shared', 'first_x_paid_views_as_content_owner', 'top_x_in_subcategory', 'registration_verify_bonus')",
+					"UPDATE public.render_templates\nSET title = '{{.percent_multiplier}}% increased rewards for friends invitations.'\nWHERE id LIKE 'increase#_reward#_stage#_1' ESCAPE '#';\n\nUPDATE public.render_templates\nSET title = '{{.percent_multiplier}}% increased rewards for friends invitations.'\nWHERE id LIKE 'increase#_reward#_stage#_2' ESCAPE '#';",
+					"update render_templates set headline = 'Limited time deal!' where id in ('increase_reward_stage_1', 'increase_reward_stage_2')",
+				)
+			},
+		},
 	}
 }

@@ -3,10 +3,11 @@ package database
 import "time"
 
 type RenderTemplate struct {
-	Id    string
-	Title string
-	Body  string
-	Kind  string
+	Id       string
+	Title    string
+	Body     string
+	Headline string
+	Kind     string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

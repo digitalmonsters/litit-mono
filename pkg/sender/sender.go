@@ -42,19 +42,19 @@ func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64
 		return nil, nil
 	}
 
-	title, body, renderingTemplate, err := s.renderTemplate(db, templateName, renderingData)
+	title, body, headline, renderingTemplate, err := s.renderTemplate(db, templateName, renderingData)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body, renderingTemplate,
+	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body, headline, renderingTemplate,
 		fmt.Sprint(userId)), ctx)
 
 	return nil, sendResult
 }
 
-func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, template database.RenderTemplate,
+func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, headline string, template database.RenderTemplate,
 	key string) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
 
@@ -66,8 +66,9 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 				Title:      title,
 				Body:       body,
 				ExtraData: map[string]string{
-					"type": template.Id,
-					"kind": template.Kind,
+					"type":     template.Id,
+					"kind":     template.Kind,
+					"headline": template.Headline,
 				},
 				PublishKey: key,
 			}
@@ -88,14 +89,14 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 }
 
 func (s *Sender) renderTemplate(db *gorm.DB, templateName string,
-	renderingData map[string]string) (title string, body string, renderingTemplate database.RenderTemplate, err error) {
+	renderingData map[string]string) (title string, body string, headline string, renderingTemplate database.RenderTemplate, err error) {
 	var renderTemplate database.RenderTemplate
 
 	if err := db.Where("id = ?", strings.ToLower(templateName)).Take(&renderTemplate).Error; err != nil {
-		return "", "", renderTemplate, errors.WithStack(err)
+		return "", "", "", renderTemplate, errors.WithStack(err)
 	}
 
-	title, body, err = renderer.Render(renderTemplate, renderingData)
+	title, body, headline, err = renderer.Render(renderTemplate, renderingData)
 
-	return title, body, renderTemplate, err
+	return title, body, headline, renderTemplate, err
 }
