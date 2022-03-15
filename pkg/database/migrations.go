@@ -76,5 +76,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "guest_notifications_templates_150320221520",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('first_guest_x_paid_views', 'Create your account and get your first {{.signup_bonus}}  LIT points', 'On Lit.it you earn rewards for watching & sharing videos or inviting people', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('first_guest_x_earned_points', 'You just earned your first {{.earned_points}} LIT points. Create your account to transfer them to your points wallet.', 'On Lit.it you earn rewards for watching & sharing videos or inviting people', '2022-03-15 15:16:35.000000', '2022-03-15 15:16:37.000000', 'popup') on conflict do nothing;")
+			},
+		},
 	}
 }
