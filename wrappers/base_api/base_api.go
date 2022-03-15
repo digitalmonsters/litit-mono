@@ -80,7 +80,7 @@ func (w *BaseApiWrapper) GetCountriesWithAgeLimit(apmTransaction *apm.Transactio
 		finalResponse.Error = rpcInternalResponse.Error
 
 		if finalResponse.Error == nil && len(rpcInternalResponse.Result) > 0 {
-			if err := json.Unmarshal(rpcInternalResponse.Result, &items); err != nil {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &countries); err != nil {
 				finalResponse.Error = &rpc.RpcError{
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
