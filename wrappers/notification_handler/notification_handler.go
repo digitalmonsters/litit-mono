@@ -46,6 +46,16 @@ func NewNotificationHandlerWrapper(config boilerplate.WrapperConfig) INotificati
 			ReplicationFactor: 2,
 		})
 
+	w.customPublisher = eventsourcing.NewKafkaEventPublisher(
+		boilerplate.KafkaWriterConfiguration{
+			Hosts: "kafka-notifications-1.infra.svc.cluster.local:9094,kafka-notifications-2.infra.svc.cluster.local:9094",
+			Tls:   true,
+		}, boilerplate.KafkaTopicConfig{
+			Name:              fmt.Sprintf("%v.handler_sending_queue_custom", env),
+			NumPartitions:     24,
+			ReplicationFactor: 2,
+		})
+
 	return w
 }
 
@@ -87,6 +97,47 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithTemplate(templateNam
 			return
 		}
 
+		resp.Id = id
+	}()
+
+	return ch
+}
+
+func (h *NotificationHandlerWrapper) EnqueueNotificationWithCustomTemplate(title, body, headline string, userId int64, ctx context.Context) chan EnqueueMessageResult {
+	ch := make(chan EnqueueMessageResult, 2)
+
+	go func() {
+		var resp EnqueueMessageResult
+
+		defer func() {
+			ch <- resp
+			close(ch)
+		}()
+
+		if len(title) == 0 && len(body) == 0 && len(headline) == 0 {
+			resp.Error = errors.New("message is empty")
+			return
+		}
+
+		if h.publisher == nil {
+			resp.Error = errors.New("publisher is nil")
+			return
+		}
+
+		id := boilerplate.GetGenerator().Generate().String()
+
+		if err := h.customPublisher.Publish(apm.TransactionFromContext(ctx),
+			SendNotificationWithCustomTemplate{
+				Id:       id,
+				UserId:   userId,
+				Title:    title,
+				Body:     body,
+				Headline: headline,
+			}); len(err) > 0 {
+			resp.Error = err[0]
+
+			return
+		}
 		resp.Id = id
 	}()
 
