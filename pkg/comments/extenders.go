@@ -34,7 +34,7 @@ func extendWithLikedByMe(db *gorm.DB, currentUserId int64, comments ...*Comment)
 
 		var foundVotes []struct {
 			CommentId int64
-			VoteUp    bool
+			VoteUp    null.Bool
 		}
 
 		if err := db.Model(database.CommentVote{}).Where("user_id = ? and comment_id in ?", currentUserId, commentIds).
@@ -43,7 +43,7 @@ func extendWithLikedByMe(db *gorm.DB, currentUserId int64, comments ...*Comment)
 			return
 		}
 
-		voteMap := map[int64]bool{}
+		voteMap := map[int64]null.Bool{}
 
 		for _, f := range foundVotes {
 			voteMap[f.CommentId] = f.VoteUp
@@ -52,7 +52,7 @@ func extendWithLikedByMe(db *gorm.DB, currentUserId int64, comments ...*Comment)
 		if len(foundVotes) > 0 {
 			for _, comment := range comments {
 				if v, ok := voteMap[comment.Id]; ok {
-					comment.MyVoteUp = null.BoolFrom(v)
+					comment.MyVoteUp = v
 				}
 			}
 		}
