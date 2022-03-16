@@ -9,12 +9,16 @@ import (
 	"github.com/digitalmonsters/music/configs"
 	"github.com/pkg/errors"
 	"github.com/tcolgate/mp3"
+	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
 	"gopkg.in/guregu/null.v4"
 	"io"
 	"path/filepath"
 	"strings"
 )
+
+var extensionsForMusic = []string{"mp3"}
+var extensionsForImage = []string{"jpg", "jpeg", "png"}
 
 func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.RequestCtx) ([]byte, error) {
 	m, err := ctx.Request.MultipartForm()
@@ -42,8 +46,10 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 		return nil, errors.New("invalid file format")
 	}
 
-	if f[len(f)-1] == "mp3" {
-		return nil, errors.New("mp3 format is only available for upload")
+	fileExtension := f[len(f)-1]
+
+	if !checkFileExtension(uploadType, fileExtension) {
+		return nil, errors.New("wrong file extension")
 	}
 
 	openedFile, err := header.Open()
@@ -63,8 +69,16 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 	fileId := fmt.Sprintf("%x", md5.Sum(body))
 
 	filename := fmt.Sprintf("%s.%s", fileId, f[len(f)-1])
-	filePath := filepath.Join(cfg.S3.CdnDirectory, filename)
-	fileUrl = fmt.Sprintf("%v/%v", cfg.S3.CdnUrl, filename)
+
+	var filePath string
+	if uploadType >= UploadTypeCreatorsSongFull && uploadType <= UploadTypeCreatorsSongImage { //creator upload
+		filePath = "creator"
+	}
+
+	filePath = filepath.Join(filePath, uploadType.ToString(), filename)
+	fileUrl = fmt.Sprintf("%v/%v", cfg.S3.CdnUrl, filePath)
+
+	fmt.Println(fileUrl)
 
 	uploader := s3.NewUploader(&cfg.S3)
 	if err := uploader.UploadObject(filePath, body, "application/octet-stream"); err != nil {
@@ -82,6 +96,17 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 	}
 }
 
+func checkFileExtension(t UploadType, ext string) bool {
+	switch t {
+	case UploadTypeAdminMusic, UploadTypeCreatorsSongFull, UploadTypeCreatorsSongShort:
+		return funk.ContainsString(extensionsForMusic, ext)
+	case UploadTypeCreatorsSongImage:
+		return funk.ContainsString(extensionsForImage, ext)
+	default:
+		return false
+	}
+}
+
 func getSongDuration(body []byte) float64 {
 	duration := 0.0
 	r := bytes.NewReader(body)
@@ -96,7 +121,7 @@ func getSongDuration(body []byte) float64 {
 			}
 			break
 		}
-		duration = duration + fr.Duration().Seconds()
+		duration += fr.Duration().Seconds()
 	}
 
 	return duration

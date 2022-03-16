@@ -19,7 +19,7 @@ func InitUploadApi(httpRouter *router.HttpRouter, cfg *configs.Settings) {
 			utils.SetCors(ctx)
 		}()
 
-		resp, err := uploader.FileUpload(cfg, uploader.UploadTypeMusic, ctx)
+		resp, err := uploader.FileUpload(cfg, uploader.UploadTypeAdminMusic, ctx)
 		if err != nil {
 			log.Info().Msgf("[Upload] an error occurred %s", err.Error())
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
