@@ -95,5 +95,14 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "modify_headline_202203161316",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update render_templates set headline = 'Congrats!' where id in ('first_x_paid_views', 'first_referral_joined', 'first_video_shared', 'first_x_paid_views_as_content_owner', 'top_x_in_subcategory', 'registration_verify_bonus', 'first_daily_time_bonus', 'first_daily_followers_bonus');",
+					"update render_templates set headline = 'Get 3x more!' where id = 'increase_reward_stage_2';",
+				)
+			},
+		},
 	}
 }
