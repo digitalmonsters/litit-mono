@@ -30,6 +30,13 @@ func (s *Sender) SendTemplateToUser(channel NotificationChannel,
 
 	return s.sendPushTemplateMessageToUser(templateName, userId, renderingData, db, ctx)
 }
+
+func (s *Sender) SendCustomTemplateToUser(channel NotificationChannel, userId int64, title, body, headline string, ctx context.Context) (interface{}, error) {
+	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
+
+	return s.sendCustomPushTemplateMessageToUser(title, body, headline, userId, db, ctx)
+}
+
 func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64, renderingData map[string]string,
 	db *gorm.DB, ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(db, userId)
@@ -54,6 +61,23 @@ func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64
 	return nil, sendResult
 }
 
+func (s *Sender) sendCustomPushTemplateMessageToUser(title, body, headline string, userId int64,
+	db *gorm.DB, ctx context.Context) (interface{}, error) {
+	userTokens, err := token.GetUserTokens(db, userId)
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if len(userTokens) == 0 {
+		return nil, nil
+	}
+
+	sendResult := <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, title, body, headline, fmt.Sprint(userId)), ctx)
+
+	return nil, sendResult
+}
+
 func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, headline string, template database.RenderTemplate,
 	key string) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
@@ -69,6 +93,39 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 					"type":     template.Id,
 					"kind":     template.Kind,
 					"headline": template.Headline,
+				},
+				PublishKey: key,
+			}
+
+			mm[t.Platform] = &req
+		}
+
+		mm[t.Platform].Tokens = append(mm[t.Platform].Tokens, t.PushToken)
+	}
+
+	var resp []notification_gateway.SendPushRequest
+
+	for _, v := range mm {
+		resp = append(resp, *v)
+	}
+
+	return resp
+}
+
+func (s *Sender) prepareCustomPushEvents(tokens []database.Device, title string, body string, headline string, key string) []notification_gateway.SendPushRequest {
+	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
+
+	for _, t := range tokens {
+		if _, ok := mm[t.Platform]; !ok {
+			req := notification_gateway.SendPushRequest{
+				Tokens:     nil,
+				DeviceType: t.Platform,
+				Title:      title,
+				Body:       body,
+				ExtraData: map[string]string{
+					"type":     "custom",
+					"kind":     "popup",
+					"headline": headline,
 				},
 				PublishKey: key,
 			}

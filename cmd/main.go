@@ -43,6 +43,7 @@ func main() {
 		cfg.Wrappers.NotificationGateway))
 
 	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender).ListenAsync()
+	sendingQueueCustomListener := sending_queue.InitListener(ctx, cfg.SendingQueueCustomListener, notificationSender).ListenAsync()
 
 	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
 
@@ -67,6 +68,9 @@ func main() {
 		},
 		func() error {
 			return sendingQueueListener.Close()
+		},
+		func() error {
+			return sendingQueueCustomListener.Close()
 		},
 		func() error {
 			return creatorsListener.Close()
