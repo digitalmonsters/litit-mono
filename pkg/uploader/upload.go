@@ -83,10 +83,16 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 		return nil, err
 	}
 
+	var duration null.Float
+
+	if fileExtension == "mp3" {
+		duration = null.FloatFrom(getSongDuration(body))
+	}
+
 	if respBytes, err := json.Marshal(&uploadResponse{
 		FileUrl:  fileUrl,
 		Size:     size,
-		Duration: null.FloatFrom(getSongDuration(body)),
+		Duration: duration,
 	}); err != nil {
 		return nil, err
 	} else {
