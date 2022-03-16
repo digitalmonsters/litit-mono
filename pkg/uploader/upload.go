@@ -78,8 +78,6 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 	filePath = filepath.Join(filePath, uploadType.ToString(), filename)
 	fileUrl = fmt.Sprintf("%v/%v", cfg.S3.CdnUrl, filePath)
 
-	fmt.Println(fileUrl)
-
 	uploader := s3.NewUploader(&cfg.S3)
 	if err := uploader.UploadObject(filePath, body, "application/octet-stream"); err != nil {
 		return nil, err
