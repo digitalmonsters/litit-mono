@@ -119,4 +119,8 @@ type UserTokenomicsStats struct {
 	PointsForRejectedTransactions decimal.Decimal `json:"points_for_rejected_transactions"`
 	PendingTransactionsNumber     int             `json:"pending_transactions_number"`
 	PointsForPendingTransactions  decimal.Decimal `json:"points_for_pending_transactions"`
+	SharedVideoNumber             int             `json:"shared_video_number"`
+	PointsForSharedVideo          decimal.Decimal `json:"points_for_shared_video"`
+	InvitedFromShareNumber        int             `json:"invited_from_share_number"`
+	PointsForInvitedFromShare     decimal.Decimal `json:"points_for_invited_from_share"`
 }
