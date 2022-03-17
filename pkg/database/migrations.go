@@ -111,5 +111,13 @@ func getMigrations() []*gormigrate.Migration {
 					"update render_templates set kind = 'content_creator' where id in ('creator_status_rejected','creator_status_approved')")
 			},
 		},
+		{
+			ID: "add_content_creator_pending_220317",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('creator_status_pending', 'Creator status pending.', 'Your Creator approval process has been successfully initiated', '2022-03-17 13:40:04.000000', '2022-03-17 13:40:06.000000', 'content_creator', null) on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
