@@ -15,8 +15,8 @@ type UserEvent struct {
 	Avatar                 null.String     `json:"avatar"`
 	Username               null.String     `json:"username"`
 	Email                  null.String     `json:"email"`
-	Firstname              string          `json:"firstname"`
-	Lastname               string          `json:"lastname"`
+	Firstname              null.String     `json:"firstname"`
+	Lastname               null.String     `json:"lastname"`
 	Birthdate              null.Time       `json:"birthdate"`
 	AllowNotifications     bool            `json:"allow_notifications"`
 	Newsletter             bool            `json:"newsletter"`
