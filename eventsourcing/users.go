@@ -8,15 +8,15 @@ import (
 )
 
 type UserEvent struct {
-	Id                     int64           `json:"id"`
+	UserId                 int64           `json:"id"`
 	Deleted                bool            `json:"deleted"`
 	CreatedAt              time.Time       `json:"created_at"`
 	UpdatedAt              time.Time       `json:"updated_at"`
-	AvatarKey              null.String     `json:"avatar_key"`
+	Avatar                 null.String     `json:"avatar"`
 	Username               null.String     `json:"username"`
 	Email                  null.String     `json:"email"`
-	FirstName              null.String     `json:"first_name"`
-	LastName               null.String     `json:"last_name"`
+	Firstname              string          `json:"firstname"`
+	Lastname               string          `json:"lastname"`
 	Birthdate              null.Time       `json:"birthdate"`
 	AllowNotifications     bool            `json:"allow_notifications"`
 	Newsletter             bool            `json:"newsletter"`
@@ -52,6 +52,7 @@ type UserEvent struct {
 	Tags                   null.Int        `json:"tags"`
 	DeviceId               string          `json:"device_id"`
 	Guest                  bool            `json:"guest"`
+	AppleUid               null.String     `json:"apple_uid"`
 	BaseChangeEvent
 }
 
@@ -61,5 +62,5 @@ const (
 )
 
 func (c UserEvent) GetPublishKey() string {
-	return fmt.Sprint(c.Id)
+	return fmt.Sprint(c.UserId)
 }
