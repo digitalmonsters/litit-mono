@@ -56,7 +56,7 @@ func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64
 	}
 
 	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body, headline, renderingTemplate,
-		fmt.Sprint(userId)), ctx)
+		fmt.Sprint(userId), renderingData), ctx)
 
 	return nil, sendResult
 }
@@ -79,8 +79,20 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(title, body, headline strin
 }
 
 func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, headline string, template database.RenderTemplate,
-	key string) []notification_gateway.SendPushRequest {
+	key string, renderingData map[string]string) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
+
+	extraData := map[string]string{
+		"type":     template.Id,
+		"kind":     template.Kind,
+		"headline": headline,
+	}
+
+	for k, v := range renderingData {
+		if _, ok := extraData[k]; !ok {
+			extraData[k] = v
+		}
+	}
 
 	for _, t := range tokens {
 		if _, ok := mm[t.Platform]; !ok {
@@ -89,11 +101,7 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 				DeviceType: t.Platform,
 				Title:      title,
 				Body:       body,
-				ExtraData: map[string]string{
-					"type":     template.Id,
-					"kind":     template.Kind,
-					"headline": template.Headline,
-				},
+				ExtraData:  extraData,
 				PublishKey: key,
 			}
 

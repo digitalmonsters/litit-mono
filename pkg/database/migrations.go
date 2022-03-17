@@ -104,5 +104,12 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "change_creators_data_20220317",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update render_templates set kind = 'content_creator' where id in ('creator_status_rejected','creator_status_approved')")
+			},
+		},
 	}
 }
