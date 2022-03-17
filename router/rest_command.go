@@ -53,7 +53,7 @@ func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodTyp
 		requireIdentityValidation: requiredIdentityValidation}
 }
 
-func (r RestCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
+func (r RestCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
 	return publicCanExecuteLogic(ctx, r.requireIdentityValidation)
 }
 

@@ -24,6 +24,7 @@ const (
 	GenericPanicError           ErrorCode = -32603
 	UserHasNoPermissionToMethod ErrorCode = 601
 	KYCRequiredError                      = ErrorCode(602)
+	RegistrationRequiredError             = ErrorCode(603)
 )
 
 const (

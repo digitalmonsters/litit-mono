@@ -28,15 +28,15 @@ func NewLegacyAdminCommand(methodName string, fn CommandFunc) ICommand {
 	}
 }
 
-func (a LegacyAdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
-	userId, err := publicCanExecuteLogic(ctx, a.requireIdentityValidation)
+func (a LegacyAdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+	userId, isGuest, err := publicCanExecuteLogic(ctx, a.requireIdentityValidation)
 
 	if err != nil {
-		return 0, err
+		return 0, isGuest, err
 	}
 
 	if userId <= 0 {
-		return 0, &rpc.RpcError{
+		return 0, isGuest, &rpc.RpcError{
 			Code:        error_codes.MissingJwtToken,
 			Message:     "legacy admin method requires identity validation",
 			Hostname:    hostName,
@@ -47,14 +47,14 @@ func (a LegacyAdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction 
 	resp := <-auth.CheckLegacyAdmin(userId, apmTransaction, false)
 
 	if resp.Error != nil {
-		return 0, resp.Error
+		return 0, isGuest, resp.Error
 	}
 
 	if resp.Resp.IsAdmin || resp.Resp.IsSuperAdmin {
-		return userId, nil
+		return userId, isGuest, nil
 	}
 
-	return 0, &rpc.RpcError{
+	return 0, isGuest, &rpc.RpcError{
 		Code:        error_codes.InvalidJwtToken,
 		Message:     "user is not marked as admin",
 		Stack:       "",

@@ -20,7 +20,7 @@ type ICommand interface {
 	ForceLog() bool
 	GetPath() string
 	GetHttpMethod() string
-	CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, *rpc.RpcError)
+	CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (userId int64, isGuest bool, err *rpc.RpcError)
 }
 
 type CommandFunc func(request []byte, executionData MethodExecutionData) (interface{}, *error_codes.ErrorWithCode)
@@ -69,16 +69,18 @@ func (c Command) GetFn() CommandFunc {
 	return c.fn
 }
 
-func (c Command) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
+func (c Command) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
 	return publicCanExecuteLogic(ctx, c.requireIdentityValidation)
 }
 
-func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation bool) (int64, *rpc.RpcError) {
+func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation bool) (int64, bool, *rpc.RpcError) {
 	var userId int64
+	var isGuest bool
+
 	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
 		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
-				return 0, &rpc.RpcError{
+				return 0, isGuest, &rpc.RpcError{
 					Code:        error_codes.InvalidJwtToken,
 					Message:     fmt.Sprintf("can not parse str to int for user-id. input string %v. [%v]", userIdHead, err.Error()),
 					Hostname:    hostName,
@@ -90,8 +92,23 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 		}
 	}
 
+	if userId > 0 {
+		if isGuestHeader := ctx.Request.Header.Peek("Is-Guest"); len(isGuestHeader) > 0 {
+			if parsedIsGuest, err := strconv.ParseBool(string(isGuestHeader)); err != nil {
+				return 0, isGuest, &rpc.RpcError{
+					Code:        error_codes.InvalidJwtToken,
+					Message:     fmt.Sprintf("can not parse str to int for is-guest. input string %v. [%v]", isGuestHeader, err.Error()),
+					Hostname:    hostName,
+					ServiceName: hostName,
+				}
+			} else {
+				isGuest = parsedIsGuest
+			}
+		}
+	}
+
 	if requireIdentityValidation && userId <= 0 {
-		return 0, &rpc.RpcError{
+		return 0, isGuest, &rpc.RpcError{
 			Code:        error_codes.MissingJwtToken,
 			Message:     "public method requires identity validation",
 			Hostname:    hostName,
@@ -99,7 +116,7 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 		}
 	}
 
-	return userId, nil
+	return userId, isGuest, nil
 }
 
 func (c Command) ForceLog() bool {

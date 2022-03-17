@@ -34,13 +34,13 @@ func NewAdminCommand(methodName string, fn CommandFunc, accessLevel common.Acces
 	}
 }
 
-func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, authWrapper auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
+func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, authWrapper auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
 	currentUserId := int64(0)
 
 	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") { // external auth
 		if userIdHead := ctx.Request.Header.Peek("Admin-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
-				return 0, &rpc.RpcError{
+				return 0, false, &rpc.RpcError{
 					Code:        error_codes.InvalidJwtToken,
 					Message:     fmt.Sprintf("can not parse str to int for admin-id. input string %v. [%v]", userIdHead, err.Error()),
 					Hostname:    hostName,
@@ -62,7 +62,7 @@ func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.T
 			resp := <-forwardAuthWrapper.ParseNewAdminToken(string(jwtAuthData), false, apmTransaction, false)
 
 			if resp.Error != nil {
-				return 0, resp.Error
+				return 0, false, resp.Error
 			}
 
 			currentUserId = resp.Resp.UserId
@@ -70,7 +70,7 @@ func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.T
 	}
 
 	if currentUserId == 0 {
-		return 0, &rpc.RpcError{
+		return 0, false, &rpc.RpcError{
 			Code:        error_codes.MissingJwtToken,
 			Message:     "new admin method requires new admin authorization header",
 			Hostname:    hostName,
@@ -79,20 +79,20 @@ func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.T
 	}
 
 	if a.accessLevel == common.AccessLevelPublic {
-		return currentUserId, nil
+		return currentUserId, false, nil
 	}
 
 	ch := <-authWrapper.CheckAdminPermissions(currentUserId, a.obj, apmTransaction, false)
 
 	if ch.Error != nil {
-		return 0, ch.Error
+		return 0, false, ch.Error
 	}
 
 	if ch.Resp.HasAccess {
-		return currentUserId, nil
+		return currentUserId, false, nil
 	}
 
-	return 0, &rpc.RpcError{
+	return 0, false, &rpc.RpcError{
 		Code:        error_codes.InvalidJwtToken,
 		Message:     "admin user does not have access to this method",
 		Hostname:    hostName,

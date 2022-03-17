@@ -398,7 +398,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	shouldLog = forceLog
 
-	userId, rpcError := cmd.CanExecute(ctx, apmTransaction, r.authGoWrapper)
+	userId, isGuest, rpcError := cmd.CanExecute(ctx, apmTransaction, r.authGoWrapper)
 
 	if rpcError != nil {
 		rpcResponse.Error = rpcError
@@ -441,6 +441,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 		ApmTransaction: apmTransaction,
 		Context:        newCtx,
 		UserId:         userId,
+		IsGuest:        isGuest,
 		UserIp:         userIp,
 		getUserValueFn: getUserValue,
 	}); err != nil {

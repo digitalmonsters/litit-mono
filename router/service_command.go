@@ -29,8 +29,8 @@ func NewServiceCommand(methodName string, fn CommandFunc, forceLog bool) IComman
 	}
 }
 
-func (a ServiceCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, *rpc.RpcError) {
-	return 0, nil
+func (a ServiceCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+	return 0, false, nil
 }
 
 func (a ServiceCommand) ForceLog() bool {
