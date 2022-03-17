@@ -8,7 +8,7 @@ import (
 
 func getMigrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
-		/*{
+		{
 			ID: "initial_node_tables_20220310",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
@@ -19,7 +19,7 @@ func getMigrations() []*gormigrate.Migration {
 					"create table if not exists user_notifications\n(\n    user_id      integer           not null\n        primary key,\n    unread_count integer default 0 not null\n);\n\ncreate index if not exists user_notifications_unread_count_idx\n    on user_notifications (unread_count);\n\n",
 				)
 			},
-		},*/
+		},
 		{
 			ID: "additional_tables_20220310",
 			Migrate: func(db *gorm.DB) error {
