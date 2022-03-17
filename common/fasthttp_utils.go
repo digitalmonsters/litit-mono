@@ -48,6 +48,27 @@ func UnpackFastHttpBody(response *fasthttp.Response) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func GetRealIp(req *fasthttp.RequestCtx) string {
+	ip := ""
+
+	if ipHeader := req.Request.Header.Peek("X-Envoy-External-Address"); len(ipHeader) > 0 {
+		ip = string(ipHeader)
+	}
+
+	if len(ip) > 0 {
+		return ip
+	}
+
+	if ipHeader := req.Request.Header.Peek("X-Forwarded-For"); len(ipHeader) > 0 {
+		ip = strings.TrimSpace(strings.Split(string(ipHeader), ",")[0])
+	}
+
+	if len(ip) == 0 {
+		ip = "0.0.0.0"
+	}
+
+	return ip
+}
 func StripSlashFromUrl(input string) string {
 	if len(input) == 0 {
 		return input

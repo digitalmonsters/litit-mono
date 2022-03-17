@@ -432,17 +432,12 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	executionTiming := time.Now()
 
-	var userIp string
-	if val := ctx.Request.Header.Peek("x-envoy-external-address"); len(val) > 0 {
-		userIp = string(val)
-	}
-
 	if resp, err := cmd.GetFn()(rpcRequest.Params, MethodExecutionData{
 		ApmTransaction: apmTransaction,
 		Context:        newCtx,
 		UserId:         userId,
 		IsGuest:        isGuest,
-		UserIp:         userIp,
+		UserIp:         common.GetRealIp(ctx),
 		getUserValueFn: getUserValue,
 	}); err != nil {
 		rpcResponse.Error = &rpc.RpcError{
@@ -628,11 +623,18 @@ func (r *HttpRouter) logRequestHeaders(ctx *fasthttp.RequestCtx,
 	ctx.Request.Header.VisitAll(func(key, value []byte) {
 		keyStr := strings.ToLower(string(key))
 
-		if keyStr == "cookies" || keyStr == "authorization" || keyStr == "x-forwarded-client-cert" {
+		if keyStr == "cookies" || keyStr == "authorization" || keyStr == "x-forwarded-client-cert" ||
+			keyStr == "x-envoy-peer-metadata" || keyStr == "x-envoy-peer-metadata-id" {
 			return
 		}
 
 		valueStr := string(value)
+
+		if keyStr == "user-id" {
+			keyStr = "user_id"
+		} else if keyStr == "is-guest" {
+			keyStr = "is_guest"
+		}
 
 		apm_helper.AddApmLabel(apmTransaction, keyStr, valueStr)
 	})
