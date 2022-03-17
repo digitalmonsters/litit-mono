@@ -55,6 +55,11 @@ type UserEvent struct {
 	BaseChangeEvent
 }
 
+const (
+	DeleteModeSoft = "soft"
+	DeleteModeHard = "hard"
+)
+
 func (c UserEvent) GetPublishKey() string {
 	return fmt.Sprint(c.Id)
 }

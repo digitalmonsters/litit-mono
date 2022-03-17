@@ -128,14 +128,12 @@ func (c ContentEvent) GetPublishKey() string {
 }
 
 type BaseChangeEvent struct {
-	Type                ChangeEvenType `json:"type"`
 	CrudOperation       ChangeEvenType `json:"crud_operation"`
 	CrudOperationReason string         `json:"crud_operation_reason"`
 }
 
 func NewBaseChangeEvent(crudOperation ChangeEvenType) BaseChangeEvent {
 	return BaseChangeEvent{
-		Type:                crudOperation,
 		CrudOperation:       crudOperation,
 		CrudOperationReason: "",
 	}
@@ -143,7 +141,6 @@ func NewBaseChangeEvent(crudOperation ChangeEvenType) BaseChangeEvent {
 
 func NewBaseChangeEventWithReason(crudOperation ChangeEvenType, reason string) BaseChangeEvent {
 	return BaseChangeEvent{
-		Type:                crudOperation,
 		CrudOperation:       crudOperation,
 		CrudOperationReason: reason,
 	}
