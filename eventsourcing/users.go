@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type UserModel struct {
+type UserEvent struct {
 	Id                     int64           `json:"id"`
 	Deleted                bool            `json:"deleted"`
 	CreatedAt              time.Time       `json:"created_at"`
@@ -52,8 +52,9 @@ type UserModel struct {
 	Tags                   null.Int        `json:"tags"`
 	DeviceId               string          `json:"device_id"`
 	Guest                  bool            `json:"guest"`
+	BaseChangeEvent
 }
 
-func (c UserModel) GetPublishKey() string {
+func (c UserEvent) GetPublishKey() string {
 	return fmt.Sprint(c.Id)
 }
