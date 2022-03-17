@@ -14,6 +14,7 @@ type AuthParseTokenResponseChan struct {
 
 type AuthParseTokenResponse struct {
 	UserId  int64 `json:"user_id"`
+	IsGuest bool  `json:"is_guest"`
 	Expired bool  `json:"expired"`
 }
 
