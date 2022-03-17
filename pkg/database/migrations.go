@@ -8,7 +8,7 @@ import (
 
 func getMigrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
-		{
+		/*{
 			ID: "initial_node_tables_20220310",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
@@ -19,7 +19,7 @@ func getMigrations() []*gormigrate.Migration {
 					"create table if not exists user_notifications\n(\n    user_id      integer           not null\n        primary key,\n    unread_count integer default 0 not null\n);\n\ncreate index if not exists user_notifications_unread_count_idx\n    on user_notifications (unread_count);\n\n",
 				)
 			},
-		},
+		},*/
 		{
 			ID: "additional_tables_20220310",
 			Migrate: func(db *gorm.DB) error {
@@ -116,6 +116,16 @@ func getMigrations() []*gormigrate.Migration {
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
 					"INSERT INTO render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('creator_status_pending', 'Creator status pending.', 'Your Creator approval process has been successfully initiated', '2022-03-17 13:40:04.000000', '2022-03-17 13:40:06.000000', 'content_creator', null) on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "guest_max_earned_points_for_views_17032022",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('guest_max_earned_points_for_views'::text, 'You just earned maximum allowed LIT points as unregistered user.'::text, 'You can earn 100 LIT points for watching videos as unregistered user. Create your Lit.it account now to keep getting points for watching videos.'::text, '2022-03-17 18:35:38.000000'::timestamp, '2022-03-17 18:35:40.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
+					"UPDATE render_templates SET headline = 'Congrats!' WHERE id = 'first_guest_x_paid_views'",
+					"UPDATE render_templates SET headline = 'Congrats!' WHERE id = 'first_guest_x_earned_points'",
 				)
 			},
 		},
