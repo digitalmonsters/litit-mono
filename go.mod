@@ -3,7 +3,7 @@ module github.com/digitalmonsters/comments
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.15.11
+	github.com/digitalmonsters/go-common v1.20.5
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v0.0.0-20211222173705-d73e6b1002a7
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
@@ -55,6 +55,7 @@ require (
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
