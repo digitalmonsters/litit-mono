@@ -21,7 +21,9 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
-
+		if executionData.IsGuest {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("registration required"), error_codes.RegistrationRequiredError)
+		}
 		if commentId <= 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}

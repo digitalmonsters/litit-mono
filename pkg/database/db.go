@@ -1,11 +1,11 @@
 package database
 
 import (
-	"fmt"
 	"github.com/digitalmonsters/comments/configs"
+	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/rs/zerolog/log"
-	postgres "go.elastic.co/apm/module/apmgormv2/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -14,10 +14,15 @@ var gormDb *gorm.DB
 func init() {
 	config := configs.GetConfig()
 
-	db, err := gorm.Open(postgres.Open(fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v",
-		config.Db.Host, config.Db.User, config.Db.Password, config.Db.Db, config.Db.Port)), &gorm.Config{
-		QueryFields: true,
-	})
+	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
+		if err := boilerplate_testing.EnsurePostgresDbExists(config.Db); err != nil {
+			panic(err)
+		}
+	}
+
+	log.Info().Msg("setup postgres database")
+
+	db, err := boilerplate.GetGormConnection(config.Db)
 
 	if err != nil {
 		panic(err)
@@ -25,9 +30,9 @@ func init() {
 
 	gormDb = db
 
-	m := gormigrate.New(db, gormigrate.DefaultOptions, getMigrations())
+	m := gormigrate.New(gormDb, gormigrate.DefaultOptions, getMigrations())
 
-	log.Info().Msg("start migrations")
+	log.Info().Msg("[Db] start migrations")
 
 	if err = m.Migrate(); err != nil {
 		panic(err)

@@ -7,24 +7,6 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 )
 
-type DbConfig struct {
-	Host     string `json:"Host" default:"localhost"`
-	Port     int    `json:"Port" default:"5432"`
-	Db       string `json:"Db" default:"base_api"`
-	User     string `json:"User" default:"postgres"`
-	Password string `json:"Password" default:"qwerty"`
-}
-
-func (d DbConfig) ToBoilerplate() boilerplate.DbConfig {
-	return boilerplate.DbConfig{
-		Host:     d.Host,
-		Port:     d.Port,
-		Db:       d.Db,
-		User:     d.User,
-		Password: d.Password,
-	}
-}
-
 type NotifierConfig struct {
 	KafkaTopic     boilerplate.KafkaTopicConfig `json:"KafkaTopic"`
 	PollTimeMs     int                          `json:"PollTimeMs"`
@@ -32,15 +14,16 @@ type NotifierConfig struct {
 }
 
 type Settings struct {
-	HttpPort                             int                                   `json:"HttpPort"`
-	PrivateHttpPort                      int                                   `json:"PrivateHttpPort"`
-	Wrappers                             boilerplate.Wrappers                  `json:"Wrappers"`
-	Db                                   DbConfig                              `json:"Db"`
-	KafkaWriter                          *boilerplate.KafkaWriterConfiguration `json:"KafkaWriter"`
-	NotifierCommentConfig                *NotifierConfig                       `json:"NotifierCommentConfig"`
-	NotifierContentCommentsCounterConfig *NotifierConfig                       `json:"NotifierContentCommentsCounterConfig"`
-	NotifierUserCommentsCounterConfig    *NotifierConfig                       `json:"NotifierUserCommentsCounterConfig"`
-	NotifierVoteConfig                   *NotifierConfig                       `json:"NotifierVoteConfig"`
+	HttpPort                             int                                    `json:"HttpPort"`
+	PrivateHttpPort                      int                                    `json:"PrivateHttpPort"`
+	Wrappers                             boilerplate.Wrappers                   `json:"Wrappers"`
+	Db                                   boilerplate.DbConfig                   `json:"Db"`
+	KafkaWriter                          *boilerplate.KafkaWriterConfiguration  `json:"KafkaWriter"`
+	NotifierCommentConfig                *NotifierConfig                        `json:"NotifierCommentConfig"`
+	NotifierContentCommentsCounterConfig *NotifierConfig                        `json:"NotifierContentCommentsCounterConfig"`
+	NotifierUserCommentsCounterConfig    *NotifierConfig                        `json:"NotifierUserCommentsCounterConfig"`
+	NotifierVoteConfig                   *NotifierConfig                        `json:"NotifierVoteConfig"`
+	UserListener                         boilerplate.KafkaListenerConfiguration `json:"UserListener"`
 }
 
 var settings Settings
@@ -59,7 +42,7 @@ func init() {
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
 		settings.Db.Db = fmt.Sprintf("ci_%v", boilerplate.GetGenerator().Generate().String())
 
-		if err := boilerplate_testing.EnsurePostgresDbExists(settings.Db.ToBoilerplate()); err != nil {
+		if err := boilerplate_testing.EnsurePostgresDbExists(settings.Db); err != nil {
 			panic(err)
 		}
 	}

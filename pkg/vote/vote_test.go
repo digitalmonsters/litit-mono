@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 func baseSetup(t *testing.T) {
 	cfg := configs.GetConfig()
 
-	if err := boilerplate_testing.FlushPostgresTables(cfg.Db.ToBoilerplate(),
+	if err := boilerplate_testing.FlushPostgresTables(cfg.Db,
 		[]string{"public.comment", "public.comment_vote", "public.content", "public.comment_vote", "public.profile"}, nil, nil); err != nil {
 		t.Fatal(err)
 	}

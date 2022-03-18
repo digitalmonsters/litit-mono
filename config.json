@@ -60,5 +60,13 @@
     "UserBlock": {
       "ApiUrl": ""
     }
+  },
+  "UserListener": {
+    "Hosts": "127.0.0.1",
+    "Topic": "local.user",
+    "GroupId": "local_comments_user_listener",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true
   }
 }
