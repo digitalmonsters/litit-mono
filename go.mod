@@ -3,7 +3,7 @@ module github.com/digitalmonsters/comments
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.20.5
+	github.com/digitalmonsters/go-common v1.20.6
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v0.0.0-20211222173705-d73e6b1002a7
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
@@ -14,7 +14,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/thoas/go-funk v0.9.1
 	go.elastic.co/apm v1.15.0
-	go.elastic.co/apm/module/apmgormv2 v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.22.4
 )
@@ -82,6 +81,7 @@ require (
 	github.com/valyala/fasthttp v1.31.0 // indirect
 	github.com/xdg/scram v1.0.3 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
+	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
