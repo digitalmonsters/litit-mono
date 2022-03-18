@@ -119,5 +119,15 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "guest_max_earned_points_for_views_17032022",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('guest_max_earned_points_for_views'::text, 'You just earned maximum allowed LIT points as unregistered user.'::text, 'You can earn 100 LIT points for watching videos as unregistered user. Create your Lit.it account now to keep getting points for watching videos.'::text, '2022-03-17 18:35:38.000000'::timestamp, '2022-03-17 18:35:40.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
+					"UPDATE render_templates SET headline = 'Congrats!' WHERE id = 'first_guest_x_paid_views'",
+					"UPDATE render_templates SET headline = 'Congrats!' WHERE id = 'first_guest_x_earned_points'",
+				)
+			},
+		},
 	}
 }
