@@ -59,7 +59,7 @@ func main() {
 	voteNotifier := vote2.NewNotifier(time.Duration(cfg.NotifierVoteConfig.PollTimeMs)*time.Millisecond,
 		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierVoteConfig.KafkaTopic), true)
 
-	user_consumer.InitListener(ctx, cfg.UserListener)
+	user_consumer.InitListener(ctx, cfg.UserListener).ListenAsync()
 
 	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
 		contentCommentsNotifier, userCommentsNotifier); err != nil {
