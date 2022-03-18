@@ -8,14 +8,15 @@ import (
 )
 
 type Settings struct {
-	HttpPort             int                                    `json:"HttpPort"`
-	PrivateHttpPort      int                                    `json:"PrivateHttpPort"`
-	Wrappers             boilerplate.Wrappers                   `json:"Wrappers"`
-	MasterDb             boilerplate.DbConfig                   `json:"MasterDb"`
-	ReadonlyDb           boilerplate.DbConfig                   `json:"ReadonlyDb"`
-	KafkaWriter          boilerplate.KafkaWriterConfiguration   `json:"KafkaWriter"`
-	SendingQueueListener boilerplate.KafkaListenerConfiguration `json:"SendingQueueListener"`
-	CreatorsListener     boilerplate.KafkaListenerConfiguration `json:"CreatorsListener"`
+	HttpPort                   int                                    `json:"HttpPort"`
+	PrivateHttpPort            int                                    `json:"PrivateHttpPort"`
+	Wrappers                   boilerplate.Wrappers                   `json:"Wrappers"`
+	MasterDb                   boilerplate.DbConfig                   `json:"MasterDb"`
+	ReadonlyDb                 boilerplate.DbConfig                   `json:"ReadonlyDb"`
+	KafkaWriter                boilerplate.KafkaWriterConfiguration   `json:"KafkaWriter"`
+	SendingQueueListener       boilerplate.KafkaListenerConfiguration `json:"SendingQueueListener"`
+	SendingQueueCustomListener boilerplate.KafkaListenerConfiguration `json:"SendingQueueCustomListener"`
+	CreatorsListener           boilerplate.KafkaListenerConfiguration `json:"CreatorsListener"`
 }
 
 var settings Settings

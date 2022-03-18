@@ -2,6 +2,7 @@ package creators
 
 import (
 	"context"
+	"fmt"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
@@ -10,23 +11,37 @@ import (
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
 	var err error
-	if event.Status == eventsourcing.CreatorStatusRejected {
+
+	renderingData := map[string]string{
+		"status": fmt.Sprint(event.Status),
+	}
+
+	switch event.Status {
+	case eventsourcing.CreatorStatusRejected:
 		_, err = notifySender.SendTemplateToUser(
 			sender.NotificationChannelPush,
 			"creator_status_rejected",
 			event.UserId,
-			map[string]string{},
+			renderingData,
 			ctx,
 		)
-	} else if event.Status == eventsourcing.CreatorStatusApproved {
+	case eventsourcing.CreatorStatusApproved:
 		_, err = notifySender.SendTemplateToUser(
 			sender.NotificationChannelPush,
 			"creator_status_approved",
 			event.UserId,
-			map[string]string{},
+			renderingData,
 			ctx,
 		)
-	} else {
+	case eventsourcing.CreatorStatusPending:
+		_, err = notifySender.SendTemplateToUser(
+			sender.NotificationChannelPush,
+			"creator_status_pending",
+			event.UserId,
+			renderingData,
+			ctx,
+		)
+	default:
 		return &event.Messages, nil
 	}
 
