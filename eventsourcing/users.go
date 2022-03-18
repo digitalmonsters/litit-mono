@@ -8,7 +8,7 @@ import (
 )
 
 type UserEvent struct {
-	UserId                 int64           `json:"id"`
+	UserId                 int64           `json:"user_id"`
 	Deleted                bool            `json:"deleted"`
 	CreatedAt              time.Time       `json:"created_at"`
 	UpdatedAt              time.Time       `json:"updated_at"`
