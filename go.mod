@@ -10,6 +10,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/romanyx/polluter v1.2.2
 	github.com/rs/zerolog v1.26.1
+	github.com/segmentio/kafka-go v0.4.25
 	github.com/stretchr/testify v1.7.0
 	github.com/thoas/go-funk v0.9.1
 	go.elastic.co/apm v1.15.0
@@ -25,6 +26,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/continuity v0.0.0-20210208174643-50096c924a4e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -74,11 +76,12 @@ require (
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.6.0 // indirect
-	github.com/segmentio/kafka-go v0.4.25 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.31.0 // indirect
+	github.com/xdg/scram v1.0.3 // indirect
+	github.com/xdg/stringprep v1.0.3 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect

@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/report"
 	"github.com/digitalmonsters/comments/cmd/api/vote"
 	vote2 "github.com/digitalmonsters/comments/cmd/api/vote/notifiers/vote"
+	"github.com/digitalmonsters/comments/cmd/consumers/user_consumer"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -57,6 +58,8 @@ func main() {
 		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierUserCommentsCounterConfig.KafkaTopic), true)
 	voteNotifier := vote2.NewNotifier(time.Duration(cfg.NotifierVoteConfig.PollTimeMs)*time.Millisecond,
 		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierVoteConfig.KafkaTopic), true)
+
+	user_consumer.InitListener(ctx, cfg.UserListener)
 
 	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
 		contentCommentsNotifier, userCommentsNotifier); err != nil {
