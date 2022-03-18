@@ -11,17 +11,23 @@ type uploadResponse struct {
 type UploadType int
 
 const (
-	UploadTypeNone          = UploadType(0)
-	UploadTypeMusic         = UploadType(1)
-	UploadTypeCreatorsMusic = UploadType(2)
+	UploadTypeNone              = UploadType(0)
+	UploadTypeAdminMusic        = UploadType(1)
+	UploadTypeCreatorsSongFull  = UploadType(2)
+	UploadTypeCreatorsSongShort = UploadType(3)
+	UploadTypeCreatorsSongImage = UploadType(4)
 )
 
 func (t UploadType) ToString() string {
 	switch t {
-	case UploadTypeMusic:
+	case UploadTypeAdminMusic:
 		return "music"
-	case UploadTypeCreatorsMusic:
-		return "creators"
+	case UploadTypeCreatorsSongFull:
+		return "full"
+	case UploadTypeCreatorsSongShort:
+		return "short"
+	case UploadTypeCreatorsSongImage:
+		return "image"
 	default:
 		return "unk"
 	}

@@ -147,8 +147,6 @@ func CreatorRequestApprove(req CreatorRequestApproveRequest, db *gorm.DB) ([]*da
 		r.ApprovedAt = null.TimeFrom(time.Now())
 	}
 
-	//todo: add user to creators table
-
 	if err := tx.Save(&creators).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -216,17 +214,19 @@ func UploadNewSong(req UploadNewSongRequest, db *gorm.DB, executionData router.M
 	}
 
 	song := database.CreatorSong{
-		UserId:       executionData.UserId,
-		Name:         req.Name,
-		Status:       database.CreatorSongStatusPending,
-		LyricAuthor:  req.LyricAuthor,
-		MusicAuthor:  req.MusicAuthor,
-		CategoryId:   req.CategoryId,
-		FullSongUrl:  req.FullSongUrl,
-		ShortSongUrl: req.ShortSongUrl,
-		ImageUrl:     req.ImageUrl,
-		Hashtags:     req.Hashtags,
-		CreatedAt:    time.Now(),
+		UserId:            executionData.UserId,
+		Name:              req.Name,
+		Status:            database.CreatorSongStatusPending,
+		LyricAuthor:       req.LyricAuthor,
+		MusicAuthor:       req.MusicAuthor,
+		FullSongDuration:  req.FullSongDuration,
+		ShortSongDuration: req.ShortSongDuration,
+		CategoryId:        req.CategoryId,
+		FullSongUrl:       req.FullSongUrl,
+		ShortSongUrl:      req.ShortSongUrl,
+		ImageUrl:          req.ImageUrl,
+		Hashtags:          req.Hashtags,
+		CreatedAt:         time.Now(),
 	}
 
 	if req.Id.Valid {
