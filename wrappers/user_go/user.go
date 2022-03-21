@@ -21,6 +21,7 @@ type IUserGoWrapper interface {
 	GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
 	GetUserIdsFilterByUsername(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
 	GetUsersTags(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
+	AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -320,4 +321,38 @@ func (u UserGoWrapper) GetUsersTags(userIds []int64, apmTransaction *apm.Transac
 	}()
 
 	return respCh
+}
+
+func (u *UserGoWrapper) AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan {
+	resChan := make(chan AuthGuestResponseChan, 2)
+
+	go func() {
+		link := fmt.Sprintf("%v/auth/guest", u.apiUrl)
+
+		rpcInternalResponse := <-u.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
+			"POST",
+			"application/json",
+			"auth guest",
+			AuthGuestRequest{DeviceId: deviceId}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+		finalResponse := AuthGuestResponseChan{
+			Error: rpcInternalResponse.Error,
+		}
+
+		if len(rpcInternalResponse.Result) > 0 {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Resp); err != nil {
+				finalResponse.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			}
+		}
+
+		resChan <- finalResponse
+	}()
+
+	return resChan
 }

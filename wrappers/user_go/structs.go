@@ -170,3 +170,18 @@ const (
 	LargeWalletBalance        Tag = 1 << 3
 	SuspiciousUser            Tag = 1 << 4
 )
+
+type AuthGuestRequest struct {
+	DeviceId string `json:"device_id"`
+}
+
+type AuthGuestResponseChan struct {
+	Error *rpc.RpcError  `json:"error"`
+	Resp  *AuthGuestResp `json:"resp"`
+}
+
+type AuthGuestResp struct {
+	UserId       int64  `json:"user_id"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}

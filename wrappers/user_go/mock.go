@@ -10,6 +10,7 @@ type UserGoWrapperMock struct {
 	GetUsersActiveThresholdsFn   func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
 	GetUserIdsFilterByUsernameFn func(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
 	GetUsersTagsFn               func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
+	AuthGuestFn                  func(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
 }
 
 func (m *UserGoWrapperMock) GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan {
@@ -34,6 +35,10 @@ func (m *UserGoWrapperMock) GetUserIdsFilterByUsername(userIds []int64, searchQu
 
 func (m *UserGoWrapperMock) GetUsersTags(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan {
 	return m.GetUsersTagsFn(userIds, apmTransaction, forceLog)
+}
+
+func (m *UserGoWrapperMock) AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan {
+	return m.AuthGuestFn(deviceId, apmTransaction, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors
