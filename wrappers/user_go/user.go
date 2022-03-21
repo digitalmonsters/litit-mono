@@ -338,9 +338,8 @@ func (u *UserGoWrapper) AuthGuest(deviceId string, apmTransaction *apm.Transacti
 		finalResponse := AuthGuestResponseChan{
 			Error: rpcInternalResponse.Error,
 		}
-
 		if len(rpcInternalResponse.Result) > 0 {
-			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Resp); err != nil {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse.Data); err != nil {
 				finalResponse.Error = &rpc.RpcError{
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),

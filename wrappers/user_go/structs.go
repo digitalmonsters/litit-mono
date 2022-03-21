@@ -177,7 +177,7 @@ type AuthGuestRequest struct {
 
 type AuthGuestResponseChan struct {
 	Error *rpc.RpcError  `json:"error"`
-	Resp  *AuthGuestResp `json:"resp"`
+	Data  *AuthGuestResp `json:"data"`
 }
 
 type AuthGuestResp struct {
