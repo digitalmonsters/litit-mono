@@ -32,3 +32,18 @@ type CreatorModel struct {
 func (c CreatorModel) GetPublishKey() string {
 	return fmt.Sprint(c.UserId)
 }
+
+type MusicCreatorModel struct {
+	Id           int64          `json:"id"`
+	UserId       int64          `json:"user_id"`
+	Status       CreatorStatus  `json:"status"`
+	RejectReason null.String    `json:"reject_reason"`
+	LibraryUrl   string         `json:"link"`
+	CreatedAt    time.Time      `json:"created_at"`
+	ApprovedAt   null.Time      `json:"approved_at"`
+	DeletedAt    gorm.DeletedAt `json:"deleted_at"`
+}
+
+func (c MusicCreatorModel) GetPublishKey() string {
+	return fmt.Sprint(c.UserId)
+}
