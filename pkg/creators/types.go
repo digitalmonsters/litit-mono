@@ -63,13 +63,15 @@ type creatorRejectItem struct {
 }
 
 type UploadNewSongRequest struct {
-	Id           null.Int    `json:"id"`
-	Name         string      `json:"name"`
-	LyricAuthor  null.String `json:"lyric_author"`
-	MusicAuthor  string      `json:"music_author"`
-	CategoryId   int64       `json:"category_id"`
-	FullSongUrl  string      `json:"full_song_url"`
-	ShortSongUrl string      `json:"short_song_url"`
-	ImageUrl     string      `json:"image_url"`
-	Hashtags     []string    `json:"hashtags"`
+	Id                null.Int    `json:"id"`
+	Name              string      `json:"name"`
+	LyricAuthor       null.String `json:"lyric_author"`
+	MusicAuthor       string      `json:"music_author"`
+	CategoryId        int64       `json:"category_id"`
+	FullSongUrl       string      `json:"full_song_url"`
+	FullSongDuration  float64     `json:"full_song_duration"`
+	ShortSongUrl      string      `json:"short_song_url"`
+	ShortSongDuration float64     `json:"short_song_duration"`
+	ImageUrl          string      `json:"image_url"`
+	Hashtags          []string    `json:"hashtags"`
 }

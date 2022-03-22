@@ -351,5 +351,16 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "creator_songs_new_columns_160320222018",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creator_songs add column if not exists full_song_duration numeric;
+						  alter table creator_songs add column if not exists short_song_duration numeric;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

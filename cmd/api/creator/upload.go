@@ -5,8 +5,8 @@ import (
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/uploader"
 	"github.com/digitalmonsters/music/utils"
-	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
+	"strconv"
 )
 
 func InitUploadApi(httpRouter *router.HttpRouter, cfg *configs.Settings) {
@@ -19,9 +19,32 @@ func InitUploadApi(httpRouter *router.HttpRouter, cfg *configs.Settings) {
 			utils.SetCors(ctx)
 		}()
 
-		resp, err := uploader.FileUpload(cfg, uploader.UploadTypeCreatorsMusic, ctx)
+		m, err := ctx.Request.MultipartForm()
 		if err != nil {
-			log.Info().Msgf("[Upload] an error occurred %s", err.Error())
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			return
+		}
+
+		t := m.Value["type"]
+		if len(t) == 0 {
+			ctx.Error("type is required", fasthttp.StatusInternalServerError)
+			return
+		}
+
+		ut, err := strconv.Atoi(t[0])
+		if err != nil {
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			return
+		}
+
+		uploadType := uploader.UploadType(ut)
+		if uploadType < uploader.UploadTypeAdminMusic || uploadType > uploader.UploadTypeCreatorsSongImage {
+			ctx.Error("wrong upload type", fasthttp.StatusInternalServerError)
+			return
+		}
+
+		resp, err := uploader.FileUpload(cfg, uploadType, ctx)
+		if err != nil {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		} else {
 			ctx.Response.Header.Set("Content-Type", "application/json")
