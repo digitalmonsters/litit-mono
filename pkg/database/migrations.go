@@ -95,5 +95,49 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "modify_headline_202203161316",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update render_templates set headline = 'Congrats!' where id in ('first_x_paid_views', 'first_referral_joined', 'first_video_shared', 'first_x_paid_views_as_content_owner', 'top_x_in_subcategory', 'registration_verify_bonus', 'first_daily_time_bonus', 'first_daily_followers_bonus');",
+					"update render_templates set headline = 'Get 3x more!' where id = 'increase_reward_stage_2';",
+				)
+			},
+		},
+		{
+			ID: "change_creators_data_20220317",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update render_templates set kind = 'content_creator' where id in ('creator_status_rejected','creator_status_approved')")
+			},
+		},
+		{
+			ID: "add_content_creator_pending_220317",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('creator_status_pending', 'Creator status pending.', 'Your Creator approval process has been successfully initiated', '2022-03-17 13:40:04.000000', '2022-03-17 13:40:06.000000', 'content_creator', null) on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "guest_max_earned_points_for_views_17032022",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('guest_max_earned_points_for_views'::text, 'You just earned maximum allowed LIT points as unregistered user.'::text, 'You can earn 100 LIT points for watching videos as unregistered user. Create your Lit.it account now to keep getting points for watching videos.'::text, '2022-03-17 18:35:38.000000'::timestamp, '2022-03-17 18:35:40.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
+					"UPDATE render_templates SET headline = 'Congrats!' WHERE id = 'first_guest_x_paid_views'",
+					"UPDATE render_templates SET headline = 'Congrats!' WHERE id = 'first_guest_x_earned_points'",
+				)
+			},
+		},
+		{
+			ID: "other_referrals_joined_template_21032022",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('other_referrals_joined'::text, " +
+					"'Your friend {{.username}} just joined via your link. +{{.referral_bonus}} LIT points'::text, null, '2022-03-21 19:35:38.000000'::timestamp, " +
+					"'2022-03-21 19:35:38.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
