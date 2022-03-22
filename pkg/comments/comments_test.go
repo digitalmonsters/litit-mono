@@ -108,7 +108,7 @@ func TestMain(m *testing.M) {
 func baseSetup(t *testing.T) {
 	cfg := configs.GetConfig()
 
-	if err := boilerplate_testing.FlushPostgresTables(cfg.Db.ToBoilerplate(),
+	if err := boilerplate_testing.FlushPostgresTables(cfg.Db,
 		[]string{"public.comment", "public.comment_vote", "public.content", "public.profile"}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
@@ -186,7 +186,7 @@ func TestGetCommentById(t *testing.T) {
 func TestGetCommentById_ChildrenComments(t *testing.T) {
 	cfg := configs.GetConfig()
 
-	if err := boilerplate_testing.FlushPostgresTables(cfg.Db.ToBoilerplate(),
+	if err := boilerplate_testing.FlushPostgresTables(cfg.Db,
 		[]string{"public.comment"}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +211,7 @@ func TestGetCommentById_ChildrenComments(t *testing.T) {
 	var comments []database.Comment
 
 	for i := 0; i < 3; i++ {
-		var minute = - 2 * (i + 1)
+		var minute = -2 * (i + 1)
 		comments = append(comments, database.Comment{
 			AuthorId:  userId,
 			Comment:   "test comments",

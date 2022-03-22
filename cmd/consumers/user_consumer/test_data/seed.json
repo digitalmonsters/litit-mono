@@ -1,0 +1,65 @@
+{
+  "comment": [
+    {
+      "id": 16,
+      "author_id": 5,
+      "content_id": null,
+      "profile_id": 5,
+      "parent_id": null,
+      "comment": "hi, @oleksandra_lola! How are you?",
+      "num_replies": 5,
+      "num_upvotes": 1,
+      "num_downvotes": 1,
+      "flagged": false,
+      "active": true,
+      "created_at": "2021-05-06 14:31:03.430453 +00:00",
+      "updated_at": "2021-05-14 15:32:16.018000 +00:00"
+    },
+    {
+      "id": 20,
+      "author_id": 1000220,
+      "content_id": null,
+      "profile_id": null,
+      "parent_id": 16,
+      "comment": "haha",
+      "num_replies": 0,
+      "num_upvotes": 0,
+      "num_downvotes": 0,
+      "flagged": false,
+      "active": true,
+      "created_at": "2021-05-07 14:26:28.743657 +00:00",
+      "updated_at": "2021-05-13 12:41:04.214000 +00:00"
+    },
+    {
+      "id": 19,
+      "author_id": 1000219,
+      "content_id": null,
+      "profile_id": null,
+      "parent_id": 16,
+      "comment": "haha",
+      "num_replies": 0,
+      "num_upvotes": 0,
+      "num_downvotes": 0,
+      "flagged": false,
+      "active": true,
+      "created_at": "2021-05-06 16:38:26.181510 +00:00",
+      "updated_at": "2021-05-13 13:00:38.131000 +00:00"
+    }
+  ],
+  "comment_vote": [
+    {
+      "user_id": 1000220,
+      "comment_id": 16,
+      "vote_up": true,
+      "created_at": "2021-05-13 17:52:31.405130 +00:00",
+      "updated_at": "2021-05-13 17:52:31.405130 +00:00"
+    },
+    {
+      "user_id": 1000218,
+      "comment_id": 16,
+      "vote_up": false,
+      "created_at": "2021-05-14 15:32:16.019170 +00:00",
+      "updated_at": "2021-05-14 15:32:16.019170 +00:00"
+    }
+  ]
+}

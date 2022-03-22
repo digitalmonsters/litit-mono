@@ -59,6 +59,11 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+
+		if executionData.IsGuest {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("registration required"), error_codes.RegistrationRequiredError)
+		}
+
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "delete_comment_id", 0, 0)
 
 		if commentId <= 0 {
@@ -95,6 +100,10 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "update_comment_id", 0, 0)
+
+		if executionData.IsGuest {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("registration required"), error_codes.RegistrationRequiredError)
+		}
 
 		var updateRequest updateCommentRequest
 
@@ -299,6 +308,10 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		contentId := utils.ExtractInt64(executionData.GetUserValue, "content_id_to_create_comment_on", 0, 0)
 
+		if executionData.IsGuest {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("registration required"), error_codes.RegistrationRequiredError)
+		}
+
 		if contentId <= 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
@@ -343,6 +356,10 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		profileId := utils.ExtractInt64(executionData.GetUserValue, "profile_id_to_create_comment_on", 0, 0)
+
+		if executionData.IsGuest {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("registration required"), error_codes.RegistrationRequiredError)
+		}
 
 		if profileId <= 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid profile_id"), error_codes.GenericValidationError)
