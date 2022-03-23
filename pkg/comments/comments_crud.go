@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/pkg/errors"
@@ -96,8 +97,8 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 			}
 		}
 
-		commentNotifier.Enqueue(newComment, mapped.Content, comment.ContentResourceTypeCreate)
-		commentNotifier.Enqueue(parentComment, mappedParentComment.Content, comment.ContentResourceTypeUpdate)
+		commentNotifier.Enqueue(newComment, mapped.Content, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonContent)
+		commentNotifier.Enqueue(parentComment, mappedParentComment.Content, eventsourcing.ChangeEventTypeUpdated, eventsourcing.CommentChangeReasonContent)
 	}
 
 	return &mapped.SimpleComment, nil
@@ -127,10 +128,10 @@ func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, curr
 	mapped := MapDbCommentToComment(modifiedComment)
 
 	if commentNotifier != nil {
-		var eventType comment.EventType
+		var eventType eventsourcing.CommentChangeReason
 
 		if !mapped.ContentId.IsZero() {
-			eventType = comment.ContentResourceTypeUpdate
+			eventType = eventsourcing.CommentChangeReasonContent
 
 			extenders := []chan error{
 				ExtendWithContent(contentWrapper, apmTransaction, &mapped),
@@ -142,10 +143,10 @@ func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, curr
 				}
 			}
 		} else {
-			eventType = comment.ProfileResourceTypeUpdate
+			eventType = eventsourcing.CommentChangeReasonProfile
 		}
 
-		commentNotifier.Enqueue(modifiedComment, mapped.Content, eventType)
+		commentNotifier.Enqueue(modifiedComment, mapped.Content, eventsourcing.ChangeEventTypeUpdated, eventType)
 	}
 
 	return &mapped.SimpleComment, nil
@@ -202,20 +203,20 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 	}
 
 	if commentNotifier != nil {
-		var eventType comment.EventType
+		var eventType eventsourcing.CommentChangeReason
 
 		if !mappedComment.ContentId.IsZero() {
-			eventType = comment.ContentResourceTypeDelete
+			eventType = eventsourcing.CommentChangeReasonContent
 		} else {
-			eventType = comment.ProfileResourceTypeDelete
+			eventType = eventsourcing.CommentChangeReasonProfile
 		}
 
-		commentNotifier.Enqueue(commentToDelete, mappedComment.Content, eventType)
+		commentNotifier.Enqueue(commentToDelete, mappedComment.Content, eventsourcing.ChangeEventTypeDeleted, eventType)
 
 		if !parentComment.ParentId.IsZero() {
 			mappedParentComment := MapDbCommentToComment(parentComment)
 
-			if eventType == comment.ContentResourceTypeDelete {
+			if eventType == eventsourcing.CommentChangeReasonContent {
 				extenders = []chan error{
 					ExtendWithContent(contentWrapper, apmTransaction, &mappedParentComment),
 				}
@@ -227,7 +228,7 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 				}
 			}
 
-			commentNotifier.Enqueue(parentComment, mappedParentComment.Content, eventType)
+			commentNotifier.Enqueue(parentComment, mappedParentComment.Content, eventsourcing.ChangeEventTypeDeleted, eventType)
 		}
 	}
 
@@ -289,10 +290,10 @@ func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, pa
 	mapped := mapDbCommentToCommentOnProfile(newComment)
 
 	if commentNotifier != nil {
-		commentNotifier.Enqueue(newComment, content.SimpleContent{}, comment.ProfileResourceTypeCreate)
+		commentNotifier.Enqueue(newComment, content.SimpleContent{}, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
 
 		if !parentId.IsZero() {
-			commentNotifier.Enqueue(parentComment, content.SimpleContent{}, comment.ProfileResourceTypeUpdate)
+			commentNotifier.Enqueue(parentComment, content.SimpleContent{}, eventsourcing.ChangeEventTypeUpdated, eventsourcing.CommentChangeReasonProfile)
 		}
 	}
 

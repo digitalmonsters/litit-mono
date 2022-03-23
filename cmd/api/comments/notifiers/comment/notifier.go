@@ -11,12 +11,13 @@ import (
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"strconv"
 	"sync"
 	"time"
 )
 
 type Notifier struct {
-	queueMap  map[string]eventData
+	queueMap  map[string]eventsourcing.Comment
 	mutex     sync.Mutex
 	publisher eventsourcing.IEventPublisher
 	poolTime  time.Duration
@@ -28,7 +29,7 @@ type Notifier struct {
 func NewNotifier(pollTime time.Duration, ctx context.Context,
 	eventPublisher eventsourcing.IEventPublisher, db *gorm.DB, autoFlush bool) *Notifier {
 	n := &Notifier{
-		queueMap:  make(map[string]eventData),
+		queueMap:  make(map[string]eventsourcing.Comment),
 		publisher: eventPublisher,
 		mutex:     sync.Mutex{},
 		poolTime:  pollTime,
@@ -36,16 +37,17 @@ func NewNotifier(pollTime time.Duration, ctx context.Context,
 		db:        db,
 		autoFlush: autoFlush,
 	}
-	if autoFlush{
+	if autoFlush {
 		n.initQueueListener()
 	}
 	return n
 }
 
-func (s *Notifier) Enqueue(comment database.Comment, content content.SimpleContent, eventType EventType) {
+func (s *Notifier) Enqueue(comment database.Comment, content content.SimpleContent, crudOperation eventsourcing.ChangeEvenType,
+	crudOperationReason eventsourcing.CommentChangeReason) {
 	s.mutex.Lock()
 
-	data := eventData{
+	data := eventsourcing.Comment{
 		Id:           comment.Id,
 		AuthorId:     comment.AuthorId,
 		NumReplies:   comment.NumReplies,
@@ -57,10 +59,13 @@ func (s *Notifier) Enqueue(comment database.Comment, content content.SimpleConte
 		ContentId:    comment.ContentId,
 		ParentId:     comment.ParentId,
 		ProfileId:    comment.ProfileId,
-		EventType:    eventType,
+		BaseChangeEvent: eventsourcing.BaseChangeEvent{
+			CrudOperation:       crudOperation,
+			CrudOperationReason: strconv.Itoa(int(crudOperationReason)),
+		},
 	}
 
-	if eventType == ContentResourceTypeCreate || eventType == ContentResourceTypeUpdate || eventType == ContentResourceTypeDelete {
+	if crudOperationReason == eventsourcing.CommentChangeReasonContent {
 		data.Width = null.IntFrom(int64(content.Width))
 		data.Height = null.IntFrom(int64(content.Height))
 		data.VideoId = null.StringFrom(content.VideoId)
@@ -88,7 +93,7 @@ func (s *Notifier) Flush() []error {
 	defer apmTransaction.End()
 
 	queueCopy := s.queueMap
-	s.queueMap = make(map[string]eventData)
+	s.queueMap = make(map[string]eventsourcing.Comment)
 	s.mutex.Unlock()
 
 	var parentCommentIds []int64
