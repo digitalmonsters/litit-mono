@@ -11,12 +11,6 @@ const (
 	KycStatusVerified = KycStatusType("verified")
 )
 
-type KycType string
-
-const (
-	KycTypeStatusUpdated = KycType("kyc_status_updated")
-)
-
 type KycReason string
 
 const (
