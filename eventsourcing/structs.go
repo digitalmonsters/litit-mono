@@ -120,6 +120,7 @@ type ContentEvent struct {
 	SharesCount      int64                 `json:"shares_count"`
 	CommentsCount    int64                 `json:"comments_count"`
 	RejectReason     frontend.RejectReason `json:"reject_reason"`
+	IsNewVisible     bool                  `json:"is_new_visible"`
 	BaseChangeEvent
 }
 

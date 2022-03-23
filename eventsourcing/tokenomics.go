@@ -3,6 +3,7 @@ package eventsourcing
 import (
 	"fmt"
 	"github.com/shopspring/decimal"
+	"gopkg.in/guregu/null.v4"
 	"time"
 )
 
@@ -34,4 +35,27 @@ type PaidFeatureUpdateEvent struct {
 
 func (u PaidFeatureUpdateEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v", u.UserId)
+}
+
+type TokenomicsNotificationType string
+
+const (
+	TokenomicsNotificationTip                 TokenomicsNotificationType = "push.tip"
+	TokenomicsNotificationDailyBonusTime      TokenomicsNotificationType = "push.bonus.time"
+	TokenomicsNotificationDailyBonusFollowers TokenomicsNotificationType = "push.bonus.followers"
+)
+
+type TokenomicsNotificationPayload struct {
+	UserId        int64               `json:"user_id"`
+	RelatedUserId null.Int            `json:"related_user_id"`
+	PointsAmount  decimal.NullDecimal `json:"points_amount"`
+}
+
+type TokenomicsNotificationEventData struct {
+	Type    TokenomicsNotificationType    `json:"type"`
+	Payload TokenomicsNotificationPayload `json:"payload"`
+}
+
+func (t TokenomicsNotificationEventData) GetPublishKey() string {
+	return fmt.Sprintf("%v", t.Payload.UserId)
 }
