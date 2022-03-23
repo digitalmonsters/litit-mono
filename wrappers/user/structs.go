@@ -22,16 +22,26 @@ type GetUsersDetailsResponseChan struct {
 
 //goland:noinspection GoNameStartsWithPackageName
 type UserRecord struct {
-	UserId                     int64       `json:"user_id"`
-	Avatar                     null.String `json:"avatar"`
-	Username                   string      `json:"username"`
-	Firstname                  string      `json:"firstname"`
-	Lastname                   string      `json:"lastname"`
-	Verified                   bool        `json:"verified"`
-	Guest                      bool        `json:"guest"`
-	EnableAgeRestrictedContent bool        `json:"enable_age_restricted_content"`
-	IsTipEnabled               bool        `json:"is_tip_enabled"`
+	UserId                     int64             `json:"user_id"`
+	Avatar                     null.String       `json:"avatar"`
+	Username                   string            `json:"username"`
+	Firstname                  string            `json:"firstname"`
+	Lastname                   string            `json:"lastname"`
+	Verified                   bool              `json:"verified"`
+	Guest                      bool              `json:"guest"`
+	EnableAgeRestrictedContent bool              `json:"enable_age_restricted_content"`
+	IsTipEnabled               bool              `json:"is_tip_enabled"`
+	NamePrivacyStatus          NamePrivacyStatus `json:"name_privacy_status"`
 }
+
+type NamePrivacyStatus int
+
+const (
+	NamePrivacyStatusVisible         NamePrivacyStatus = 0
+	NamePrivacyStatusFirstNameHidden NamePrivacyStatus = 1
+	NamePrivacyStatusLastNameHidden  NamePrivacyStatus = 2
+	NamePrivacyStatusAllHidden       NamePrivacyStatus = 3
+)
 
 type GetUsersRequest struct {
 	UserIds []int64 `json:"user_ids"`
@@ -48,23 +58,24 @@ type GetProfileBulkResponseChan struct {
 }
 
 type UserDetailRecord struct {
-	Id           int64       `json:"id"`
-	Username     null.String `json:"username"`
-	Firstname    string      `json:"firstname"`
-	Lastname     string      `json:"lastname"`
-	CountryCode  string      `json:"country_code"`
-	Gender       null.String `json:"gender"`
-	Following    int         `json:"following"`
-	Followers    int         `json:"followers"`
-	VideosCount  int         `json:"videos_count"`
-	IsFollowing  bool        `json:"is_following"`
-	IsFollower   bool        `json:"is_follower"`
-	Privacy      UerPrivacy  `json:"privacy"`
-	Profile      UserProfile `json:"profile"`
-	CountryName  string      `json:"country_name"`
-	Avatar       null.String `json:"avatar"`
-	IsTipEnabled bool        `json:"is_tip_enabled"`
-	Guest        bool        `json:"guest"`
+	Id                int64             `json:"id"`
+	Username          null.String       `json:"username"`
+	Firstname         string            `json:"firstname"`
+	Lastname          string            `json:"lastname"`
+	CountryCode       string            `json:"country_code"`
+	Gender            null.String       `json:"gender"`
+	Following         int               `json:"following"`
+	Followers         int               `json:"followers"`
+	VideosCount       int               `json:"videos_count"`
+	IsFollowing       bool              `json:"is_following"`
+	IsFollower        bool              `json:"is_follower"`
+	Privacy           UerPrivacy        `json:"privacy"`
+	Profile           UserProfile       `json:"profile"`
+	CountryName       string            `json:"country_name"`
+	Avatar            null.String       `json:"avatar"`
+	IsTipEnabled      bool              `json:"is_tip_enabled"`
+	Guest             bool              `json:"guest"`
+	NamePrivacyStatus NamePrivacyStatus `json:"name_privacy_status"`
 }
 
 type UerPrivacy struct {
