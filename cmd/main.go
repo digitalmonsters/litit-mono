@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/creators"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/music_creators"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/sending_queue"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"os"
@@ -39,13 +40,13 @@ func main() {
 
 	ctx := context.Background()
 
-	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
-		cfg.Wrappers.NotificationGateway))
+	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(cfg.Wrappers.NotificationGateway))
 
 	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender).ListenAsync()
 	sendingQueueCustomListener := sending_queue.InitListener(ctx, cfg.SendingQueueCustomListener, notificationSender).ListenAsync()
 
 	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
+	musicCreatorsListener := music_creators.InitListener(ctx, cfg.MusicCreatorsListener, notificationSender).ListenAsync()
 
 	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, cfg); err != nil {
 		log.Panic().Err(err).Msg("cannot initialize api")
@@ -74,6 +75,9 @@ func main() {
 		},
 		func() error {
 			return creatorsListener.Close()
+		},
+		func() error {
+			return musicCreatorsListener.Close()
 		},
 	})
 }

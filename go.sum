@@ -57,8 +57,8 @@ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc h1:VRRKCwnzqk8QCaRC4os14xoKDdbHqqlJtJA0oc1ZAjg=
 github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
-github.com/digitalmonsters/go-common v1.19.5 h1:Y1RrU5kYg+Yhz6rJ6YWZFhPG2vOn3EEiQmVVCVrEcgU=
-github.com/digitalmonsters/go-common v1.19.5/go.mod h1:lwCM4AO8jP4eyrshhouXthOIi1J+pGn4cmJw4GQdCvY=
+github.com/digitalmonsters/go-common v1.20.13 h1:Hw1DzmR1PGBTyc8j69BZu4dvRxRotS3/de+lsGqsYvQ=
+github.com/digitalmonsters/go-common v1.20.13/go.mod h1:lwCM4AO8jP4eyrshhouXthOIi1J+pGn4cmJw4GQdCvY=
 github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
 github.com/docker/go-connections v0.4.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
 github.com/docker/go-units v0.3.3 h1:Xk8S3Xj5sLGlG5g67hJmYMmUgXv5N4PhkjJHHqrwnTk=

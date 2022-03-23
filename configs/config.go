@@ -17,6 +17,7 @@ type Settings struct {
 	SendingQueueListener       boilerplate.KafkaListenerConfiguration `json:"SendingQueueListener"`
 	SendingQueueCustomListener boilerplate.KafkaListenerConfiguration `json:"SendingQueueCustomListener"`
 	CreatorsListener           boilerplate.KafkaListenerConfiguration `json:"CreatorsListener"`
+	MusicCreatorsListener      boilerplate.KafkaListenerConfiguration `json:"MusicCreatorsListener"`
 }
 
 var settings Settings
