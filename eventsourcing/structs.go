@@ -121,7 +121,6 @@ type ContentEvent struct {
 	CommentsCount    int64                 `json:"comments_count"`
 	RejectReason     frontend.RejectReason `json:"reject_reason"`
 	IsNewVisible     bool                  `json:"is_new_visible"`
-	KycStatus        KycStatusType         `json:"kyc_status"`
 	BaseChangeEvent
 }
 
