@@ -26,12 +26,14 @@ type SimpleContent struct {
 type GetTopNotFollowingUsersRequest struct {
 	UserId int64 `json:"user_id"`
 	Limit  int   `json:"limit"`
+	Offset int   `json:"offset"`
 }
 
 //goland:noinspection ALL
 type GetTopNotFollowingUsersResponseChan struct {
-	Error *rpc.RpcError `json:"error"`
-	Items []int64       `json:"items"`
+	Error      *rpc.RpcError `json:"error"`
+	Items      []int64       `json:"items"`
+	TotalCount int64         `json:"total_count"`
 }
 
 //goland:noinspection ALL

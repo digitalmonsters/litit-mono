@@ -15,7 +15,7 @@ import (
 
 type IContentWrapper interface {
 	GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan ContentGetInternalResponseChan
-	GetTopNotFollowingUsers(userId int64, limit int, apmTransaction *apm.Transaction, forceLog bool) chan GetTopNotFollowingUsersResponseChan
+	GetTopNotFollowingUsers(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan GetTopNotFollowingUsersResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -88,12 +88,13 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 	return respCh
 }
 
-func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, apmTransaction *apm.Transaction, forceLog bool) chan GetTopNotFollowingUsersResponseChan {
+func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan GetTopNotFollowingUsersResponseChan {
 	respCh := make(chan GetTopNotFollowingUsersResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetTopNotFollowingUsers", GetTopNotFollowingUsersRequest{
 		UserId: userId,
 		Limit:  limit,
+		Offset: offset,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
