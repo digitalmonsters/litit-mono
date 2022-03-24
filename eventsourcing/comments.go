@@ -46,3 +46,12 @@ type Vote struct {
 func (l Vote) GetPublishKey() string {
 	return fmt.Sprintf("%v_%v", l.CommentId, l.UserId)
 }
+
+type CommentCountOnContentEvent struct {
+	ContentId int64 `json:"content_id"`
+	Count     int64 `json:"count"`
+}
+
+func (l CommentCountOnContentEvent) GetPublishKey() string {
+	return fmt.Sprintf("%v", l.ContentId)
+}
