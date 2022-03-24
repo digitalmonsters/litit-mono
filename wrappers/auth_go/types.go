@@ -1,8 +1,14 @@
 package auth_go
 
 import (
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/rpc"
 )
+
+type AddUserResponseChan struct {
+	Error *rpc.RpcError
+	Item  eventsourcing.UserEvent `json:"item"`
+}
 
 type CheckAdminPermissionsRequest struct {
 	UserId int64  `json:"user_id"`

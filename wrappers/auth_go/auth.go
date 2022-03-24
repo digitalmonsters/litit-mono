@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/rs/zerolog/log"
@@ -46,6 +47,45 @@ func NewAuthGoWrapper(config boilerplate.WrapperConfig) IAuthGoWrapper {
 		serviceName:    "auth_go",
 		baseWrapper:    wrappers.GetBaseWrapper(),
 	}
+}
+
+func (w AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan {
+	respCh := make(chan AddUserResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "AddNewUser",
+		req, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := AddUserResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := eventsourcing.UserEvent{} // no need ot have it
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Item = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
 }
 
 func (w *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan {
