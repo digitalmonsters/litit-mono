@@ -31,9 +31,13 @@ type GetTopNotFollowingUsersRequest struct {
 
 //goland:noinspection ALL
 type GetTopNotFollowingUsersResponseChan struct {
-	Error      *rpc.RpcError `json:"error"`
-	Items      []int64       `json:"items"`
-	TotalCount int64         `json:"total_count"`
+	Error    *rpc.RpcError                   `json:"error"`
+	Response GetTopNotFollowingUsersResponse `json:"response"`
+}
+
+type GetTopNotFollowingUsersResponse struct {
+	Items      []int64 `json:"items"`
+	TotalCount int64   `json:"total_count"`
 }
 
 //goland:noinspection ALL

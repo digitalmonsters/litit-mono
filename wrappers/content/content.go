@@ -109,9 +109,9 @@ func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, offset
 		}
 
 		if len(resp.Result) > 0 {
-			var items []int64
+			var resultResp GetTopNotFollowingUsersResponse
 
-			if err := json.Unmarshal(resp.Result, &items); err != nil {
+			if err := json.Unmarshal(resp.Result, &resultResp); err != nil {
 				result.Error = &rpc.RpcError{
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
@@ -120,7 +120,7 @@ func (w *ContentWrapper) GetTopNotFollowingUsers(userId int64, limit int, offset
 					ServiceName: w.serviceName,
 				}
 			} else {
-				result.Items = items
+				result.Response = resultResp
 			}
 		}
 
