@@ -19,6 +19,7 @@ type IAuthGoWrapper interface {
 	CheckLegacyAdmin(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan
 	GetAdminIdsFilterByEmail(adminIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminIdsFilterByEmailResponseChan
 	GetAdminsInfoById(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
+	AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
 }
 
 type AuthGoWrapper struct {
@@ -49,11 +50,11 @@ func NewAuthGoWrapper(config boilerplate.WrapperConfig) IAuthGoWrapper {
 	}
 }
 
-func (w AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan {
+func (u AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan {
 	respCh := make(chan AddUserResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "AddNewUser",
-		req, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+	respChan := u.baseWrapper.SendRpcRequest(u.apiUrl, "AddNewUser",
+		req, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -74,8 +75,8 @@ func (w AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *a
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
 				}
 			} else {
 				result.Item = data
@@ -88,12 +89,12 @@ func (w AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *a
 	return respCh
 }
 
-func (w *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan {
+func (u *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan {
 	respCh := make(chan CheckLegacyAdminResponseChan, 2)
 
-	rpcInternalResponseCh := w.baseWrapper.SendRpcRequest(w.apiUrl, "CheckLegacyAdmin", CheckLegacyAdminRequest{
+	rpcInternalResponseCh := u.baseWrapper.SendRpcRequest(u.apiUrl, "CheckLegacyAdmin", CheckLegacyAdminRequest{
 		UserId: userId,
-	}, map[string]string{}, w.defaultTimeout, transaction, w.serviceName, forceLog)
+	}, map[string]string{}, u.defaultTimeout, transaction, u.serviceName, forceLog)
 
 	go func() {
 		resp := <-rpcInternalResponseCh
@@ -108,8 +109,8 @@ func (w *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transact
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
 				}
 			}
 		}
@@ -119,14 +120,14 @@ func (w *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transact
 	return respCh
 }
 
-func (w *AuthGoWrapper) CheckAdminPermissions(userId int64, obj string, transaction *apm.Transaction,
+func (u *AuthGoWrapper) CheckAdminPermissions(userId int64, obj string, transaction *apm.Transaction,
 	forceLog bool) chan CheckAdminPermissionsResponseChan {
 	respCh := make(chan CheckAdminPermissionsResponseChan, 2)
 
-	rpcInternalResponseCh := w.baseWrapper.SendRpcRequest(w.apiUrl, "CheckUserAdminPermissions", CheckAdminPermissionsRequest{
+	rpcInternalResponseCh := u.baseWrapper.SendRpcRequest(u.apiUrl, "CheckUserAdminPermissions", CheckAdminPermissionsRequest{
 		UserId: userId,
 		Object: obj,
-	}, map[string]string{}, w.defaultTimeout, transaction, w.serviceName, forceLog)
+	}, map[string]string{}, u.defaultTimeout, transaction, u.serviceName, forceLog)
 
 	go func() {
 
@@ -142,8 +143,8 @@ func (w *AuthGoWrapper) CheckAdminPermissions(userId int64, obj string, transact
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
 				}
 			}
 		}
