@@ -28,6 +28,7 @@ type UserRecord struct {
 	Username                   string      `json:"username"`
 	Firstname                  string      `json:"firstname"`
 	Lastname                   string      `json:"lastname"`
+	Email                      string      `json:"email"`
 	Verified                   bool        `json:"verified"`
 	Guest                      bool        `json:"guest"`
 	EnableAgeRestrictedContent bool        `json:"enable_age_restricted_content"`

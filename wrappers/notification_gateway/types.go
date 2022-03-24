@@ -16,11 +16,18 @@ type SendSmsMessageResponseChan struct {
 }
 
 type SendEmailMessageRequest struct {
-	CcAddresses []string `json:"cc_addresses"`
-	ToAddresses []string `json:"to_addresses"`
-	HtmlBody    string   `json:"html_body"`
-	TextBody    string   `json:"text_body"`
-	Subject     string   `json:"subject"`
+	CcAddresses  []string `json:"cc_addresses"`
+	ToAddresses  []string `json:"to_addresses"`
+	HtmlBody     string   `json:"html_body"`
+	TextBody     string   `json:"text_body"`
+	Subject      string   `json:"subject"`
+	Template     string   `json:"template"`
+	TemplateData string   `json:"template_data"`
+	PublishKey   string   `json:"publish_key"`
+}
+
+func (v SendEmailMessageRequest) GetPublishKey() string {
+	return fmt.Sprintf("%v", v.PublishKey)
 }
 
 type SendEmailMessageResponseChan struct {

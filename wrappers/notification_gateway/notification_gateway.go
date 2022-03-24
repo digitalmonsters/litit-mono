@@ -19,12 +19,14 @@ type Wrapper struct {
 	apiUrl         string
 	serviceName    string
 	pushPublisher  *eventsourcing.KafkaEventPublisher
+	emailPublisher *eventsourcing.KafkaEventPublisher
 }
 
 type INotificationGatewayWrapper interface {
 	SendSmsInternal(message string, phoneNumber string, apmTransaction *apm.Transaction, forceLog bool) chan SendSmsMessageResponseChan
 	SendEmailInternal(ccAddresses, toAddresses []string, htmlBody, textBody, subject string, apmTransaction *apm.Transaction, forceLog bool) chan SendEmailMessageResponseChan
 	EnqueuePushForUser(msg []SendPushRequest, ctx context.Context) chan error
+	EnqueueEmail(msg []SendEmailMessageRequest, ctx context.Context) chan error
 }
 
 func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificationGatewayWrapper {
@@ -58,6 +60,15 @@ func NewNotificationGatewayWrapper(config boilerplate.WrapperConfig) INotificati
 			NumPartitions:     24,
 			ReplicationFactor: 2,
 		})
+	w.emailPublisher = eventsourcing.NewKafkaEventPublisher(
+		boilerplate.KafkaWriterConfiguration{
+			Hosts: "kafka-notifications-1.infra.svc.cluster.local:9094,kafka-notifications-2.infra.svc.cluster.local:9094",
+			Tls:   true,
+		}, boilerplate.KafkaTopicConfig{
+			Name:              fmt.Sprintf("%v.email", env),
+			NumPartitions:     24,
+			ReplicationFactor: 2,
+		})
 
 	return w
 }
@@ -80,6 +91,36 @@ func (w *Wrapper) EnqueuePushForUser(msg []SendPushRequest, ctx context.Context)
 		}
 
 		if err := w.pushPublisher.Publish(apm.TransactionFromContext(ctx),
+			i...); len(err) > 0 {
+			ch <- err[0]
+
+			return
+		}
+
+		ch <- nil
+	}()
+
+	return ch
+}
+
+func (w *Wrapper) EnqueueEmail(msg []SendEmailMessageRequest, ctx context.Context) chan error {
+	ch := make(chan error, 2)
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+
+		if w.emailPublisher == nil {
+			ch <- errors.New("publisher is nil")
+		}
+		var i []eventsourcing.IEventData
+
+		for _, m := range msg {
+			i = append(i, m)
+		}
+
+		if err := w.emailPublisher.Publish(apm.TransactionFromContext(ctx),
 			i...); len(err) > 0 {
 			ch <- err[0]
 
