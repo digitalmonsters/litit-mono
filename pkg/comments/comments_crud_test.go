@@ -93,7 +93,8 @@ func TestUpdateCommentById(t *testing.T) {
 
 func TestDeleteCommentById(t *testing.T) {
 	baseSetup(t)
-	_, err := DeleteCommentById(db, 9713, 1074247, contentWrapperMock, nil, nil)
+	_, err := DeleteCommentById(db, 9713, 1074247, contentWrapperMock, nil, nil,
+		nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

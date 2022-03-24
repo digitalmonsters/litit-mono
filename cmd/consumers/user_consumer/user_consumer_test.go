@@ -39,7 +39,7 @@ func TestDeleteChild(t *testing.T) {
 			},
 		},
 		Message: kafka.Message{},
-	}, nil, context.TODO())
+	}, nil, context.TODO(), nil, nil, nil)
 
 	if err != nil {
 		t.Fatal(err)
@@ -67,7 +67,7 @@ func TestDeleteChild(t *testing.T) {
 			},
 		},
 		Message: kafka.Message{},
-	}, nil, context.TODO())
+	}, nil, context.TODO(), nil, nil, nil)
 
 	if err != nil {
 		t.Fatal(err)

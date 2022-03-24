@@ -108,8 +108,7 @@ func TestMain(m *testing.M) {
 func baseSetup(t *testing.T) {
 	cfg := configs.GetConfig()
 
-	if err := boilerplate_testing.FlushPostgresTables(cfg.Db,
-		[]string{"public.comment", "public.comment_vote", "public.content", "public.profile"}, nil, nil); err != nil {
+	if err := boilerplate_testing.FlushPostgresAllTables(cfg.Db, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := utils.PollutePostgresDatabase(db, "./test_data/seed.json"); err != nil {

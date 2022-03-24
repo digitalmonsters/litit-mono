@@ -2,14 +2,9 @@ package comment
 
 import (
 	"context"
-	"fmt"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/thoas/go-funk"
-	"go.elastic.co/apm"
-	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"strconv"
 	"sync"
@@ -17,7 +12,7 @@ import (
 )
 
 type Notifier struct {
-	queueMap  map[string]eventsourcing.Comment
+	queueMap  []eventsourcing.IEventData
 	mutex     sync.Mutex
 	publisher eventsourcing.IEventPublisher
 	poolTime  time.Duration
@@ -29,7 +24,7 @@ type Notifier struct {
 func NewNotifier(pollTime time.Duration, ctx context.Context,
 	eventPublisher eventsourcing.IEventPublisher, db *gorm.DB, autoFlush bool) *Notifier {
 	n := &Notifier{
-		queueMap:  make(map[string]eventsourcing.Comment),
+		queueMap:  make([]eventsourcing.IEventData, 0),
 		publisher: eventPublisher,
 		mutex:     sync.Mutex{},
 		poolTime:  pollTime,
@@ -43,7 +38,7 @@ func NewNotifier(pollTime time.Duration, ctx context.Context,
 	return n
 }
 
-func (s *Notifier) Enqueue(comment database.Comment, content content.SimpleContent, crudOperation eventsourcing.ChangeEvenType,
+func (s *Notifier) Enqueue(comment database.Comment, crudOperation eventsourcing.ChangeEvenType,
 	crudOperationReason eventsourcing.CommentChangeReason) {
 	s.mutex.Lock()
 
@@ -65,22 +60,13 @@ func (s *Notifier) Enqueue(comment database.Comment, content content.SimpleConte
 		},
 	}
 
-	if crudOperationReason == eventsourcing.CommentChangeReasonContent {
-		data.Width = null.IntFrom(int64(content.Width))
-		data.Height = null.IntFrom(int64(content.Height))
-		data.VideoId = null.StringFrom(content.VideoId)
-	}
-
-	data.ContentAuthorId = null.IntFrom(content.AuthorId)
-
-	s.queueMap[fmt.Sprintf("%v", comment.Id)] = data
+	s.queueMap = append(s.queueMap, data)
 
 	s.mutex.Unlock()
 }
 
 func (s *Notifier) Flush() []error {
 	apmTransaction := apm_helper.StartNewApmTransaction("content comments flush", "publisher", nil, nil)
-	ctx := apm.ContextWithTransaction(context.TODO(), apmTransaction)
 
 	s.mutex.Lock()
 
@@ -93,50 +79,10 @@ func (s *Notifier) Flush() []error {
 	defer apmTransaction.End()
 
 	queueCopy := s.queueMap
-	s.queueMap = make(map[string]eventsourcing.Comment)
+	s.queueMap = make([]eventsourcing.IEventData, 0)
 	s.mutex.Unlock()
 
-	var parentCommentIds []int64
-	for _, v := range queueCopy {
-		parentId := v.ParentId.ValueOrZero()
-
-		if parentId > 0 {
-			if !funk.ContainsInt64(parentCommentIds, parentId) {
-				parentCommentIds = append(parentCommentIds, parentId)
-			}
-		}
-	}
-
-	parentComments := map[int64]database.Comment{}
-
-	if len(parentCommentIds) > 0 {
-		var tempComments []database.Comment
-
-		if err := s.db.WithContext(ctx).Where("id in ?", parentCommentIds).Find(&tempComments).Error; err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
-		} else {
-			for _, v := range tempComments {
-				parentComments[v.Id] = v
-			}
-		}
-	}
-
-	records := make([]eventsourcing.IEventData, len(queueCopy))
-
-	indexer := 0
-
-	for _, r := range queueCopy {
-		parentId := r.ParentId.ValueOrZero()
-
-		if v, ok := parentComments[parentId]; ok {
-			r.ParentAuthorId = null.IntFrom(v.AuthorId)
-		}
-
-		records[indexer] = r
-
-		indexer += 1
-	}
-	return s.publisher.Publish(apmTransaction, records...)
+	return s.publisher.Publish(apmTransaction, queueCopy...)
 }
 
 func (s *Notifier) Close() []error {

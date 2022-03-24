@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/gocql/gocql"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
@@ -122,7 +121,7 @@ func testInsert(t *testing.T) {
 	}
 
 	for _, event := range dict {
-		service.Enqueue(event, content.SimpleContent{}, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
+		service.Enqueue(event, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
 	}
 
 	errs := service.Flush()
@@ -197,7 +196,7 @@ func testPerformance(b *testing.B) {
 			Comment:      fmt.Sprint(i),
 			ContentId:    null.IntFrom(i),
 			ParentId:     null.IntFrom(i - 1),
-		}, content.SimpleContent{}, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
+		}, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
 	}
 
 	b.ResetTimer()

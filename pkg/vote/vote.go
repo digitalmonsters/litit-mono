@@ -107,7 +107,7 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 			eventType = eventsourcing.CommentChangeReasonProfile
 		}
 
-		commentNotifier.Enqueue(commentToVote, mapped.Content, eventsourcing.ChangeEventTypeUpdated, eventType)
+		commentNotifier.Enqueue(commentToVote, eventsourcing.ChangeEventTypeUpdated, eventType)
 
 	}
 
