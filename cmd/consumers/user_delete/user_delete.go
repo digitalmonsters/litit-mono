@@ -22,20 +22,20 @@ func process(event newSendingEvent, ctx context.Context) (*kafka.Message, error)
 	}
 
 	if len(userIds) > 0 {
-		if err := tx.Model(&database.Notification{}).Delete("related_user_id = ?", event.UserId).Error; err != nil {
+		if err := tx.Exec("delete from notifications where related_user_id = ?", event.UserId).Error; err != nil {
 			return nil, err
 		}
 
-		if err := tx.Exec("update set unread_count = unread_count - 1 where user_id in ?", userIds).Error; err != nil {
+		if err := tx.Exec("update user_notifications set unread_count = unread_count - 1 where user_id in ?", userIds).Error; err != nil {
 			return nil, err
 		}
 	}
 
-	if err := tx.Model(&database.Notification{}).Delete("user_id = ?", event.UserId).Error; err != nil {
+	if err := tx.Exec("delete from notifications where user_id = ?", event.UserId).Error; err != nil {
 		return nil, err
 	}
 
-	if err := tx.Model(&database.UserNotification{}).Delete("user_id = ?", event.UserId).Error; err != nil {
+	if err := tx.Exec("delete from user_notifications where user_id = ?", event.UserId).Error; err != nil {
 		return nil, err
 	}
 

@@ -27,11 +27,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		if len(userIds) > 0 {
-			if err := tx.Model(&database.Notification{}).Delete("content_id = ?", event.Id).Error; err != nil {
+			if err := tx.Exec("delete from notifications where content_id = ?", event.Id).Error; err != nil {
 				return nil, err
 			}
 
-			if err := tx.Exec("update set unread_count = unread_count - 1 where user_id in ?", userIds).Error; err != nil {
+			if err := tx.Exec("update user_notifications set unread_count = unread_count - 1 where user_id in ?", userIds).Error; err != nil {
 				return nil, err
 			}
 		}
