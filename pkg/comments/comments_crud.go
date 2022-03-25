@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/pkg/errors"
@@ -70,7 +71,8 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		}
 	}
 
-	if err = updateUserStatsComments(tx, currentUserId, resourceId, userCommentsNotifier, contentCommentsNotifier); err != nil {
+	if err = updateUserStatsComments(tx, currentUserId, resourceId, true,
+		userCommentsNotifier, contentCommentsNotifier, false); err != nil {
 		return nil, err
 	}
 
@@ -96,8 +98,8 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 			}
 		}
 
-		commentNotifier.Enqueue(newComment, mapped.Content, comment.ContentResourceTypeCreate)
-		commentNotifier.Enqueue(parentComment, mappedParentComment.Content, comment.ContentResourceTypeUpdate)
+		commentNotifier.Enqueue(newComment, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonContent)
+		commentNotifier.Enqueue(parentComment, eventsourcing.ChangeEventTypeUpdated, eventsourcing.CommentChangeReasonContent)
 	}
 
 	return &mapped.SimpleComment, nil
@@ -127,10 +129,10 @@ func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, curr
 	mapped := MapDbCommentToComment(modifiedComment)
 
 	if commentNotifier != nil {
-		var eventType comment.EventType
+		var eventType eventsourcing.CommentChangeReason
 
 		if !mapped.ContentId.IsZero() {
-			eventType = comment.ContentResourceTypeUpdate
+			eventType = eventsourcing.CommentChangeReasonContent
 
 			extenders := []chan error{
 				ExtendWithContent(contentWrapper, apmTransaction, &mapped),
@@ -142,96 +144,176 @@ func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, curr
 				}
 			}
 		} else {
-			eventType = comment.ProfileResourceTypeUpdate
+			eventType = eventsourcing.CommentChangeReasonProfile
 		}
 
-		commentNotifier.Enqueue(modifiedComment, mapped.Content, eventType)
+		commentNotifier.Enqueue(modifiedComment, eventsourcing.ChangeEventTypeUpdated, eventType)
 	}
 
 	return &mapped.SimpleComment, nil
 }
 
-func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, contentWrapper content.IContentWrapper,
-	apmTransaction *apm.Transaction, commentNotifier *comment.Notifier) (*SimpleComment, error) {
-	tx := db.Begin()
-	defer tx.Rollback()
+func DeleteComments(commentsToDelete []database.Comment, tx *gorm.DB, contentCommentsNotifier *content_comments_counter.Notifier,
+	userCommentsNotifier *user_comments_counter.Notifier, commentNotifier *comment.Notifier) ([]func(), error) {
+	parentIds := map[int64]int{}
+	authors := map[int64]int{}
+	contents := map[int64]int{}
 
-	var commentToDelete database.Comment
+	for _, c := range commentsToDelete {
+		if err := tx.Exec("delete from comment where id = ?", c.Id).Error; err != nil {
+			return nil, errors.WithStack(err)
+		}
 
-	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Take(&commentToDelete, commentId).Error; err != nil {
-		return nil, err
-	}
-	var commentProfileId = commentToDelete.ProfileId
-	mappedComment := MapDbCommentToComment(commentToDelete)
+		if c.ParentId.Valid {
+			parentIds[c.ParentId.ValueOrZero()] = parentIds[c.ParentId.ValueOrZero()] + 1
+		}
 
-	extenders := []chan error{
-		ExtendWithContent(contentWrapper, apmTransaction, &mappedComment),
-	}
+		if c.AuthorId > 0 {
+			authors[c.AuthorId] = authors[c.AuthorId] + 1
+		}
 
-	for _, e := range extenders {
-		if err := <-e; err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
+		if c.ContentId.Valid {
+			contents[c.ContentId.ValueOrZero()] = contents[c.ContentId.ValueOrZero()] + 1
 		}
 	}
-	var profileOwnerDeleteComments = commentProfileId.Valid && commentProfileId.Int64 == currentUserId
 
-	if mappedComment.AuthorId != currentUserId && mappedComment.Content.AuthorId != currentUserId &&
-		!profileOwnerDeleteComments {
-		return nil, errors.WithStack(errors.New("not allowed"))
-	}
+	var callbacks []func()
 
-	var parentComment database.Comment
-
-	if commentToDelete.ParentId.ValueOrZero() > 0 {
-		if err := tx.Model(&parentComment).Where("id = ?", commentToDelete.ParentId.ValueOrZero()).
-			Update("num_replies", gorm.Expr("num_replies - 1")).Scan(&parentComment).Error; err != nil {
+	for parentId, count := range parentIds {
+		if err := tx.Exec("update comment set num_replies = num_replies - ? where id = ?", count, parentId).
+			Error; err != nil {
 			return nil, err
 		}
 	}
 
-	if err := tx.Delete(&commentToDelete, commentId).Error; err != nil {
-		return nil, err
-	}
+	for commentAuthorId, count := range authors {
+		var userStatsActionComments int64
 
-	if err := tx.Commit().Error; err != nil {
-		return nil, err
-	}
-
-	if err := updateContentCommentsCounter(db, commentToDelete.ContentId.ValueOrZero()); err != nil {
-		return nil, err
-	}
-
-	if commentNotifier != nil {
-		var eventType comment.EventType
-
-		if !mappedComment.ContentId.IsZero() {
-			eventType = comment.ContentResourceTypeDelete
-		} else {
-			eventType = comment.ProfileResourceTypeDelete
+		if err := tx.Raw("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) "+
+			"do update set comments = user_stats_action.comments - ? returning comments", commentAuthorId, count).
+			Scan(&userStatsActionComments).Error; err != nil {
+			return nil, err
 		}
 
-		commentNotifier.Enqueue(commentToDelete, mappedComment.Content, eventType)
-
-		if !parentComment.ParentId.IsZero() {
-			mappedParentComment := MapDbCommentToComment(parentComment)
-
-			if eventType == comment.ContentResourceTypeDelete {
-				extenders = []chan error{
-					ExtendWithContent(contentWrapper, apmTransaction, &mappedParentComment),
-				}
-
-				for _, e := range extenders {
-					if err := <-e; err != nil {
-						apm_helper.CaptureApmError(err, apmTransaction)
-					}
-				}
+		callbacks = append(callbacks, func() {
+			if userCommentsNotifier == nil {
+				return
 			}
 
-			commentNotifier.Enqueue(parentComment, mappedParentComment.Content, eventType)
+			userCommentsNotifier.Enqueue(commentAuthorId, userStatsActionComments)
+		})
+	}
+
+	for contentId, count := range contents {
+		var userStatsContentComments int64
+
+		if err := tx.Raw("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) "+
+			"do update set comments = user_stats_content.comments - ? returning comments", contentId, count).
+			Scan(&userStatsContentComments).Error; err != nil {
+			return nil, err
+		}
+
+		callbacks = append(callbacks, func() {
+			if contentCommentsNotifier == nil {
+				return
+			}
+
+			contentCommentsNotifier.Enqueue(contentId, userStatsContentComments)
+		})
+	}
+
+	for _, c := range commentsToDelete {
+		var eventType eventsourcing.CommentChangeReason
+
+		if !c.ContentId.IsZero() {
+			eventType = eventsourcing.CommentChangeReasonContent
+		} else {
+			eventType = eventsourcing.CommentChangeReasonProfile
+		}
+
+		callbacks = append(callbacks, func() {
+			if commentNotifier == nil {
+				return
+			}
+
+			commentNotifier.Enqueue(c, eventsourcing.ChangeEventTypeDeleted, eventType)
+		})
+	}
+
+	return callbacks, nil
+}
+
+func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, contentWrapper content.IContentWrapper,
+	apmTransaction *apm.Transaction, commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
+	userCommentsNotifier *user_comments_counter.Notifier) (*SimpleComment, error) {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	var commentsToDelete []database.Comment // is raw list of all comments
+
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("id = ? or parent_id = ?", commentId, commentId).
+		Find(&commentsToDelete).Error; err != nil {
+		return nil, err
+	}
+
+	if len(commentsToDelete) == 0 {
+		return nil, errors.New("no comments to delete")
+	}
+
+	var mainComment database.Comment
+
+	for _, c := range commentsToDelete {
+		if c.Id == commentId {
+			mainComment = c
 		}
 	}
 
-	return &mappedComment.SimpleComment, nil
+	if mainComment.Id == 0 {
+		return nil, errors.New("no main comment")
+	}
+
+	if mainComment.AuthorId != currentUserId {
+		if mainComment.ProfileId.ValueOrZero() != currentUserId {
+			contentId := mainComment.ContentId.ValueOrZero()
+
+			if contentId == 0 {
+				return nil, errors.New("delete operation not permitted")
+			}
+
+			resp := <-contentWrapper.GetInternal([]int64{contentId}, true,
+				apmTransaction, false)
+
+			if resp.Error != nil {
+				return nil, resp.Error.ToError()
+			}
+
+			if v, ok := resp.Items[contentId]; !ok {
+				return nil, errors.New("content not found")
+			} else if v.AuthorId != currentUserId {
+				return nil, errors.New("delete operation not permitted 2")
+			}
+		}
+	}
+
+	callbacks, err := DeleteComments(commentsToDelete, tx, contentCommentsNotifier,
+		userCommentsNotifier, commentNotifier)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	for _, c := range callbacks {
+		c()
+	}
+
+	mapped := MapDbCommentToComment(mainComment).SimpleComment
+
+	return &mapped, nil
 }
 
 func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
@@ -278,21 +360,22 @@ func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, pa
 		}
 	}
 
-	if err = updateUserStatsComments(tx, currentUserId, resourceId, userCommentsNotifier, contentCommentsNotifier); err != nil {
+	if err = updateUserStatsComments(tx, currentUserId, resourceId, false,
+		userCommentsNotifier, contentCommentsNotifier, false); err != nil {
 		return nil, err
 	}
 
-	if err := tx.Commit().Error; err != nil {
+	if err = tx.Commit().Error; err != nil {
 		return nil, err
 	}
 
 	mapped := mapDbCommentToCommentOnProfile(newComment)
 
 	if commentNotifier != nil {
-		commentNotifier.Enqueue(newComment, content.SimpleContent{}, comment.ProfileResourceTypeCreate)
+		commentNotifier.Enqueue(newComment, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
 
 		if !parentId.IsZero() {
-			commentNotifier.Enqueue(parentComment, content.SimpleContent{}, comment.ProfileResourceTypeUpdate)
+			commentNotifier.Enqueue(parentComment, eventsourcing.ChangeEventTypeUpdated, eventsourcing.CommentChangeReasonProfile)
 		}
 	}
 

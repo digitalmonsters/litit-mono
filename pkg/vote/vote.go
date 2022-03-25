@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
@@ -88,10 +89,10 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 	mapped := comments.MapDbCommentToComment(commentToVote)
 
 	if commentNotifier != nil {
-		var eventType comment.EventType
+		var eventType eventsourcing.CommentChangeReason
 
 		if !mapped.ContentId.IsZero() {
-			eventType = comment.ContentResourceTypeUpdate
+			eventType = eventsourcing.CommentChangeReasonContent
 
 			extenders := []chan error{
 				comments.ExtendWithContent(contentWrapper, apmTransaction, &mapped),
@@ -103,16 +104,21 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 				}
 			}
 		} else {
-			eventType = comment.ProfileResourceTypeUpdate
+			eventType = eventsourcing.CommentChangeReasonProfile
 		}
 
-		commentNotifier.Enqueue(commentToVote, mapped.Content, eventType)
+		commentNotifier.Enqueue(commentToVote, eventsourcing.ChangeEventTypeUpdated, eventType)
 
 	}
 
 	if voteNotifier != nil {
-		voteNotifier.Enqueue(commentToVote.Id, currentUserId, voteUp, commentToVote.ParentId, commentToVote.AuthorId,
-			commentToVote.Comment, commentToVote.ContentId, commentToVote.ProfileId)
+		if commentToVote.ContentId.Valid {
+			voteNotifier.Enqueue(commentToVote.Id, currentUserId, voteUp, commentToVote.ParentId, commentToVote.AuthorId,
+				commentToVote.Comment, commentToVote.ContentId.Int64, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonContent)
+		} else if commentToVote.ProfileId.Valid {
+			voteNotifier.Enqueue(commentToVote.Id, currentUserId, voteUp, commentToVote.ParentId, commentToVote.AuthorId,
+				commentToVote.Comment, commentToVote.ProfileId.Int64, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
+		}
 	}
 
 	return &previousVote, nil

@@ -3,10 +3,8 @@ package comment
 import (
 	"context"
 	"fmt"
-	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/gocql/gocql"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +18,6 @@ import (
 	"time"
 )
 
-var cfg *configs.Settings
 var service *Notifier
 var cluster *gocql.ClusterConfig
 var kafkaPublishedEvents []eventsourcing.IEventData
@@ -41,9 +38,7 @@ func (s *KafkaEventPublisherMock) Publish(apmTransaction *apm.Transaction, event
 }
 
 func TestMain(m *testing.M) {
-	config := configs.GetConfig()
 	gormDb = database.GetDb()
-	cfg = &config
 	kafkaPublishedEvents = nil
 
 	pollTime = 100 * time.Millisecond
@@ -126,7 +121,7 @@ func testInsert(t *testing.T) {
 	}
 
 	for _, event := range dict {
-		service.Enqueue(event, content.SimpleContent{}, ProfileResourceTypeCreate)
+		service.Enqueue(event, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
 	}
 
 	errs := service.Flush()
@@ -137,11 +132,11 @@ func testInsert(t *testing.T) {
 
 	var newDict = make(map[string]database.Comment, len(kafkaPublishedEvents))
 	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
-		return kafkaPublishedEvents[i].(eventData).Id < kafkaPublishedEvents[j].(eventData).Id
+		return kafkaPublishedEvents[i].(eventsourcing.Comment).Id < kafkaPublishedEvents[j].(eventsourcing.Comment).Id
 	})
 
 	sort.Slice(kafkaPublishedEvents, func(i, j int) bool {
-		return kafkaPublishedEvents[i].(eventData).Id < kafkaPublishedEvents[j].(eventData).Id
+		return kafkaPublishedEvents[i].(eventsourcing.Comment).Id < kafkaPublishedEvents[j].(eventsourcing.Comment).Id
 	})
 
 	i := 0
@@ -201,7 +196,7 @@ func testPerformance(b *testing.B) {
 			Comment:      fmt.Sprint(i),
 			ContentId:    null.IntFrom(i),
 			ParentId:     null.IntFrom(i - 1),
-		}, content.SimpleContent{}, ProfileResourceTypeCreate)
+		}, eventsourcing.ChangeEventTypeCreated, eventsourcing.CommentChangeReasonProfile)
 	}
 
 	b.ResetTimer()

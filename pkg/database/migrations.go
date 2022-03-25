@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )
@@ -331,6 +332,15 @@ func getMigrations() []*gormigrate.Migration {
 			},
 			Rollback: func(db *gorm.DB) error {
 				return nil
+			},
+		},
+		{
+			ID: "resync_counters_20220324",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into user_stats_content(id, comments) select content.id, (select count(*) from comment where comment.content_id = content.id)\nfrom content on conflict(id) do update set comments = (select count(*) from comment where comment.content_id = excluded.id);",
+					"update content set comments_count = (select count(*) from comment where comment.content_id = content.id) where 1 = 1;",
+				)
 			},
 		},
 	}

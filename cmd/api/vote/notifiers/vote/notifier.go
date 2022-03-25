@@ -5,12 +5,13 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"gopkg.in/guregu/null.v4"
+	"strconv"
 	"sync"
 	"time"
 )
 
 type Notifier struct {
-	queueMap  map[string]eventData
+	queueMap  map[string]eventsourcing.Vote
 	mutex     sync.Mutex
 	publisher eventsourcing.IEventPublisher
 	poolTime  time.Duration
@@ -21,32 +22,35 @@ type Notifier struct {
 func NewNotifier(pollTime time.Duration, ctx context.Context,
 	eventPublisher eventsourcing.IEventPublisher, autoFlush bool) *Notifier {
 	n := &Notifier{
-		queueMap:  make(map[string]eventData),
+		queueMap:  make(map[string]eventsourcing.Vote),
 		publisher: eventPublisher,
 		mutex:     sync.Mutex{},
 		poolTime:  pollTime,
 		ctx:       ctx,
 		autoFlush: autoFlush,
 	}
-	if autoFlush{
+	if autoFlush {
 		n.initQueueListener()
 	}
 	return n
 }
 
 func (s *Notifier) Enqueue(commentId int64, userId int64, voteUp null.Bool, parentId null.Int, commentAuthorId int64,
-	comment string, contentId null.Int, profileId null.Int) {
+	comment string, entityId int64, crudOperation eventsourcing.ChangeEvenType, crudOperationReason eventsourcing.CommentChangeReason) {
 	s.mutex.Lock()
 
-	data := eventData{
+	data := eventsourcing.Vote{
 		CommentId:       commentId,
 		UserId:          userId,
 		Upvote:          voteUp,
 		ParentId:        parentId,
 		CommentAuthorId: commentAuthorId,
 		Comment:         comment,
-		ContentId:       contentId,
-		ProfileId:       profileId,
+		EntityId:        entityId,
+		BaseChangeEvent: eventsourcing.BaseChangeEvent{
+			CrudOperation:       crudOperation,
+			CrudOperationReason: strconv.Itoa(int(crudOperationReason)),
+		},
 	}
 
 	s.queueMap[data.GetPublishKey()] = data
@@ -68,7 +72,7 @@ func (s *Notifier) Flush() []error {
 	defer apmTransaction.End()
 
 	queueCopy := s.queueMap
-	s.queueMap = make(map[string]eventData)
+	s.queueMap = make(map[string]eventsourcing.Vote)
 	s.mutex.Unlock()
 
 	records := make([]eventsourcing.IEventData, len(queueCopy))
