@@ -28,7 +28,7 @@ type Notification struct {
 }
 
 func (Notification) TableName() string {
-	return "withdrawals"
+	return "notifications"
 }
 
 type NotificationContent struct {

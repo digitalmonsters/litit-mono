@@ -11,7 +11,7 @@ import (
 
 func InitListener(appCtx context.Context, configuration boilerplate.KafkaListenerConfiguration,
 	notificationSender sender.ISender) kafka_listener.IKafkaListener {
-	return kafka_listener.NewSingleListener(configuration, kafka_listener.NewCommand("votes",
+	return kafka_listener.NewSingleListener(configuration, kafka_listener.NewCommand("content",
 		func(executionData kafka_listener.ExecutionData, request ...kafka.Message) []kafka.Message {
 			singleMessage := request[0]
 
