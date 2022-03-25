@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/token"
@@ -23,7 +24,7 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper) *Sender
 	}
 }
 
-func (s *Sender) SendTemplateToUser(channel NotificationChannel,
+func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationChannel,
 	templateName string, userId int64, renderingData map[string]string,
 	ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
@@ -31,10 +32,14 @@ func (s *Sender) SendTemplateToUser(channel NotificationChannel,
 	return s.sendPushTemplateMessageToUser(templateName, userId, renderingData, db, ctx)
 }
 
-func (s *Sender) SendCustomTemplateToUser(channel NotificationChannel, userId int64, title, body, headline string, ctx context.Context) (interface{}, error) {
+func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, title, body, headline string, ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
 	return s.sendCustomPushTemplateMessageToUser(title, body, headline, userId, db, ctx)
+}
+
+func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error {
+	return <-s.gateway.EnqueueEmail(msg, ctx)
 }
 
 func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64, renderingData map[string]string,
@@ -49,7 +54,7 @@ func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64
 		return nil, nil
 	}
 
-	title, body, headline, renderingTemplate, err := s.renderTemplate(db, templateName, renderingData)
+	title, body, headline, renderingTemplate, err := s.RenderTemplate(db, templateName, renderingData)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -153,7 +158,7 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, title string,
 	return resp
 }
 
-func (s *Sender) renderTemplate(db *gorm.DB, templateName string,
+func (s *Sender) RenderTemplate(db *gorm.DB, templateName string,
 	renderingData map[string]string) (title string, body string, headline string, renderingTemplate database.RenderTemplate, err error) {
 	var renderTemplate database.RenderTemplate
 

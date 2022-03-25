@@ -1,0 +1,129 @@
+package api
+
+import (
+	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/extract"
+	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/digitalmonsters/notification-handler/pkg/database"
+	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"net/http"
+)
+
+func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper,
+	userBlockWrapper user_block.IUserBlockWrapper, followWrapper follow.IFollowWrapper) error {
+	notificationsPath := "/notifications"
+	deleteNotificationPath := "/notifications/:id"
+	readAllNotificationsPath := "/notifications/reset"
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		page := extract.String(executionData.GetUserValue, "page", "")
+		typeGroup := notificationPkg.TypeGroup(extract.String(executionData.GetUserValue, "notification_type", notificationPkg.TypeGroupAll))
+
+		userId := executionData.UserId
+
+		if userId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
+		}
+
+		resp, err := notificationPkg.GetNotifications(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context),
+			executionData.UserId, page, typeGroup, userGoWrapper, userBlockWrapper, followWrapper, executionData.ApmTransaction)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, notificationsPath, http.MethodGet, true, false)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		id, err := uuid.Parse(extract.String(executionData.GetUserValue, "id", uuid.Nil.String()))
+		if err != nil || id.String() == uuid.Nil.String() {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid id"), error_codes.GenericValidationError)
+		}
+
+		userId := executionData.UserId
+
+		if userId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
+		}
+
+		if err = notificationPkg.DeleteNotification(database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
+			executionData.UserId, id); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, deleteNotificationPath, http.MethodDelete, true, false)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		userId := executionData.UserId
+
+		if userId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
+		}
+
+		if err := notificationPkg.ReadAllNotifications(database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
+			executionData.UserId); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, readAllNotificationsPath, http.MethodPatch, true, false)); err != nil {
+		return err
+	}
+
+	apiDef[notificationsPath] = swagger.ApiDescription{
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "page",
+				In:          swagger.ParameterInQuery,
+				Description: "page",
+				Required:    false,
+				Type:        "string",
+			},
+			{
+				Name:        "notification_type",
+				In:          swagger.ParameterInQuery,
+				Description: "all|comment|system|following",
+				Required:    false,
+				Type:        "string",
+			},
+		},
+		Response:          notificationPkg.NotificationsResponse{},
+		MethodDescription: "user notifications",
+		Tags:              []string{"notification"},
+	}
+
+	apiDef[deleteNotificationPath] = swagger.ApiDescription{
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "id",
+				In:          swagger.ParameterInPath,
+				Description: "notification id",
+				Required:    true,
+				Type:        "uuid",
+			},
+		},
+		MethodDescription: "delete notification",
+		Tags:              []string{"notification"},
+	}
+
+	apiDef[readAllNotificationsPath] = swagger.ApiDescription{
+		MethodDescription: "read all notifications",
+		Tags:              []string{"notification"},
+	}
+
+	return nil
+}

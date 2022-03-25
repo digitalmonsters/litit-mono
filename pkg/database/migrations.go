@@ -139,5 +139,26 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_comments_templates_180320221600",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_content_resource_create', '{{.firstname}} {{.lastname}} commented your video', '{{.firstname}} {{.lastname}} commented: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.comment') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_profile_resource_create', '{{.firstname}} {{.lastname}} commented your profile', '{{.firstname}} {{.lastname}} commented: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.profile.comment') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_reply', '{{.firstname}} {{.lastname}} replied on your comment', '{{.firstname}} {{.lastname}} replied on your comment: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.comment.reply') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_vote_like', '{{.firstname}} {{.lastname}} liked your comment', '{{.firstname}} {{.lastname}} liked your comment: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.comment.vote') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_vote_dislike', '{{.firstname}} {{.lastname}} disliked your comment', '{{.firstname}} {{.lastname}} disliked your comment: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.comment.vote') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_like', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} liked your video', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.like') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_upload', 'Video uploaded', 'Your video was successfully uploaded', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.successful-upload') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_reject', 'Your video is rejected', 'You were rejected to publish your video due to {{.reason}} content', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.rejected') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('kyc_status_verified', 'Verification is approved', 'Your identity verification has been approved', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.kyc.status') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('kyc_status_rejected', 'Verification is rejected', 'Your identity verification has been rejected Reason: {{.reason}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.kyc.status') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('follow', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} started following you', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.profile.following') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('tip', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} tipped you {{.pointsAmount}} LIT points', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.tip') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('bonus_time', 'Daily bonus', 'Daily reward for views', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.bonus.time') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('bonus_followers', 'Daily bonus', 'You received daily bonus for followers', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.bonus.followers') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
