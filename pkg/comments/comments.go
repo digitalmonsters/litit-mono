@@ -6,11 +6,13 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -298,4 +300,28 @@ func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64, isCon
 	}
 
 	return nil
+}
+
+func GetCommentsInfoById(req comment.GetCommentsInfoByIdRequest, db *gorm.DB) (map[int64]comment.CommentsInfoById, error) {
+	query := db.Model(&database.Comment{}).Where("id in ?", req.CommentIds)
+
+	var comments []struct {
+		Id             int64
+		ParentAuthorId null.Int
+	}
+
+	query = query.Joins("left join comment as parent on comment.parent_id = parent.id")
+
+	if err := query.Select("id, parent.author_id as parent_author_id").Find(&comments).Error; err != nil {
+		return nil, err
+	}
+
+	commentsMap := make(map[int64]comment.CommentsInfoById, len(comments))
+	for _, item := range comments {
+		commentsMap[item.Id] = comment.CommentsInfoById{
+			ParentAuthorId: item.ParentAuthorId,
+		}
+	}
+
+	return commentsMap, nil
 }
