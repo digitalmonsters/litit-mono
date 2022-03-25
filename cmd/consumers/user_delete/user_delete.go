@@ -17,7 +17,7 @@ func process(event newSendingEvent, ctx context.Context) (*kafka.Message, error)
 	defer tx.Rollback()
 
 	var userIds []int64
-	if err := tx.Model(&database.Notification{}).Where("related_user_id = ?", event.UserId).Select("user_id").Row().Scan(&userIds); err != nil {
+	if err := tx.Model(&database.Notification{}).Where("related_user_id = ?", event.UserId).Select("user_id").Find(&userIds).Error; err != nil {
 		return nil, err
 	}
 

@@ -22,7 +22,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		defer tx.Rollback()
 
 		var userIds []int64
-		if err := tx.Model(&database.Notification{}).Where("content_id = ?", event.Id).Select("user_id").Row().Scan(&userIds); err != nil {
+		if err := tx.Model(&database.Notification{}).Where("content_id = ?", event.Id).Select("user_id").Find(&userIds).Error; err != nil {
 			return nil, err
 		}
 
