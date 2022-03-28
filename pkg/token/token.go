@@ -5,7 +5,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func GetUserTokens(db *gorm.DB, userId int64) ([]database.Device, error) {
@@ -26,10 +25,7 @@ func CreateToken(db *gorm.DB, userId int64, req TokenCreateRequest) error {
 		Platform:  req.Platform,
 	}
 
-	if err := db.Clauses(clause.OnConflict{UpdateAll: true, Columns: []clause.Column{
-		{Name: "userId", Raw: true},
-		{Name: "deviceId", Raw: true},
-	}}).Create(&device).Error; err != nil {
+	if err := db.Create(&device).Error; err != nil {
 		return err
 	}
 
