@@ -10,7 +10,7 @@ import (
 )
 
 type Notification struct {
-	Id                   uuid.UUID                    `json:"id"`
+	Id                   uuid.UUID                    `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserId               int64                        `json:"user_id"`
 	Type                 string                       `json:"type"`
 	Title                string                       `json:"title"`
