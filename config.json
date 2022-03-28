@@ -105,7 +105,7 @@
     "MaxBytes": 10000000,
     "Tls": true,
     "GroupId": "local_notification_handler_email_notification_listener",
-    "Topic": "local.email"
+    "Topic": "local.notification_created"
   },
   "PushAdminMessageListener": {
     "Hosts": "127.0.0.1",
