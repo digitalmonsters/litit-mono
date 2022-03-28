@@ -17,9 +17,9 @@ import (
 
 func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper,
 	userBlockWrapper user_block.IUserBlockWrapper, followWrapper follow.IFollowWrapper) error {
-	notificationsPath := "/notifications"
-	deleteNotificationPath := "/notifications/:id"
-	readAllNotificationsPath := "/notifications/reset"
+	notificationsPath := "/mobile/v1/notifications"
+	deleteNotificationPath := "/mobile/v1/notifications/:id"
+	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
