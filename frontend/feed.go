@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"gopkg.in/guregu/null.v4"
 	"time"
 )
@@ -15,13 +16,14 @@ type VideoSubcategoryModel struct {
 }
 
 type VideoUserModel struct {
-	Avatar       string `json:"avatar"`
-	FirstName    string `json:"firstname"`
-	Id           int64  `json:"id"`
-	LastName     string `json:"lastname"`
-	UserName     string `json:"username"`
-	Verified     bool   `json:"verified"`
-	IsTipEnabled bool   `json:"is_tip_enabled"`
+	Avatar            string                    `json:"avatar"`
+	FirstName         string                    `json:"firstname"`
+	Id                int64                     `json:"id"`
+	LastName          string                    `json:"lastname"`
+	UserName          string                    `json:"username"`
+	Verified          bool                      `json:"verified"`
+	IsTipEnabled      bool                      `json:"is_tip_enabled"`
+	NamePrivacyStatus user_go.NamePrivacyStatus `json:"name_privacy_status"`
 }
 
 type ContentModel struct {
