@@ -111,7 +111,7 @@ func ReadAllNotifications(db *gorm.DB, userId int64) error {
 }
 
 func IncrementUnreadNotificationsCounter(db *gorm.DB, userId int64) error {
-	if err := db.Exec("insert into user_notifications(user_id, unread_count) values(?, 1) on conflict (user_id) do update set unread_count = unread_count + 1", userId).Error; err != nil {
+	if err := db.Exec("insert into user_notifications(user_id, unread_count) values(?, 1) on conflict (user_id) do update set unread_count = user_notifications.unread_count + 1", userId).Error; err != nil {
 		return err
 	}
 
