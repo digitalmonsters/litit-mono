@@ -16,6 +16,15 @@ type UsersInternalChan struct {
 	UserDetailRecord
 }
 
+type NamePrivacyStatus int
+
+const (
+	NamePrivacyStatusVisible         NamePrivacyStatus = 0
+	NamePrivacyStatusFirstNameHidden NamePrivacyStatus = 1
+	NamePrivacyStatusLastNameHidden  NamePrivacyStatus = 2
+	NamePrivacyStatusAllHidden       NamePrivacyStatus = 3
+)
+
 type GetUsersDetailsResponseChan struct {
 	Error *rpc.RpcError
 	Items map[int64]UserDetailRecord `json:"items"`
@@ -23,16 +32,17 @@ type GetUsersDetailsResponseChan struct {
 
 //goland:noinspection GoNameStartsWithPackageName
 type UserRecord struct {
-	UserId                     int64       `json:"user_id"`
-	Avatar                     null.String `json:"avatar"`
-	Username                   string      `json:"username"`
-	Firstname                  string      `json:"firstname"`
-	Lastname                   string      `json:"lastname"`
-	Email                      string      `json:"email"`
-	Verified                   bool        `json:"verified"`
-	Guest                      bool        `json:"guest"`
-	EnableAgeRestrictedContent bool        `json:"enable_age_restricted_content"`
-	IsTipEnabled               bool        `json:"is_tip_enabled"`
+	UserId                     int64             `json:"user_id"`
+	Avatar                     null.String       `json:"avatar"`
+	Username                   string            `json:"username"`
+	Firstname                  string            `json:"firstname"`
+	Lastname                   string            `json:"lastname"`
+	Email                      string            `json:"email"`
+	Verified                   bool              `json:"verified"`
+	Guest                      bool              `json:"guest"`
+	EnableAgeRestrictedContent bool              `json:"enable_age_restricted_content"`
+	IsTipEnabled               bool              `json:"is_tip_enabled"`
+	NamePrivacyStatus          NamePrivacyStatus `json:"name_privacy_status"`
 }
 
 type GetUsersRequest struct {
@@ -50,24 +60,25 @@ type GetProfileBulkResponseChan struct {
 }
 
 type UserDetailRecord struct {
-	Id           int64           `json:"id"`
-	Username     null.String     `json:"username"`
-	Firstname    string          `json:"firstname"`
-	Lastname     string          `json:"lastname"`
-	Birthdate    null.Time       `json:"birthdate"`
-	KycStatus    string          `json:"kyc_status"`
-	CountryCode  string          `json:"country_code"`
-	VaultPoints  decimal.Decimal `json:"vault_points"`
-	Gender       null.String     `json:"gender"`
-	Following    int             `json:"following"`
-	Followers    int             `json:"followers"`
-	VideosCount  int             `json:"videos_count"`
-	Privacy      UerPrivacy      `json:"privacy"`
-	Profile      UserProfile     `json:"profile"`
-	CountryName  string          `json:"country_name"`
-	Avatar       null.String     `json:"avatar"`
-	IsTipEnabled bool            `json:"is_tip_enabled"`
-	Guest        bool            `json:"guest"`
+	Id                int64             `json:"id"`
+	Username          null.String       `json:"username"`
+	Firstname         string            `json:"firstname"`
+	Lastname          string            `json:"lastname"`
+	Birthdate         null.Time         `json:"birthdate"`
+	KycStatus         string            `json:"kyc_status"`
+	CountryCode       string            `json:"country_code"`
+	VaultPoints       decimal.Decimal   `json:"vault_points"`
+	Gender            null.String       `json:"gender"`
+	Following         int               `json:"following"`
+	Followers         int               `json:"followers"`
+	VideosCount       int               `json:"videos_count"`
+	Privacy           UerPrivacy        `json:"privacy"`
+	Profile           UserProfile       `json:"profile"`
+	CountryName       string            `json:"country_name"`
+	Avatar            null.String       `json:"avatar"`
+	IsTipEnabled      bool              `json:"is_tip_enabled"`
+	Guest             bool              `json:"guest"`
+	NamePrivacyStatus NamePrivacyStatus `json:"name_privacy_status"`
 }
 
 type UserProfileDetailRecord struct {
