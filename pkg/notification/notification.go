@@ -54,10 +54,14 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 
 	if cursor.After != nil {
 		resp.Next = *cursor.After
+	} else {
+		resp.Next = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
 	}
 
 	if cursor.Before != nil {
 		resp.Prev = *cursor.Before
+	} else {
+		resp.Prev = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
 	}
 
 	return &resp, nil
