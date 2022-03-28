@@ -303,7 +303,7 @@ func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64, isCon
 }
 
 func GetCommentsInfoById(req comment.GetCommentsInfoByIdRequest, db *gorm.DB) (map[int64]comment.CommentsInfoById, error) {
-	query := db.Model(&database.Comment{}).Where("id in ?", req.CommentIds)
+	query := db.Model(&database.Comment{}).Where("comment.id in ?", req.CommentIds)
 
 	var comments []struct {
 		Id             int64
@@ -312,7 +312,7 @@ func GetCommentsInfoById(req comment.GetCommentsInfoByIdRequest, db *gorm.DB) (m
 
 	query = query.Joins("left join comment as parent on comment.parent_id = parent.id")
 
-	if err := query.Select("id, parent.author_id as parent_author_id").Find(&comments).Error; err != nil {
+	if err := query.Select("comment.id, parent.author_id as parent_author_id").Find(&comments).Error; err != nil {
 		return nil, err
 	}
 

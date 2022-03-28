@@ -329,7 +329,7 @@ func TestGetCommentsInfoById(t *testing.T) {
 	a := assert.New(t)
 	for commentId, info := range result {
 		if commentId == 9694 {
-			a.Equal(1074241, info.ParentAuthorId.Int64)
+			a.Equal(int64(1074241), info.ParentAuthorId.Int64)
 		} else if commentId == 9712 {
 			a.False(info.ParentAuthorId.Valid)
 		} else {
