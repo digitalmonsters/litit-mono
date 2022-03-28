@@ -14,7 +14,7 @@ import (
 
 func InitTokenApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
 	createTokenPath := "/mobile/v1/push/token/notifications"
-	deleteTokenPath := "/mobile/v1/push/token/:device_id"
+	deleteTokenPath := "/mobile/v1/push/token/{device_id}"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
