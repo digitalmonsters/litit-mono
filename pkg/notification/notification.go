@@ -53,11 +53,11 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	}
 
 	if cursor.After != nil {
-		resp.Next = *cursor.After
+		resp.Prev = *cursor.After
 	}
 
 	if cursor.Before != nil {
-		resp.Prev = *cursor.Before
+		resp.Next = *cursor.Before
 	}
 
 	return &resp, nil

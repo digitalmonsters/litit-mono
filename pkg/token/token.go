@@ -39,7 +39,7 @@ func CreateToken(db *gorm.DB, userId int64, req TokenCreateRequest) error {
 func DeleteToken(db *gorm.DB, userId int64, deviceId string) error {
 	var device database.Device
 
-	if err := db.Where("device_id = ?", deviceId).Find(&device).Error; err != nil {
+	if err := db.Where("deviceId = ?", deviceId).Find(&device).Error; err != nil {
 		return err
 	}
 
