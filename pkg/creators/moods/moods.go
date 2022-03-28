@@ -1,4 +1,4 @@
-package categories
+package moods
 
 import (
 	"fmt"
@@ -13,16 +13,15 @@ import (
 	"time"
 )
 
-func Upsert(req UpsertRequest, db *gorm.DB) ([]database.Category, error) {
+func Upsert(req UpsertRequest, db *gorm.DB) ([]database.Mood, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	var categories []database.Category
+	var moods []database.Mood
 	for _, item := range req.Items {
-		r := database.Category{
+		r := database.Mood{
 			Name:      item.Name,
 			SortOrder: item.SortOrder,
-			IsActive:  item.IsActive,
 			CreatedAt: time.Now(),
 		}
 
@@ -31,16 +30,16 @@ func Upsert(req UpsertRequest, db *gorm.DB) ([]database.Category, error) {
 			r.UpdatedAt = null.TimeFrom(time.Now())
 		}
 
-		categories = append(categories, r)
+		moods = append(moods, r)
 	}
 
-	if err := tx.Model(&categories).
+	if err := tx.Model(&moods).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "id"}},
 			DoUpdates: clause.AssignmentColumns([]string{"name", "sort_order", "is_active"}),
-		}).Create(&categories).Error; err != nil {
+		}).Create(&moods).Error; err != nil {
 		if contain := strings.Contains(err.Error(), "duplicate key value violates unique constraint"); contain {
-			return nil, errors.New("category with the given name has been already created")
+			return nil, errors.New("mood with the given name has been already created")
 		}
 
 		return nil, errors.WithStack(err)
@@ -50,15 +49,19 @@ func Upsert(req UpsertRequest, db *gorm.DB) ([]database.Category, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	return categories, nil
+	return moods, nil
 }
 
 func AdminList(req ListRequest, db *gorm.DB) (*ListResponse, error) {
-	var records []database.Category
+	var records []database.Mood
 	query := db.Model(records)
 
 	if req.Name.Valid {
 		query = query.Where("name ilike ?", fmt.Sprintf("%%%v%%", req.Name.String))
+	}
+
+	if req.IsActive.Valid {
+		query = query.Where("is_active is ?", req.IsActive.Bool)
 	}
 
 	var totalCount int64
@@ -92,15 +95,15 @@ func Delete(req DeleteRequest, db *gorm.DB) error {
 	defer tx.Rollback()
 
 	var creatorSongsIds []int64
-	if err := tx.Model(&database.CreatorSong{}).Where("category_id in ?", req.Ids).Pluck("id", &creatorSongsIds).Error; err != nil {
+	if err := tx.Model(&database.CreatorSong{}).Where("mood_id in ?", req.Ids).Pluck("id", &creatorSongsIds).Error; err != nil {
 		return errors.WithStack(err)
 	}
 
 	if len(creatorSongsIds) > 0 {
-		return fmt.Errorf("can not delete selected categories, used in songs %v", creatorSongsIds)
+		return fmt.Errorf("can not delete selected moods, used in songs %v", creatorSongsIds)
 	}
 
-	if err := tx.Where("id in ?", req.Ids).Delete(&database.Category{}).Error; err != nil {
+	if err := tx.Where("id in ?", req.Ids).Delete(&database.Mood{}).Error; err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -108,9 +111,9 @@ func Delete(req DeleteRequest, db *gorm.DB) error {
 }
 
 func PublicList(req PublicListRequest, db *gorm.DB) (*PublicListResponse, error) {
-	var categories []database.Category
+	var moods []database.Mood
 
-	query := db.Model(categories).Where("is_active = true")
+	query := db.Model(moods).Where("is_active = true")
 
 	if req.Name.Valid && len(req.Name.String) > 0 {
 		query = query.Where("name ilike ?", fmt.Sprintf("%%%v%%", req.Name.String))
@@ -138,7 +141,7 @@ func PublicList(req PublicListRequest, db *gorm.DB) (*PublicListResponse, error)
 		p.SetAfterCursor(req.Cursor)
 	}
 
-	result, cursor, err := p.Paginate(query, &categories)
+	result, cursor, err := p.Paginate(query, &moods)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -149,14 +152,14 @@ func PublicList(req PublicListRequest, db *gorm.DB) (*PublicListResponse, error)
 	}
 
 	resp := &PublicListResponse{
-		Items: make([]frontend.Category, 0),
+		Items: make([]frontend.Mood, 0),
 	}
 
-	if len(categories) == 0 {
+	if len(moods) == 0 {
 		return resp, nil
 	}
 
-	resp.Items = frontend.ConvertCategoriesToFrontendModel(categories)
+	resp.Items = frontend.ConvertMoodsToFrontendModel(moods)
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After
 	}

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
@@ -11,11 +13,15 @@ import (
 	"github.com/digitalmonsters/music/cmd/api/creator"
 	"github.com/digitalmonsters/music/cmd/api/music"
 	"github.com/digitalmonsters/music/configs"
+	"github.com/digitalmonsters/music/pkg/creators"
+	"github.com/digitalmonsters/music/pkg/creators/notifier"
+	"github.com/digitalmonsters/music/pkg/global"
 	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -23,6 +29,8 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
+
+	ctx, healthCancel := context.WithCancel(context.Background())
 
 	cfg := configs.GetConfig()
 	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
@@ -39,6 +47,18 @@ func main() {
 
 	musicStorageService := music_source.NewMusicStorageService(&cfg)
 
+	creatorsNotifier := notifier.NewService(
+		time.Duration(cfg.NotifierCreatorsConfig.PollTimeMs)*time.Millisecond,
+		eventsourcing.NewKafkaEventPublisher(cfg.KafkaWriter, cfg.NotifierCreatorsConfig.KafkaTopic),
+		ctx,
+	)
+
+	notifiers := []global.INotifier{
+		creatorsNotifier,
+	}
+
+	creatorsService := creators.NewService(notifiers)
+
 	if err := music.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, musicStorageService); err != nil {
 		log.Panic().Err(err).Msg("[Music Admin API] Cannot initialize api")
 		panic(err)
@@ -49,12 +69,12 @@ func main() {
 		panic(err)
 	}
 
-	if err := creator.InitPublicApi(httpRouter, apiDef); err != nil {
+	if err := creator.InitPublicApi(httpRouter, apiDef, creatorsService); err != nil {
 		log.Panic().Err(err).Msg("[Creators Public API] Cannot initialize api")
 		panic(err)
 	}
 
-	if err := creator.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef, cfg, userWrapper); err != nil {
+	if err := creator.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef, cfg, userWrapper, creatorsService); err != nil {
 		log.Panic().Err(err).Msg("[Creators Admin API] Cannot initialize api")
 		panic(err)
 	}
@@ -79,6 +99,7 @@ func main() {
 			return nil
 		},
 		func() error {
+			healthCancel()
 			return nil
 		},
 		func() error {

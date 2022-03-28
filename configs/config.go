@@ -6,14 +6,21 @@ import (
 )
 
 type Settings struct {
-	HttpPort        int                  `json:"HttpPort"`
-	Wrappers        boilerplate.Wrappers `json:"Wrappers"`
-	MasterDb        boilerplate.DbConfig `json:"MasterDb"`
-	ReadonlyDb      boilerplate.DbConfig `json:"ReadonlyDb"`
-	SoundStripe     *SoundStripeConfig   `json:"SoundStripe"`
-	S3              boilerplate.S3Config `json:"S3"`
-	PrivateHttpPort int                  `json:"PrivateHttpPort"`
-	Creators        CreatorsConfig       `json:"Creators"`
+	HttpPort               int                                  `json:"HttpPort"`
+	Wrappers               boilerplate.Wrappers                 `json:"Wrappers"`
+	MasterDb               boilerplate.DbConfig                 `json:"MasterDb"`
+	ReadonlyDb             boilerplate.DbConfig                 `json:"ReadonlyDb"`
+	SoundStripe            *SoundStripeConfig                   `json:"SoundStripe"`
+	S3                     boilerplate.S3Config                 `json:"S3"`
+	PrivateHttpPort        int                                  `json:"PrivateHttpPort"`
+	Creators               CreatorsConfig                       `json:"Creators"`
+	KafkaWriter            boilerplate.KafkaWriterConfiguration `json:"KafkaWriter"`
+	NotifierCreatorsConfig NotifierConfig                       `json:"NotifierCreatorsConfig"`
+}
+
+type NotifierConfig struct {
+	KafkaTopic boilerplate.KafkaTopicConfig `json:"KafkaTopic"`
+	PollTimeMs int                          `json:"PollTimeMs"`
 }
 
 type CreatorsConfig struct {

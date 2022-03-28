@@ -62,6 +62,28 @@ func ConvertPlaylistsToFrontendModel(playlists []database.Playlist) (result []Pl
 	return result
 }
 
+func ConvertCategoriesToFrontendModel(categories []database.Category) (result []Category) {
+	for _, cat := range categories {
+		result = append(result, Category{
+			Id:   cat.Id,
+			Name: cat.Name,
+		})
+	}
+
+	return result
+}
+
+func ConvertMoodsToFrontendModel(moods []database.Mood) (result []Mood) {
+	for _, mood := range moods {
+		result = append(result, Mood{
+			Id:   mood.Id,
+			Name: mood.Name,
+		})
+	}
+
+	return result
+}
+
 func fillIsFavorite(songsMapped map[int64]*Song, currentUserId int64, songIds []int64, db *gorm.DB) chan error {
 	ch := make(chan error, 2)
 

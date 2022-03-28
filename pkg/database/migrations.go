@@ -148,7 +148,7 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "feat_favorites_init_060120221134",
 			Migrate: func(db *gorm.DB) error {
 				query := `
-						create table favorites
+						create table if not exists favorites
 					(
 						user_id    bigint not null,
 						song_id    bigint not null,
@@ -166,7 +166,7 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "feat_music_storage_init_180120221913",
 			Migrate: func(db *gorm.DB) error {
 				query := `
-						create table music_storage
+						create table if not exists music_storage
 						(
 							id serial
 								constraint music_storage_pk
@@ -229,7 +229,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "creator_init_080220221909",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table creators
+				query := `create table if not exists creators
 							(
 								id serial
 								constraint creators_pk
@@ -251,7 +251,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "reject_reasons_init_10022022",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table creator_reject_reasons
+				query := `create table if not exists creator_reject_reasons
 						(
 							id serial
 							constraint reject_reasons_pk
@@ -284,7 +284,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "categories_init_11022022",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table categories
+				query := `create table if not exists categories
 						(
 							id serial
 							constraint categories_pk
@@ -308,7 +308,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "creator_songs_init_11022022",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table creator_songs
+				query := `create table if not exists creator_songs
 						(
 							id serial
 								constraint creator_songs_pk
@@ -356,6 +356,102 @@ func getMigrations() []*gormigrate.Migration {
 			Migrate: func(db *gorm.DB) error {
 				query := `alter table creator_songs add column if not exists full_song_duration numeric;
 						  alter table creator_songs add column if not exists short_song_duration numeric;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "moods_init_210320221903",
+			Migrate: func(db *gorm.DB) error {
+				query := `create table if not exists moods
+						(
+							id serial
+							constraint moods_pk
+							primary key,
+							name text,
+							sort_order int,
+							songs_count int,
+							is_active boolean,
+							created_at timestamp default current_timestamp,
+							updated_at timestamp,
+							deleted_at timestamp
+						);
+					
+							create unique index moods_name_uindex
+							on moods (name);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "categories_is_active_220320221246",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table categories add column if not exists is_active boolean;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "feat_mood_field_220320221351",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creator_songs add column if not exists mood_id int;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "feat_songs_count_230320221405",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creators add column if not exists songs_count int;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "feat_songs_count_trigger_230320221412",
+			Migrate: func(db *gorm.DB) error {
+				query := `CREATE OR REPLACE FUNCTION creator_add_new_song()
+						RETURNS trigger AS
+						$func$
+						BEGIN
+						update creators set songs_count = creators.songs_count + 1 where user_id = NEW.user_id;
+						update categories set songs_count = categories.songs_count + 1 where id = NEW.category_id;
+						update moods set songs_count = moods.songs_count + 1 where id = NEW.mood_id;
+						RETURN NEW;
+						END
+						$func$  LANGUAGE plpgsql;
+				
+						CREATE TRIGGER creator_add_new_song
+						AFTER INSERT
+						ON creator_songs
+						FOR EACH ROW
+						EXECUTE PROCEDURE creator_add_new_song();`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "feat_foreign_keys_230320221418",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creator_songs
+						add constraint creator_songs_categories_id_fk
+						foreign key (category_id) references categories;
+
+						alter table creator_songs
+						add constraint creator_songs_moods_id_fk
+						foreign key (mood_id) references moods;`
 				return db.Exec(query).Error
 			},
 			Rollback: func(db *gorm.DB) error {
