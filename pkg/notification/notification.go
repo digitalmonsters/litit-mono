@@ -47,12 +47,20 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 
 	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, userBlockWrapper, followWrapper, apmTransaction)
 
-	return &NotificationsResponse{
+	resp := NotificationsResponse{
 		Data:        notificationsResp,
-		Next:        *cursor.After,
-		Prev:        *cursor.Before,
 		UnreadCount: userNotification.UnreadCount,
-	}, nil
+	}
+
+	if cursor.After != nil {
+		resp.Next = *cursor.After
+	}
+
+	if cursor.Before != nil {
+		resp.Prev = *cursor.Before
+	}
+
+	return &resp, nil
 }
 
 func getNotificationsTypesByTypeGroup(typeGroup TypeGroup) []string {
