@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/digitalmonsters/comments/cmd/api"
 	"github.com/digitalmonsters/comments/cmd/api/comments"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
@@ -72,6 +73,10 @@ func main() {
 	}
 
 	if err := vote.Init(fastHttpRouter, db, apiDef, commentNotifier, voteNotifier, contentWrapper); err != nil {
+		panic(err)
+	}
+
+	if err := api.InitInternalApi(fastHttpRouter.GetRpcServiceEndpoint(), apiDef, db); err != nil {
 		panic(err)
 	}
 
