@@ -12,15 +12,15 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
 	"strings"
 )
 
-func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrapper, contentWrapper content.IContentWrapper,
+func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserGoWrapper, contentWrapper content.IContentWrapper,
 	userBlockWrapper user_block.IUserBlockWrapper, apiDef map[string]swagger.ApiDescription,
 	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) error {

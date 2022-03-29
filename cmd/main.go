@@ -21,8 +21,8 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
@@ -47,7 +47,7 @@ func main() {
 		cfg.PrivateHttpPort,
 	)
 
-	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
+	userWrapper := user.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
 

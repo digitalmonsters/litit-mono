@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user"
+	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"go.elastic.co/apm"
@@ -60,7 +60,7 @@ func extendWithLikedByMe(db *gorm.DB, currentUserId int64, comments ...*Comment)
 
 	return ch
 }
-func extendWithAuthor(userInfoWrapper user.IUserWrapper, apmTransaction *apm.Transaction, comments ...*Comment) chan error {
+func extendWithAuthor(userInfoWrapper user.IUserGoWrapper, apmTransaction *apm.Transaction, comments ...*Comment) chan error {
 	ch := make(chan error)
 
 	if len(comments) == 0 {
@@ -93,11 +93,12 @@ func extendWithAuthor(userInfoWrapper user.IUserWrapper, apmTransaction *apm.Tra
 			for _, comment := range comments {
 				if v, ok := responseData.Items[comment.AuthorId]; ok {
 					comment.Author = Author{
-						Id:        v.UserId,
-						Username:  v.Username,
-						Avatar:    v.Avatar,
-						Firstname: v.Firstname,
-						Lastname:  v.Lastname,
+						Id:                v.UserId,
+						Username:          v.Username,
+						Avatar:            v.Avatar,
+						Firstname:         v.Firstname,
+						Lastname:          v.Lastname,
+						NamePrivacyStatus: v.NamePrivacyStatus,
 					}
 				}
 			}

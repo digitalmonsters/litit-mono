@@ -7,8 +7,8 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
-	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
@@ -18,7 +18,7 @@ import (
 )
 
 func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, currentUserId int64, db *gorm.DB,
-	userWrapper user.IUserWrapper, apmTransaction *apm.Transaction, resourceType ResourceType) (*GetCommentsByTypeWithResourceResponse, error) {
+	userWrapper user.IUserGoWrapper, apmTransaction *apm.Transaction, resourceType ResourceType) (*GetCommentsByTypeWithResourceResponse, error) {
 	var comments []database.Comment
 
 	if request.ResourceId == 0 {
@@ -181,7 +181,7 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	return &finalResponse, nil
 }
 
-func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserWrapper,
+func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserGoWrapper,
 	apmTransaction *apm.Transaction) (*CommentWithCursor, error) {
 	var comment database.Comment
 

@@ -8,8 +8,8 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
@@ -21,7 +21,7 @@ import (
 )
 
 var db *gorm.DB
-var userWrapperMock user.IUserWrapper
+var userWrapperMock user.IUserGoWrapper
 var mockUserRecord = user.UserRecord{
 	UserId:                     1074240,
 	Avatar:                     null.String{},
@@ -35,7 +35,7 @@ var mockUserRecord = user.UserRecord{
 func TestMain(m *testing.M) {
 	db = database.GetDb()
 
-	userWrapperMock = &user.UserWrapperMock{
+	userWrapperMock = &user.UserGoWrapperMock{
 		GetUsersFn: func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUsersResponseChan {
 			ch := make(chan user.GetUsersResponseChan, 2)
 			go func() {
