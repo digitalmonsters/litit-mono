@@ -26,8 +26,8 @@ type UserBlockData struct {
 type BlockedUserType string
 
 const (
-	BlockedUser   BlockedUserType = "BLOCKED USER"
-	BlockedByUser BlockedUserType = "YOUR PROFILE IS BLOCKED BY USER"
+	BlockedUser   BlockedUserType = "BLOCKED_BY_USER"
+	BlockedByUser BlockedUserType = "BLOCKED_TO_USER"
 )
 
 type GetUserBlockRequest struct {
