@@ -78,7 +78,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 	}
 
 	sort.Slice(finalResp, func(i, j int) bool {
-		return finalResp[i].CreatedAt.Unix() < finalResp[j].CreatedAt.Unix()
+		return finalResp[i].CreatedAt.Unix() > finalResp[j].CreatedAt.Unix()
 	})
 
 	return finalResp
