@@ -2,9 +2,25 @@ package main
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/wrappers/comment"
+	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/digitalmonsters/notification-handler/cmd/api"
+	commentConsumer "github.com/digitalmonsters/notification-handler/cmd/consumers/comment"
+	contentConsumer "github.com/digitalmonsters/notification-handler/cmd/consumers/content"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/creators"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/email_notification"
+	followConsumer "github.com/digitalmonsters/notification-handler/cmd/consumers/follow"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/kyc_status"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/like"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/push_admin_message"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/sending_queue"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/tokenomics_notification"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_delete"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/vote"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"os"
 	"os/signal"
@@ -47,9 +63,41 @@ func main() {
 
 	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
 
+	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
+	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
+	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
+	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
+	commentWrapper := comment.NewCommentWrapper(cfg.Wrappers.Comment)
+
+	commentListener := commentConsumer.InitListener(ctx, cfg.CommentListener, notificationSender, userGoWrapper,
+		contentWrapper, commentWrapper).ListenAsync()
+	voteListener := vote.InitListener(ctx, cfg.VoteListener, notificationSender, userGoWrapper).ListenAsync()
+	likeListener := like.InitListener(ctx, cfg.LikeListener, notificationSender, userGoWrapper, contentWrapper).ListenAsync()
+	contentListener := contentConsumer.InitListener(ctx, cfg.ContentListener, notificationSender).ListenAsync()
+	kycStatusListener := kyc_status.InitListener(ctx, cfg.KysStatusListener, notificationSender).ListenAsync()
+	followListener := followConsumer.InitListener(ctx, cfg.FollowListener, notificationSender, userGoWrapper).ListenAsync()
+	tokenomicsNotificationListener := tokenomics_notification.InitListener(ctx, cfg.TokenomicsNotificationListener,
+		notificationSender, userGoWrapper).ListenAsync()
+	emailNotificationListener := email_notification.InitListener(ctx, cfg.EmailNotificationListener,
+		notificationSender, userGoWrapper, cfg.EmailLinks).ListenAsync()
+	pushAdminMessageListener := push_admin_message.InitListener(ctx, cfg.PushAdminMessageListener,
+		notificationSender).ListenAsync()
+	userDeleteListener := user_delete.InitListener(ctx, cfg.UserDeleteListener).ListenAsync()
+
 	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, cfg); err != nil {
-		log.Panic().Err(err).Msg("cannot initialize api")
-		panic(err)
+		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin creator api")
+	}
+
+	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, userBlockWrapper, followWrapper); err != nil {
+		log.Fatal().Err(err).Msgf("[HTTP] Could not init notification api")
+	}
+
+	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, userBlockWrapper, followWrapper); err != nil {
+		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
+	}
+
+	if err := api.InitTokenApi(httpRouter, apiDef); err != nil {
+		log.Fatal().Err(err).Msgf("[HTTP] Could not init token api")
 	}
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
@@ -74,6 +122,36 @@ func main() {
 		},
 		func() error {
 			return creatorsListener.Close()
+		},
+		func() error {
+			return commentListener.Close()
+		},
+		func() error {
+			return voteListener.Close()
+		},
+		func() error {
+			return likeListener.Close()
+		},
+		func() error {
+			return contentListener.Close()
+		},
+		func() error {
+			return kycStatusListener.Close()
+		},
+		func() error {
+			return followListener.Close()
+		},
+		func() error {
+			return tokenomicsNotificationListener.Close()
+		},
+		func() error {
+			return emailNotificationListener.Close()
+		},
+		func() error {
+			return pushAdminMessageListener.Close()
+		},
+		func() error {
+			return userDeleteListener.Close()
 		},
 	})
 }
