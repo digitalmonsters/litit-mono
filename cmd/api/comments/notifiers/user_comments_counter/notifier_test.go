@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/gocql/gocql"
+	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
 	"os"
 	"reflect"
@@ -65,7 +66,8 @@ func testInsert(t *testing.T) {
 		service.Enqueue(userId, commentsCount)
 	}
 
-	service.Flush()
+	errs := service.Flush()
+	assert.Equal(t, len(errs), 0)
 
 	var newDict = make(map[int64]int64, len(kafkaPublishedEvents))
 
@@ -82,6 +84,12 @@ func testInsert(t *testing.T) {
 	if !reflect.DeepEqual(dict, newDict) {
 		t.Fatal("Unexpected value")
 	}
+
+	kafkaPublishedEvents = []eventsourcing.IEventData{}
+
+	errs = service.Flush()
+	assert.Equal(t, len(errs), 0)
+	assert.Equal(t, len(kafkaPublishedEvents), 0)
 }
 
 func TestInsert(t *testing.T) {

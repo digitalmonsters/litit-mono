@@ -1,12 +1,14 @@
 package comments
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v4"
-	"testing"
 )
 
 var contentWrapperMock content.IContentWrapper
@@ -89,6 +91,18 @@ func TestUpdateCommentById(t *testing.T) {
 
 	a := assert.New(t)
 	a.Equal(updatedComment.Comment, comment.Comment)
+
+	updatedComment, err = UpdateCommentById(db, 1, "updated comment", 1074240,
+		nil, nil, nil)
+	a.Nil(updatedComment)
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "record not found"))
+
+	updatedComment, err = UpdateCommentById(db, 9700, "updated comment", 1074241,
+		nil, nil, nil)
+	a.Nil(updatedComment)
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "record not found"))
 }
 
 func TestDeleteCommentById(t *testing.T) {
@@ -105,6 +119,24 @@ func TestDeleteCommentById(t *testing.T) {
 
 	a := assert.New(t)
 	a.Equal(0, len(deletedComment))
+
+	_, err = DeleteCommentById(db, 9714, 1074247, contentWrapperMock, nil, nil,
+		nil, nil)
+
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "no comments to delete"))
+
+	_, err = DeleteCommentById(db, 9712, 1074248, contentWrapperMock, nil, nil,
+		nil, nil)
+
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "delete operation not permitted"))
+
+	_, err = DeleteCommentById(db, 9710, 1074248, contentWrapperMock, nil, nil,
+		nil, nil)
+
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "delete operation not permitted 2"))
 }
 
 func TestCreateCommentOnProfile(t *testing.T) {
