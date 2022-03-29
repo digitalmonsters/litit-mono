@@ -1,0 +1,17 @@
+package eventsourcing
+
+import (
+	"fmt"
+	"github.com/digitalmonsters/go-common/common"
+)
+
+type ReferrerVerifiedEvent struct {
+	UserId             int64                 `json:"user_id"`
+	ReferrerId         int64                 `json:"referrer_id"`
+	ReferredByType     common.VerifiedByType `json:"referred_by_type"`
+	IsVerifiedReferrer bool                  `json:"is_verified_referrer"`
+}
+
+func (c ReferrerVerifiedEvent) GetPublishKey() string {
+	return fmt.Sprintf("%v_%v", c.UserId, c.ReferrerId)
+}
