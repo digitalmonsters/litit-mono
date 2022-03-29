@@ -160,5 +160,20 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_devices_userid_deviceid_uindex_290320221650",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+					DELETE FROM "Devices" T1
+						USING   "Devices" T2
+					WHERE   T1.ctid < T2.ctid
+						AND T1."userId" = T2."userId"
+						AND T1."deviceId"  = T2."deviceId";
+
+					create unique index if not exists devices_userid_deviceid_uindex
+						on "Devices" ("userId", "deviceId");
+				`)
+			},
+		},
 	}
 }

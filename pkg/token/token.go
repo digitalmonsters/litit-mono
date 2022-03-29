@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -25,7 +26,10 @@ func CreateToken(db *gorm.DB, userId int64, req TokenCreateRequest) (*TokenCreat
 		Platform:  req.Platform,
 	}
 
-	if err := db.Create(&device).Error; err != nil {
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "userId"}, {Name: "deviceId"}},
+		UpdateAll: true,
+	}).Create(&device).Error; err != nil {
 		return nil, err
 	}
 
