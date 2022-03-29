@@ -72,6 +72,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Type:     database.NotificationCommentTypeContent,
 		Comment:  event.Comment,
 		ParentId: event.ParentId,
+		Upvote:   event.Upvote,
 	}
 
 	reason, _ := strconv.Atoi(event.CrudOperationReason)

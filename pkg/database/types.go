@@ -60,6 +60,7 @@ type NotificationComment struct {
 	ParentId  null.Int                `json:"parent_id"`
 	ContentId null.Int                `json:"content_id"`
 	ProfileId null.Int                `json:"profile_id"`
+	Upvote    null.Bool               `json:"upvote"`
 }
 
 func (n *NotificationComment) Scan(input interface{}) error {
