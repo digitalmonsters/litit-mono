@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
@@ -80,14 +81,15 @@ func (MusicStorage) TableName() string {
 }
 
 type Creator struct {
-	Id           int64          `json:"id"`
-	UserId       int64          `json:"user_id"`
-	Status       CreatorStatus  `json:"status"`
-	RejectReason null.Int       `json:"reject_reason"`
-	LibraryUrl   string         `json:"library_url"`
-	CreatedAt    time.Time      `json:"created_at"`
-	ApprovedAt   null.Time      `json:"approved_at"`
-	DeletedAt    gorm.DeletedAt `json:"deleted_at"`
+	Id           int64                       `json:"id"`
+	UserId       int64                       `json:"user_id"`
+	Status       eventsourcing.CreatorStatus `json:"status"`
+	RejectReason null.Int                    `json:"reject_reason"`
+	LibraryUrl   string                      `json:"library_url"`
+	SongsCount   int                         `json:"songs_count"`
+	CreatedAt    time.Time                   `json:"created_at"`
+	ApprovedAt   null.Time                   `json:"approved_at"`
+	DeletedAt    gorm.DeletedAt              `json:"deleted_at"`
 
 	Reason *CreatorRejectReasons `json:"-" gorm:"foreignKey:reject_reason"`
 }
@@ -95,15 +97,6 @@ type Creator struct {
 func (Creator) TableName() string {
 	return "creators"
 }
-
-type CreatorStatus int
-
-const (
-	CreatorStatusNone     = CreatorStatus(0)
-	CreatorStatusPending  = CreatorStatus(1)
-	CreatorStatusRejected = CreatorStatus(2)
-	CreatorStatusApproved = CreatorStatus(3)
-)
 
 type CreatorRejectReasons struct {
 	Id        int64
@@ -120,6 +113,7 @@ type Category struct {
 	Id         int64
 	Name       string
 	SortOrder  int
+	IsActive   bool
 	SongsCount int
 	CreatedAt  time.Time
 	UpdatedAt  null.Time
@@ -138,6 +132,7 @@ type CreatorSong struct {
 	LyricAuthor       null.String       `json:"lyric_author"`
 	MusicAuthor       string            `json:"music_author"`
 	CategoryId        int64             `json:"category_id"`
+	MoodId            int64             `json:"mood_id"`
 	FullSongUrl       string            `json:"full_song_url"`
 	FullSongDuration  float64           `json:"full_song_duration"`
 	ShortSongUrl      string            `json:"short_song_url"`
@@ -155,13 +150,31 @@ type CreatorSong struct {
 	DeletedAt         gorm.DeletedAt    `json:"deleted_at"`
 
 	Category *Category `gorm:"foreignKey:category_id" json:"-"`
+	Mood     *Mood     `gorm:"foreignKey:mood_id" json:"-"`
+}
+
+func (CreatorSong) TableName() string {
+	return "creator_songs"
 }
 
 type CreatorSongStatus int
 
 const (
-	CreatorSongStatusNone     = CreatorSongStatus(0)
-	CreatorSongStatusPending  = CreatorSongStatus(1)
-	CreatorSongStatusRejected = CreatorSongStatus(2)
-	CreatorSongStatusApproved = CreatorSongStatus(3)
+	CreatorSongStatusNone      = CreatorSongStatus(0)
+	CreatorSongStatusPublished = CreatorSongStatus(1)
+	CreatorSongStatusRejected  = CreatorSongStatus(2)
 )
+
+type Mood struct {
+	Id         int64
+	Name       string
+	SortOrder  int
+	SongsCount int
+	CreatedAt  time.Time
+	UpdatedAt  null.Time
+	DeletedAt  gorm.DeletedAt
+}
+
+func (Mood) TableName() string {
+	return "moods"
+}

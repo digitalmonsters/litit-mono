@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/music/configs"
@@ -20,11 +21,13 @@ import (
 var config configs.Settings
 var gormDb *gorm.DB
 var userWrapper *user.UserWrapperMock
+var service *Service
 
 func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	gormDb = database.GetDb(database.DbTypeMaster)
 	userWrapper = &user.UserWrapperMock{}
+	service = NewService(nil)
 
 	userWrapper.GetUsersFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUsersResponseChan {
 		ch := make(chan user.GetUsersResponseChan, 2)
@@ -60,7 +63,7 @@ func TestBecomeMusicCreator(t *testing.T) {
 		UserId:  userId,
 	}
 
-	err := BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData)
+	err := service.BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData)
 	assert.Nil(t, err)
 
 	var creatorRequest database.Creator
@@ -68,7 +71,7 @@ func TestBecomeMusicCreator(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, creatorRequest.LibraryUrl, link)
 
-	err = BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData)
+	err = service.BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData)
 	assert.NotNil(t, err)
 }
 
@@ -80,13 +83,13 @@ func TestCreatorRequestsList(t *testing.T) {
 	var requests []database.Creator
 	for i := 0; i < 10; i++ {
 		r := database.Creator{
-			Status:     database.CreatorStatusPending,
+			Status:     eventsourcing.CreatorStatusPending,
 			UserId:     int64(i),
 			LibraryUrl: fmt.Sprintf("https://music%v", i),
 		}
 
 		if i%2 == 0 {
-			r.Status = database.CreatorStatusApproved
+			r.Status = eventsourcing.CreatorStatusApproved
 			r.ApprovedAt = null.TimeFrom(time.Now())
 		}
 
@@ -100,7 +103,7 @@ func TestCreatorRequestsList(t *testing.T) {
 	userId := int64(100)
 	thresholdRequest := database.Creator{
 		UserId:    userId,
-		Status:    database.CreatorStatusPending,
+		Status:    eventsourcing.CreatorStatusPending,
 		CreatedAt: time.Date(2020, 1, 1, 1, 1, 1, 1, time.UTC),
 	}
 
@@ -108,8 +111,8 @@ func TestCreatorRequestsList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := CreatorRequestsList(CreatorRequestsListRequest{
-		Statuses:             []database.CreatorStatus{database.CreatorStatusPending},
+	resp, err := service.CreatorRequestsList(CreatorRequestsListRequest{
+		Statuses:             []eventsourcing.CreatorStatus{eventsourcing.CreatorStatusPending},
 		MaxThresholdExceeded: false,
 		Limit:                10,
 		Offset:               0,
@@ -118,7 +121,7 @@ func TestCreatorRequestsList(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, resp.Items, 6)
 
-	resp, err = CreatorRequestsList(CreatorRequestsListRequest{
+	resp, err = service.CreatorRequestsList(CreatorRequestsListRequest{
 		MaxThresholdExceeded: true,
 		Limit:                10,
 		Offset:               0,
@@ -137,13 +140,13 @@ func TestCreatorRequestApprove(t *testing.T) {
 	var requests []database.Creator
 	for i := 0; i < 10; i++ {
 		r := database.Creator{
-			Status:     database.CreatorStatusPending,
+			Status:     eventsourcing.CreatorStatusPending,
 			UserId:     int64(i),
 			LibraryUrl: fmt.Sprintf("https://music%v", i),
 		}
 
 		if i%2 == 0 {
-			r.Status = database.CreatorStatusApproved
+			r.Status = eventsourcing.CreatorStatusApproved
 			r.ApprovedAt = null.TimeFrom(time.Now())
 		}
 
@@ -159,7 +162,7 @@ func TestCreatorRequestApprove(t *testing.T) {
 		ids = append(ids, r.Id)
 	}
 
-	_, err := CreatorRequestApprove(CreatorRequestApproveRequest{Ids: ids}, gormDb)
+	_, err := service.CreatorRequestApprove(CreatorRequestApproveRequest{Ids: ids}, gormDb)
 	assert.Nil(t, err)
 
 	var finalRequests []database.Creator
@@ -167,7 +170,7 @@ func TestCreatorRequestApprove(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, r := range finalRequests {
-		assert.Equal(t, r.Status, database.CreatorStatusApproved)
+		assert.Equal(t, r.Status, eventsourcing.CreatorStatusApproved)
 	}
 }
 
@@ -179,13 +182,13 @@ func TestCreatorRequestReject(t *testing.T) {
 	var requests []database.Creator
 	for i := 0; i < 10; i++ {
 		r := database.Creator{
-			Status:     database.CreatorStatusPending,
+			Status:     eventsourcing.CreatorStatusPending,
 			UserId:     int64(i),
 			LibraryUrl: fmt.Sprintf("https://music%v", i),
 		}
 
 		if i%2 == 0 {
-			r.Status = database.CreatorStatusRejected
+			r.Status = eventsourcing.CreatorStatusRejected
 			r.ApprovedAt = null.TimeFrom(time.Now())
 		}
 
@@ -217,7 +220,7 @@ func TestCreatorRequestReject(t *testing.T) {
 		})
 	}
 
-	_, err := CreatorRequestReject(CreatorRequestRejectRequest{Items: items}, gormDb)
+	_, err := service.CreatorRequestReject(CreatorRequestRejectRequest{Items: items}, gormDb)
 	assert.Nil(t, err)
 
 	var finalRequests []database.Creator
@@ -225,11 +228,11 @@ func TestCreatorRequestReject(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, r := range finalRequests {
-		assert.Equal(t, r.Status, database.CreatorStatusRejected)
+		assert.Equal(t, r.Status, eventsourcing.CreatorStatusRejected)
 	}
 }
 
-func addCreator(t *testing.T, userId int64, status database.CreatorStatus) *database.Creator {
+func addCreator(t *testing.T, userId int64, status eventsourcing.CreatorStatus) *database.Creator {
 	creator := database.Creator{
 		UserId:     userId,
 		Status:     status,
@@ -255,14 +258,26 @@ func addCategory(t *testing.T, categoryName string) *database.Category {
 	return &catergory
 }
 
+func addMood(t *testing.T, name string) *database.Mood {
+	mood := database.Mood{
+		Name: name,
+	}
+
+	if err := gormDb.Create(&mood).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	return &mood
+}
+
 func TestUploadNewSong(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"" +
-		"public.creators", "public.categories", "public.creator_songs"}, nil, t); err != nil {
+		"public.creators", "public.categories", "public.creator_songs", "public.moods"}, nil, t); err != nil {
 		t.Fatal(err)
 	}
 
 	userId := int64(111)
-	creator := addCreator(t, userId, database.CreatorStatusApproved)
+	creator := addCreator(t, userId, eventsourcing.CreatorStatusApproved)
 	assert.NotNil(t, creator)
 
 	executionData := router.MethodExecutionData{
@@ -272,12 +287,14 @@ func TestUploadNewSong(t *testing.T) {
 	}
 
 	category := addCategory(t, "test_category")
+	mood := addMood(t, "test_mood")
 
-	_, err := UploadNewSong(UploadNewSongRequest{
+	_, err := service.UploadNewSong(UploadNewSongRequest{
 		Name:         "test_song",
 		LyricAuthor:  null.StringFrom("test lyric author"),
 		MusicAuthor:  "test music author",
 		CategoryId:   category.Id,
+		MoodId:       mood.Id,
 		FullSongUrl:  "https://full-url.com",
 		ShortSongUrl: "https://short-url.com",
 		ImageUrl:     "https://image-url.com",

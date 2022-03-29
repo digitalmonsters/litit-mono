@@ -1,4 +1,4 @@
-package categories
+package moods
 
 import (
 	"github.com/digitalmonsters/music/pkg/database"
@@ -7,10 +7,10 @@ import (
 )
 
 type UpsertRequest struct {
-	Items []category `json:"items"`
+	Items []mood `json:"items"`
 }
 
-type category struct {
+type mood struct {
 	Id        null.Int `json:"id"`
 	Name      string   `json:"name"`
 	IsActive  bool     `json:"is_active"`
@@ -19,6 +19,7 @@ type category struct {
 
 type ListRequest struct {
 	Name       null.String `json:"name"`
+	IsActive   null.Bool   `json:"is_active"`
 	Limit      int         `json:"limit"`
 	Offset     int         `json:"offset"`
 	SortOption SortOption  `json:"sort_option"`
@@ -35,8 +36,8 @@ const (
 )
 
 type ListResponse struct {
-	Items      []database.Category `json:"items"`
-	TotalCount int64               `json:"total_count"`
+	Items      []database.Mood `json:"items"`
+	TotalCount int64           `json:"total_count"`
 }
 
 type DeleteRequest struct {
@@ -50,6 +51,6 @@ type PublicListRequest struct {
 }
 
 type PublicListResponse struct {
-	Items  []frontend.Category `json:"items"`
-	Cursor string              `json:"cursor"`
+	Items  []frontend.Mood `json:"items"`
+	Cursor string          `json:"cursor"`
 }

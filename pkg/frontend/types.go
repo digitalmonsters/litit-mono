@@ -17,3 +17,13 @@ type Song struct {
 	Genre      string  `json:"genre"`
 	Duration   float64 `json:"duration"`
 }
+
+type Category struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type Mood struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+}
