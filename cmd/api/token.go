@@ -30,12 +30,13 @@ func InitTokenApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		if err := tokenPkg.CreateToken(database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
-			executionData.UserId, req); err != nil {
+		resp, err := tokenPkg.CreateToken(database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
+			executionData.UserId, req)
+		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
-		return nil, nil
+		return resp, nil
 	}, createTokenPath, http.MethodPost, true, false)); err != nil {
 		return err
 	}
