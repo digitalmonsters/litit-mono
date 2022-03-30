@@ -18,7 +18,7 @@ import (
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
 	contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
-	if !event.Like {
+	if !event.Like || event.ContentAuthorId == event.UserId {
 		return &event.Messages, nil
 	}
 
