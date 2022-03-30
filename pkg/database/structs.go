@@ -98,8 +98,17 @@ func (Creator) TableName() string {
 	return "creators"
 }
 
+type ReasonType int
+
+const (
+	ReasonTypeNone         = ReasonType(0)
+	ReasonTypeMusicCreator = ReasonType(1)
+	ReasonTypeCreatorSong  = ReasonType(2)
+)
+
 type CreatorRejectReasons struct {
 	Id        int64
+	Type      ReasonType
 	Reason    string
 	CreatedAt time.Time
 	DeletedAt gorm.DeletedAt
@@ -145,12 +154,14 @@ type CreatorSong struct {
 	Comments          int               `json:"comments"`
 	UsedInVideo       int               `json:"used_in_video"`
 	PointsEarned      decimal.Decimal   `json:"points_earned"`
+	RejectReason      null.Int          `json:"reject_reason"`
 	CreatedAt         time.Time         `json:"created_at"`
 	UpdatedAt         null.Time         `json:"updated_at"`
 	DeletedAt         gorm.DeletedAt    `json:"deleted_at"`
 
-	Category *Category `gorm:"foreignKey:category_id" json:"-"`
-	Mood     *Mood     `gorm:"foreignKey:mood_id" json:"-"`
+	Category *Category             `gorm:"foreignKey:category_id" json:"-"`
+	Mood     *Mood                 `gorm:"foreignKey:mood_id" json:"-"`
+	Reject   *CreatorRejectReasons `gorm:"foreignKey:reject_reason" json:"-"`
 }
 
 func (CreatorSong) TableName() string {
@@ -163,6 +174,7 @@ const (
 	CreatorSongStatusNone      = CreatorSongStatus(0)
 	CreatorSongStatusPublished = CreatorSongStatus(1)
 	CreatorSongStatusRejected  = CreatorSongStatus(2)
+	CreatorSongStatusApproved  = CreatorSongStatus(3)
 )
 
 type Mood struct {

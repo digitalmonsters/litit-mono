@@ -16,6 +16,7 @@ func Upsert(req UpsertRequest, db *gorm.DB) ([]database.CreatorRejectReasons, er
 	for _, item := range req.Items {
 		r := database.CreatorRejectReasons{
 			Reason:    item.Reason,
+			Type:      item.Type,
 			CreatedAt: time.Now(),
 		}
 
@@ -42,6 +43,10 @@ func Upsert(req UpsertRequest, db *gorm.DB) ([]database.CreatorRejectReasons, er
 func List(req ListRequest, db *gorm.DB) (*ListResponse, error) {
 	var records []database.CreatorRejectReasons
 	query := db.Model(records)
+
+	if req.Type > 0 {
+		query = query.Where("type = ?", req.Type)
+	}
 
 	var totalCount int64
 	if err := query.Count(&totalCount).Error; err != nil {

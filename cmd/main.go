@@ -9,7 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
-	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/api/creator"
 	"github.com/digitalmonsters/music/cmd/api/music"
 	"github.com/digitalmonsters/music/configs"
@@ -25,7 +25,7 @@ import (
 )
 
 func main() {
-	// trigger build111
+	// trigger build1
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
@@ -34,7 +34,7 @@ func main() {
 
 	cfg := configs.GetConfig()
 	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
-	userWrapper := user.NewUserWrapper(cfg.Wrappers.UserInfo)
+	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
@@ -74,7 +74,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := creator.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef, cfg, userWrapper, creatorsService); err != nil {
+	if err := creator.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef, cfg, userGoWrapper, creatorsService); err != nil {
 		log.Panic().Err(err).Msg("[Creators Admin API] Cannot initialize api")
 		panic(err)
 	}

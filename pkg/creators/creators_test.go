@@ -6,7 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/stretchr/testify/assert"
@@ -20,26 +20,26 @@ import (
 
 var config configs.Settings
 var gormDb *gorm.DB
-var userWrapper *user.UserWrapperMock
+var userWrapper *user_go.UserGoWrapperMock
 var service *Service
 
 func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	gormDb = database.GetDb(database.DbTypeMaster)
-	userWrapper = &user.UserWrapperMock{}
+	userWrapper = &user_go.UserGoWrapperMock{}
 	service = NewService(nil)
 
-	userWrapper.GetUsersFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUsersResponseChan {
-		ch := make(chan user.GetUsersResponseChan, 2)
-		resp := map[int64]user.UserRecord{}
+	userWrapper.GetUsersFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user_go.GetUsersResponseChan {
+		ch := make(chan user_go.GetUsersResponseChan, 2)
+		resp := map[int64]user_go.UserRecord{}
 
 		for _, userId := range userIds {
-			resp[userId] = user.UserRecord{
+			resp[userId] = user_go.UserRecord{
 				UserId: userId,
 			}
 		}
 
-		ch <- user.GetUsersResponseChan{
+		ch <- user_go.GetUsersResponseChan{
 			Error: nil,
 			Items: resp,
 		}
