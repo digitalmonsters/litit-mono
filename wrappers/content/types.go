@@ -1,7 +1,6 @@
 package content
 
 import (
-	"github.com/digitalmonsters/go-common/rpc"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -29,24 +28,94 @@ type GetTopNotFollowingUsersRequest struct {
 	Offset int   `json:"offset"`
 }
 
-//goland:noinspection ALL
-type GetTopNotFollowingUsersResponseChan struct {
-	Error    *rpc.RpcError                   `json:"error"`
-	Response GetTopNotFollowingUsersResponse `json:"response"`
-}
-
 type GetTopNotFollowingUsersResponse struct {
 	Items      []int64 `json:"items"`
 	TotalCount int64   `json:"total_count"`
 }
 
-//goland:noinspection ALL
-type ContentGetInternalResponseChan struct {
-	Error *rpc.RpcError           `json:"error"`
-	Items map[int64]SimpleContent `json:"items"`
-}
-
 type ContentGetInternalRequest struct {
 	IncludeDeleted bool    `json:"include_deleted"`
 	ContentIds     []int64 `json:"content_ids"`
+}
+
+type HashtagResponseData struct {
+	Items      []SimpleHashtagModel `json:"items"`
+	TotalCount int64                `json:"total_count"`
+}
+
+type SimpleHashtagModel struct {
+	Name       string `json:"name"`
+	ViewsCount int    `json:"views_count"`
+}
+
+type GetHashtagsInternalRequest struct {
+	Hashtags               []string  `json:"hashtags"`
+	OmitHashtags           []string  `json:"omit_hashtags"`
+	WithViews              null.Bool `json:"with_views"`
+	ShouldHaveValidContent bool      `json:"should_have_valid_content"`
+	Limit                  int       `json:"limit"`
+	Offset                 int       `json:"offset"`
+}
+
+type CategoryResponseData struct {
+	Items      []SimpleCategoryModel `json:"items"`
+	TotalCount int64                 `json:"total_count"`
+}
+
+type SimpleCategoryModel struct {
+	Id         int64  `json:"id"`
+	Name       string `json:"name"`
+	ViewsCount int    `json:"views_count"`
+	Emojis     string `json:"emojis"`
+}
+
+type AllCategoriesResponseItem struct {
+	Id        int64          `json:"id"`
+	Name      string         `json:"name"`
+	Emojis    string         `json:"emojis"`
+	ParentId  null.Int       `json:"parent_id"`
+	SortOrder int            `json:"sort_order"`
+	Status    CategoryStatus `json:"status"`
+}
+
+type GetUserBlacklistedCategoriesResponse struct {
+	CategoryIds []int64 `json:"category_ids"`
+}
+
+type CategoryStatus int
+
+const (
+	CategoryStatusNotActive  CategoryStatus = 0
+	CategoryStatusActive     CategoryStatus = 1
+	CategoryStatusComingSoon CategoryStatus = 2
+)
+
+type GetUserBlacklistedCategoriesRequest struct {
+	UserId int64 `json:"user_id"`
+}
+
+type GetCategoryInternalRequest struct {
+	CategoryIds            []int64   `json:"category_ids"`
+	Limit                  int       `json:"limit"`
+	Offset                 int       `json:"offset"`
+	OnlyParent             null.Bool `json:"only_parent"`
+	WithViews              null.Bool `json:"with_views"`
+	ShouldHaveValidContent bool      `json:"should_have_valid_content"`
+	OmitCategoryIds        []int64   `json:"omit_category_ids"`
+}
+
+type GetAllCategoriesRequest struct {
+	CategoryIds    []int64 `json:"category_ids"`
+	IncludeDeleted bool    `json:"include_deleted"`
+}
+
+type LikedContent struct {
+	ContentIds []int64 `json:"content_ids"`
+	TotalCount int64   `json:"total_count"`
+}
+
+type GetUserLikesRequest struct {
+	UserId int64 `json:"user_id"`
+	Limit  int   `json:"limit"`
+	Offset int   `json:"offset"`
 }

@@ -62,11 +62,8 @@ type Wrappers struct {
 	Views               WrapperConfig `json:"Views"`
 	UserCategories      WrapperConfig `json:"UserCategories"`
 	UserHashtags        WrapperConfig `json:"UserHashtags"`
-	UserLikes           WrapperConfig `json:"UserLikes"`
 	UserDislikes        WrapperConfig `json:"UserDislikes"`
-	UserInfo            WrapperConfig `json:"UserInfo"`
-	Categories          WrapperConfig `json:"Categories"`
-	Hashtags            WrapperConfig `json:"Hashtags"`
+	UserBlock           WrapperConfig `json:"UserBlock"`
 	PointsCount         WrapperConfig `json:"PointsCount"`
 	AuthGo              WrapperConfig `json:"AuthGo"`
 	NotificationGateway WrapperConfig `json:"NotificationGateway"`

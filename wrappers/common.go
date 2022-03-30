@@ -14,6 +14,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -53,12 +54,6 @@ func (b *BaseWrapper) GetHostName() string {
 	return b.hostName
 }
 
-func (b *BaseWrapper) SendRequestWithRpcResponse(url string, methodName string, request interface{}, headers map[string]string, timeout time.Duration,
-	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
-
-	return b.GetRpcResponse(url, request, methodName, headers, timeout, apmTransaction, externalServiceName, forceLog)
-}
-
 func (b *BaseWrapper) SendRequestWithRpcResponseFromNodeJsService(url string, httpMethod string, contentType string,
 	methodName string, request interface{}, headers map[string]string, timeout time.Duration, apmTransaction *apm.Transaction,
 	externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
@@ -77,6 +72,12 @@ func (b *BaseWrapper) SendRequestWithRpcResponseFromAnyService(url string, httpM
 	)
 }
 
+func (b *BaseWrapper) SendRequestWithRpcResponse(url string, methodName string, request interface{}, headers map[string]string, timeout time.Duration,
+	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
+
+	return b.GetRpcResponse(url, request, methodName, headers, timeout, apmTransaction, externalServiceName, forceLog)
+}
+
 func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request interface{}, headers map[string]string, timeout time.Duration,
 	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan rpc.RpcResponseInternal {
 	name := strings.ToLower(methodName)
@@ -86,6 +87,51 @@ func (b *BaseWrapper) SendRpcRequest(url string, methodName string, request inte
 		Id:      "1",
 		JsonRpc: "2.0",
 	}, name, headers, timeout, apmTransaction, externalServiceName, forceLog)
+}
+
+type GenericResponseChan[T any] struct {
+	Error    *rpc.RpcError `json:"error"`
+	Response T             `json:"response"`
+}
+
+func ExecuteRpcRequestAsync[T any](b *BaseWrapper,
+	url string, methodName string, request interface{}, headers map[string]string, timeout time.Duration,
+	apmTransaction *apm.Transaction, externalServiceName string, forceLog bool) chan GenericResponseChan[T] {
+
+	ch := make(chan GenericResponseChan[T], 2)
+
+	go func() {
+		resp := <-b.SendRpcRequest(url, methodName, request, headers, timeout, apmTransaction, externalServiceName, forceLog)
+
+		result := GenericResponseChan[T]{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			if err := json.Unmarshal(resp.Result, &result.Response); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    b.GetHostName(),
+					ServiceName: externalServiceName,
+				}
+			}
+
+			if resp.Error == nil {
+				kind := reflect.TypeOf(result.Response).Kind()
+
+				if kind == reflect.Map && reflect.ValueOf(result.Response).Len() == 0 {
+					result.Response = reflect.MakeMap(reflect.TypeOf(result.Response)).Interface().(T)
+				}
+			}
+
+		}
+
+		ch <- result
+	}()
+
+	return ch
 }
 
 type httpResponseChan struct {
