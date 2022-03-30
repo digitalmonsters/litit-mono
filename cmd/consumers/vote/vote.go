@@ -19,7 +19,7 @@ import (
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
 	apmTransaction *apm.Transaction) (*kafka.Message, error) {
-	if !event.Upvote.Valid {
+	if !event.Upvote.Valid || event.CommentAuthorId == event.UserId {
 		return &event.Messages, nil
 	}
 

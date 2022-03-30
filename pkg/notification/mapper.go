@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
-	"gopkg.in/guregu/null.v4"
 	"sort"
 )
 
@@ -38,7 +37,9 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 		}
 
 		if mappedItem.RelatedUserId.Valid {
-			mappedItem.RelatedUser = &NotificationsResponseUser{}
+			mappedItem.RelatedUser = &NotificationsResponseUser{
+				Id: mappedItem.RelatedUserId.Int64,
+			}
 		}
 
 		if mappedItem.ContentId.ValueOrZero() > 0 {
@@ -134,7 +135,6 @@ func fillUsers(notifications map[uuid.UUID]*NotificationsResponseItem, userGoWra
 				continue
 			}
 
-			notification.RelatedUser.Id = userResp.Id
 			notification.RelatedUser.Username = userResp.Username
 			notification.RelatedUser.Firstname = userResp.Firstname
 			notification.RelatedUser.Lastname = userResp.Lastname
@@ -161,16 +161,16 @@ func fillUserBlock(notifications map[uuid.UUID]*NotificationsResponseItem, userB
 			close(ch)
 		}()
 
-		userBlockMap := map[int64]map[int64]null.Bool{}
+		userBlockMap := map[int64]map[int64]bool{}
 		for _, notification := range notifications {
 			if !notification.RelatedUserId.Valid {
 				continue
 			}
 
 			if _, ok := userBlockMap[notification.UserId]; ok {
-				userBlockMap[notification.UserId][notification.RelatedUserId.Int64] = null.Bool{}
+				userBlockMap[notification.UserId][notification.RelatedUserId.Int64] = false
 			} else {
-				userBlockMap[notification.UserId] = map[int64]null.Bool{notification.RelatedUserId.Int64: {}}
+				userBlockMap[notification.UserId] = map[int64]bool{notification.RelatedUserId.Int64: false}
 			}
 		}
 
@@ -182,7 +182,9 @@ func fillUserBlock(notifications map[uuid.UUID]*NotificationsResponseItem, userB
 					return
 				}
 
-				userBlockMap[userId][relatedUserId] = null.BoolFrom(resp.Data.IsBlocked)
+				if resp.Data.Type != nil && *resp.Data.Type == user_block.BlockedUser {
+					userBlockMap[userId][relatedUserId] = resp.Data.IsBlocked
+				}
 			}
 		}
 
@@ -191,13 +193,13 @@ func fillUserBlock(notifications map[uuid.UUID]*NotificationsResponseItem, userB
 				continue
 			}
 
-			userResp, hasUser := userBlockMap[notification.UserId][notification.RelatedUserId.Int64]
+			isBlocked, hasUser := userBlockMap[notification.UserId][notification.RelatedUserId.Int64]
 
 			if !hasUser {
 				continue
 			}
 
-			notification.RelatedUser.IsBlocked = userResp.ValueOrZero()
+			notification.RelatedUser.IsBlocked = isBlocked
 		}
 	}()
 
@@ -259,8 +261,8 @@ func fillFollowData(notifications map[uuid.UUID]*NotificationsResponseItem, foll
 			}
 
 			if resp, ok := userMap[notification.RelatedUserId.Int64][notification.UserId]; ok && resp != nil {
-				notification.RelatedUser.IsFollower = resp.IsFollower
-				notification.RelatedUser.IsFollowing = resp.IsFollowing
+				notification.RelatedUser.IsFollower = resp.IsFollowing
+				notification.RelatedUser.IsFollowing = resp.IsFollower
 			}
 		}
 	}()

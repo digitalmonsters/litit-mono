@@ -120,13 +120,15 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		if err = notification.IncrementUnreadNotificationsCounter(db, contentAuthorId.Int64); err != nil {
 			return nil, err
 		}
+
+		return &event.Messages, nil
 	}
 
 	reason, _ := strconv.Atoi(event.CrudOperationReason)
 
 	switch eventsourcing.CommentChangeReason(reason) {
 	case eventsourcing.CommentChangeReasonContent:
-		if !contentAuthorId.Valid {
+		if !contentAuthorId.Valid || contentAuthorId.Int64 == event.AuthorId {
 			return &event.Messages, nil
 		}
 
@@ -163,6 +165,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return nil, err
 		}
 	case eventsourcing.CommentChangeReasonProfile:
+		if event.ProfileId.Int64 == event.AuthorId {
+			return &event.Messages, nil
+		}
+
 		title, body, headline, _, err = notifySender.RenderTemplate(db, "comment_profile_resource_create", renderData)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
