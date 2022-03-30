@@ -11,6 +11,8 @@ type UserGoWrapperMock struct {
 	GetUserIdsFilterByUsernameFn func(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
 	GetUsersTagsFn               func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
 	AuthGuestFn                  func(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
+	GetBlockListFn               func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan
+	GetUserBlockFn               func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan
 }
 
 func (m *UserGoWrapperMock) GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan {
@@ -39,6 +41,14 @@ func (m *UserGoWrapperMock) GetUsersTags(userIds []int64, apmTransaction *apm.Tr
 
 func (m *UserGoWrapperMock) AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan {
 	return m.AuthGuestFn(deviceId, apmTransaction, forceLog)
+}
+
+func (m *UserGoWrapperMock) GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan {
+	return m.GetBlockListFn(userIds, apmTransaction, forceLog)
+}
+
+func (m *UserGoWrapperMock) GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan {
+	return m.GetUserBlockFn(blockedTo, blockedBy, apmTransaction, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors

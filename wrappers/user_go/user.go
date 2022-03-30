@@ -22,6 +22,8 @@ type IUserGoWrapper interface {
 	GetUserIdsFilterByUsername(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
 	GetUsersTags(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
 	AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
+	GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan
+	GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -338,6 +340,75 @@ func (u *UserGoWrapper) AuthGuest(deviceId string, apmTransaction *apm.Transacti
 			AuthGuestRequest{DeviceId: deviceId}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 
 		finalResponse := AuthGuestResponseChan{
+			Error: rpcInternalResponse.Error,
+		}
+		if len(rpcInternalResponse.Result) > 0 {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse); err != nil {
+				finalResponse.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			}
+		}
+
+		resChan <- finalResponse
+	}()
+
+	return resChan
+}
+
+func (u *UserGoWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan {
+	resChan := make(chan GetBlockListResponseChan, 2)
+
+	go func() {
+		link := fmt.Sprintf("%v/mobile/v1/user/block_list", u.publicApiUrl)
+
+		rpcInternalResponse := <-u.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
+			"POST",
+			"application/json",
+			"block list",
+			GetBlockListRequest{UserIds: userIds}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+		finalResponse := GetBlockListResponseChan{
+			Error: rpcInternalResponse.Error,
+		}
+		if len(rpcInternalResponse.Result) > 0 {
+			if err := json.Unmarshal(rpcInternalResponse.Result, &finalResponse); err != nil {
+				finalResponse.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    u.baseWrapper.GetHostName(),
+					ServiceName: u.serviceName,
+				}
+			}
+		}
+
+		resChan <- finalResponse
+	}()
+
+	return resChan
+}
+
+func (u *UserGoWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan {
+	resChan := make(chan GetUserBlockResponseChan, 2)
+
+	go func() {
+		link := fmt.Sprintf("%v/mobile/v1/user/block_relations", u.publicApiUrl)
+
+		rpcInternalResponse := <-u.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
+			"POST",
+			"application/json",
+			"block relations",
+			GetUserBlockRequest{
+				BlockBy:   blockedBy,
+				BlockedTo: blockedTo,
+			}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+
+		finalResponse := GetUserBlockResponseChan{
 			Error: rpcInternalResponse.Error,
 		}
 		if len(rpcInternalResponse.Result) > 0 {
