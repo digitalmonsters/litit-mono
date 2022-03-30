@@ -5,9 +5,10 @@ type GeolocationServiceI interface {
 }
 
 type LocationInfo struct {
-	Status  ResponseStatus `json:"status"`
-	Country string         `json:"country"`
-	City    string         `json:"city"`
+	Status      ResponseStatus `json:"status"`
+	Country     string         `json:"country"`
+	City        string         `json:"city"`
+	CountryCode string         `json:"countryCode"`
 }
 
 type ResponseStatus string
@@ -16,4 +17,3 @@ const (
 	Success ResponseStatus = "success"
 	Fail    ResponseStatus = "fail"
 )
-
