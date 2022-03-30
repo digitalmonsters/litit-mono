@@ -120,6 +120,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		if err = notification.IncrementUnreadNotificationsCounter(db, contentAuthorId.Int64); err != nil {
 			return nil, err
 		}
+
+		return &event.Messages, nil
 	}
 
 	reason, _ := strconv.Atoi(event.CrudOperationReason)
