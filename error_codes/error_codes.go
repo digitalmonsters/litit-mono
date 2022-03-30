@@ -16,6 +16,7 @@ const (
 	ExpiredJwtToken             ErrorCode = 401
 	InvalidJwtToken             ErrorCode = 401
 	InvalidMethodPermission     ErrorCode = 401
+	Forbidden                   ErrorCode = 403
 	GenericMappingError         ErrorCode = -32700
 	GenericDuplicateError       ErrorCode = 409
 	GenericNotFoundError        ErrorCode = 404
