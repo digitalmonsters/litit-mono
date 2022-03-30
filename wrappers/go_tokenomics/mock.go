@@ -7,6 +7,7 @@ type GoTokenomicsWrapperMock struct {
 	GetWithdrawalsAmountsByAdminIdsFn     func(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan
 	GetContentEarningsTotalByContentIdsFn func(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetContentEarningsTotalByContentIdsResponseChan
 	GetTokenomicsStatsByUserIdFn          func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan
+	GetConfigPropertiesFn                 func(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan
 }
 
 func (w *GoTokenomicsWrapperMock) GetUsersTokenomicsInfo(userIds []int64, filters []Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan {
@@ -23,6 +24,10 @@ func (w *GoTokenomicsWrapperMock) GetContentEarningsTotalByContentIds(contentIds
 
 func (w *GoTokenomicsWrapperMock) GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan {
 	return w.GetTokenomicsStatsByUserIdFn(userIds, apmTransaction, forceLog)
+}
+
+func (w *GoTokenomicsWrapperMock) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan {
+	return w.GetConfigPropertiesFn(properties, apmTransaction, forceLog)
 }
 
 func GetMock() IGoTokenomicsWrapper {

@@ -124,3 +124,11 @@ type UserTokenomicsStats struct {
 	InvitedFromShareNumber        int             `json:"invited_from_share_number"`
 	PointsForInvitedFromShare     decimal.Decimal `json:"points_for_invited_from_share"`
 }
+
+type GetConfigPropertiesResponseChan struct {
+	Items map[string]string `json:"items"`
+	Error *rpc.RpcError
+}
+type GetConfigPropertiesRequest struct {
+	Properties []string `json:"properties"`
+}

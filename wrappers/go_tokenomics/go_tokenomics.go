@@ -26,6 +26,7 @@ type IGoTokenomicsWrapper interface {
 	GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan
 	GetContentEarningsTotalByContentIds(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetContentEarningsTotalByContentIdsResponseChan
 	GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan
+	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
@@ -171,6 +172,44 @@ func (w *Wrapper) GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *ap
 			}
 		}
 
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (w *Wrapper) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan{
+	respCh := make(chan GetConfigPropertiesResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetConfigProperties", GetConfigPropertiesRequest{Properties: properties},
+	map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetConfigPropertiesResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			var data = make(map[string]string)
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Items = data
+			}
+		}
 		respCh <- result
 	}()
 
