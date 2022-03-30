@@ -95,7 +95,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return nil, err
 		}
 
-		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, contentAuthorId.Int64,
+		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, parentAuthorId.Int64,
 			title, body, headline, ctx); err != nil {
 			return nil, err
 		}
