@@ -4,17 +4,22 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/frontend"
+	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
+	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"time"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, followWrapper follow.IFollowWrapper,
+	userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
 	if event.CrudOperation == eventsourcing.ChangeEventTypeDeleted {
@@ -78,7 +83,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, nil
 	}
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
@@ -90,7 +98,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if err = db.Create(&database.Notification{
+	if err = tx.Create(&database.Notification{
 		UserId:    event.UserId,
 		Type:      notificationType,
 		Title:     title,
@@ -102,7 +110,103 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if err = notification.IncrementUnreadNotificationsCounter(db, event.UserId); err != nil {
+	if err = notification.IncrementUnreadNotificationsCounter(tx, event.UserId); err != nil {
+		return nil, err
+	}
+
+	if templateName != "content_upload" {
+		if err = tx.Commit().Error; err != nil {
+			return nil, err
+		}
+
+		return &event.Messages, nil
+	}
+
+	followersCountResp := <-followWrapper.GetFollowersCount([]int64{event.UserId}, apmTransaction, false)
+	if followersCountResp.Error != nil {
+		return nil, followersCountResp.Error.ToError()
+	}
+
+	if len(followersCountResp.Data) == 0 {
+		if err = tx.Commit().Error; err != nil {
+			return nil, err
+		}
+
+		return &event.Messages, nil
+	}
+
+	var ok bool
+
+	limit, ok := followersCountResp.Data[event.UserId]
+	if !ok {
+		return &event.Messages, nil
+	}
+
+	userFollowersResp := <-followWrapper.GetUserFollowers(event.UserId, "", int(limit), apmTransaction, false)
+	if userFollowersResp.Error != nil {
+		return nil, userFollowersResp.Error.ToError()
+	}
+
+	if len(userFollowersResp.FollowerIds) == 0 {
+		if err = tx.Commit().Error; err != nil {
+			return nil, err
+		}
+
+		return &event.Messages, nil
+	}
+
+	var userData user_go.UserRecord
+
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, apmTransaction, false)
+	if resp.Error != nil {
+		return nil, resp.Error.ToError()
+	}
+
+	if userData, ok = resp.Items[event.UserId]; !ok {
+		if err = tx.Commit().Error; err != nil {
+			return nil, err
+		}
+
+		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	}
+
+	templateName = "content_posted"
+	notificationType = "push.content.new-posted"
+	renderData = map[string]string{
+		"firstname": userData.Firstname,
+		"lastname":  userData.Lastname,
+	}
+	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData)
+	if err == renderer.TemplateRenderingError {
+		return &event.Messages, err // we should continue, no need to retry
+	} else if err != nil {
+		return nil, err
+	}
+
+	for _, followerId := range userFollowersResp.FollowerIds {
+		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, followerId,
+			title, body, headline, ctx); err != nil {
+			return nil, err
+		}
+
+		if err = tx.Create(&database.Notification{
+			UserId:    followerId,
+			Type:      notificationType,
+			Title:     title,
+			Message:   body,
+			ContentId: null.IntFrom(event.Id),
+			Content:   notificationContent,
+			CreatedAt: time.Now().UTC(),
+		}).Error; err != nil {
+			return nil, err
+		}
+
+		if err = notification.IncrementUnreadNotificationsCounter(tx, followerId); err != nil {
+			return nil, err
+		}
+	}
+
+	if err = tx.Commit().Error; err != nil {
 		return nil, err
 	}
 
