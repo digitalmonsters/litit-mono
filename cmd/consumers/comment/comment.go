@@ -87,7 +87,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		parentAuthorId = commentInfo.ParentAuthorId
 	}
 
-	if parentAuthorId.Valid && parentAuthorId.Int64 != event.AuthorId && contentAuthorId.Valid {
+	reason, _ := strconv.Atoi(event.CrudOperationReason)
+	commentChangeReason := eventsourcing.CommentChangeReason(reason)
+
+	if parentAuthorId.Valid && parentAuthorId.Int64 != event.AuthorId {
 		title, body, headline, _, err = notifySender.RenderTemplate(db, "comment_reply", renderData)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
@@ -100,7 +103,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return nil, err
 		}
 
-		notificationComment.Type = database.NotificationCommentTypeContent
+		if commentChangeReason == eventsourcing.CommentChangeReasonContent {
+			notificationComment.Type = database.NotificationCommentTypeContent
+		} else {
+			notificationComment.Type = database.NotificationCommentTypeProfile
+		}
 
 		if err = db.Create(&database.Notification{
 			UserId:        parentAuthorId.Int64,
@@ -117,16 +124,16 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return nil, err
 		}
 
-		if err = notification.IncrementUnreadNotificationsCounter(db, contentAuthorId.Int64); err != nil {
+		if err = notification.IncrementUnreadNotificationsCounter(db, parentAuthorId.Int64); err != nil {
 			return nil, err
 		}
 
-		return &event.Messages, nil
+		if (contentAuthorId.Valid && parentAuthorId.Int64 == contentAuthorId.Int64) || (event.ProfileId.Valid && parentAuthorId.Int64 == event.ProfileId.Int64) {
+			return &event.Messages, nil
+		}
 	}
 
-	reason, _ := strconv.Atoi(event.CrudOperationReason)
-
-	switch eventsourcing.CommentChangeReason(reason) {
+	switch commentChangeReason {
 	case eventsourcing.CommentChangeReasonContent:
 		if !contentAuthorId.Valid || contentAuthorId.Int64 == event.AuthorId {
 			return &event.Messages, nil
