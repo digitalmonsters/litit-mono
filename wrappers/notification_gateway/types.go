@@ -35,12 +35,12 @@ type SendEmailMessageResponseChan struct {
 }
 
 type SendPushRequest struct {
-	Tokens     []string               `json:"tokens"`
-	DeviceType common.DeviceType      `json:"device_type"`
-	Title      string                 `json:"title"`
-	Body       string                 `json:"body"`
-	ExtraData  map[string]interface{} `json:"extra_data"`
-	PublishKey string                 `json:"publish_key"`
+	Tokens     []string          `json:"tokens"`
+	DeviceType common.DeviceType `json:"device_type"`
+	Title      string            `json:"title"`
+	Body       string            `json:"body"`
+	ExtraData  map[string]string `json:"extra_data"`
+	PublishKey string            `json:"publish_key"`
 }
 
 func (v SendPushRequest) GetPublishKey() string {
