@@ -1,6 +1,9 @@
 package auth
 
-import "github.com/digitalmonsters/go-common/rpc"
+import (
+	"github.com/digitalmonsters/go-common/common"
+	"github.com/digitalmonsters/go-common/rpc"
+)
 
 type AuthParseTokenRequest struct {
 	Token            string `json:"token"`
@@ -39,4 +42,12 @@ type ParseAdminJwtTokenResponse struct {
 type ParseAdminJwtTokenResponseChan struct {
 	Error *rpc.RpcError
 	Resp  ParseAdminJwtTokenResponse
+}
+
+type MetaData struct {
+	DeviceType common.DeviceType `json:"device_type"`
+	DeviceName string            `json:"device_name"`
+	Os         string            `json:"os"`
+	Location   string            `json:"location"`
+	IpAddress  string            `json:"ip_address"`
 }

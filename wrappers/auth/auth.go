@@ -19,7 +19,7 @@ type IAuthWrapper interface {
 		forceLog bool) chan AuthParseTokenResponseChan
 	ParseNewAdminToken(token string, ignoreExpiration bool, apmTransaction *apm.Transaction,
 		forceLog bool) chan AuthParseTokenResponseChan
-	GenerateToken(userId int64, isGuest bool, apmTransaction *apm.Transaction,
+	GenerateToken(userId int64, isGuest bool, meta MetaData, apmTransaction *apm.Transaction,
 		forceLog bool) chan GenerateTokenResponseChan
 	GenerateNewAdminToken(userId int64, ctx context.Context,
 		forceLog bool) chan GenerateTokenResponseChan
@@ -121,7 +121,7 @@ func (w *AuthWrapper) ParseNewAdminToken(token string, ignoreExpiration bool, ap
 	return resChan
 }
 
-func (w *AuthWrapper) GenerateToken(userId int64, isGuest bool, apmTransaction *apm.Transaction,
+func (w *AuthWrapper) GenerateToken(userId int64, isGuest bool, meta MetaData, apmTransaction *apm.Transaction,
 	forceLog bool) chan GenerateTokenResponseChan {
 	resChan := make(chan GenerateTokenResponseChan, 2)
 
@@ -135,7 +135,7 @@ func (w *AuthWrapper) GenerateToken(userId int64, isGuest bool, apmTransaction *
 			"GET",
 			"application/json",
 			"generate token",
-			nil, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+			meta, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := GenerateTokenResponseChan{
 			Error: rpcInternalResponse.Error,
