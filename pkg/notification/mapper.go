@@ -140,6 +140,7 @@ func fillUsers(notifications map[uuid.UUID]*NotificationsResponseItem, userGoWra
 			notification.RelatedUser.Lastname = userResp.Lastname
 			notification.RelatedUser.Verified = true
 			notification.RelatedUser.AvatarUrl = userResp.Avatar
+			notification.RelatedUser.NamePrivacyStatus = userResp.NamePrivacyStatus
 		}
 	}()
 

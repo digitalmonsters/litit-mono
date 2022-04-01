@@ -126,10 +126,7 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 	userBlockWrapper user_block.IUserBlockWrapper, followWrapper follow.IFollowWrapper,
 	apmTransaction *apm.Transaction) (*ListNotificationsByAdminResponse, error) {
 	notifications := make([]database.Notification, 0)
-
-	var userNotification database.UserNotification
-
-	query := db.Model(userNotification)
+	query := db.Model(notifications)
 
 	var totalCount null.Int
 	if req.Offset == 0 {
@@ -150,7 +147,7 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 		}
 	}
 
-	if err := db.Offset(req.Offset).Limit(req.Limit).Find(&userNotification).Error; err != nil {
+	if err := db.Offset(req.Offset).Limit(req.Limit).Find(&notifications).Error; err != nil {
 		return nil, err
 	}
 

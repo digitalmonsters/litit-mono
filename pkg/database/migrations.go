@@ -183,5 +183,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "update_other_referrals_verified_310320221400",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set body='You can share videos with your friends on Lit.it and earn 10 LIT points for each share.' " +
+					"where id = 'other_referrals_joined'")
+			},
+		},
 	}
 }

@@ -2,6 +2,7 @@ package notification
 
 import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
@@ -49,16 +50,17 @@ type NotificationsResponseContent struct {
 }
 
 type NotificationsResponseUser struct {
-	Id          int64       `json:"id"`
-	Username    null.String `json:"username"`
-	Firstname   string      `json:"firstname"`
-	Lastname    string      `json:"lastname"`
-	Deleted     bool        `json:"deleted"`
-	Verified    bool        `json:"verified"`
-	IsBlocked   bool        `json:"is_blocked"`
-	IsFollowing bool        `json:"is_following"`
-	IsFollower  bool        `json:"is_follower"`
-	AvatarUrl   null.String `json:"avatar_url"`
+	Id                int64                     `json:"id"`
+	Username          null.String               `json:"username"`
+	Firstname         string                    `json:"firstname"`
+	Lastname          string                    `json:"lastname"`
+	Deleted           bool                      `json:"deleted"`
+	Verified          bool                      `json:"verified"`
+	IsBlocked         bool                      `json:"is_blocked"`
+	IsFollowing       bool                      `json:"is_following"`
+	IsFollower        bool                      `json:"is_follower"`
+	AvatarUrl         null.String               `json:"avatar_url"`
+	NamePrivacyStatus user_go.NamePrivacyStatus `json:"name_privacy_status"`
 }
 
 type Sorting struct {
