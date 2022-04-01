@@ -133,9 +133,9 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "other_referrals_joined_template_21032022",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
-					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('other_referrals_joined'::text, " +
-					"'Your friend {{.username}} just joined via your link. +{{.referral_bonus}} LIT points'::text, null, '2022-03-21 19:35:38.000000'::timestamp, " +
-					"'2022-03-21 19:35:38.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('other_referrals_joined'::text, "+
+						"'Your friend {{.username}} just joined via your link. +{{.referral_bonus}} LIT points'::text, null, '2022-03-21 19:35:38.000000'::timestamp, "+
+						"'2022-03-21 19:35:38.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
 				)
 			},
 		},
@@ -173,6 +173,14 @@ func getMigrations() []*gormigrate.Migration {
 					create unique index if not exists devices_userid_deviceid_uindex
 						on "Devices" ("userId", "deviceId");
 				`)
+			},
+		},
+		{
+			ID: "add_content_posted_template_310320221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_posted', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} posted new content', '2022-03-31 12:00:00.000000', '2022-03-31 12:00:00.000000', 'push.content.new-posted') on conflict do nothing;",
+				)
 			},
 		},
 		{
