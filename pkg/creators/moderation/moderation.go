@@ -122,6 +122,7 @@ func List(req ListRequest, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, ap
 	var listItems []listItem
 	for _, song := range records {
 		item := listItem{
+			SongId:            song.Id,
 			SongName:          song.Name,
 			Status:            song.Status,
 			LyricAuthor:       song.LyricAuthor,

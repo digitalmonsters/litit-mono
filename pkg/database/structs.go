@@ -182,6 +182,7 @@ type Mood struct {
 	Name       string
 	SortOrder  int
 	SongsCount int
+	IsActive   bool
 	CreatedAt  time.Time
 	UpdatedAt  null.Time
 	DeletedAt  gorm.DeletedAt

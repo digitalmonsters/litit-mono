@@ -30,6 +30,7 @@ type ListResponse struct {
 }
 
 type listItem struct {
+	SongId            int64                      `json:"song_id"`
 	SongName          string                     `json:"song_name"`
 	Status            database.CreatorSongStatus `json:"status"`
 	LyricAuthor       null.String                `json:"lyric_author"`
