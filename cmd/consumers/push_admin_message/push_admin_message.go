@@ -15,7 +15,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
-	_, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, event.Title, event.Message, "", ctx)
+	_, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, "admin_bulk", "default",
+		event.Title, event.Message, "", nil, ctx)
 	if err != nil {
 		return nil, err
 	}

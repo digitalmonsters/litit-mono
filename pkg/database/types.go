@@ -79,3 +79,51 @@ type UserNotification struct {
 func (UserNotification) TableName() string {
 	return "user_notifications"
 }
+
+func GetNotificationType(templateId string) string{
+	switch templateId {
+	case "first_daily_followers_bonus":
+		return "push.bonus.daily_followers.first"
+	case "first_daily_time_bonus":
+		return "push.bonus.daily_time.first"
+	case "first_guest_x_earned_points":
+		return "push.earned_points.first"
+	case "first_guest_x_paid_views":
+		return "push.paid_views.first"
+	case "first_referral_joined":
+		return "push.referral.first"
+	case "first_video_shared":
+		return "push.share.first"
+	case "first_weekly_followers_bonus":
+		return "push.bonus.weekly_followers.first"
+	case "first_weekly_time_bonus":
+		return "push.bonus.weekly_time.first"
+	case "first_x_paid_views":
+		return "push.paid_views.first"
+	case "first_x_paid_views_as_content_owner":
+		return "push.content_owner.paid_views.first"
+	case "guest_max_earned_points_for_views":
+		return "push.earned_points.max"
+	case "increase_reward_stage_1":
+		return "push.referral.reward_increase.stage1"
+	case "increase_reward_stage_2":
+		return "push.referral.reward_increase.stage2"
+	case "registration_verify_bonus":
+		return "push.bonus.registration.verify"
+	case "other_referrals_joined":
+		return "push.referral.other"
+	case "custom_reward_increase":
+		return "push.referral.reward_increase"
+	}
+	return ""
+}
+
+func GetMarketingNotifications() []string{
+	return []string{
+		"push.bonus.daily_followers.first", "push.bonus.daily_time.first", "push.earned_points.first",
+		"push.paid_views.first", "push.referral.first", "push.share.first", "push.bonus.weekly_followers.first",
+		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
+		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
+		"push.referral.other", "push.referral.reward_increase",
+	}
+}

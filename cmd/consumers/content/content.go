@@ -94,7 +94,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId,
-		title, body, headline, ctx); err != nil {
+		templateName, "default", title, body, headline, nil, ctx); err != nil {
 		return nil, err
 	}
 
@@ -184,8 +184,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	for _, followerId := range userFollowersResp.FollowerIds {
-		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, followerId,
-			title, body, headline, ctx); err != nil {
+		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, followerId, templateName, "default",
+			title, body, headline, nil, ctx); err != nil {
 			return nil, err
 		}
 

@@ -41,7 +41,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, "content_like", map[string]string{
+	var template = "content_like"
+	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{
 		"firstname": userData.Firstname,
 		"lastname":  userData.Lastname,
 	})
@@ -51,8 +52,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ContentAuthorId,
-		title, body, headline, ctx); err != nil {
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ContentAuthorId, template, "default",
+		title, body, headline, nil, ctx); err != nil {
 		return nil, err
 	}
 

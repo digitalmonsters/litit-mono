@@ -91,7 +91,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	commentChangeReason := eventsourcing.CommentChangeReason(reason)
 
 	if parentAuthorId.Valid && parentAuthorId.Int64 != event.AuthorId {
-		title, body, headline, _, err = notifySender.RenderTemplate(db, "comment_reply", renderData)
+		var templateName = "comment_reply"
+		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
@@ -99,7 +100,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, parentAuthorId.Int64,
-			title, body, headline, ctx); err != nil {
+			templateName, "default", title, body, headline, nil, ctx); err != nil {
 			return nil, err
 		}
 
@@ -139,15 +140,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return &event.Messages, nil
 		}
 
-		title, body, headline, _, err = notifySender.RenderTemplate(db, "comment_content_resource_create", renderData)
+		var templateName = "comment_content_resource_create"
+
+		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
 			return nil, err
 		}
 
-		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, contentAuthorId.Int64,
-			title, body, headline, ctx); err != nil {
+		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, contentAuthorId.Int64, templateName, "default",
+			title, body, headline, nil, ctx); err != nil {
 			return nil, err
 		}
 
@@ -176,7 +179,9 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return &event.Messages, nil
 		}
 
-		title, body, headline, _, err = notifySender.RenderTemplate(db, "comment_profile_resource_create", renderData)
+		var templateName = "comment_profile_resource_create"
+
+		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
@@ -184,7 +189,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ProfileId.Int64,
-			title, body, headline, ctx); err != nil {
+			templateName, "default", title, body, headline, nil, ctx); err != nil {
 			return nil, err
 		}
 

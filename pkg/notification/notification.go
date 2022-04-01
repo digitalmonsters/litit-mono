@@ -70,11 +70,13 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 func getNotificationsTypesByTypeGroup(typeGroup TypeGroup) []string {
 	switch typeGroup {
 	case TypeGroupAll:
-		return []string{"push.comment.new", "push.comment.reply", "push.comment.vote", "push.profile.comment",
+		var all = []string{"push.comment.new", "push.comment.reply", "push.comment.vote", "push.profile.comment",
 			"push.content.comment", "push.admin.bulk", "push.admin.single", "push.profile.following",
 			"push.content.new-posted", "push.like.new", "push.tip", "push.content.like", "push.bonus.followers",
 			"push.bonus.daily", "push.content.successful-upload", "push.content.rejected", "push.kyc.status",
 			"push.content-creator.status", "push.bonus.time"}
+		all = append(all, database.GetMarketingNotifications()...)
+		return all
 	case TypeGroupComment:
 		return []string{"push.comment.new", "push.comment.reply", "push.comment.vote", "push.profile.comment",
 			"push.content.comment"}
