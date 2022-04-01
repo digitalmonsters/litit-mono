@@ -22,6 +22,7 @@ type IContentWrapper interface {
 	GetAllCategories(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]AllCategoriesResponseItem]
 	GetUserBlacklistedCategories(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetUserBlacklistedCategoriesResponse]
 	GetUserLikes(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[LikedContent]
+	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -115,4 +116,9 @@ func (w *ContentWrapper) GetUserLikes(userId int64, limit int, offset int, apmTr
 		Limit:  limit,
 		Offset: offset,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w *ContentWrapper) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string] {
+	return wrappers.ExecuteRpcRequestAsync[map[string]string](w.baseWrapper, w.apiUrl, "InternalGetConfigValues", GetConfigValuesRequest{Properties: properties},
+		map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }

@@ -17,6 +17,7 @@ type ContentWrapperMock struct {
 	GetAllCategoriesFn             func(categoryIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]AllCategoriesResponseItem]
 	GetUserBlacklistedCategoriesFn func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetUserBlacklistedCategoriesResponse]
 	GetUserLikesFn                 func(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[LikedContent]
+	GetConfigPropertiesFn          func(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string]
 }
 
 func (w *ContentWrapperMock) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent] {
@@ -48,6 +49,9 @@ func (w *ContentWrapperMock) GetUserBlacklistedCategories(userId int64, apmTrans
 
 func (w *ContentWrapperMock) GetUserLikes(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[LikedContent] {
 	return w.GetUserLikesFn(userId, limit, offset, apmTransaction, forceLog)
+}
+func (w *ContentWrapperMock) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string] {
+	return w.GetConfigPropertiesFn(properties, apmTransaction, forceLog)
 }
 
 func GetMock() IContentWrapper { // for compiler errors

@@ -119,3 +119,7 @@ type GetUserLikesRequest struct {
 	Limit  int   `json:"limit"`
 	Offset int   `json:"offset"`
 }
+
+type GetConfigValuesRequest struct {
+	Properties []string `json:"properties"`
+}
