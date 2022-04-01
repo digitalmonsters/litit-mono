@@ -49,8 +49,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId,
-		title, body, headline, ctx); err != nil {
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, templateName, "default",
+		title, body, headline, nil, ctx); err != nil {
 		return nil, err
 	}
 
