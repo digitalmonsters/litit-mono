@@ -8,18 +8,14 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
-	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
 	"time"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
 	if event.CrudOperation != eventsourcing.ChangeEventTypeUpdated || !(event.KycStatus == eventsourcing.KycStatusRejected || event.KycStatus == eventsourcing.KycStatusVerified) {
-		log.Info().Msg("error " + string(event.CrudOperation) + string(event.KycStatus))
 		return &event.Messages, nil
 	}
-
-	log.Info().Msg(string(event.CrudOperation) + string(event.KycStatus))
 
 	var err error
 	var title string
@@ -38,7 +34,6 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			"reason": event.CrudOperationReason,
 		}
 	} else {
-		log.Info().Msgf(string(event.KycStatus) + string(event.CrudOperation) + string(event.KycStatus))
 		return &event.Messages, nil
 	}
 
