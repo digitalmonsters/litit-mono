@@ -50,7 +50,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		contentId = null.IntFrom(0)
 	case eventsourcing.TokenomicsNotificationDailyBonusTime:
 		templateName = "bonus_time"
-		templateType = "push.bonus.time"
+		templateType = "push.bonus.daily"
 	case eventsourcing.TokenomicsNotificationDailyBonusFollowers:
 		templateName = "bonus_followers"
 		templateType = "push.bonus.followers"
