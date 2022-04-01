@@ -198,5 +198,12 @@ func getMigrations() []*gormigrate.Migration {
 					"update public.render_templates set kind='push.bonus.daily' where id = 'bonus_time'")
 			},
 		},
+		{
+			ID: "set_different_type_to_ref_popup_20220401",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"UPDATE public.render_templates SET kind = 'default' WHERE id LIKE 'other#_referrals#_joined' ESCAPE '#';")
+			},
+		},
 	}
 }
