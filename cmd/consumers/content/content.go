@@ -190,13 +190,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		if err = tx.Create(&database.Notification{
-			UserId:    followerId,
-			Type:      notificationType,
-			Title:     title,
-			Message:   body,
-			ContentId: null.IntFrom(event.Id),
-			Content:   notificationContent,
-			CreatedAt: time.Now().UTC(),
+			UserId:        followerId,
+			Type:          notificationType,
+			Title:         title,
+			Message:       body,
+			ContentId:     null.IntFrom(event.Id),
+			Content:       notificationContent,
+			CreatedAt:     time.Now().UTC(),
+			RelatedUserId: null.IntFrom(event.UserId),
 		}).Error; err != nil {
 			return nil, err
 		}
