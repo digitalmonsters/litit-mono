@@ -10,7 +10,7 @@ import (
 
 type ISender interface {
 	SendTemplateToUser(channel notification_handler.NotificationChannel,
-		templateName string, userId int64, renderingData map[string]string,
+		title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
 		ctx context.Context) (interface{}, error)
 
 	SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,

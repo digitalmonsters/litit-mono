@@ -27,11 +27,11 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper) *Sender
 }
 
 func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationChannel,
-	templateName string, userId int64, renderingData map[string]string,
+	title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
 	ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
-	return s.sendPushTemplateMessageToUser(templateName, userId, renderingData, db, ctx)
+	return s.sendPushTemplateMessageToUser(title, body, headline, renderingTemplate, userId, renderingData, db, ctx)
 }
 
 func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
@@ -45,7 +45,8 @@ func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, c
 	return <-s.gateway.EnqueueEmail(msg, ctx)
 }
 
-func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64, renderingData map[string]string,
+func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
+	renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
 	db *gorm.DB, ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(db, userId)
 
@@ -56,15 +57,8 @@ func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64
 	if len(userTokens) == 0 {
 		return nil, nil
 	}
-
-	title, body, headline, renderingTemplate, err := s.RenderTemplate(db, templateName, renderingData)
-
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body, headline, renderingTemplate,
-		fmt.Sprint(userId), renderingData), ctx)
+	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body,
+		headline, renderingTemplate, fmt.Sprint(userId), renderingData), ctx)
 
 	return nil, sendResult
 }
