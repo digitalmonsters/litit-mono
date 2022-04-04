@@ -43,9 +43,94 @@
     "GroupId": "local_notification_handler_sending_queue_custom_listener",
     "Topic": "local.handler_sending_queue_custom"
   },
+  "CommentListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_comment_listener",
+    "Topic": "local.comments"
+  },
+  "VoteListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_vote_listener",
+    "Topic": "local.comment_votes"
+  },
+  "LikeListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_like_listener",
+    "Topic": "local.likes"
+  },
+  "ContentListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_content_listener",
+    "Topic": "local.content"
+  },
+  "KysStatusListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_kyc_status_listener",
+    "Topic": "local.user"
+  },
+  "FollowListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_follow_listener",
+    "Topic": "local.follows"
+  },
+  "TokenomicsNotificationListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_tokenomics_notification_listener",
+    "Topic": "local.notification_created"
+  },
+  "EmailNotificationListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_email_notification_listener",
+    "Topic": "local.notification_created"
+  },
+  "PushAdminMessageListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_push_admin_messages_listener",
+    "Topic": "local.push_admin_messages"
+  },
+  "UserDeleteListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_user_delete_listener",
+    "Topic": "local.user"
+  },
   "Wrappers": {
     "UserInfo": {
       "ApiUrl": ""
     }
+  },
+  "EmailLinks": {
+    "VerifyHost": "",
+    "VerifyPath": "",
+    "MarketingSite": ""
   }
 }

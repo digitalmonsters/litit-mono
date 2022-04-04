@@ -7,16 +7,40 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
+var CDN_BASE string
+
+const (
+	PREFIX_CONTENT = "content"
+)
+
 type Settings struct {
-	HttpPort                   int                                    `json:"HttpPort"`
-	PrivateHttpPort            int                                    `json:"PrivateHttpPort"`
-	Wrappers                   boilerplate.Wrappers                   `json:"Wrappers"`
-	MasterDb                   boilerplate.DbConfig                   `json:"MasterDb"`
-	ReadonlyDb                 boilerplate.DbConfig                   `json:"ReadonlyDb"`
-	KafkaWriter                boilerplate.KafkaWriterConfiguration   `json:"KafkaWriter"`
-	SendingQueueListener       boilerplate.KafkaListenerConfiguration `json:"SendingQueueListener"`
-	SendingQueueCustomListener boilerplate.KafkaListenerConfiguration `json:"SendingQueueCustomListener"`
-	CreatorsListener           boilerplate.KafkaListenerConfiguration `json:"CreatorsListener"`
+	HttpPort                       int                                    `json:"HttpPort"`
+	PrivateHttpPort                int                                    `json:"PrivateHttpPort"`
+	CdnBase                        string                                 `json:"CdnBase"`
+	Wrappers                       boilerplate.Wrappers                   `json:"Wrappers"`
+	MasterDb                       boilerplate.DbConfig                   `json:"MasterDb"`
+	ReadonlyDb                     boilerplate.DbConfig                   `json:"ReadonlyDb"`
+	KafkaWriter                    boilerplate.KafkaWriterConfiguration   `json:"KafkaWriter"`
+	SendingQueueListener           boilerplate.KafkaListenerConfiguration `json:"SendingQueueListener"`
+	SendingQueueCustomListener     boilerplate.KafkaListenerConfiguration `json:"SendingQueueCustomListener"`
+	CreatorsListener               boilerplate.KafkaListenerConfiguration `json:"CreatorsListener"`
+	CommentListener                boilerplate.KafkaListenerConfiguration `json:"CommentListener"`
+	VoteListener                   boilerplate.KafkaListenerConfiguration `json:"VoteListener"`
+	LikeListener                   boilerplate.KafkaListenerConfiguration `json:"LikeListener"`
+	ContentListener                boilerplate.KafkaListenerConfiguration `json:"ContentListener"`
+	KysStatusListener              boilerplate.KafkaListenerConfiguration `json:"KysStatusListener"`
+	FollowListener                 boilerplate.KafkaListenerConfiguration `json:"FollowListener"`
+	TokenomicsNotificationListener boilerplate.KafkaListenerConfiguration `json:"TokenomicsNotificationListener"`
+	EmailNotificationListener      boilerplate.KafkaListenerConfiguration `json:"EmailNotificationListener"`
+	PushAdminMessageListener       boilerplate.KafkaListenerConfiguration `json:"PushAdminMessageListener"`
+	UserDeleteListener             boilerplate.KafkaListenerConfiguration `json:"UserDeleteListener"`
+	EmailLinks                     EmailLinks                             `json:"EmailLinks"`
+}
+
+type EmailLinks struct {
+	VerifyHost    string `json:"VerifyHost"`
+	VerifyPath    string `json:"VerifyPath"`
+	MarketingSite string `json:"MarketingSite"`
 }
 
 var settings Settings
@@ -37,6 +61,7 @@ func init() {
 		settings.ReadonlyDb.Db = settings.MasterDb.Db
 	}
 
+	CDN_BASE = settings.CdnBase
 }
 
 func GetConfig() Settings {

@@ -133,10 +133,76 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "other_referrals_joined_template_21032022",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
-					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('other_referrals_joined'::text, " +
-					"'Your friend {{.username}} just joined via your link. +{{.referral_bonus}} LIT points'::text, null, '2022-03-21 19:35:38.000000'::timestamp, " +
-					"'2022-03-21 19:35:38.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('other_referrals_joined'::text, "+
+						"'Your friend {{.username}} just joined via your link. +{{.referral_bonus}} LIT points'::text, null, '2022-03-21 19:35:38.000000'::timestamp, "+
+						"'2022-03-21 19:35:38.000000'::timestamp, 'popup'::text, 'Congrats!'::text) on conflict do nothing;",
 				)
+			},
+		},
+		{
+			ID: "add_comments_templates_180320221600",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_content_resource_create', '{{.firstname}} {{.lastname}} commented your video', '{{.firstname}} {{.lastname}} commented: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.comment') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_profile_resource_create', '{{.firstname}} {{.lastname}} commented your profile', '{{.firstname}} {{.lastname}} commented: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.profile.comment') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_reply', '{{.firstname}} {{.lastname}} replied on your comment', '{{.firstname}} {{.lastname}} replied on your comment: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.comment.reply') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_vote_like', '{{.firstname}} {{.lastname}} liked your comment', '{{.firstname}} {{.lastname}} liked your comment: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.comment.vote') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('comment_vote_dislike', '{{.firstname}} {{.lastname}} disliked your comment', '{{.firstname}} {{.lastname}} disliked your comment: {{.comment}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.comment.vote') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_like', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} liked your video', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.like') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_upload', 'Video uploaded', 'Your video was successfully uploaded', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.successful-upload') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_reject', 'Your video is rejected', 'You were rejected to publish your video due to {{.reason}} content', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.content.rejected') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('kyc_status_verified', 'Verification is approved', 'Your identity verification has been approved', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.kyc.status') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('kyc_status_rejected', 'Verification is rejected', 'Your identity verification has been rejected Reason: {{.reason}}', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.kyc.status') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('follow', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} started following you', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.profile.following') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('tip', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} tipped you {{.pointsAmount}} LIT points', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.tip') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('bonus_time', 'Daily bonus', 'Daily reward for views', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.bonus.time') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('bonus_followers', 'Daily bonus', 'You received daily bonus for followers', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.bonus.followers') on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "add_devices_userid_deviceid_uindex_290320221650",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+					DELETE FROM "Devices" T1
+						USING   "Devices" T2
+					WHERE   T1.ctid < T2.ctid
+						AND T1."userId" = T2."userId"
+						AND T1."deviceId"  = T2."deviceId";
+
+					create unique index if not exists devices_userid_deviceid_uindex
+						on "Devices" ("userId", "deviceId");
+				`)
+			},
+		},
+		{
+			ID: "add_content_posted_template_310320221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('content_posted', '{{.firstname}} {{.lastname}}', '{{.firstname}} {{.lastname}} posted new content', '2022-03-31 12:00:00.000000', '2022-03-31 12:00:00.000000', 'push.content.new-posted') on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "update_other_referrals_verified_310320221400",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set body='You can share videos with your friends on Lit.it and earn 10 LIT points for each share.' "+
+						"where id = 'other_referrals_joined'")
+			},
+		},
+		{
+			ID: "update_bonus_time_kind_010420221326",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set kind='push.bonus.daily' where id = 'bonus_time'")
+			},
+		},
+		{
+			ID: "set_different_type_to_ref_popup_20220401",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"UPDATE public.render_templates SET kind = 'default' WHERE id LIKE 'other#_referrals#_joined' ESCAPE '#';")
 			},
 		},
 	}

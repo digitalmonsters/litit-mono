@@ -3,13 +3,16 @@ module github.com/digitalmonsters/notification-handler
 go 1.17
 
 require (
-	github.com/digitalmonsters/go-common v1.19.5
+	github.com/digitalmonsters/go-common v1.21.6
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/google/uuid v1.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/pilagod/gorm-cursor-paginator/v2 v2.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/segmentio/kafka-go v0.4.25
+	go.elastic.co/apm v1.15.0
+	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.22.4
 )
 
@@ -34,6 +37,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
+	github.com/iancoleman/strcase v0.0.0-20180726023541-3605ed457bf7 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.1 // indirect
@@ -71,7 +75,6 @@ require (
 	github.com/valyala/fasthttp v1.32.0 // indirect
 	github.com/xdg/scram v1.0.3 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
-	go.elastic.co/apm v1.15.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
@@ -84,7 +87,6 @@ require (
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
-	gopkg.in/guregu/null.v4 v4.0.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/postgres v1.2.3 // indirect

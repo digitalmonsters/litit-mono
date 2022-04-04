@@ -2,13 +2,16 @@ package sender
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/token"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -23,21 +26,27 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper) *Sender
 	}
 }
 
-func (s *Sender) SendTemplateToUser(channel NotificationChannel,
-	templateName string, userId int64, renderingData map[string]string,
+func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationChannel,
+	title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
 	ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
-	return s.sendPushTemplateMessageToUser(templateName, userId, renderingData, db, ctx)
+	return s.sendPushTemplateMessageToUser(title, body, headline, renderingTemplate, userId, renderingData, db, ctx)
 }
 
-func (s *Sender) SendCustomTemplateToUser(channel NotificationChannel, userId int64, title, body, headline string, ctx context.Context) (interface{}, error) {
+func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
+	title, body, headline string, customData map[string]interface{}, ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
-	return s.sendCustomPushTemplateMessageToUser(title, body, headline, userId, db, ctx)
+	return s.sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline, userId, customData, db, ctx)
 }
 
-func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64, renderingData map[string]string,
+func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error {
+	return <-s.gateway.EnqueueEmail(msg, ctx)
+}
+
+func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
+	renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
 	db *gorm.DB, ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(db, userId)
 
@@ -48,20 +57,13 @@ func (s *Sender) sendPushTemplateMessageToUser(templateName string, userId int64
 	if len(userTokens) == 0 {
 		return nil, nil
 	}
-
-	title, body, headline, renderingTemplate, err := s.renderTemplate(db, templateName, renderingData)
-
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body, headline, renderingTemplate,
-		fmt.Sprint(userId), renderingData), ctx)
+	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body,
+		headline, renderingTemplate, fmt.Sprint(userId), renderingData), ctx)
 
 	return nil, sendResult
 }
 
-func (s *Sender) sendCustomPushTemplateMessageToUser(title, body, headline string, userId int64,
+func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline string, userId int64, customData map[string]interface{},
 	db *gorm.DB, ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(db, userId)
 
@@ -73,7 +75,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(title, body, headline strin
 		return nil, nil
 	}
 
-	sendResult := <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, title, body, headline, fmt.Sprint(userId)), ctx)
+	sendResult := <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, pushType, kind, title, body, headline, fmt.Sprint(userId), customData), ctx)
 
 	return nil, sendResult
 }
@@ -120,8 +122,22 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 	return resp
 }
 
-func (s *Sender) prepareCustomPushEvents(tokens []database.Device, title string, body string, headline string, key string) []notification_gateway.SendPushRequest {
+func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kind, title string, body string, headline string,
+	key string, customData map[string]interface{}) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
+
+	var extraData = map[string]string{
+		"type":     pushType,
+		"kind":     kind,
+		"headline": headline,
+	}
+	if customData != nil {
+		js, err := json.Marshal(&customData)
+		if err != nil {
+			log.Error().Str("push_kind", "user_follow").Err(err)
+		}
+		extraData["custom_data"] = string(js)
+	}
 
 	for _, t := range tokens {
 		if _, ok := mm[t.Platform]; !ok {
@@ -130,11 +146,7 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, title string,
 				DeviceType: t.Platform,
 				Title:      title,
 				Body:       body,
-				ExtraData: map[string]string{
-					"type":     "custom",
-					"kind":     "popup",
-					"headline": headline,
-				},
+				ExtraData:  extraData,
 				PublishKey: key,
 			}
 
@@ -153,7 +165,7 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, title string,
 	return resp
 }
 
-func (s *Sender) renderTemplate(db *gorm.DB, templateName string,
+func (s *Sender) RenderTemplate(db *gorm.DB, templateName string,
 	renderingData map[string]string) (title string, body string, headline string, renderingTemplate database.RenderTemplate, err error) {
 	var renderTemplate database.RenderTemplate
 

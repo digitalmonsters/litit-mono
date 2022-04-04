@@ -1,8 +1,7 @@
-package creators
+package kyc_status
 
 import (
 	"context"
-	"fmt"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -14,49 +13,51 @@ import (
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
-	var err error
-
-	renderingData := map[string]string{
-		"status": fmt.Sprint(event.Status),
+	if event.CrudOperation != eventsourcing.ChangeEventTypeUpdated || !(event.KycStatus == eventsourcing.KycStatusRejected || event.KycStatus == eventsourcing.KycStatusVerified) {
+		return &event.Messages, nil
 	}
 
-	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
-
+	var err error
 	var title string
 	var body string
 	var headline string
 	var templateName string
+	renderData := map[string]string{}
 
-	switch event.Status {
-	case eventsourcing.CreatorStatusRejected:
-		templateName = "creator_status_rejected"
-	case eventsourcing.CreatorStatusApproved:
-		templateName = "creator_status_approved"
-	case eventsourcing.CreatorStatusPending:
-		templateName = "creator_status_pending"
-	default:
+	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
+
+	if event.KycStatus == eventsourcing.KycStatusVerified {
+		templateName = "kyc_status_verified"
+	} else if event.KycStatus == eventsourcing.KycStatusRejected {
+		templateName = "kyc_status_rejected"
+		renderData = map[string]string{
+			"reason": event.CrudOperationReason,
+		}
+	} else {
 		return &event.Messages, nil
 	}
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderingData)
+	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, templateName, "content_creator",
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, templateName, "default",
 		title, body, headline, nil, ctx); err != nil {
 		return nil, err
 	}
 
+	reason := eventsourcing.KycReason(event.CrudOperationReason)
 	if err = db.Create(&database.Notification{
-		UserId:               event.UserId,
-		Type:                 "push.content-creator.status",
-		Title:                title,
-		Message:              body,
-		CreatedAt:            time.Now().UTC(),
-		ContentCreatorStatus: &event.Status,
+		UserId:    event.UserId,
+		Type:      "push.kyc.status",
+		Title:     title,
+		Message:   body,
+		CreatedAt: time.Now().UTC(),
+		KycReason: &reason,
+		KycStatus: &event.KycStatus,
 	}).Error; err != nil {
 		return nil, err
 	}
