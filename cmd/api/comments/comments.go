@@ -12,17 +12,15 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
-	user "github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
 	"strings"
 )
 
-func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserGoWrapper, contentWrapper content.IContentWrapper,
-	userBlockWrapper user_block.IUserBlockWrapper, apiDef map[string]swagger.ApiDescription,
-	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
+func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserGoWrapper, contentWrapper content.IContentWrapper,
+	apiDef map[string]swagger.ApiDescription, commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) error {
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -333,7 +331,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserGoWr
 		}
 
 		if resp, err := comments.CreateComment(db.WithContext(executionData.Context), contentId,
-			createRequest.Comment, createRequest.ParentId, contentWrapper, userBlockWrapper, executionData.ApmTransaction,
+			createRequest.Comment, createRequest.ParentId, contentWrapper, userWrapper, executionData.ApmTransaction,
 			executionData.UserId, commentNotifier, contentCommentsNotifier, userCommentsNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
@@ -382,7 +380,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserGoWr
 		}
 
 		if resp, err := comments.CreateCommentOnProfile(db.WithContext(executionData.Context), profileId,
-			createRequest.Comment, createRequest.ParentId, contentWrapper, userBlockWrapper, executionData.ApmTransaction,
+			createRequest.Comment, createRequest.ParentId, userWrapper, executionData.ApmTransaction,
 			executionData.UserId, commentNotifier, contentCommentsNotifier, userCommentsNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {

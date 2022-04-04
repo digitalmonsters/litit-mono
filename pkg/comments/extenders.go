@@ -137,7 +137,7 @@ func ExtendWithContent(contentWrapper content.IContentWrapper, apmTransaction *a
 			}
 
 			for _, comment := range comments {
-				if v, ok := responseData.Items[comment.ContentId.ValueOrZero()]; ok {
+				if v, ok := responseData.Response[comment.ContentId.ValueOrZero()]; ok {
 					comment.Content = content.SimpleContent{
 						Id:       v.Id,
 						AuthorId: v.AuthorId,
