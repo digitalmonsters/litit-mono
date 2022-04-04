@@ -1,9 +1,9 @@
 module github.com/digitalmonsters/comments
 
-go 1.17
+go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.21.3
+	github.com/digitalmonsters/go-common v1.22.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v0.0.0-20211222173705-d73e6b1002a7
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0

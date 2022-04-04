@@ -2,6 +2,7 @@ package vote
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"os"
 	"strings"
 	"testing"
@@ -65,17 +66,17 @@ func TestMain(m *testing.M) {
 	)
 
 	contentWrapperMock = &content.ContentWrapperMock{
-		GetInternalFn: func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan content.ContentGetInternalResponseChan {
-			ch := make(chan content.ContentGetInternalResponseChan, 2)
+		GetInternalFn: func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]content.SimpleContent] {
+			ch := make(chan wrappers.GenericResponseChan[map[int64]content.SimpleContent], 2)
 			go func() {
 				defer func() {
 					close(ch)
 				}()
 
 				if contentIds[0] == mockContentRecord.Id {
-					ch <- content.ContentGetInternalResponseChan{
+					ch <- wrappers.GenericResponseChan[map[int64]content.SimpleContent]{
 						Error: nil,
-						Items: map[int64]content.SimpleContent{
+						Response: map[int64]content.SimpleContent{
 							mockContentRecord.Id: mockContentRecord,
 						},
 					}

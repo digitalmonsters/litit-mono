@@ -8,7 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -17,7 +17,7 @@ import (
 )
 
 func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
-	userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction, currentUserId int64,
+	userWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction, currentUserId int64,
 	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) (*SimpleComment, error) {
 	var parentComment database.Comment
@@ -43,7 +43,7 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 		}
 	}
 
-	blockedUserType, err := isBlocked(userBlockWrapper, apmTransaction, currentUserId, mappedParentComment.AuthorId)
+	blockedUserType, err := isBlocked(userWrapper, apmTransaction, currentUserId, mappedParentComment.AuthorId)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -288,7 +288,7 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 				return nil, resp.Error.ToError()
 			}
 
-			if v, ok := resp.Items[contentId]; !ok {
+			if v, ok := resp.Response[contentId]; !ok {
 				return nil, errors.New("content not found")
 			} else if v.AuthorId != currentUserId {
 				return nil, errors.New("delete operation not permitted 2")
@@ -316,8 +316,8 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 	return &mapped, nil
 }
 
-func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
-	userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction, currentUserId int64,
+func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int,
+	userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction, currentUserId int64,
 	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) (*SimpleComment, error) {
 	var parentComment database.Comment
@@ -330,7 +330,7 @@ func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, pa
 
 	mappedParentComment := mapDbCommentToCommentOnProfile(parentComment)
 
-	blockedUserType, err := isBlocked(userBlockWrapper, apmTransaction, currentUserId, mappedParentComment.AuthorId)
+	blockedUserType, err := isBlocked(userGoWrapper, apmTransaction, currentUserId, mappedParentComment.AuthorId)
 
 	if err != nil {
 		return nil, errors.WithStack(err)

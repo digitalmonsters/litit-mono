@@ -6,9 +6,9 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -55,45 +55,20 @@ func TestMain(m *testing.M) {
 
 			return ch
 		},
-	}
-
-	contentWrapperMock = &content.ContentWrapperMock{
-		GetInternalFn: func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan content.ContentGetInternalResponseChan {
-			ch := make(chan content.ContentGetInternalResponseChan, 2)
-			go func() {
-				defer func() {
-					close(ch)
-				}()
-
-				if contentIds[0] == mockContentRecord.Id {
-					ch <- content.ContentGetInternalResponseChan{
-						Error: nil,
-						Items: map[int64]content.SimpleContent{
-							mockContentRecord.Id: mockContentRecord,
-						},
-					}
-				}
-			}()
-
-			return ch
-		},
-	}
-
-	blockWrapperMock = &user_block.UserBlockWrapperMock{
-		GetUserBlockFn: func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan user_block.GetUserBlockResponseChan {
-			ch := make(chan user_block.GetUserBlockResponseChan, 2)
+		GetUserBlockFn: func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUserBlockResponseChan {
+			ch := make(chan user.GetUserBlockResponseChan, 2)
 			go func() {
 				defer func() {
 					close(ch)
 				}()
 
 				if blockedTo == 1 || blockedBy == 2 {
-					ch <- user_block.GetUserBlockResponseChan{
+					ch <- user.GetUserBlockResponseChan{
 						Error: nil,
 						Data:  mockBlockRecord,
 					}
 				} else {
-					ch <- user_block.GetUserBlockResponseChan{
+					ch <- user.GetUserBlockResponseChan{
 						Error: nil,
 						Data:  mockNotBlockRecord,
 					}
@@ -104,6 +79,27 @@ func TestMain(m *testing.M) {
 		},
 	}
 
+	contentWrapperMock = &content.ContentWrapperMock{
+		GetInternalFn: func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]content.SimpleContent] {
+			ch := make(chan wrappers.GenericResponseChan[map[int64]content.SimpleContent], 2)
+			go func() {
+				defer func() {
+					close(ch)
+				}()
+
+				if contentIds[0] == mockContentRecord.Id {
+					ch <- wrappers.GenericResponseChan[map[int64]content.SimpleContent]{
+						Error: nil,
+						Response: map[int64]content.SimpleContent{
+							mockContentRecord.Id: mockContentRecord,
+						},
+					}
+				}
+			}()
+
+			return ch
+		},
+	}
 	os.Exit(m.Run())
 }
 

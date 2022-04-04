@@ -21,7 +21,6 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -49,7 +48,6 @@ func main() {
 
 	userWrapper := user.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
-	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
 
 	commentNotifier := comment.NewNotifier(time.Duration(cfg.NotifierCommentConfig.PollTimeMs)*time.Millisecond,
 		ctx, eventsourcing.NewKafkaEventPublisher(*cfg.KafkaWriter, cfg.NotifierCommentConfig.KafkaTopic), db, true)
@@ -63,7 +61,7 @@ func main() {
 	user_consumer.InitListener(ctx, cfg.UserListener, commentNotifier, contentCommentsNotifier, userCommentsNotifier).
 		ListenAsync()
 
-	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, userBlockWrapper, apiDef, commentNotifier,
+	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, apiDef, commentNotifier,
 		contentCommentsNotifier, userCommentsNotifier); err != nil {
 		panic(err)
 	}

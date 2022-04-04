@@ -7,8 +7,7 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
-	user "github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
@@ -18,7 +17,7 @@ import (
 )
 
 func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, currentUserId int64, db *gorm.DB,
-	userWrapper user.IUserGoWrapper, apmTransaction *apm.Transaction, resourceType ResourceType) (*GetCommentsByTypeWithResourceResponse, error) {
+	userWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction, resourceType ResourceType) (*GetCommentsByTypeWithResourceResponse, error) {
 	var comments []database.Comment
 
 	if request.ResourceId == 0 {
@@ -181,7 +180,7 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 	return &finalResponse, nil
 }
 
-func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user.IUserGoWrapper,
+func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user_go.IUserGoWrapper,
 	apmTransaction *apm.Transaction) (*CommentWithCursor, error) {
 	var comment database.Comment
 
@@ -254,9 +253,9 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 	}, nil
 }
 
-func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *apm.Transaction,
-	blockedTo int64, blockedBy int64) (*user_block.BlockedUserType, error) {
-	responseData := <-userBlockWrapper.GetUserBlock(blockedTo, blockedBy, apmTransaction, false)
+func isBlocked(userWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction,
+	blockedTo int64, blockedBy int64) (*user_go.BlockedUserType, error) {
+	responseData := <-userWrapper.GetUserBlock(blockedTo, blockedBy, apmTransaction, false)
 
 	if responseData.Error != nil {
 		return nil, errors.New(fmt.Sprintf("invalid response from user block service [%v]", responseData.Error.Message))
