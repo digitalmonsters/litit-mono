@@ -6,7 +6,6 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/cmd/api"
 	commentConsumer "github.com/digitalmonsters/notification-handler/cmd/consumers/comment"
@@ -65,7 +64,6 @@ func main() {
 
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
-	userBlockWrapper := user_block.NewUserBlockWrapper(cfg.Wrappers.UserBlock)
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
 	commentWrapper := comment.NewCommentWrapper(cfg.Wrappers.Comment)
 
@@ -89,11 +87,11 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin creator api")
 	}
 
-	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, userBlockWrapper, followWrapper); err != nil {
+	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init notification api")
 	}
 
-	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, userBlockWrapper, followWrapper); err != nil {
+	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
 

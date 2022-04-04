@@ -1,9 +1,9 @@
 module github.com/digitalmonsters/notification-handler
 
-go 1.17
+go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.21.6
+	github.com/digitalmonsters/go-common v1.22.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/google/uuid v1.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
