@@ -2,6 +2,7 @@ package tokenomics_notification
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -23,6 +24,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var templateName string
 	var templateType string
 	contentId := null.Int{}
+
+	apm_helper.AddApmLabel(apmTransaction, "event_type", string(event.Type))
+	apm_helper.AddApmLabel(apmTransaction, "user_id", event.Payload.UserId)
+	apm_helper.AddApmLabel(apmTransaction, "related_user_id", event.Payload.RelatedUserId.ValueOrZero())
 
 	switch event.Type {
 	case eventsourcing.TokenomicsNotificationTip:
@@ -89,6 +94,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	if err = db.Create(&notification).Error; err != nil {
 		return nil, err
 	}
+
+	apm_helper.AddApmLabel(apmTransaction, "notification_id", notification.Id.String())
 
 	if err = notificationPkg.IncrementUnreadNotificationsCounter(db, event.Payload.UserId); err != nil {
 		return nil, err

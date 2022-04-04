@@ -2,6 +2,7 @@ package like
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -18,6 +19,10 @@ import (
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
 	contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
+
+	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
+	apm_helper.AddApmLabel(apmTransaction, "content_id", event.ContentId)
+
 	if !event.Like || event.ContentAuthorId == event.UserId {
 		return &event.Messages, nil
 	}
@@ -74,7 +79,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var contentData content.SimpleContent
 
-	if contentData, ok = contentResp.Items[event.ContentId]; ok {
+	if contentData, ok = contentResp.Response[event.ContentId]; ok {
 		notification.Content = &database.NotificationContent{
 			Id:      event.ContentId,
 			Width:   contentData.Width,
@@ -86,6 +91,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	if err = db.Create(&notification).Error; err != nil {
 		return nil, err
 	}
+
+	apm_helper.AddApmLabel(apmTransaction, "notification_id", notification.Id.String())
 
 	if err = notificationPkg.IncrementUnreadNotificationsCounter(db, event.UserId); err != nil {
 		return nil, err

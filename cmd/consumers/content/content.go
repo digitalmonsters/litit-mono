@@ -2,6 +2,7 @@ package content
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/frontend"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
@@ -21,6 +22,12 @@ import (
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, followWrapper follow.IFollowWrapper,
 	userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
+
+	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
+	apm_helper.AddApmLabel(apmTransaction, "author_id", event.UserId)
+	apm_helper.AddApmLabel(apmTransaction, "content_id", event.Id)
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation_reason", event.BaseChangeEvent.CrudOperationReason)
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation", event.BaseChangeEvent.CrudOperation)
 
 	if event.CrudOperation == eventsourcing.ChangeEventTypeDeleted {
 		tx := db.Begin()
@@ -98,7 +105,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if err = tx.Create(&database.Notification{
+	nt := &database.Notification{
 		UserId:    event.UserId,
 		Type:      notificationType,
 		Title:     title,
@@ -106,9 +113,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		ContentId: null.IntFrom(event.Id),
 		Content:   notificationContent,
 		CreatedAt: time.Now().UTC(),
-	}).Error; err != nil {
+	}
+
+	if err = tx.Create(nt).Error; err != nil {
 		return nil, err
 	}
+
+	apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
 
 	if err = notification.IncrementUnreadNotificationsCounter(tx, event.UserId); err != nil {
 		return nil, err
