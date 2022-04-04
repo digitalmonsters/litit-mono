@@ -1,4 +1,4 @@
-package categories
+package moods
 
 import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
@@ -20,17 +20,17 @@ func TestMain(m *testing.M) {
 }
 
 func TestMethods(t *testing.T) {
-	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.creator_reject_reasons", "public.categories"}, nil, t); err != nil {
+	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.creator_reject_reasons", "public.moods"}, nil, t); err != nil {
 		t.Fatal(err)
 	}
 
-	upsertReq := []category{
+	upsertReq := []mood{
 		{
-			Name:      "test_category_1",
+			Name:      "test_mood_1",
 			SortOrder: 1,
 		},
 		{
-			Name:      "test_category_2",
+			Name:      "test_mood_2",
 			SortOrder: 2,
 		},
 	}

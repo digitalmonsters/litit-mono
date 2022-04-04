@@ -30,6 +30,19 @@
   "Creators": {
     "MaxThresholdHours": 48
   },
+  "KafkaWriter": {
+    "Hosts": "",
+    "KafkaAuth": {},
+    "Tls": true
+  },
+  "NotifierCreatorsConfig": {
+    "KafkaTopic": {
+      "Name": "local.creators",
+      "NumPartitions": 12,
+      "ReplicationFactor": 2
+    },
+    "PollTimeMs": 2000
+  },
   "Wrappers": {
     "Content": {
       "ApiUrl": ""
