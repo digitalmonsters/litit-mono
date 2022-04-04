@@ -20,6 +20,7 @@ type IAuthGoWrapper interface {
 	GetAdminIdsFilterByEmail(adminIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminIdsFilterByEmailResponseChan
 	GetAdminsInfoById(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
 	AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
+	IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
 }
 
 type AuthGoWrapper struct {
@@ -48,6 +49,12 @@ func NewAuthGoWrapper(config boilerplate.WrapperConfig) IAuthGoWrapper {
 		serviceName:    "auth_go",
 		baseWrapper:    wrappers.GetBaseWrapper(),
 	}
+}
+
+func (u AuthGoWrapper) IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse] {
+	return wrappers.ExecuteRpcRequestAsync[IsGuestResponse](u.baseWrapper, u.apiUrl, "IsGuest", IsGuestRequest{
+		UserId: userId,
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 }
 
 func (u AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan {

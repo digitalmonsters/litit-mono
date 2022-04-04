@@ -2,6 +2,7 @@ package auth_go
 
 import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
 )
 
@@ -11,6 +12,11 @@ type AuthGoWrapperMock struct {
 	GetAdminIdsFilterByEmailFn func(adminIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminIdsFilterByEmailResponseChan
 	GetAdminsInfoByIdFn        func(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
 	AddNewUserFn               func(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
+	IsGuestFn                  func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
+}
+
+func (w *AuthGoWrapperMock) IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse] {
+	return w.IsGuestFn(userId, apmTransaction, forceLog)
 }
 
 func (w *AuthGoWrapperMock) AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan {

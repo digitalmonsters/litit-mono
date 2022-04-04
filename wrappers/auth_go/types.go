@@ -5,6 +5,14 @@ import (
 	"github.com/digitalmonsters/go-common/rpc"
 )
 
+type IsGuestRequest struct {
+	UserId int64 `json:"user_id"`
+}
+
+type IsGuestResponse struct {
+	IsGuest bool `json:"is_guest"`
+}
+
 type AddUserResponseChan struct {
 	Error *rpc.RpcError
 	Item  eventsourcing.UserEvent `json:"item"`
