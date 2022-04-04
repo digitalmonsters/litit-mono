@@ -7,6 +7,7 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/comments/utils"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -70,8 +71,11 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment_id"), error_codes.GenericValidationError)
 		}
 
+		apm_helper.AddApmLabel(executionData.ApmTransaction, "user_id", executionData.UserId)
+		apm_helper.AddApmLabel(executionData.ApmTransaction, "comment_id", commentId)
+
 		if _, err := comments.DeleteCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
-			contentWrapper, executionData.ApmTransaction, commentNotifier); err != nil {
+			contentWrapper, executionData.ApmTransaction, commentNotifier, contentCommentsNotifier, userCommentsNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return successResponse{
@@ -110,6 +114,9 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		if err := json.Unmarshal(request, &updateRequest); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
+
+		apm_helper.AddApmLabel(executionData.ApmTransaction, "user_id", executionData.UserId)
+		apm_helper.AddApmLabel(executionData.ApmTransaction, "comment_id", commentId)
 
 		if len(updateRequest.Comment) == 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid comment length"), error_codes.GenericValidationError)
@@ -158,6 +165,9 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user.IUserWrap
 		after := utils.ExtractString(executionData.GetUserValue, "after", "")
 		before := utils.ExtractString(executionData.GetUserValue, "before", "")
 		sortOrder := utils.ExtractString(executionData.GetUserValue, "sort_order", "")
+
+		apm_helper.AddApmLabel(executionData.ApmTransaction, "user_id", executionData.UserId)
+		apm_helper.AddApmLabel(executionData.ApmTransaction, "comment_id", commentId)
 
 		if resp, err := comments.GetCommentsByResourceId(comments.GetCommentsByTypeWithResourceRequest{
 			After:      after,

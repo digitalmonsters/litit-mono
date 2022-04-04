@@ -6,11 +6,13 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -43,12 +45,20 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 		paginatorRules = append(paginatorRules, paginator.Rule{
 			Key:   "CreatedAt",
 			Order: paginator.DESC,
-		})
+		},
+			paginator.Rule{
+				Key:   "Id",
+				Order: paginator.ASC,
+			})
 	case "oldest":
 		paginatorRules = append(paginatorRules, paginator.Rule{
 			Key:   "CreatedAt",
 			Order: paginator.ASC,
-		})
+		},
+			paginator.Rule{
+				Key:   "Id",
+				Order: paginator.ASC,
+			})
 	case "most_replied":
 		paginatorRules = append(paginatorRules, paginator.Rule{
 			Key:   "NumReplies",
@@ -255,37 +265,63 @@ func isBlocked(userBlockWrapper user_block.IUserBlockWrapper, apmTransaction *ap
 	return responseData.Data.Type, nil
 }
 
-func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64,
-	userCommentsNotifier *user_comments_counter.Notifier, contentCommentsNotifier *content_comments_counter.Notifier) error {
+func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64, isContentComment bool,
+	userCommentsNotifier *user_comments_counter.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
+	decrease bool) error {
 	var userStatsActionComments int64
 	var userStatsContentComments int64
 
+	increaseValue := 1
+
+	if decrease {
+		increaseValue = -1
+	}
+
 	if err := tx.Raw("insert into user_stats_action(id, comments) values (?, 1) on conflict (id) "+
-		"do update set comments = user_stats_action.comments + 1 returning comments", authorId).Scan(&userStatsActionComments).Error; err != nil {
+		"do update set comments = user_stats_action.comments + ? returning comments", authorId, increaseValue).
+		Scan(&userStatsActionComments).Error; err != nil {
 		return err
 	}
 
-	if err := tx.Raw("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) "+
-		"do update set comments = user_stats_content.comments + 1 returning comments", contentId).Scan(&userStatsContentComments).Error; err != nil {
-		return err
+	if isContentComment {
+		if err := tx.Raw("insert into user_stats_content(id, comments) values (?, 1) on conflict (id) "+
+			"do update set comments = user_stats_content.comments + ? returning comments", contentId, increaseValue).
+			Scan(&userStatsContentComments).Error; err != nil {
+			return err
+		}
 	}
 
 	if userCommentsNotifier != nil {
 		userCommentsNotifier.Enqueue(authorId, userStatsActionComments)
 	}
 
-	if contentCommentsNotifier != nil {
+	if isContentComment && contentCommentsNotifier != nil {
 		contentCommentsNotifier.Enqueue(contentId, userStatsContentComments)
 	}
 
 	return nil
 }
 
-func updateContentCommentsCounter(tx *gorm.DB, contentId int64) error {
-	if err := tx.Exec("update content set comments_count = (select count(*) from comment where content_id = content.id) where content.id = ?", contentId).
-		Error; err != nil {
-		return err
+func GetCommentsInfoById(req comment.GetCommentsInfoByIdRequest, db *gorm.DB) (map[int64]comment.CommentsInfoById, error) {
+	query := db.Model(&database.Comment{}).Where("comment.id in ?", req.CommentIds)
+
+	var comments []struct {
+		Id             int64
+		ParentAuthorId null.Int
 	}
 
-	return nil
+	query = query.Joins("left join comment as parent on comment.parent_id = parent.id")
+
+	if err := query.Select("comment.id, parent.author_id as parent_author_id").Find(&comments).Error; err != nil {
+		return nil, err
+	}
+
+	commentsMap := make(map[int64]comment.CommentsInfoById, len(comments))
+	for _, item := range comments {
+		commentsMap[item.Id] = comment.CommentsInfoById{
+			ParentAuthorId: item.ParentAuthorId,
+		}
+	}
+
+	return commentsMap, nil
 }

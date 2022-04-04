@@ -6,9 +6,11 @@ import (
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user"
 	"github.com/digitalmonsters/go-common/wrappers/user_block"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -108,8 +110,7 @@ func TestMain(m *testing.M) {
 func baseSetup(t *testing.T) {
 	cfg := configs.GetConfig()
 
-	if err := boilerplate_testing.FlushPostgresTables(cfg.Db,
-		[]string{"public.comment", "public.comment_vote", "public.content", "public.profile"}, nil, nil); err != nil {
+	if err := boilerplate_testing.FlushPostgresAllTables(cfg.Db, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := utils.PollutePostgresDatabase(db, "./test_data/seed.json"); err != nil {
@@ -315,4 +316,24 @@ func TestGetCommentsByProfile(t *testing.T) {
 
 	assert.Equal(t, int64(9711), result.Comments[0].Id)
 
+}
+
+func TestGetCommentsInfoById(t *testing.T) {
+	baseSetup(t)
+
+	result, err := GetCommentsInfoById(comment.GetCommentsInfoByIdRequest{CommentIds: []int64{9694, 9712}}, db)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a := assert.New(t)
+	for commentId, info := range result {
+		if commentId == 9694 {
+			a.Equal(int64(1074241), info.ParentAuthorId.Int64)
+		} else if commentId == 9712 {
+			a.False(info.ParentAuthorId.Valid)
+		} else {
+			t.Fatal(errors.New("unexpected value"))
+		}
+	}
 }

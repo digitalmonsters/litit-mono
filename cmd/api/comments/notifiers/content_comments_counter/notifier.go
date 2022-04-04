@@ -10,7 +10,7 @@ import (
 )
 
 type Notifier struct {
-	queueMap  map[string]eventData
+	queueMap  map[string]eventsourcing.CommentCountOnContentEvent
 	mutex     sync.Mutex
 	publisher eventsourcing.IEventPublisher
 	poolTime  time.Duration
@@ -21,14 +21,14 @@ type Notifier struct {
 func NewNotifier(pollTime time.Duration, ctx context.Context,
 	eventPublisher eventsourcing.IEventPublisher, autoFlush bool) *Notifier {
 	n := &Notifier{
-		queueMap:  make(map[string]eventData),
+		queueMap:  make(map[string]eventsourcing.CommentCountOnContentEvent),
 		publisher: eventPublisher,
 		mutex:     sync.Mutex{},
 		poolTime:  pollTime,
 		ctx:       ctx,
 		autoFlush: autoFlush,
 	}
-	if autoFlush{
+	if autoFlush {
 		n.initQueueListener()
 	}
 	return n
@@ -37,7 +37,7 @@ func NewNotifier(pollTime time.Duration, ctx context.Context,
 func (s *Notifier) Enqueue(contentId int64, contentCommentsCount int64) {
 	s.mutex.Lock()
 
-	s.queueMap[fmt.Sprintf("%v", contentId)] = eventData{
+	s.queueMap[fmt.Sprintf("%v", contentId)] = eventsourcing.CommentCountOnContentEvent{
 		ContentId: contentId,
 		Count:     contentCommentsCount,
 	}
@@ -65,7 +65,7 @@ func (s *Notifier) Flush() []error {
 		indexer += 1
 	}
 
-	s.queueMap = make(map[string]eventData)
+	s.queueMap = make(map[string]eventsourcing.CommentCountOnContentEvent)
 
 	s.mutex.Unlock()
 
