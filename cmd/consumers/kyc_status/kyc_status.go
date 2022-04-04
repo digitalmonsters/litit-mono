@@ -2,6 +2,7 @@ package kyc_status
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -9,10 +10,15 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"github.com/segmentio/kafka-go"
+	"go.elastic.co/apm"
 	"time"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, apmTransaction *apm.Transaction) (*kafka.Message, error) {
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation_reason", event.BaseChangeEvent.CrudOperationReason)
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation", event.BaseChangeEvent.CrudOperation)
+	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
+
 	if event.CrudOperation != eventsourcing.ChangeEventTypeUpdated || !(event.KycStatus == eventsourcing.KycStatusRejected || event.KycStatus == eventsourcing.KycStatusVerified) {
 		return &event.Messages, nil
 	}

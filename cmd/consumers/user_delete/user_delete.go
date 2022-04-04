@@ -2,15 +2,21 @@ package user_delete
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/segmentio/kafka-go"
+	"go.elastic.co/apm"
 )
 
-func process(event newSendingEvent, ctx context.Context) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, apmTransaction *apm.Transaction) (*kafka.Message, error) {
 	if event.CrudOperation != eventsourcing.ChangeEventTypeDeleted {
 		return &event.Messages, nil
 	}
+
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation_reason", event.BaseChangeEvent.CrudOperationReason)
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation", event.BaseChangeEvent.CrudOperation)
+	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
 
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 	tx := db.Begin()
