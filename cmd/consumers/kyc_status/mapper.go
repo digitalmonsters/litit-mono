@@ -5,6 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
+	"gopkg.in/guregu/null.v4"
 )
 
 type newSendingEvent struct {
@@ -19,7 +20,8 @@ const (
 )
 
 type legacyEvent struct {
-	Type LegacyEventType `json:"type"`
+	Type   LegacyEventType `json:"type"`
+	Reason null.String     `json:"reason"`
 }
 
 func mapKafkaMessages(message kafka.Message) (*newSendingEvent, error) {
@@ -41,7 +43,7 @@ func mapKafkaMessages(message kafka.Message) (*newSendingEvent, error) {
 				event.CrudOperation = eventsourcing.ChangeEventTypeUpdated
 			}
 			if len(event.CrudOperationReason) <= 0 {
-				event.CrudOperationReason = string(LegacyEventTypeKycStatusUpdated)
+				event.CrudOperationReason = lEvent.Reason.ValueOrZero()
 			}
 		}
 	}
