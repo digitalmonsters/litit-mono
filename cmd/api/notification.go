@@ -6,7 +6,6 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
@@ -16,7 +15,7 @@ import (
 )
 
 func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper,
-	userBlockWrapper user_block.IUserBlockWrapper, followWrapper follow.IFollowWrapper) error {
+	followWrapper follow.IFollowWrapper) error {
 	notificationsPath := "/mobile/v1/notifications"
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
@@ -33,7 +32,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		}
 
 		resp, err := notificationPkg.GetNotifications(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context),
-			executionData.UserId, page, typeGroup, userGoWrapper, userBlockWrapper, followWrapper, executionData.ApmTransaction)
+			executionData.UserId, page, typeGroup, userGoWrapper, followWrapper, executionData.ApmTransaction)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

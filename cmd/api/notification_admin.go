@@ -7,15 +7,13 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 )
 
 func InitAdminNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription,
-	userGoWrapper user_go.IUserGoWrapper, userBlockWrapper user_block.IUserBlockWrapper,
-	followWrapper follow.IFollowWrapper) error {
+	userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper) error {
 	listNotificationsMethod := "ListNotifications"
 
 	if err := httpRouter.GetRpcAdminEndpoint().RegisterRpcCommand(router.NewAdminCommand(listNotificationsMethod,
@@ -28,7 +26,7 @@ func InitAdminNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]s
 
 			resp, err := notification.ListNotificationsByAdmin(
 				database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), req, userGoWrapper,
-				userBlockWrapper, followWrapper, executionData.ApmTransaction)
+				followWrapper, executionData.ApmTransaction)
 			if err != nil {
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}

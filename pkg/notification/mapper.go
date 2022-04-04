@@ -3,7 +3,6 @@ package notification
 import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/utils"
@@ -14,7 +13,7 @@ import (
 )
 
 func mapNotificationsToResponseItems(notifications []database.Notification, userGoWrapper user_go.IUserGoWrapper,
-	userBlockWrapper user_block.IUserBlockWrapper, followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction) []NotificationsResponseItem {
+	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction) []NotificationsResponseItem {
 	mapped := make(map[uuid.UUID]*NotificationsResponseItem, len(notifications))
 	relatedUsersIdsMap := map[int64]bool{}
 
@@ -61,7 +60,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 
 	routines := []chan error{
 		fillUsers(mapped, userGoWrapper, apmTransaction),
-		fillUserBlock(mapped, userBlockWrapper, apmTransaction),
+		fillUserBlock(mapped, userGoWrapper, apmTransaction),
 		fillFollowData(mapped, followWrapper, apmTransaction),
 	}
 
@@ -147,7 +146,7 @@ func fillUsers(notifications map[uuid.UUID]*NotificationsResponseItem, userGoWra
 	return ch
 }
 
-func fillUserBlock(notifications map[uuid.UUID]*NotificationsResponseItem, userBlockWrapper user_block.IUserBlockWrapper,
+func fillUserBlock(notifications map[uuid.UUID]*NotificationsResponseItem, userBlockWrapper user_go.IUserGoWrapper,
 	apmTransaction *apm.Transaction) chan error {
 	ch := make(chan error, 2)
 
@@ -183,7 +182,7 @@ func fillUserBlock(notifications map[uuid.UUID]*NotificationsResponseItem, userB
 					return
 				}
 
-				if resp.Data.Type != nil && *resp.Data.Type == user_block.BlockedUser {
+				if resp.Data.Type != nil && *resp.Data.Type == user_go.BlockedUser {
 					userBlockMap[userId][relatedUserId] = resp.Data.IsBlocked
 				}
 			}

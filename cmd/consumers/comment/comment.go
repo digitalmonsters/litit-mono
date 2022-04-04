@@ -68,7 +68,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		notificationContent = &database.NotificationContent{Id: event.ContentId.Int64}
 
-		if simpleContent, ok := contentResp.Items[event.ContentId.Int64]; ok {
+		if simpleContent, ok := contentResp.Response[event.ContentId.Int64]; ok {
 			notificationContent.Width = simpleContent.Width
 			notificationContent.Height = simpleContent.Height
 			notificationContent.VideoId = simpleContent.VideoId

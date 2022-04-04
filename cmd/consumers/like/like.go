@@ -74,7 +74,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var contentData content.SimpleContent
 
-	if contentData, ok = contentResp.Items[event.ContentId]; ok {
+	if contentData, ok = contentResp.Response[event.ContentId]; ok {
 		notification.Content = &database.NotificationContent{
 			Id:      event.ContentId,
 			Width:   contentData.Width,
