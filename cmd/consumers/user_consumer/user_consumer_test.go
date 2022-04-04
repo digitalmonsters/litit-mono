@@ -84,4 +84,25 @@ func TestDeleteChild(t *testing.T) {
 	assert.Equal(t, int64(4), comment[0].NumReplies)
 	assert.Equal(t, int64(0), comment[0].NumUpvotes)
 	assert.Equal(t, int64(0), comment[0].NumDownvotes)
+
+	_, err = process(wrappedEvent{
+		UserEvent: eventsourcing.UserEvent{
+			UserId: 1000219,
+			BaseChangeEvent: eventsourcing.BaseChangeEvent{
+				CrudOperation:       eventsourcing.ChangeEventTypeCreated,
+				CrudOperationReason: eventsourcing.DeleteModeSoft,
+			},
+		},
+		Message: kafka.Message{},
+	}, nil, context.TODO(), nil, nil, nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Order("id asc").Find(&comment).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, 2, len(comment))
 }
