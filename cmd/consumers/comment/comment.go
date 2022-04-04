@@ -2,6 +2,7 @@ package comment
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
@@ -24,6 +25,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	if event.CrudOperation != eventsourcing.ChangeEventTypeCreated {
 		return &event.Messages, nil
 	}
+
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation_reason", event.BaseChangeEvent.CrudOperationReason)
+	apm_helper.AddApmLabel(apmTransaction, "crud_operation", event.BaseChangeEvent.CrudOperation)
+	apm_helper.AddApmLabel(apmTransaction, "user_id", event.AuthorId)
+	apm_helper.AddApmLabel(apmTransaction, "profile_id", event.ProfileId.ValueOrZero())
+	apm_helper.AddApmLabel(apmTransaction, "content_id", event.ContentId.ValueOrZero())
 
 	var userData user_go.UserRecord
 	var err error
@@ -110,7 +117,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			notificationComment.Type = database.NotificationCommentTypeProfile
 		}
 
-		if err = db.Create(&database.Notification{
+		nt := &database.Notification{
 			UserId:        parentAuthorId.Int64,
 			Type:          "push.comment.reply",
 			Title:         title,
@@ -121,9 +128,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			ContentId:     event.ContentId,
 			Content:       notificationContent,
 			CreatedAt:     time.Now().UTC(),
-		}).Error; err != nil {
+		}
+
+		if err = db.Create(nt).Error; err != nil {
 			return nil, err
 		}
+
+		apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
 
 		if err = notification.IncrementUnreadNotificationsCounter(db, parentAuthorId.Int64); err != nil {
 			return nil, err
@@ -156,7 +167,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		notificationComment.Type = database.NotificationCommentTypeContent
 
-		if err = db.Create(&database.Notification{
+		nt := &database.Notification{
 			UserId:        contentAuthorId.Int64,
 			Type:          "push.content.comment",
 			Title:         title,
@@ -167,9 +178,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			ContentId:     event.ContentId,
 			Content:       notificationContent,
 			CreatedAt:     time.Now().UTC(),
-		}).Error; err != nil {
+		}
+
+		if err = db.Create(nt).Error; err != nil {
 			return nil, err
 		}
+
+		apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
 
 		if err = notification.IncrementUnreadNotificationsCounter(db, contentAuthorId.Int64); err != nil {
 			return nil, err
@@ -195,7 +210,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		notificationComment.Type = database.NotificationCommentTypeProfile
 
-		if err = db.Create(&database.Notification{
+		nt := &database.Notification{
 			UserId:        event.ProfileId.Int64,
 			Type:          "push.profile.comment",
 			Title:         title,
@@ -206,9 +221,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			ContentId:     event.ContentId,
 			Content:       notificationContent,
 			CreatedAt:     time.Now().UTC(),
-		}).Error; err != nil {
+		}
+
+		if err = db.Create(nt).Error; err != nil {
 			return nil, err
 		}
+
+		apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
 
 		if err = notification.IncrementUnreadNotificationsCounter(db, event.ProfileId.Int64); err != nil {
 			return nil, err

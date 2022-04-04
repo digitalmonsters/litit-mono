@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -23,6 +24,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	templateData := map[string]string{}
 	var publishKey string
 
+	apm_helper.AddApmLabel(apmTransaction, "event_type", string(event.Type))
+
 	switch event.Type {
 	case eventsourcing.EmailNotificationPasswordForgot:
 		var payload eventsourcing.EmailNotificationPasswordForgotPayload
@@ -32,6 +35,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		var userData user_go.UserRecord
+
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
 
 		resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, apmTransaction, false)
 		if resp.Error != nil {
@@ -55,7 +60,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return &event.Messages, err
 		}
 
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
+
 		email = payload.Email
+
+		apm_helper.AddApmLabel(apmTransaction, "email", email)
+
 		template = "email_verify"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
 		templateData["token"] = payload.Token
@@ -69,6 +79,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		if err = json.Unmarshal(event.Payload, &payload); err != nil {
 			return &event.Messages, err
 		}
+
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
 
 		var userData user_go.UserRecord
 
