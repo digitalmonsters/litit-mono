@@ -13,6 +13,11 @@ func InitListener(appCtx context.Context, configuration boilerplate.KafkaListene
 		func(executionData kafka_listener.ExecutionData, request ...kafka.Message) []kafka.Message {
 			singleMessage := request[0]
 
+			// nolint
+			if 1 == 1 {
+				return request // temp mock
+			}
+			
 			mapped, err := mapKafkaMessages(singleMessage)
 
 			if err != nil {
