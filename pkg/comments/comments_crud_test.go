@@ -1,12 +1,14 @@
 package comments
 
 import (
+	user "github.com/digitalmonsters/go-common/wrappers/user_go"
+	"strings"
+	"testing"
+
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/user_block"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v4"
-	"testing"
 )
 
 var contentWrapperMock content.IContentWrapper
@@ -19,14 +21,14 @@ var mockContentRecord = content.SimpleContent{
 	Hashtags:      nil,
 }
 
-var userType = user_block.BlockedUser
+var userType = user.BlockedUser
 
-var blockWrapperMock user_block.IUserBlockWrapper
-var mockBlockRecord = user_block.UserBlockData{
+var blockWrapperMock user.IUserGoWrapper
+var mockBlockRecord = user.UserBlockData{
 	Type:      &userType,
 	IsBlocked: true,
 }
-var mockNotBlockRecord = user_block.UserBlockData{
+var mockNotBlockRecord = user.UserBlockData{
 	Type:      nil,
 	IsBlocked: false,
 }
@@ -89,6 +91,18 @@ func TestUpdateCommentById(t *testing.T) {
 
 	a := assert.New(t)
 	a.Equal(updatedComment.Comment, comment.Comment)
+
+	updatedComment, err = UpdateCommentById(db, 1, "updated comment", 1074240,
+		nil, nil, nil)
+	a.Nil(updatedComment)
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "record not found"))
+
+	updatedComment, err = UpdateCommentById(db, 9700, "updated comment", 1074241,
+		nil, nil, nil)
+	a.Nil(updatedComment)
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "record not found"))
 }
 
 func TestDeleteCommentById(t *testing.T) {
@@ -105,12 +119,30 @@ func TestDeleteCommentById(t *testing.T) {
 
 	a := assert.New(t)
 	a.Equal(0, len(deletedComment))
+
+	_, err = DeleteCommentById(db, 9714, 1074247, contentWrapperMock, nil, nil,
+		nil, nil)
+
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "no comments to delete"))
+
+	_, err = DeleteCommentById(db, 9712, 1074248, contentWrapperMock, nil, nil,
+		nil, nil)
+
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "delete operation not permitted"))
+
+	_, err = DeleteCommentById(db, 9710, 1074248, contentWrapperMock, nil, nil,
+		nil, nil)
+
+	a.NotNil(err)
+	a.True(strings.Contains(err.Error(), "delete operation not permitted 2"))
 }
 
 func TestCreateCommentOnProfile(t *testing.T) {
 	baseSetup(t)
 	comment, err := CreateCommentOnProfile(db, 11108, "test_create_comment_on_profile",
-		null.NewInt(0, false), contentWrapperMock, blockWrapperMock, nil, 10, nil, nil, nil)
+		null.NewInt(0, false), blockWrapperMock, nil, 10, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +158,7 @@ func TestCreateCommentOnProfile(t *testing.T) {
 	a.Equal(false, c1.ParentId.Valid)
 
 	comment2, err := CreateCommentOnProfile(db, 11108, "test_create_comment2_on_profile",
-		null.IntFrom(comment.Id), contentWrapperMock, blockWrapperMock, nil, 10, nil, nil, nil)
+		null.IntFrom(comment.Id), blockWrapperMock, nil, 10, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +173,7 @@ func TestCreateCommentOnProfile(t *testing.T) {
 	a.Equal(c1.Id, c2.ParentId.ValueOrZero())
 
 	_, err = CreateCommentOnProfile(db, 11108, "test_create_comment2_on_profile",
-		null.IntFrom(comment.Id), contentWrapperMock, blockWrapperMock, nil, 1, nil, nil, nil)
+		null.IntFrom(comment.Id), blockWrapperMock, nil, 1, nil, nil, nil)
 	a.NotEqual(nil, err)
 
 }

@@ -2,6 +2,7 @@ package comments
 
 import (
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"gopkg.in/guregu/null.v4"
 	"time"
 )
@@ -61,11 +62,12 @@ type CommentOnProfile struct {
 }
 
 type Author struct {
-	Id        int64       `json:"id"`
-	Username  string      `json:"username"`
-	Avatar    null.String `json:"avatar"`
-	Firstname string      `json:"firstname"`
-	Lastname  string      `json:"lastname"`
+	Id                int64                  `json:"id"`
+	Username          string                 `json:"username"`
+	Avatar            null.String            `json:"avatar"`
+	Firstname         string                 `json:"firstname"`
+	Lastname          string                 `json:"lastname"`
+	NamePrivacyStatus user.NamePrivacyStatus `json:"name_privacy_status"`
 }
 
 type ResourceType int

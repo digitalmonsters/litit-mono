@@ -163,6 +163,15 @@ func testInsert(t *testing.T) {
 	if !reflect.DeepEqual(dict, newDict) {
 		t.Fatal("Unexpected value")
 	}
+
+	kafkaPublishedEvents = []eventsourcing.IEventData{}
+
+	errs = service.Flush()
+	assert.Equal(t, len(errs), 0)
+	for _, err := range errs {
+		log.Error().Err(err).Send()
+	}
+	assert.Equal(t, len(kafkaPublishedEvents), 0)
 }
 
 func TestInsert(t *testing.T) {
