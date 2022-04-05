@@ -27,6 +27,7 @@ type IGoTokenomicsWrapper interface {
 	GetContentEarningsTotalByContentIds(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetContentEarningsTotalByContentIdsResponseChan
 	GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan
 	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan
+	GetReferralsInfo(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse]
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
@@ -137,7 +138,6 @@ func (w *Wrapper) GetContentEarningsTotalByContentIds(contentIds []int64, apmTra
 	return respCh
 }
 
-
 func (w *Wrapper) GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan {
 	respCh := make(chan GetTokenomicsStatsByUserIdResponseChan, 2)
 
@@ -178,11 +178,11 @@ func (w *Wrapper) GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *ap
 	return respCh
 }
 
-func (w *Wrapper) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan{
+func (w *Wrapper) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan {
 	respCh := make(chan GetConfigPropertiesResponseChan, 2)
 
 	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetConfigProperties", GetConfigPropertiesRequest{Properties: properties},
-	map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+		map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -214,4 +214,11 @@ func (w *Wrapper) GetConfigProperties(properties []string, apmTransaction *apm.T
 	}()
 
 	return respCh
+}
+
+func (w *Wrapper) GetReferralsInfo(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetReferralInfoResponse](w.baseWrapper, w.apiUrl, "GetReferralsInfo", GetReferralInfoRequest{
+		ReferralIds: referralIds,
+		ReferrerId:  referrerId,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }

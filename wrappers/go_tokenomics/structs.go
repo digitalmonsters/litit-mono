@@ -132,3 +132,12 @@ type GetConfigPropertiesResponseChan struct {
 type GetConfigPropertiesRequest struct {
 	Properties []string `json:"properties"`
 }
+
+type GetReferralInfoRequest struct {
+	ReferrerId  int64   `json:"referrer_id"`
+	ReferralIds []int64 `json:"referral_ids"`
+}
+type GetReferralInfoResponse struct {
+	TotalCollectedPoints decimal.Decimal           `json:"total_collected_points"`
+	Referrals            map[int64]decimal.Decimal `json:"referrals"`
+}
