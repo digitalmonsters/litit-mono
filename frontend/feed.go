@@ -35,6 +35,7 @@ type ContentModel struct {
 	IsFollowing        bool   `json:"is_following"`
 	IsVertical         bool   `json:"is_vertical"`
 	LikedByMe          bool   `json:"liked_by_me"`
+	DislikedByMe       bool   `json:"disliked_by_me"`
 	Unlisted           bool   `json:"unlisted"`
 
 	Subcategory VideoSubcategoryModel `json:"subcategory"`

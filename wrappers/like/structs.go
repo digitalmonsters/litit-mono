@@ -44,3 +44,9 @@ type GetInternalUserLikesRequest struct {
 type getInternalUserLikesResponse struct {
 	ContentIds []int64 `json:"content_ids"`
 }
+
+//goland:noinspection GoNameStartsWithPackageName
+type GetInternalDislikedByUserRequest struct {
+	UserId     int64   `json:"user_id"`
+	ContentIds []int64 `json:"content_ids"`
+}

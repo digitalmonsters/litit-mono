@@ -29,5 +29,6 @@ func TestSendRequestArr(t *testing.T) {
 		null.BoolFrom(false), nil, false, false)
 
 	assert.Nil(t, cc.Error)
-	assert.NotEqual(t, len(cc.Response.Items), 0)
+	var ccResponse = cc.Response
+	assert.NotEqual(t, len(ccResponse.Items), 0)
 }
