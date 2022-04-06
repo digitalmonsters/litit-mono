@@ -6,23 +6,24 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
-	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/creators"
 	"github.com/digitalmonsters/music/pkg/creators/categories"
+	"github.com/digitalmonsters/music/pkg/creators/moderation"
 	"github.com/digitalmonsters/music/pkg/creators/moods"
 	"github.com/digitalmonsters/music/pkg/creators/reject_reasons"
 	"github.com/digitalmonsters/music/pkg/database"
 )
 
-func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription, cfg configs.Settings, userWrapper user.IUserWrapper, creatorsService *creators.Service) error {
+func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription, cfg configs.Settings, userGoWrapper user_go.IUserGoWrapper, creatorsService *creators.Service) error {
 	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorRequestsListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req creators.CreatorRequestsListRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		res, err := creatorsService.CreatorRequestsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), cfg.Creators.MaxThresholdHours, executionData.ApmTransaction, userWrapper)
+		res, err := creatorsService.CreatorRequestsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), cfg.Creators.MaxThresholdHours, executionData.ApmTransaction, userGoWrapper)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
@@ -208,6 +209,49 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		return err
 	}
 
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("RejectMusic", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req moderation.RejectMusicRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		err := moderation.RejectMusic(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return "ok", nil
+	}, common.AccessLevelWrite, "music:moderation:reject")); err != nil {
+		return err
+	}
+
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("ApproveMusic", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req moderation.ApproveMusicRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		err := moderation.ApproveMusic(req, database.GetDb(database.DbTypeMaster).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return "ok", nil
+	}, common.AccessLevelWrite, "music:moderation:approve")); err != nil {
+		return err
+	}
+
+	if err := adminEndpoint.RegisterRpcCommand(router.NewAdminCommand("CreatorSongsList", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req moderation.ListRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		return moderation.List(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), userGoWrapper, executionData.ApmTransaction)
+	}, common.AccessLevelRead, "music:moderation:list")); err != nil {
+		return err
+	}
+
 	apiDef["CreatorRequestsListAdmin"] = swagger.ApiDescription{
 		Request:  creators.CreatorRequestsListRequest{},
 		Response: creators.CreatorRequestsListResponse{},
@@ -278,6 +322,22 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 		Request:  categories.DeleteRequest{},
 		Response: nil,
 		Tags:     []string{"categories"},
+	}
+
+	apiDef["RejectMusic"] = swagger.ApiDescription{
+		Request: moderation.RejectMusicRequest{},
+		Tags:    []string{"moderation"},
+	}
+
+	apiDef["ApproveMusic"] = swagger.ApiDescription{
+		Request: moderation.ApproveMusicRequest{},
+		Tags:    []string{"moderation"},
+	}
+
+	apiDef["CreatorSongsList"] = swagger.ApiDescription{
+		Request:  moderation.ListRequest{},
+		Response: moderation.ListResponse{},
+		Tags:     []string{"moderation"},
 	}
 
 	return nil
