@@ -1,7 +1,6 @@
 package user_go
 
 import (
-	"fmt"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
@@ -47,20 +46,11 @@ type UserRecord struct {
 }
 
 func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
-	if u.NamePrivacyStatus == NamePrivacyStatusAllHidden || u.NamePrivacyStatus == NamePrivacyStatusFirstNameHidden ||
-		u.NamePrivacyStatus == NamePrivacyStatusLastNameHidden || (len(u.Firstname) == 0 && len(u.Lastname) == 0) {
-		return u.FormatUserName(), ""
-	}
-
-	return u.Firstname, u.Lastname
+	return getFirstAndLastNameWithPrivacy(u.NamePrivacyStatus, u.Firstname, u.Lastname, u.Username)
 }
 
 func (u UserRecord) FormatUserName() string {
-	if len(u.Username) == 0 {
-		return ""
-	}
-
-	return fmt.Sprintf("@%v", u.Username)
+	return formatUserName(u.Username)
 }
 
 type GetUsersRequest struct {
@@ -97,6 +87,10 @@ type UserDetailRecord struct {
 	IsTipEnabled      bool              `json:"is_tip_enabled"`
 	Guest             bool              `json:"guest"`
 	NamePrivacyStatus NamePrivacyStatus `json:"name_privacy_status"`
+}
+
+func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
+	return getFirstAndLastNameWithPrivacy(u.NamePrivacyStatus, u.Firstname, u.Lastname, u.Username.ValueOrZero())
 }
 
 type UserProfileDetailRecord struct {
