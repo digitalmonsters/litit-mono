@@ -51,7 +51,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		email = userData.Email
 		template = "forgot_password_link"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
-		templateData["name"] = fmt.Sprintf("%v %v", userData.Firstname, userData.Lastname)
+
+		firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
+		templateData["name"] = fmt.Sprintf("%v %v", firstName, lastName)
 		templateData["code"] = strconv.Itoa(payload.Code)
 	case eventsourcing.EmailNotificationConfirmAddress:
 		var payload eventsourcing.EmailNotificationConfirmAddressPayload
@@ -97,7 +100,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		email = userData.Email
 		template = "referal_sign_up"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
-		templateData["name"] = userData.Firstname
+
+		firstName, _ := userData.GetFirstAndLastNameWithPrivacy()
+
+		templateData["name"] = firstName
 		templateData["referred"] = payload.ReferrerName
 		templateData["nth_referral"] = strconv.FormatInt(payload.NumReferrals, 10)
 	default:

@@ -36,9 +36,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 	}
 
+	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
 	renderData := map[string]string{
-		"firstname": userData.Firstname,
-		"lastname":  userData.Lastname,
+		"firstname": firstName,
+		"lastname":  lastName,
 		"comment":   event.Comment,
 	}
 

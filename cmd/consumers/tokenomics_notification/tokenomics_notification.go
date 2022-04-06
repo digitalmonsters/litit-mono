@@ -46,9 +46,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		templateName = "tip"
 		templateType = "push.tip"
 
+		firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
 		rendererData = map[string]string{
-			"firstname":    userData.Firstname,
-			"lastname":     userData.Lastname,
+			"firstname":    firstName,
+			"lastname":     lastName,
 			"pointsAmount": event.Payload.PointsAmount.Decimal.String(),
 		}
 

@@ -183,10 +183,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	templateName = "content_posted"
 	notificationType = "push.content.new-posted"
+
+	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
 	renderData = map[string]string{
-		"firstname": userData.Firstname,
-		"lastname":  userData.Lastname,
+		"firstname": firstName,
+		"lastname":  lastName,
 	}
+
 	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
