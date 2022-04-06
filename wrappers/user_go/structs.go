@@ -1,6 +1,7 @@
 package user_go
 
 import (
+	"fmt"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
@@ -43,6 +44,23 @@ type UserRecord struct {
 	EnableAgeRestrictedContent bool              `json:"enable_age_restricted_content"`
 	IsTipEnabled               bool              `json:"is_tip_enabled"`
 	NamePrivacyStatus          NamePrivacyStatus `json:"name_privacy_status"`
+}
+
+func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
+	if u.NamePrivacyStatus == NamePrivacyStatusAllHidden || u.NamePrivacyStatus == NamePrivacyStatusFirstNameHidden ||
+		u.NamePrivacyStatus == NamePrivacyStatusLastNameHidden || (len(u.Firstname) == 0 && len(u.Lastname) == 0) {
+		return u.FormatUserName(), ""
+	}
+
+	return u.Firstname, u.Lastname
+}
+
+func (u UserRecord) FormatUserName() string {
+	if len(u.Username) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("@%v", u.Username)
 }
 
 type GetUsersRequest struct {
@@ -197,7 +215,6 @@ type AuthGuestResp struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
-
 
 type GetBlockListResponseChan struct {
 	Error *rpc.RpcError
