@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"time"
 )
 
 type Uploader struct {
@@ -20,6 +21,26 @@ func NewUploader(cfg *boilerplate.S3Config) *Uploader {
 	}
 	return u
 }
+
+func (u *Uploader) GetObjectSignedUrl(path string, urlExpiration time.Duration) (string, error) {
+	client, err := u.getClient()
+	if err != nil {
+		return "", err
+	}
+
+	req, _ := client.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(u.config.Bucket),
+		Key:    aws.String(path),
+	})
+
+	signedUrl, err := req.Presign(urlExpiration)
+	if err != nil {
+		return "", err
+	}
+
+	return signedUrl, nil
+}
+
 func (u *Uploader) UploadObject(path string, data []byte, contentType string) error {
 	client, err := u.getClient()
 	if err != nil {
