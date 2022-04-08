@@ -80,7 +80,7 @@ func (UserNotification) TableName() string {
 	return "user_notifications"
 }
 
-func GetNotificationType(templateId string) string{
+func GetNotificationType(templateId string) string {
 	switch templateId {
 	case "first_daily_followers_bonus":
 		return "push.bonus.daily_followers.first"
@@ -114,16 +114,18 @@ func GetNotificationType(templateId string) string{
 		return "push.referral.other"
 	case "custom_reward_increase":
 		return "push.referral.reward_increase"
+	case "megabonus":
+		return "push.referral.megabonus"
 	}
 	return ""
 }
 
-func GetMarketingNotifications() []string{
+func GetMarketingNotifications() []string {
 	return []string{
 		"push.bonus.daily_followers.first", "push.bonus.daily_time.first", "push.earned_points.first",
 		"push.paid_views.first", "push.referral.first", "push.share.first", "push.bonus.weekly_followers.first",
 		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
 		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
-		"push.referral.other", "push.referral.reward_increase",
+		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
 	}
 }
