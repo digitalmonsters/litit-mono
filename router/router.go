@@ -645,7 +645,8 @@ func (r *HttpRouter) Router() *fastRouter.Router {
 }
 
 func (r *HttpRouter) Handler() func(ctx *fasthttp.RequestCtx) {
-	return fasthttp.CompressHandlerBrotliLevel(r.realRouter.Handler, 11, 9)
+	return fasthttp.CompressHandlerBrotliLevel(r.realRouter.Handler, fasthttp.CompressBrotliDefaultCompression,
+		fasthttp.CompressDefaultCompression)
 }
 
 //func (r *HttpRouter) GetRpcRegisteredCommands() []Command {
