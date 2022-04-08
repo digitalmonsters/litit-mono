@@ -106,13 +106,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	nt := &database.Notification{
-		UserId:    event.UserId,
-		Type:      notificationType,
-		Title:     title,
-		Message:   body,
-		ContentId: null.IntFrom(event.Id),
-		Content:   notificationContent,
-		CreatedAt: time.Now().UTC(),
+		UserId:             event.UserId,
+		Type:               notificationType,
+		Title:              title,
+		Message:            body,
+		ContentId:          null.IntFrom(event.Id),
+		Content:            notificationContent,
+		CreatedAt:          time.Now().UTC(),
+		RenderingVariables: renderData,
 	}
 
 	if err = tx.Create(nt).Error; err != nil {
@@ -205,14 +206,15 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		if err = tx.Create(&database.Notification{
-			UserId:        followerId,
-			Type:          notificationType,
-			Title:         title,
-			Message:       body,
-			ContentId:     null.IntFrom(event.Id),
-			Content:       notificationContent,
-			CreatedAt:     time.Now().UTC(),
-			RelatedUserId: null.IntFrom(event.UserId),
+			UserId:             followerId,
+			Type:               notificationType,
+			Title:              title,
+			Message:            body,
+			ContentId:          null.IntFrom(event.Id),
+			Content:            notificationContent,
+			CreatedAt:          time.Now().UTC(),
+			RelatedUserId:      null.IntFrom(event.UserId),
+			RenderingVariables: renderData,
 		}).Error; err != nil {
 			return nil, err
 		}

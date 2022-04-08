@@ -62,6 +62,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Message:              body,
 		CreatedAt:            time.Now().UTC(),
 		ContentCreatorStatus: &event.Status,
+		RenderingVariables:   renderingData,
 	}).Error; err != nil {
 		return nil, err
 	}

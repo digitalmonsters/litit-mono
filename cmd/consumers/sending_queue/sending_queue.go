@@ -29,11 +29,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	nf := &database.Notification{
-		UserId:    event.UserId,
-		Type:      database.GetNotificationType(event.TemplateName),
-		Title:     title,
-		Message:   body,
-		CreatedAt: time.Now().UTC(),
+		UserId:             event.UserId,
+		Type:               database.GetNotificationType(event.TemplateName),
+		Title:              title,
+		Message:            body,
+		CreatedAt:          time.Now().UTC(),
+		RenderingVariables: event.RenderingVariables,
 	}
 
 	if err := tx.Create(nf).Error; err != nil {
@@ -41,7 +42,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	apm_helper.AddApmLabel(apmTransaction, "notification_id", nf.Id.String())
-	
+
 	if err := notificationPkg.IncrementUnreadNotificationsCounter(tx, event.UserId); err != nil {
 		return nil, err
 	}
