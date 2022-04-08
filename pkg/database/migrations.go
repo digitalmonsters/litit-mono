@@ -205,5 +205,13 @@ func getMigrations() []*gormigrate.Migration {
 					"UPDATE public.render_templates SET kind = 'default' WHERE id LIKE 'other#_referrals#_joined' ESCAPE '#';")
 			},
 		},
+		{
+			ID: "add_megabonus_template_050420221756",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('megabonus', 'Congrats! Mega bonus earned!', 'You just earned {{.pointsAmount}} LIT points for {{.referralsTarget}} friends invited to Lit.it', '2022-04-05 17:56:00.000000', '2022-04-05 17:56:00.000000', 'push.referral.megabonus') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
