@@ -213,5 +213,12 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_rendering_data_20220407",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"alter table notifications add column if not exists rendering_variables jsonb default '{}' not null;")
+			},
+		},
 	}
 }

@@ -120,16 +120,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		nt := &database.Notification{
-			UserId:        parentAuthorId.Int64,
-			Type:          "push.comment.reply",
-			Title:         title,
-			Message:       body,
-			RelatedUserId: null.IntFrom(event.AuthorId),
-			CommentId:     null.IntFrom(event.Id),
-			Comment:       notificationComment,
-			ContentId:     event.ContentId,
-			Content:       notificationContent,
-			CreatedAt:     time.Now().UTC(),
+			UserId:             parentAuthorId.Int64,
+			Type:               "push.comment.reply",
+			Title:              title,
+			Message:            body,
+			RelatedUserId:      null.IntFrom(event.AuthorId),
+			CommentId:          null.IntFrom(event.Id),
+			Comment:            notificationComment,
+			ContentId:          event.ContentId,
+			Content:            notificationContent,
+			CreatedAt:          time.Now().UTC(),
+			RenderingVariables: renderData,
 		}
 
 		if err = db.Create(nt).Error; err != nil {
@@ -170,16 +171,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		notificationComment.Type = database.NotificationCommentTypeContent
 
 		nt := &database.Notification{
-			UserId:        contentAuthorId.Int64,
-			Type:          "push.content.comment",
-			Title:         title,
-			Message:       body,
-			RelatedUserId: null.IntFrom(event.AuthorId),
-			CommentId:     null.IntFrom(event.Id),
-			Comment:       notificationComment,
-			ContentId:     event.ContentId,
-			Content:       notificationContent,
-			CreatedAt:     time.Now().UTC(),
+			UserId:             contentAuthorId.Int64,
+			Type:               "push.content.comment",
+			Title:              title,
+			Message:            body,
+			RelatedUserId:      null.IntFrom(event.AuthorId),
+			CommentId:          null.IntFrom(event.Id),
+			Comment:            notificationComment,
+			ContentId:          event.ContentId,
+			Content:            notificationContent,
+			CreatedAt:          time.Now().UTC(),
+			RenderingVariables: renderData,
 		}
 
 		if err = db.Create(nt).Error; err != nil {
@@ -213,16 +215,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		notificationComment.Type = database.NotificationCommentTypeProfile
 
 		nt := &database.Notification{
-			UserId:        event.ProfileId.Int64,
-			Type:          "push.profile.comment",
-			Title:         title,
-			Message:       body,
-			RelatedUserId: null.IntFrom(event.AuthorId),
-			CommentId:     null.IntFrom(event.Id),
-			Comment:       notificationComment,
-			ContentId:     event.ContentId,
-			Content:       notificationContent,
-			CreatedAt:     time.Now().UTC(),
+			UserId:             event.ProfileId.Int64,
+			Type:               "push.profile.comment",
+			Title:              title,
+			Message:            body,
+			RelatedUserId:      null.IntFrom(event.AuthorId),
+			CommentId:          null.IntFrom(event.Id),
+			Comment:            notificationComment,
+			ContentId:          event.ContentId,
+			Content:            notificationContent,
+			CreatedAt:          time.Now().UTC(),
+			RenderingVariables: renderData,
 		}
 
 		if err = db.Create(nt).Error; err != nil {

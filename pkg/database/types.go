@@ -25,6 +25,17 @@ type Notification struct {
 	KycReason            *eventsourcing.KycReason     `json:"kyc_reason"`
 	KycStatus            *eventsourcing.KycStatusType `json:"kyc_status"`
 	ContentCreatorStatus *eventsourcing.CreatorStatus `json:"content_creator_status"`
+	RenderingVariables   RenderingVariables           `json:"rendering_variables"`
+}
+
+type RenderingVariables map[string]string
+
+func (n *RenderingVariables) Scan(input interface{}) error {
+	return json.Unmarshal(input.([]byte), n)
+}
+
+func (n RenderingVariables) Value() (driver.Value, error) {
+	return json.Marshal(n)
 }
 
 func (Notification) TableName() string {

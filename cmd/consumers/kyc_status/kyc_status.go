@@ -57,13 +57,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	reason := eventsourcing.KycReason(event.CrudOperationReason)
 	if err = db.Create(&database.Notification{
-		UserId:    event.UserId,
-		Type:      "push.kyc.status",
-		Title:     title,
-		Message:   body,
-		CreatedAt: time.Now().UTC(),
-		KycReason: &reason,
-		KycStatus: &event.KycStatus,
+		UserId:             event.UserId,
+		Type:               "push.kyc.status",
+		Title:              title,
+		Message:            body,
+		CreatedAt:          time.Now().UTC(),
+		KycReason:          &reason,
+		KycStatus:          &event.KycStatus,
+		RenderingVariables: renderData,
 	}).Error; err != nil {
 		return nil, err
 	}

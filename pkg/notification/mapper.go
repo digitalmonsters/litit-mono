@@ -33,6 +33,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 			ContentCreatorStatus: notification.ContentCreatorStatus,
 			KycReason:            notification.KycReason,
 			CreatedAt:            notification.CreatedAt,
+			RenderingVariables:   notification.RenderingVariables,
 		}
 
 		if mappedItem.RelatedUserId.Valid {
