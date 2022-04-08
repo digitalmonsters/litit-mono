@@ -33,6 +33,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 			ContentCreatorStatus: notification.ContentCreatorStatus,
 			KycReason:            notification.KycReason,
 			CreatedAt:            notification.CreatedAt,
+			RenderingVariables:   notification.RenderingVariables,
 		}
 
 		if mappedItem.RelatedUserId.Valid {
@@ -134,9 +135,11 @@ func fillUsers(notifications map[uuid.UUID]*NotificationsResponseItem, userGoWra
 				continue
 			}
 
+			firstName, lastName := userResp.GetFirstAndLastNameWithPrivacy()
+
 			notification.RelatedUser.Username = userResp.Username
-			notification.RelatedUser.Firstname = userResp.Firstname
-			notification.RelatedUser.Lastname = userResp.Lastname
+			notification.RelatedUser.Firstname = firstName
+			notification.RelatedUser.Lastname = lastName
 			notification.RelatedUser.Verified = true
 			notification.RelatedUser.AvatarUrl = userResp.Avatar
 			notification.RelatedUser.NamePrivacyStatus = userResp.NamePrivacyStatus
