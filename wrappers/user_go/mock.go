@@ -1,18 +1,32 @@
 package user_go
 
-import "go.elastic.co/apm"
+import (
+	"context"
+	"github.com/digitalmonsters/go-common/wrappers"
+	"go.elastic.co/apm"
+)
 
 //goland:noinspection ALL
 type UserGoWrapperMock struct {
-	GetUsersFn                   func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
-	GetUsersDetailFn             func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
-	GetProfileBulkFn             func(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
-	GetUsersActiveThresholdsFn   func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
-	GetUserIdsFilterByUsernameFn func(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
-	GetUsersTagsFn               func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
-	AuthGuestFn                  func(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
-	GetBlockListFn               func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan
-	GetUserBlockFn               func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan
+	GetUsersFn                            func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
+	GetUsersDetailFn                      func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
+	GetProfileBulkFn                      func(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
+	GetUsersActiveThresholdsFn            func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
+	GetUserIdsFilterByUsernameFn          func(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
+	GetUsersTagsFn                        func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
+	AuthGuestFn                           func(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
+	GetBlockListFn                        func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan
+	GetUserBlockFn                        func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan
+	UpdateUserMetadataAfterRegistrationFn func(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
+	ForceResetUserWithNewGuestIdentityFn  func(deviceId string, currentUserId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
+}
+
+func (m *UserGoWrapperMock) ForceResetUserWithNewGuestIdentity(deviceId string, currentUserId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse] {
+	return m.ForceResetUserWithNewGuestIdentityFn(deviceId, currentUserId, ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord] {
+	return m.UpdateUserMetadataAfterRegistrationFn(request, ctx, forceLog)
 }
 
 func (m *UserGoWrapperMock) GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan {

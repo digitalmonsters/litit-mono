@@ -1,6 +1,7 @@
 package user_go
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -24,6 +25,8 @@ type IUserGoWrapper interface {
 	AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
 	GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan
 	GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan
+	UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
+	ForceResetUserWithNewGuestIdentity(deviceId string, currentUserId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -59,14 +62,14 @@ func NewUserGoWrapper(config boilerplate.WrapperConfig) IUserGoWrapper {
 	}
 }
 
-func (u UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan {
+func (w UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan {
 	respCh := make(chan GetUsersResponseChan, 2)
 
 	cachedItems := map[int64]UserRecord{}
 	var userIdsToFetch []int64
 
 	for _, userId := range userIds {
-		cachedItem, hasCachedItem := u.cache.Get(fmt.Sprint(userId))
+		cachedItem, hasCachedItem := w.cache.Get(fmt.Sprint(userId))
 
 		if hasCachedItem {
 			cachedItems[userId] = cachedItem.(UserRecord)
@@ -84,9 +87,9 @@ func (u UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction
 		return respCh
 	}
 
-	respChan := u.baseWrapper.SendRpcRequest(u.serviceApiUrl, "GetUsersInternal", GetUsersRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetUsersInternal", GetUsersRequest{
 		UserIds: userIdsToFetch,
-	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -107,12 +110,12 @@ func (u UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				for userId, item := range data {
-					u.cache.Set(fmt.Sprint(userId), item, cache.DefaultExpiration)
+					w.cache.Set(fmt.Sprint(userId), item, cache.DefaultExpiration)
 					cachedItems[userId] = item
 				}
 				result.Items = cachedItems
@@ -125,12 +128,12 @@ func (u UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction
 	return respCh
 }
 
-func (u UserGoWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan {
+func (w UserGoWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan {
 	respCh := make(chan GetUsersDetailsResponseChan, 2)
 
-	respChan := u.baseWrapper.SendRpcRequest(u.serviceApiUrl, "GetUsersDetailsInternal", GetUsersDetailRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetUsersDetailsInternal", GetUsersDetailRequest{
 		UserIds: userIds,
-	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -151,8 +154,8 @@ func (u UserGoWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Tran
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Items = data
@@ -165,13 +168,13 @@ func (u UserGoWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Tran
 	return respCh
 }
 
-func (u UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan {
+func (w UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan {
 	respCh := make(chan GetProfileBulkResponseChan, 2)
 
-	respChan := u.baseWrapper.SendRpcRequest(u.serviceApiUrl, "GetProfileBulkInternal", GetProfileBulkRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetProfileBulkInternal", GetProfileBulkRequest{
 		CurrentUserId: currentUserId,
 		UserIds:       userIds,
-	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -192,8 +195,8 @@ func (u UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmT
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Items = data
@@ -206,12 +209,12 @@ func (u UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmT
 	return respCh
 }
 
-func (u UserGoWrapper) GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan {
+func (w UserGoWrapper) GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan {
 	respCh := make(chan GetUsersActiveThresholdsResponseChan, 2)
 
-	respChan := u.baseWrapper.SendRpcRequest(u.serviceApiUrl, "GetUsersActiveThresholds", GetUsersActiveThresholdsRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetUsersActiveThresholds", GetUsersActiveThresholdsRequest{
 		UserIds: userIds,
-	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -232,8 +235,8 @@ func (u UserGoWrapper) GetUsersActiveThresholds(userIds []int64, apmTransaction 
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Items = data
@@ -246,13 +249,13 @@ func (u UserGoWrapper) GetUsersActiveThresholds(userIds []int64, apmTransaction 
 	return respCh
 }
 
-func (u UserGoWrapper) GetUserIdsFilterByUsername(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan {
+func (w UserGoWrapper) GetUserIdsFilterByUsername(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan {
 	respCh := make(chan GetUserIdsFilterByUsernameResponseChan, 2)
 
-	respChan := u.baseWrapper.SendRpcRequest(u.serviceApiUrl, "GetUserIdsFilterByUsername", GetUserIdsFilterByUsernameRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetUserIdsFilterByUsername", GetUserIdsFilterByUsernameRequest{
 		UserIds:     userIds,
 		SearchQuery: searchQuery,
-	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -273,8 +276,8 @@ func (u UserGoWrapper) GetUserIdsFilterByUsername(userIds []int64, searchQuery s
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.UserIds = data
@@ -287,12 +290,12 @@ func (u UserGoWrapper) GetUserIdsFilterByUsername(userIds []int64, searchQuery s
 	return respCh
 }
 
-func (u UserGoWrapper) GetUsersTags(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan {
+func (w UserGoWrapper) GetUsersTags(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan {
 	respCh := make(chan GetUsersTagsResponseChan, 2)
 
-	respChan := u.baseWrapper.SendRpcRequest(u.serviceApiUrl, "GetUsersTags", GetUsersTagsRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetUsersTags", GetUsersTagsRequest{
 		UserIds: userIds,
-	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 	go func() {
 		defer func() {
@@ -313,8 +316,8 @@ func (u UserGoWrapper) GetUsersTags(userIds []int64, apmTransaction *apm.Transac
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			} else {
 				result.Items = data
@@ -327,17 +330,17 @@ func (u UserGoWrapper) GetUsersTags(userIds []int64, apmTransaction *apm.Transac
 	return respCh
 }
 
-func (u *UserGoWrapper) AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan {
+func (w *UserGoWrapper) AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan {
 	resChan := make(chan AuthGuestResponseChan, 2)
 
 	go func() {
-		link := fmt.Sprintf("%v/auth/guest", u.publicApiUrl)
+		link := fmt.Sprintf("%v/auth/guest", w.publicApiUrl)
 
-		rpcInternalResponse := <-u.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
 			"POST",
 			"application/json",
 			"auth guest",
-			AuthGuestRequest{DeviceId: deviceId}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+			AuthGuestRequest{DeviceId: deviceId}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := AuthGuestResponseChan{
 			Error: rpcInternalResponse.Error,
@@ -348,8 +351,8 @@ func (u *UserGoWrapper) AuthGuest(deviceId string, apmTransaction *apm.Transacti
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			}
 		}
@@ -360,17 +363,17 @@ func (u *UserGoWrapper) AuthGuest(deviceId string, apmTransaction *apm.Transacti
 	return resChan
 }
 
-func (u *UserGoWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan {
+func (w *UserGoWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan {
 	resChan := make(chan GetBlockListResponseChan, 2)
 
 	go func() {
-		link := fmt.Sprintf("%v/mobile/v1/user/block_list", u.publicApiUrl)
+		link := fmt.Sprintf("%v/mobile/v1/user/block_list", w.publicApiUrl)
 
-		rpcInternalResponse := <-u.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
 			"POST",
 			"application/json",
 			"block list",
-			GetBlockListRequest{UserIds: userIds}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+			GetBlockListRequest{UserIds: userIds}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := GetBlockListResponseChan{
 			Error: rpcInternalResponse.Error,
@@ -381,8 +384,8 @@ func (u *UserGoWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Transa
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			}
 		}
@@ -393,20 +396,20 @@ func (u *UserGoWrapper) GetBlockList(userIds []int64, apmTransaction *apm.Transa
 	return resChan
 }
 
-func (u *UserGoWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan {
+func (w *UserGoWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan {
 	resChan := make(chan GetUserBlockResponseChan, 2)
 
 	go func() {
-		link := fmt.Sprintf("%v/mobile/v1/user/block_relations", u.publicApiUrl)
+		link := fmt.Sprintf("%v/mobile/v1/user/block_relations", w.publicApiUrl)
 
-		rpcInternalResponse := <-u.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,
 			"POST",
 			"application/json",
 			"block relations",
 			GetUserBlockRequest{
 				BlockBy:   blockedBy,
 				BlockedTo: blockedTo,
-			}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+			}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 
 		finalResponse := GetUserBlockResponseChan{
 			Error: rpcInternalResponse.Error,
@@ -417,8 +420,8 @@ func (u *UserGoWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTransa
 					Code:        error_codes.GenericMappingError,
 					Message:     err.Error(),
 					Data:        nil,
-					Hostname:    u.baseWrapper.GetHostName(),
-					ServiceName: u.serviceName,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
 				}
 			}
 		}
@@ -427,4 +430,17 @@ func (u *UserGoWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTransa
 	}()
 
 	return resChan
+}
+
+func (w UserGoWrapper) UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord] {
+	return wrappers.ExecuteRpcRequestAsync[UserRecord](w.baseWrapper, w.serviceApiUrl, "UpdateUserMetadataAfterRegistration", request,
+		map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) ForceResetUserWithNewGuestIdentity(deviceId string, currentUserId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse] {
+	return wrappers.ExecuteRpcRequestAsync[ForceResetUserIdentityWithNewGuestResponse](w.baseWrapper, w.serviceApiUrl,
+		"ForceResetUserWithNewGuestIdentity", ForceResetUserIdentityWithNewGuestRequest{
+			DeviceId:      deviceId,
+			CurrentUserId: currentUserId,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

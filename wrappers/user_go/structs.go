@@ -240,3 +240,27 @@ type GetUserBlockRequest struct {
 	BlockBy   int64 `json:"block_by"`
 	BlockedTo int64 `json:"blocked_to"`
 }
+
+type UpdateUserMetaDataRequest struct {
+	UserId       int64  `json:"user_id"`
+	Email        string `json:"email"`
+	Firstname    string `json:"firstname"`
+	Lastname     string `json:"lastname"`
+	InviteCode   string `json:"invite_code"`
+	InviteLink   string `json:"invite_link"`
+	Birthdate    string `json:"birthdate"`
+	CountryCode  string `json:"country_code"`
+	Username     string `json:"username"`
+	Newsletter   bool   `json:"newsletter"`
+	IsInfluencer bool   `json:"is_influencer"`
+	Gender       string `json:"gender"`
+}
+
+type ForceResetUserIdentityWithNewGuestRequest struct {
+	DeviceId      string `json:"device_id"`
+	CurrentUserId int64  `json:"current_user_id"`
+}
+
+type ForceResetUserIdentityWithNewGuestResponse struct {
+	NewUserId int64 `json:"new_user_id"`
+}
