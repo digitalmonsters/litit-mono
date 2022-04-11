@@ -242,18 +242,13 @@ type GetUserBlockRequest struct {
 }
 
 type UpdateUserMetaDataRequest struct {
-	UserId       int64  `json:"user_id"`
-	Email        string `json:"email"`
-	Firstname    string `json:"firstname"`
-	Lastname     string `json:"lastname"`
-	InviteCode   string `json:"invite_code"`
-	InviteLink   string `json:"invite_link"`
-	Birthdate    string `json:"birthdate"`
-	CountryCode  string `json:"country_code"`
-	Username     string `json:"username"`
-	Newsletter   bool   `json:"newsletter"`
-	IsInfluencer bool   `json:"is_influencer"`
-	Gender       string `json:"gender"`
+	UserId      int64       `json:"user_id"`
+	Email       null.String `json:"email"`
+	Firstname   null.String `json:"firstname"`
+	Lastname    null.String `json:"lastname"`
+	Birthdate   string      `json:"birthdate"`
+	CountryCode string      `json:"country_code"`
+	Username    null.String `json:"username"`
 }
 
 type ForceResetUserIdentityWithNewGuestRequest struct {
