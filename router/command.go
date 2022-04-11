@@ -20,6 +20,7 @@ type ICommand interface {
 	ForceLog() bool
 	GetPath() string
 	GetHttpMethod() string
+	GetObj() string
 	CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (userId int64, isGuest bool, err *rpc.RpcError)
 }
 
@@ -51,6 +52,10 @@ func (c Command) GetMethodName() string {
 
 func (c Command) GetPath() string { // for rest
 	return c.GetMethodName()
+}
+
+func (c Command) GetObj() string {
+	return ""
 }
 
 func (c Command) AccessLevel() common.AccessLevel {
