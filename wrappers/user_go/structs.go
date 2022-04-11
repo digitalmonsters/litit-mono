@@ -242,7 +242,7 @@ type UpdateUserMetaDataRequest struct {
 }
 
 type ForceResetUserIdentityWithNewGuestRequest struct {
-	CurrentUserId int64 `json:"current_user_id"`
+	DeviceId string `json:"device_id"`
 }
 
 type ForceResetUserIdentityWithNewGuestResponse struct {

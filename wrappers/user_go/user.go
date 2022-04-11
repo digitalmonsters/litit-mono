@@ -17,7 +17,7 @@ import (
 
 type IUserGoWrapper interface {
 	GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
-	
+
 	GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
 	GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
 
@@ -29,7 +29,7 @@ type IUserGoWrapper interface {
 	GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan
 	GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan
 	UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
-	ForceResetUserWithNewGuestIdentity(currentUserId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
+	ForceResetUserWithNewGuestIdentity(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 }
 
@@ -440,10 +440,10 @@ func (w UserGoWrapper) UpdateUserMetadataAfterRegistration(request UpdateUserMet
 		map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w UserGoWrapper) ForceResetUserWithNewGuestIdentity(currentUserId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse] {
+func (w UserGoWrapper) ForceResetUserWithNewGuestIdentity(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse] {
 	return wrappers.ExecuteRpcRequestAsync[ForceResetUserIdentityWithNewGuestResponse](w.baseWrapper, w.serviceApiUrl,
 		"ForceResetUserWithNewGuestIdentity", ForceResetUserIdentityWithNewGuestRequest{
-			CurrentUserId: currentUserId,
+			DeviceId: deviceId,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
