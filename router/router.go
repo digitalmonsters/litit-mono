@@ -432,14 +432,20 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	executionTiming := time.Now()
 
-	if resp, err := cmd.GetFn()(rpcRequest.Params, MethodExecutionData{
+	executionData := MethodExecutionData{
 		ApmTransaction: apmTransaction,
 		Context:        newCtx,
 		UserId:         userId,
 		IsGuest:        isGuest,
 		UserIp:         common.GetRealIp(ctx),
 		getUserValueFn: getUserValue,
-	}); err != nil {
+	}
+
+	if deviceId := ctx.Request.Header.Peek("device-id"); len(deviceId) > 0 {
+		executionData.DeviceId = string(deviceId)
+	}
+
+	if resp, err := cmd.GetFn()(rpcRequest.Params, executionData); err != nil {
 		rpcResponse.Error = &rpc.RpcError{
 			Code:     err.GetCode(),
 			Message:  err.GetMessage(),
@@ -634,6 +640,8 @@ func (r *HttpRouter) logRequestHeaders(ctx *fasthttp.RequestCtx,
 			keyStr = "user_id"
 		} else if keyStr == "is-guest" {
 			keyStr = "is_guest"
+		} else if keyStr == "device-id" {
+			keyStr = "device_id"
 		}
 
 		apm_helper.AddApmLabel(apmTransaction, keyStr, valueStr)

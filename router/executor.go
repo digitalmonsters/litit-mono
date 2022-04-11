@@ -13,6 +13,7 @@ type MethodExecutionData struct {
 	UserId         int64
 	IsGuest        bool
 	UserIp         string
+	DeviceId       string
 	getUserValueFn func(key string) interface{}
 }
 
