@@ -8,8 +8,11 @@ import (
 
 //goland:noinspection ALL
 type UserGoWrapperMock struct {
-	GetUsersFn                            func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
-	GetUsersDetailFn                      func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
+	GetUsersFn func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
+
+	GetUsersDetailFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
+	GetUserDetailsFn func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
+
 	GetProfileBulkFn                      func(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 	GetUsersActiveThresholdsFn            func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
 	GetUserIdsFilterByUsernameFn          func(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
@@ -20,6 +23,10 @@ type UserGoWrapperMock struct {
 	UpdateUserMetadataAfterRegistrationFn func(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	ForceResetUserWithNewGuestIdentityFn  func(currentUserId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUserFn                          func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
+}
+
+func (m *UserGoWrapperMock) GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord] {
+	return m.GetUserDetailsFn(userId, ctx, forceLog)
 }
 
 func (m *UserGoWrapperMock) VerifyUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord] {
@@ -38,8 +45,8 @@ func (m *UserGoWrapperMock) GetUsers(userIds []int64, apmTransaction *apm.Transa
 	return m.GetUsersFn(userIds, apmTransaction, forceLog)
 }
 
-func (m *UserGoWrapperMock) GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan {
-	return m.GetUsersDetailFn(userIds, apmTransaction, forceLog)
+func (m *UserGoWrapperMock) GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord] {
+	return m.GetUsersDetailFn(userIds, ctx, forceLog)
 }
 
 func (m *UserGoWrapperMock) GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan {

@@ -11,11 +11,6 @@ type GetUsersResponseChan struct {
 	Items map[int64]UserRecord `json:"items"`
 }
 
-type UsersInternalChan struct {
-	Error *rpc.RpcError
-	UserDetailRecord
-}
-
 type NamePrivacyStatus int
 
 const (
@@ -24,11 +19,6 @@ const (
 	NamePrivacyStatusLastNameHidden  NamePrivacyStatus = 2
 	NamePrivacyStatusAllHidden       NamePrivacyStatus = 3
 )
-
-type GetUsersDetailsResponseChan struct {
-	Error *rpc.RpcError
-	Items map[int64]UserDetailRecord `json:"items"`
-}
 
 //goland:noinspection GoNameStartsWithPackageName
 type UserRecord struct {

@@ -17,7 +17,10 @@ import (
 
 type IUserGoWrapper interface {
 	GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
-	GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan
+	
+	GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
+	GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
+
 	GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 	GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
 	GetUserIdsFilterByUsername(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
@@ -129,44 +132,43 @@ func (w UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction
 	return respCh
 }
 
-func (w UserGoWrapper) GetUsersDetails(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersDetailsResponseChan {
-	respCh := make(chan GetUsersDetailsResponseChan, 2)
+func (w UserGoWrapper) GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]UserDetailRecord](w.baseWrapper, w.serviceApiUrl,
+		"GetUsersDetailsInternal", GetUsersDetailRequest{
+			UserIds: userIds,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
 
-	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetUsersDetailsInternal", GetUsersDetailRequest{
-		UserIds: userIds,
-	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+func (w UserGoWrapper) GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord] {
+	ch := make(chan wrappers.GenericResponseChan[UserDetailRecord], 2)
 
 	go func() {
 		defer func() {
-			close(respCh)
+			close(ch)
 		}()
 
-		resp := <-respChan
+		resp := <-w.GetUsersDetails([]int64{userId}, ctx, forceLog)
 
-		result := GetUsersDetailsResponseChan{
-			Error: resp.Error,
+		if resp.Error != nil {
+			ch <- wrappers.GenericResponseChan[UserDetailRecord]{
+				Error: resp.Error,
+			}
+
+			return
 		}
 
-		if len(resp.Result) > 0 {
-			data := map[int64]UserDetailRecord{}
-
-			if err := json.Unmarshal(resp.Result, &data); err != nil {
-				result.Error = &rpc.RpcError{
-					Code:        error_codes.GenericMappingError,
-					Message:     err.Error(),
-					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
-				}
-			} else {
-				result.Items = data
+		if v, ok := resp.Response[userId]; ok {
+			ch <- wrappers.GenericResponseChan[UserDetailRecord]{
+				Response: v,
+			}
+		} else {
+			ch <- wrappers.GenericResponseChan[UserDetailRecord]{
+				Error: &rpc.RpcError{Code: error_codes.GenericNotFoundError, Message: "item not found in dictionary"},
 			}
 		}
-
-		respCh <- result
 	}()
 
-	return respCh
+	return ch
 }
 
 func (w UserGoWrapper) GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan {
