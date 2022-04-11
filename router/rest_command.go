@@ -47,6 +47,10 @@ func (r RestCommand) ForceLog() bool {
 	return r.forceLog
 }
 
+func (r RestCommand) GetObj() string {
+	return ""
+}
+
 func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodType, requiredIdentityValidation bool,
 	forceLog bool) *RestCommand {
 	return &RestCommand{commandFn: commandFn, path: path, method: string(httpMethod), forceLog: forceLog, accessLevel: common.AccessLevelPublic,

@@ -14,6 +14,7 @@ type IApiCommand interface {
 	RequireIdentityValidation() bool
 	AccessLevel() common.AccessLevel
 	GetHttpMethod() string
+	GetObj() string
 }
 
 type ParameterPosition string
@@ -87,6 +88,11 @@ func GenerateDoc(cmd []IApiCommand, apiDescriptions map[string]ApiDescription, c
 				"authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
 				"scopes":           authScopes,
 			},
+			rbacObject: map[string]interface{}{
+				"type":             "RBAC",
+				"flow":             "implicit",
+				"authorizationUrl": "https://digitalguardian.com/blog/what-role-based-access-control-rbac-examples-benefits-and-more",
+			},
 		},
 	}
 
@@ -131,6 +137,7 @@ func mapInnerKind(kind reflect.Kind, name string) string {
 }
 
 const jwtAuthName = "jwt"
+const rbacObject = "rbac_object"
 
 func buildPath(commands []IApiCommand, apiDescriptions map[string]ApiDescription, scopes map[string]string) map[string]interface{} {
 	result := make(map[string]interface{})
@@ -166,6 +173,9 @@ func buildPath(commands []IApiCommand, apiDescriptions map[string]ApiDescription
 				map[string][]interface{}{
 					jwtAuthName: []interface{}{
 						permissionName,
+					},
+					"rbac_object": []interface{}{
+						cmd.GetObj(),
 					},
 				},
 			}
