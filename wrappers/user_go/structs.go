@@ -76,6 +76,7 @@ type UserDetailRecord struct {
 	Avatar            null.String       `json:"avatar"`
 	IsTipEnabled      bool              `json:"is_tip_enabled"`
 	Guest             bool              `json:"guest"`
+	Deleted           bool              `json:"deleted"`
 	NamePrivacyStatus NamePrivacyStatus `json:"name_privacy_status"`
 }
 
@@ -236,7 +237,7 @@ type UpdateUserMetaDataRequest struct {
 	Email       null.String `json:"email"`
 	Firstname   null.String `json:"firstname"`
 	Lastname    null.String `json:"lastname"`
-	Birthdate   string      `json:"birthdate"`
+	Birthdate   null.Time   `json:"birthdate"`
 	CountryCode string      `json:"country_code"`
 	Username    null.String `json:"username"`
 }
