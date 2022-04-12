@@ -17,9 +17,9 @@ type UserGoWrapperMock struct {
 	GetUsersActiveThresholdsFn            func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
 	GetUserIdsFilterByUsernameFn          func(userIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetUserIdsFilterByUsernameResponseChan
 	GetUsersTagsFn                        func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTagsResponseChan
-	AuthGuestFn                           func(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan
-	GetBlockListFn                        func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan
-	GetUserBlockFn                        func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan
+	AuthGuestFn                           func(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[AuthGuestResp]
+	GetBlockListFn                        func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string][]int64]
+	GetUserBlockFn                        func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[UserBlockData]
 	UpdateUserMetadataAfterRegistrationFn func(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	ForceResetUserWithNewGuestIdentityFn  func(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUserFn                          func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
@@ -65,15 +65,15 @@ func (m *UserGoWrapperMock) GetUsersTags(userIds []int64, apmTransaction *apm.Tr
 	return m.GetUsersTagsFn(userIds, apmTransaction, forceLog)
 }
 
-func (m *UserGoWrapperMock) AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan AuthGuestResponseChan {
+func (m *UserGoWrapperMock) AuthGuest(deviceId string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[AuthGuestResp] {
 	return m.AuthGuestFn(deviceId, apmTransaction, forceLog)
 }
 
-func (m *UserGoWrapperMock) GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetBlockListResponseChan {
+func (m *UserGoWrapperMock) GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string][]int64] {
 	return m.GetBlockListFn(userIds, apmTransaction, forceLog)
 }
 
-func (m *UserGoWrapperMock) GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserBlockResponseChan {
+func (m *UserGoWrapperMock) GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[UserBlockData] {
 	return m.GetUserBlockFn(blockedTo, blockedBy, apmTransaction, forceLog)
 }
 

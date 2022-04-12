@@ -190,29 +190,14 @@ type AuthGuestRequest struct {
 	DeviceId string `json:"device_id"`
 }
 
-type AuthGuestResponseChan struct {
-	Error *rpc.RpcError  `json:"error"`
-	Data  *AuthGuestResp `json:"data"`
-}
-
 type AuthGuestResp struct {
 	UserId       int64  `json:"user_id"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
-type GetBlockListResponseChan struct {
-	Error *rpc.RpcError
-	Data  map[string][]int64 `json:"data"`
-}
-
 type GetBlockListRequest struct {
 	UserIds []int64 `json:"user_ids"`
-}
-
-type GetUserBlockResponseChan struct {
-	Error *rpc.RpcError
-	Data  UserBlockData `json:"data"`
 }
 
 type UserBlockData struct {

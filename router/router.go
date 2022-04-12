@@ -490,7 +490,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 				apmTransaction.End()
 			}
 		}()
-		
+
 		defer func() {
 			r.setCors(ctx)
 		}()
