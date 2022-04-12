@@ -486,6 +486,12 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 		var apmTransaction *apm.Transaction
 
 		defer func() {
+			if apmTransaction != nil {
+				apmTransaction.End()
+			}
+		}()
+		
+		defer func() {
 			r.setCors(ctx)
 		}()
 
@@ -552,8 +558,6 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 		} else {
 			apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, apmTxType, nil, nil)
 		}
-
-		defer apmTransaction.End()
 
 		cmd, err := endpoint.GetCommand(rpcRequest.Method)
 
