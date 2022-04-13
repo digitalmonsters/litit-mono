@@ -85,6 +85,8 @@ func getFrontendSupportedNotificationTypes() []string { // temp fix https://trac
 		"push.content.rejected",
 		"push.kyc.status",
 		"push.content-creator.status",
+		"push.referral.other",
+		"push.referral.first",
 	}
 }
 

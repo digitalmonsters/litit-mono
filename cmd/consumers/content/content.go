@@ -106,13 +106,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	nt := &database.Notification{
-		UserId:    event.UserId,
-		Type:      notificationType,
-		Title:     title,
-		Message:   body,
-		ContentId: null.IntFrom(event.Id),
-		Content:   notificationContent,
-		CreatedAt: time.Now().UTC(),
+		UserId:             event.UserId,
+		Type:               notificationType,
+		Title:              title,
+		Message:            body,
+		ContentId:          null.IntFrom(event.Id),
+		Content:            notificationContent,
+		CreatedAt:          time.Now().UTC(),
+		RenderingVariables: renderData,
 	}
 
 	if err = tx.Create(nt).Error; err != nil {
@@ -183,10 +184,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	templateName = "content_posted"
 	notificationType = "push.content.new-posted"
+
+	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
 	renderData = map[string]string{
-		"firstname": userData.Firstname,
-		"lastname":  userData.Lastname,
+		"firstname": firstName,
+		"lastname":  lastName,
 	}
+
 	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
@@ -201,14 +206,15 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		if err = tx.Create(&database.Notification{
-			UserId:        followerId,
-			Type:          notificationType,
-			Title:         title,
-			Message:       body,
-			ContentId:     null.IntFrom(event.Id),
-			Content:       notificationContent,
-			CreatedAt:     time.Now().UTC(),
-			RelatedUserId: null.IntFrom(event.UserId),
+			UserId:             followerId,
+			Type:               notificationType,
+			Title:              title,
+			Message:            body,
+			ContentId:          null.IntFrom(event.Id),
+			Content:            notificationContent,
+			CreatedAt:          time.Now().UTC(),
+			RelatedUserId:      null.IntFrom(event.UserId),
+			RenderingVariables: renderData,
 		}).Error; err != nil {
 			return nil, err
 		}

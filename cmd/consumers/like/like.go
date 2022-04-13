@@ -47,9 +47,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
 	var template = "content_like"
+	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
 	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{
-		"firstname": userData.Firstname,
-		"lastname":  userData.Lastname,
+		"firstname": firstName,
+		"lastname":  lastName,
 	})
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
