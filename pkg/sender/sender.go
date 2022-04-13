@@ -134,7 +134,7 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 	if customData != nil {
 		js, err := json.Marshal(&customData)
 		if err != nil {
-			log.Error().Str("push_kind", "user_follow").Err(err)
+			log.Error().Str("push_type", pushType).Str("push_kind", kind).Err(err).Send()
 		}
 		extraData["custom_data"] = string(js)
 	}
