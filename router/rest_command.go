@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/digitalmonsters/go-common/common"
+	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/valyala/fasthttp"
@@ -81,4 +82,21 @@ type genericRestResponse struct {
 	Hostname          string      `json:"hostname"`
 	Code              int         `json:"code"`
 	ExecutionTimingMs int64       `json:"execution_timing"`
+}
+
+func ToRestResponse(data interface{}, err *error_codes.ErrorWithCode) *genericRestResponse {
+	var finalResp genericRestResponse
+
+	if err != nil {
+		finalResp.Success = false
+		finalResp.Code = int(err.GetCode())
+		finalResp.Error = err.GetMessage()
+		finalResp.Stack = err.GetStack()
+	} else {
+		finalResp.Success = true
+		finalResp.Code = -1
+		finalResp.Data = data
+	}
+
+	return &finalResp
 }
