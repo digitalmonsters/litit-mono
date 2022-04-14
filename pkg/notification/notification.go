@@ -87,6 +87,7 @@ func getFrontendSupportedNotificationTypes() []string { // temp fix https://trac
 		"push.content-creator.status",
 		"push.referral.other",
 		"push.referral.first",
+		"push.referral.megabonus",
 	}
 }
 
