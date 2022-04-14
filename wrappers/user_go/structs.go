@@ -58,26 +58,35 @@ type GetProfileBulkResponseChan struct {
 }
 
 type UserDetailRecord struct {
-	Id                int64             `json:"id"`
-	Username          null.String       `json:"username"`
-	Firstname         string            `json:"firstname"`
-	Lastname          string            `json:"lastname"`
-	Birthdate         null.Time         `json:"birthdate"`
-	KycStatus         string            `json:"kyc_status"`
-	CountryCode       string            `json:"country_code"`
-	VaultPoints       decimal.Decimal   `json:"vault_points"`
-	Gender            null.String       `json:"gender"`
-	Following         int               `json:"following"`
-	Followers         int               `json:"followers"`
-	VideosCount       int               `json:"videos_count"`
-	Privacy           UerPrivacy        `json:"privacy"`
-	Profile           UserProfile       `json:"profile"`
-	CountryName       string            `json:"country_name"`
-	Avatar            null.String       `json:"avatar"`
-	IsTipEnabled      bool              `json:"is_tip_enabled"`
-	Guest             bool              `json:"guest"`
-	Deleted           bool              `json:"deleted"`
-	NamePrivacyStatus NamePrivacyStatus `json:"name_privacy_status"`
+	Id                  int64             `json:"id"`
+	Username            null.String       `json:"username"`
+	Firstname           string            `json:"firstname"`
+	Lastname            string            `json:"lastname"`
+	Birthdate           null.Time         `json:"birthdate"`
+	KycStatus           string            `json:"kyc_status"`
+	CountryCode         string            `json:"country_code"`
+	VaultPoints         decimal.Decimal   `json:"vault_points"`
+	Gender              null.String       `json:"gender"`
+	Following           int               `json:"following"`
+	Followers           int               `json:"followers"`
+	VideosCount         int               `json:"videos_count"`
+	Privacy             UerPrivacy        `json:"privacy"`
+	Profile             UserProfile       `json:"profile"`
+	CountryName         string            `json:"country_name"`
+	Avatar              null.String       `json:"avatar"`
+	IsTipEnabled        bool              `json:"is_tip_enabled"`
+	Guest               bool              `json:"guest"`
+	Deleted             bool              `json:"deleted"`
+	NamePrivacyStatus   NamePrivacyStatus `json:"name_privacy_status"`
+	Email               string            `json:"email"`
+	Verified            bool              `json:"verified"`
+	Uploads             int               `json:"uploads"`
+	Views               int               `json:"views"`
+	Shares              int               `json:"shares"`
+	Likes               int               `json:"likes"`
+	Comments            int               `json:"comments"`
+	CreatorStatus       int               `json:"creator_status"`
+	CreatorRejectReason null.String       `json:"creator_reject_reason"`
 }
 
 func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
