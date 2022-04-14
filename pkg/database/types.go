@@ -26,6 +26,7 @@ type Notification struct {
 	KycStatus            *eventsourcing.KycStatusType `json:"kyc_status"`
 	ContentCreatorStatus *eventsourcing.CreatorStatus `json:"content_creator_status"`
 	RenderingVariables   RenderingVariables           `json:"rendering_variables"`
+	CustomData           CustomData                   `json:"custom_data"`
 }
 
 type RenderingVariables map[string]string
@@ -35,6 +36,16 @@ func (n *RenderingVariables) Scan(input interface{}) error {
 }
 
 func (n RenderingVariables) Value() (driver.Value, error) {
+	return json.Marshal(n)
+}
+
+type CustomData map[string]interface{}
+
+func (n *CustomData) Scan(input interface{}) error {
+	return json.Unmarshal(input.([]byte), n)
+}
+
+func (n CustomData) Value() (driver.Value, error) {
 	return json.Marshal(n)
 }
 
@@ -127,6 +138,16 @@ func GetNotificationType(templateId string) string {
 		return "push.referral.reward_increase"
 	case "megabonus":
 		return "push.referral.megabonus"
+	case "guest_after_install_first_push":
+	case "guest_after_install_second_push":
+	case "guest_after_install_third_push":
+		return "push.guest.after_install"
+	case "user_after_signup_first_push":
+	case "user_after_signup_second_push":
+	case "user_after_signup_third_push":
+	case "user_after_signup_fourth_push":
+	case "user_after_signup_fifth_push":
+		return "push.user.after_signup"
 	}
 	return ""
 }
@@ -137,6 +158,7 @@ func GetMarketingNotifications() []string {
 		"push.paid_views.first", "push.referral.first", "push.share.first", "push.bonus.weekly_followers.first",
 		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
 		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
-		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
+		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus", "push.guest.after_install",
+		"push.user.after_signup",
 	}
 }

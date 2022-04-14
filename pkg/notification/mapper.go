@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -13,7 +14,7 @@ import (
 )
 
 func mapNotificationsToResponseItems(notifications []database.Notification, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction) []NotificationsResponseItem {
+	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) []NotificationsResponseItem {
 	mapped := make(map[uuid.UUID]*NotificationsResponseItem, len(notifications))
 	relatedUsersIdsMap := map[int64]bool{}
 
@@ -60,7 +61,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 	}
 
 	routines := []chan error{
-		fillUsers(mapped, userGoWrapper, apmTransaction),
+		fillUsers(mapped, userGoWrapper, ctx),
 		fillUserBlock(mapped, userGoWrapper, apmTransaction),
 		fillFollowData(mapped, followWrapper, apmTransaction),
 	}
@@ -85,7 +86,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 	return finalResp
 }
 
-func fillUsers(notifications map[uuid.UUID]*NotificationsResponseItem, userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction) chan error {
+func fillUsers(notifications map[uuid.UUID]*NotificationsResponseItem, userGoWrapper user_go.IUserGoWrapper, ctx context.Context) chan error {
 	ch := make(chan error, 2)
 
 	if len(notifications) == 0 {
@@ -122,14 +123,14 @@ func fillUsers(notifications map[uuid.UUID]*NotificationsResponseItem, userGoWra
 			userIds = append(userIds, notification.RelatedUserId.Int64)
 		}
 
-		resp := <-userGoWrapper.GetUsersDetails(userIds, apmTransaction, false)
+		resp := <-userGoWrapper.GetUsersDetails(userIds, ctx, false)
 
 		if resp.Error != nil {
 			ch <- errors.Wrap(errors.New(resp.Error.Message), "fill users failed")
 		}
 
 		for _, notification := range notifications {
-			userResp, hasUser := resp.Items[notification.RelatedUserId.Int64]
+			userResp, hasUser := (resp.Response)[notification.RelatedUserId.Int64]
 
 			if !hasUser {
 				continue
@@ -185,8 +186,8 @@ func fillUserBlock(notifications map[uuid.UUID]*NotificationsResponseItem, userB
 					return
 				}
 
-				if resp.Data.Type != nil && *resp.Data.Type == user_go.BlockedUser {
-					userBlockMap[userId][relatedUserId] = resp.Data.IsBlocked
+				if (resp.Response).Type != nil && *(resp.Response).Type == user_go.BlockedUser {
+					userBlockMap[userId][relatedUserId] = (resp.Response).IsBlocked
 				}
 			}
 		}
