@@ -52,6 +52,15 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		RelatedUserId:      relatedUserId,
 	}
 
+	customData := event.CustomData
+
+	if isReferralsTemplate && relatedUserId.Valid {
+		customData = map[string]interface{}{}
+		customData["user_id"] = relatedUserId.Int64
+	}
+
+	nf.CustomData = customData
+
 	if err := tx.Create(nf).Error; err != nil {
 		return nil, err
 	}
@@ -67,16 +76,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	if isReferralsTemplate {
-		var customData = map[string]interface{}{}
-
-		if relatedUserId.Valid {
-			customData["user_id"] = relatedUserId.Int64
-		}
 		_, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId,
 			renderingTemplate.Id, renderingTemplate.Kind, title, body, headline, customData, ctx)
 	} else {
 		_, err = notifySender.SendTemplateToUser(notification_handler.NotificationChannelPush,
-			title, body, headline, renderingTemplate, event.UserId, event.RenderingVariables, ctx)
+			title, body, headline, renderingTemplate, event.UserId, event.RenderingVariables, customData, ctx)
 	}
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry

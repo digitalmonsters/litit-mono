@@ -11,7 +11,7 @@ import (
 type ISender interface {
 	SendTemplateToUser(channel notification_handler.NotificationChannel,
 		title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
-		ctx context.Context) (interface{}, error)
+		customData map[string]interface{}, ctx context.Context) (interface{}, error)
 
 	SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
 		title, body, headline string, customData map[string]interface{}, ctx context.Context) (interface{}, error)
