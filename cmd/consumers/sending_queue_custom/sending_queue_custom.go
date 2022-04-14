@@ -21,11 +21,12 @@ func process(event newCustomSendingEvent, ctx context.Context, notifySender send
 	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
 
 	nt := &database.Notification{
-		UserId:    event.UserId,
-		Type:      database.GetNotificationType("custom_reward_increase"),
-		Title:     event.Title,
-		Message:   event.Body,
-		CreatedAt: time.Now().UTC(),
+		UserId:     event.UserId,
+		Type:       database.GetNotificationType("custom_reward_increase"),
+		Title:      event.Title,
+		Message:    event.Body,
+		CreatedAt:  time.Now().UTC(),
+		CustomData: event.CustomData,
 	}
 
 	if err := tx.Create(nt).Error; err != nil {
@@ -41,7 +42,7 @@ func process(event newCustomSendingEvent, ctx context.Context, notifySender send
 		return nil, err
 	}
 	_, err := notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush,
-		event.UserId, "custom", "popup", event.Title, event.Body, event.Headline, nil, ctx)
+		event.UserId, "custom", "popup", event.Title, event.Body, event.Headline, event.CustomData, ctx)
 
 	if err != nil {
 		return nil, err

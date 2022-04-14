@@ -220,5 +220,20 @@ func getMigrations() []*gormigrate.Migration {
 					"alter table notifications add column if not exists rendering_variables jsonb default '{}' not null;")
 			},
 		},
+		{
+			ID: "add_after_install_signup_templates_140420221100",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('guest_after_install_first_push', 'Complete your account creation & start earning LIT rewards', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.guest.after_install') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('guest_after_install_second_push', 'On Lit.it the more viral videos you watch the more your earn', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.guest.after_install') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('guest_after_install_third_push', 'Check this out. We picked our TOP viral videos for you', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.guest.after_install') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_after_signup_first_push', 'Few things you need to know about Lit.it', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.user.after_signup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_after_signup_second_push', 'Check who earned the most for inviting friends to Lit.it', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.user.after_signup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_after_signup_third_push', 'Who earned the most LIT points? Check this out', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.user.after_signup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_after_signup_fourth_push', 'Check out TOP viral videos on Lit.it & earn LIT points', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.user.after_signup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_after_signup_fifth_push', 'How many LIT points in your wallet? Check this out', '', '2022-04-14 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.user.after_signup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
