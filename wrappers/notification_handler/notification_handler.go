@@ -60,7 +60,7 @@ func NewNotificationHandlerWrapper(config boilerplate.WrapperConfig) INotificati
 }
 
 func (h *NotificationHandlerWrapper) EnqueueNotificationWithTemplate(templateName string, userId int64,
-	renderingVars map[string]string, ctx context.Context) chan EnqueueMessageResult {
+	renderingVars map[string]string, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult {
 	ch := make(chan EnqueueMessageResult, 2)
 
 	go func() {
@@ -91,6 +91,7 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithTemplate(templateNam
 				TemplateName:       templateName,
 				RenderingVariables: renderingVars,
 				UserId:             userId,
+				CustomData:         customData,
 			}); len(err) > 0 {
 			resp.Error = err[0]
 
@@ -103,7 +104,7 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithTemplate(templateNam
 	return ch
 }
 
-func (h *NotificationHandlerWrapper) EnqueueNotificationWithCustomTemplate(title, body, headline string, userId int64, ctx context.Context) chan EnqueueMessageResult {
+func (h *NotificationHandlerWrapper) EnqueueNotificationWithCustomTemplate(title, body, headline string, userId int64, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult {
 	ch := make(chan EnqueueMessageResult, 2)
 
 	go func() {
@@ -128,11 +129,12 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithCustomTemplate(title
 
 		if err := h.customPublisher.Publish(apm.TransactionFromContext(ctx),
 			SendNotificationWithCustomTemplate{
-				Id:       id,
-				UserId:   userId,
-				Title:    title,
-				Body:     body,
-				Headline: headline,
+				Id:         id,
+				UserId:     userId,
+				Title:      title,
+				Body:       body,
+				Headline:   headline,
+				CustomData: customData,
 			}); len(err) > 0 {
 			resp.Error = err[0]
 

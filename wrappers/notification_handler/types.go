@@ -10,8 +10,8 @@ import (
 
 type INotificationHandlerWrapper interface {
 	EnqueueNotificationWithTemplate(templateName string, userId int64,
-		renderingVars map[string]string, ctx context.Context) chan EnqueueMessageResult
-	EnqueueNotificationWithCustomTemplate(title, body, headline string, userId int64, ctx context.Context) chan EnqueueMessageResult
+		renderingVars map[string]string, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult
+	EnqueueNotificationWithCustomTemplate(title, body, headline string, userId int64, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult
 }
 
 //goland:noinspection GoNameStartsWithPackageName
