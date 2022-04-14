@@ -576,7 +576,23 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			return
 		}
 
-		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd, ctx, apmTransaction, cmd.ForceLog(), nil)
+		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd, ctx, apmTransaction, cmd.ForceLog(), func(key string) interface{} {
+			if v := ctx.UserValue(key); v != nil {
+				return v
+			}
+
+			if ctx.QueryArgs() != nil {
+				if v := ctx.QueryArgs().Peek(key); len(v) > 0 {
+					return string(v)
+				}
+			}
+
+			if v := ctx.Request.Header.Peek(key); len(v) > 0 {
+				return string(v)
+			}
+
+			return nil
+		})
 	})
 }
 
