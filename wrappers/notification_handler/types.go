@@ -29,10 +29,11 @@ type EnqueueMessageResult struct {
 	Error error  `json:"error"`
 }
 type SendNotificationWithTemplate struct {
-	Id                 string            `json:"id"`
-	TemplateName       string            `json:"template_name"`
-	RenderingVariables map[string]string `json:"rendering_variables"`
-	UserId             int64             `json:"user_id"`
+	Id                 string                 `json:"id"`
+	TemplateName       string                 `json:"template_name"`
+	RenderingVariables map[string]string      `json:"rendering_variables"`
+	CustomData         map[string]interface{} `json:"custom_data"`
+	UserId             int64                  `json:"user_id"`
 }
 
 func (s SendNotificationWithTemplate) GetPublishKey() string {
@@ -40,11 +41,12 @@ func (s SendNotificationWithTemplate) GetPublishKey() string {
 }
 
 type SendNotificationWithCustomTemplate struct {
-	Id       string `json:"id"`
-	UserId   int64  `json:"user_id"`
-	Title    string `json:"title"`
-	Body     string `json:"body"`
-	Headline string `json:"headline"`
+	Id         string                 `json:"id"`
+	UserId     int64                  `json:"user_id"`
+	Title      string                 `json:"title"`
+	Body       string                 `json:"body"`
+	Headline   string                 `json:"headline"`
+	CustomData map[string]interface{} `json:"custom_data"`
 }
 
 func (s SendNotificationWithCustomTemplate) GetPublishKey() string {
