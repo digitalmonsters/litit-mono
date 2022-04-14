@@ -235,5 +235,12 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_custom_data_140420221724",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"alter table notifications add column if not exists custom_data jsonb default '{}' not null;")
+			},
+		},
 	}
 }
