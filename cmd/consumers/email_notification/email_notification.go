@@ -104,7 +104,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		firstName, _ := userData.GetFirstAndLastNameWithPrivacy()
 
 		templateData["name"] = firstName
-		templateData["referred"] = payload.ReferrerName
+		templateData["referred"] = payload.UserName
 		templateData["nth_referral"] = strconv.FormatInt(payload.NumReferrals, 10)
 	default:
 		return &event.Messages, nil
