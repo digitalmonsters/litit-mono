@@ -1,6 +1,7 @@
 package eventsourcing
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/gammazero/workerpool"
 	"github.com/gocql/gocql"
@@ -59,7 +60,9 @@ func (s *ScyllaEventPublisher) Publish(apmTransaction *apm.Transaction, events .
 		q, ok := event.(ScylaQuery)
 		if !ok {
 			er := errors.New("can't convert event to query")
-			apm_helper.CaptureApmError(er, apmTransaction)
+
+			apm_helper.LogError(err, apm.ContextWithTransaction(context.TODO(), apmTransaction))
+
 			internalErrors = append(internalErrors, er)
 			continue
 		}

@@ -221,7 +221,8 @@ func (k *kafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 
 			transaction := apm_helper.StartNewApmTransaction("start-kafka-listener", "kafka", nil, nil)
 			apm_helper.AddApmLabel(transaction, "topic", k.targetTopic)
-			apm_helper.CaptureApmError(err, transaction)
+
+			apm_helper.LogError(err, apm.ContextWithTransaction(context.TODO(), transaction))
 
 			transaction.End()
 			time.Sleep(10 * time.Second)
@@ -275,8 +276,7 @@ func (k *kafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 
 					tx := apm_helper.StartNewApmTransaction(k.listenerName, "kafka_listener", nil, nil)
 
-					apm_helper.CaptureApmError(err, tx)
-					log.Err(err).Send()
+					apm_helper.LogError(err, apm.ContextWithTransaction(context.TODO(), tx))
 
 					tx.End()
 					time.Sleep(5 * time.Second)
@@ -424,7 +424,7 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			"kafka_listener", nil,
 			traceContext)
 
-		commandExecutionContext := apm.ContextWithTransaction(listenCtx, apmTransaction)
+		rootCtx := boilerplate.CreateCustomContext(context.TODO(), apmTransaction, log.Logger)
 
 		apm_helper.AddApmData(apmTransaction, "messages_count", messageIndex)
 
@@ -446,7 +446,8 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 			}
 
 			processingSpan := apm_helper.StartNewApmTransaction(fmt.Sprintf("%v with retry #%v", k.command.GetFancyName(),
-				retryCount), "internal", nil, apmTransaction)
+				retryCount), "internal",
+				nil, apmTransaction)
 
 			if retryCount > 1 {
 				apm_helper.AddApmData(processingSpan, "not_processed_messages",
@@ -459,17 +460,14 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 				apm_helper.AddApmData(processingSpan, "request", kafkaMessageToFancyLog(messagesToProcess))
 			}
 
-			innerContext, cancelInnerCtx := context.WithCancel(commandExecutionContext)
-
 			defer func() {
 				if processingSpan != nil {
 					processingSpan.End()
 				}
 
-				cancelInnerCtx()
 			}()
 
-			innerContext = apm.ContextWithTransaction(innerContext, processingSpan)
+			innerContext := boilerplate.CreateCustomContext(rootCtx, processingSpan, log.Logger)
 
 			successfullyProcessedMessages = k.command.Execute(ExecutionData{
 				ApmTransaction: processingSpan,
@@ -478,8 +476,7 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 			processingSpan.Context.SetLabel("successfully_processed_messages", len(successfullyProcessedMessages))
 
-			if err = k.commitMessages(successfullyProcessedMessages, processingSpan,
-				reader, innerContext); err != nil {
+			if err = k.commitMessages(successfullyProcessedMessages, reader, innerContext); err != nil {
 				return &backoff.PermanentError{Err: err}
 			}
 
@@ -513,8 +510,9 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		}, b)
 
 		if requestProcessingErrors != nil { // it`s a permanent error, we should try to commit all messages which we had
-			if err = k.commitMessages(messagePool[:messageIndex], apmTransaction, reader, commandExecutionContext); err != nil { // we have no power here
-				apm_helper.CaptureApmError(errors.Wrap(err, "can not commit messages after retry policy"), apmTransaction)
+			if err = k.commitMessages(messagePool[:messageIndex], reader, rootCtx); err != nil { // we have no power here
+				apm_helper.LogError(errors.Wrap(err, "can not commit messages after retry policy"),
+					rootCtx)
 			}
 		}
 
@@ -527,32 +525,32 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 	return nil
 }
 
-func (k *kafkaListener) commitMessages(messages []kafka.Message, apmTransaction *apm.Transaction,
+func (k *kafkaListener) commitMessages(messages []kafka.Message,
 	reader *kafka.Reader, ctx context.Context) error {
 	if !k.isConsumerGroupMode || len(messages) == 0 {
 		return nil
 	}
 
-	kafkaCommitSpan := apmTransaction.StartSpan(fmt.Sprintf("kafka commit [%v]",
-		k.cfg.Topic), "kafka", nil)
+	if apmTransaction := apm.TransactionFromContext(ctx); apmTransaction != nil {
+		kafkaCommitSpan := apmTransaction.StartSpan(fmt.Sprintf("kafka commit [%v]",
+			k.cfg.Topic), "kafka", nil)
 
-	kafkaCommitSpan.Context.SetMessage(apm.MessageSpanContext{QueueName: k.cfg.Topic})
-	kafkaCommitSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
-		Name:     "kafka",
-		Resource: k.cfg.Topic,
-	})
+		defer func() {
+			kafkaCommitSpan.End()
+		}()
 
-	kafkaCommitSpan.Context.SetLabel("count", len(messages))
+		kafkaCommitSpan.Context.SetMessage(apm.MessageSpanContext{QueueName: k.cfg.Topic})
+		kafkaCommitSpan.Context.SetDestinationService(apm.DestinationServiceSpanContext{
+			Name:     "kafka",
+			Resource: k.cfg.Topic,
+		})
 
-	if err := reader.CommitMessages(ctx, messages...); err != nil {
-		apm_helper.CaptureApmError(err, apmTransaction)
-
-		kafkaCommitSpan.End()
-
-		return errors.WithStack(err)
+		kafkaCommitSpan.Context.SetLabel("count", len(messages))
 	}
 
-	kafkaCommitSpan.End()
+	if err := reader.CommitMessages(ctx, messages...); err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }

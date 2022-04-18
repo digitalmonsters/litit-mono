@@ -1,12 +1,12 @@
 package router
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/valyala/fasthttp"
-	"go.elastic.co/apm"
 )
 
 type HttpMethodType string
@@ -58,8 +58,8 @@ func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodTyp
 		requireIdentityValidation: requiredIdentityValidation}
 }
 
-func (r RestCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
-	return publicCanExecuteLogic(ctx, r.requireIdentityValidation)
+func (r RestCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+	return publicCanExecuteLogic(httpCtx, r.requireIdentityValidation)
 }
 
 func (r RestCommand) GetPath() string {

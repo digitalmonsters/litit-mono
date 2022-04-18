@@ -204,7 +204,7 @@ func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, meth
 			}
 		}
 
-		apm_helper.AddDataToSpanTrance(result.span, req, apmTransaction)
+		apm_helper.AddDataToSpanTrance(result.span, req, ctx)
 
 		err := b.client.DoTimeout(req, resp, timeout)
 

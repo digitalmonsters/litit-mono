@@ -225,6 +225,8 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 				targetCmd.path), "rest", nil, nil)
 		}
 
+		executionCtx := boilerplate.CreateCustomContext(ctx, apmTransaction, log.Logger)
+
 		defer apmTransaction.End()
 
 		requestBody := ctx.PostBody()
@@ -240,9 +242,9 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			r.setCors(ctx)
 		}()
 
-		apm_helper.AddApmLabel(apmTransaction, "full_url", string(ctx.URI().FullURI()))
+		apm_helper.AddApmDataWithContext(executionCtx, "full_url", string(ctx.URI().FullURI()))
 
-		rpcResponse, shouldLog := r.executeAction(rpcRequest, targetCmd, ctx, apmTransaction, targetCmd.forceLog,
+		rpcResponse, shouldLog := r.executeAction(rpcRequest, targetCmd, ctx, executionCtx, targetCmd.forceLog,
 			func(key string) interface{} {
 				if v := ctx.UserValue(key); v != nil {
 					return v
@@ -268,9 +270,9 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 				return
 			}
 
-			r.logRequestBody(requestBody, apmTransaction)
-			r.logResponseBody(responseBody, apmTransaction)
-			r.logRpcResponseError(rpcResponse, apmTransaction)
+			r.logRequestBody(requestBody, ctx)
+			r.logResponseBody(responseBody, ctx)
+			r.logRpcResponseError(rpcResponse, ctx)
 		}()
 
 		finalStatusCode := int(error_codes.None)
@@ -338,17 +340,12 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 	return nil
 }
 
-func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx *fasthttp.RequestCtx,
-	apmTransaction *apm.Transaction, forceLog bool, getUserValue func(key string) interface{}) (rpcResponse rpc.RpcResponse, shouldLog bool) {
+func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, httpCtx *fasthttp.RequestCtx,
+	ctx context.Context, forceLog bool, getUserValue func(key string) interface{}) (rpcResponse rpc.RpcResponse, shouldLog bool) {
 	totalTiming := time.Now()
 
-	newCtx, cancel := context.WithCancel(ctx)
-	newCtx = apm.ContextWithTransaction(newCtx, apmTransaction)
-
-	defer cancel()
-
-	r.logRequestHeaders(ctx, apmTransaction) // in future filter for specific routes
-	r.logUserValues(ctx, apmTransaction)
+	r.logRequestHeaders(httpCtx, ctx) // in future filter for specific routes
+	r.logUserValues(httpCtx, ctx)
 
 	var panicErr error
 
@@ -359,7 +356,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 	}
 
 	defer func() {
-		ctx.Response.Header.SetContentType("application/json")
+		httpCtx.Response.Header.SetContentType("application/json")
 		rpcResponse.ExecutionTimingMs = executionMs
 		rpcResponse.TotalTimingMs = time.Since(totalTiming).Milliseconds()
 		rpcResponse.Hostname = r.hostname
@@ -398,7 +395,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	shouldLog = forceLog
 
-	userId, isGuest, rpcError := cmd.CanExecute(ctx, apmTransaction, r.authGoWrapper)
+	userId, isGuest, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper)
 
 	if rpcError != nil {
 		rpcResponse.Error = rpcError
@@ -424,6 +421,8 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 		return
 	}
 
+	apmTransaction := apm.TransactionFromContext(ctx)
+
 	if userId > 0 {
 		if apmTransaction != nil {
 			apmTransaction.Context.SetUserID(fmt.Sprint(userId))
@@ -434,14 +433,14 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, ctx 
 
 	executionData := MethodExecutionData{
 		ApmTransaction: apmTransaction,
-		Context:        newCtx,
+		Context:        ctx,
 		UserId:         userId,
 		IsGuest:        isGuest,
-		UserIp:         common.GetRealIp(ctx),
+		UserIp:         common.GetRealIp(httpCtx),
 		getUserValueFn: getUserValue,
 	}
 
-	if deviceId := ctx.Request.Header.Peek("device-id"); len(deviceId) > 0 {
+	if deviceId := httpCtx.Request.Header.Peek("device-id"); len(deviceId) > 0 {
 		executionData.DeviceId = string(deviceId)
 	}
 
@@ -478,12 +477,21 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 		r.setCors(ctx)
 	})
 
-	r.realRouter.POST(rpcEndpointPath, func(ctx *fasthttp.RequestCtx) {
+	r.realRouter.POST(rpcEndpointPath, func(httpCtx *fasthttp.RequestCtx) {
 		var rpcRequest rpc.RpcRequest
 		var rpcResponse rpc.RpcResponse
 		var shouldLog bool
 		var requestBody []byte
 		var apmTransaction *apm.Transaction
+
+		if traceHeader := httpCtx.Request.Header.Peek(apmhttp.W3CTraceparentHeader); len(traceHeader) > 0 {
+			traceContext, _ := apmhttp.ParseTraceparentHeader(string(traceHeader))
+			apmTransaction = apm_helper.StartNewApmTransactionWithTraceData(rpcRequest.Method, apmTxType, nil, traceContext)
+		} else {
+			apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, apmTxType, nil, nil)
+		}
+
+		innerContext := boilerplate.CreateCustomContext(httpCtx, apmTransaction, log.Logger)
 
 		defer func() {
 			if apmTransaction != nil {
@@ -492,7 +500,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 		}()
 
 		defer func() {
-			r.setCors(ctx)
+			r.setCors(httpCtx)
 		}()
 
 		defer func() {
@@ -521,7 +529,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 					responseBody = respBody
 				}
 
-				ctx.Response.SetBodyRaw(responseBody)
+				httpCtx.Response.SetBodyRaw(responseBody)
 			}
 
 			if rpcResponse.Error != nil {
@@ -529,13 +537,13 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			}
 
 			if shouldLog {
-				r.logRequestBody(requestBody, apmTransaction)
-				r.logResponseBody(responseBody, apmTransaction)
-				r.logRpcResponseError(rpcResponse, apmTransaction)
+				r.logRequestBody(requestBody, innerContext)
+				r.logResponseBody(responseBody, innerContext)
+				r.logRpcResponseError(rpcResponse, innerContext)
 			}
 		}()
 
-		requestBody = ctx.PostBody()
+		requestBody = httpCtx.PostBody()
 
 		if err := json.Unmarshal(requestBody, &rpcRequest); err != nil {
 			rpcResponse.Error = &rpc.RpcError{
@@ -550,13 +558,6 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			}
 
 			return
-		}
-
-		if traceHeader := ctx.Request.Header.Peek(apmhttp.W3CTraceparentHeader); len(traceHeader) > 0 {
-			traceContext, _ := apmhttp.ParseTraceparentHeader(string(traceHeader))
-			apmTransaction = apm_helper.StartNewApmTransactionWithTraceData(rpcRequest.Method, apmTxType, nil, traceContext)
-		} else {
-			apmTransaction = apm_helper.StartNewApmTransaction(rpcRequest.Method, apmTxType, nil, nil)
 		}
 
 		cmd, err := endpoint.GetCommand(rpcRequest.Method)
@@ -576,18 +577,18 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			return
 		}
 
-		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd, ctx, apmTransaction, cmd.ForceLog(), func(key string) interface{} {
-			if v := ctx.UserValue(key); v != nil {
+		rpcResponse, shouldLog = r.executeAction(rpcRequest, cmd, httpCtx, innerContext, cmd.ForceLog(), func(key string) interface{} {
+			if v := httpCtx.UserValue(key); v != nil {
 				return v
 			}
 
-			if ctx.QueryArgs() != nil {
-				if v := ctx.QueryArgs().Peek(key); len(v) > 0 {
+			if httpCtx.QueryArgs() != nil {
+				if v := httpCtx.QueryArgs().Peek(key); len(v) > 0 {
 					return string(v)
 				}
 			}
 
-			if v := ctx.Request.Header.Peek(key); len(v) > 0 {
+			if v := httpCtx.Request.Header.Peek(key); len(v) > 0 {
 				return string(v)
 			}
 
@@ -603,34 +604,30 @@ func (r *HttpRouter) GET(path string, handler fasthttp.RequestHandler) {
 	r.realRouter.GET(path, handler)
 }
 
-func (r *HttpRouter) logRequestBody(body []byte, apmTransaction *apm.Transaction) {
-	if apmTransaction == nil {
-		return
-	}
-
+func (r *HttpRouter) logRequestBody(body []byte, ctx context.Context) {
 	if len(body) > 0 {
-		apm_helper.AddApmData(apmTransaction, "request_body", body)
+		apm_helper.AddApmDataWithContext(ctx, "request_body", body)
 	}
 }
 
 func (r *HttpRouter) logResponseBody(responseBody []byte,
-	apmTransaction *apm.Transaction) {
+	ctx context.Context) {
 	if body := responseBody; len(body) > 0 {
-		apm_helper.AddApmData(apmTransaction, "response_body", body)
+		apm_helper.AddApmDataWithContext(ctx, "response_body", body)
 	}
 }
 
-func (r *HttpRouter) logRpcResponseError(rpcResponse rpc.RpcResponse, apmTransaction *apm.Transaction) {
+func (r *HttpRouter) logRpcResponseError(rpcResponse rpc.RpcResponse, ctx context.Context) {
 	if rpcResponse.Error != nil {
-		apm_helper.CaptureApmError(rpcResponse.Error.ToError(), apmTransaction)
+		apm_helper.LogError(rpcResponse.Error.ToError(), ctx)
 	}
 }
 
-func (r *HttpRouter) logUserValues(ctx *fasthttp.RequestCtx,
-	apmTransaction *apm.Transaction) string {
+func (r *HttpRouter) logUserValues(httpCtx *fasthttp.RequestCtx,
+	ctx context.Context) string {
 	var realMethodName string
 
-	ctx.VisitUserValues(func(key []byte, i interface{}) {
+	httpCtx.VisitUserValues(func(key []byte, i interface{}) {
 		keyStr := string(key)
 		valueStr, ok := i.(string)
 
@@ -638,15 +635,15 @@ func (r *HttpRouter) logUserValues(ctx *fasthttp.RequestCtx,
 			return
 		}
 
-		apm_helper.AddApmLabel(apmTransaction, keyStr, valueStr)
+		apm_helper.AddApmDataWithContext(ctx, keyStr, valueStr)
 	})
 
 	return realMethodName
 }
 
-func (r *HttpRouter) logRequestHeaders(ctx *fasthttp.RequestCtx,
-	apmTransaction *apm.Transaction) {
-	ctx.Request.Header.VisitAll(func(key, value []byte) {
+func (r *HttpRouter) logRequestHeaders(httpCtx *fasthttp.RequestCtx,
+	ctx context.Context) {
+	httpCtx.Request.Header.VisitAll(func(key, value []byte) {
 		keyStr := strings.ToLower(string(key))
 
 		if keyStr == "cookies" || keyStr == "authorization" || keyStr == "x-forwarded-client-cert" ||
@@ -664,7 +661,7 @@ func (r *HttpRouter) logRequestHeaders(ctx *fasthttp.RequestCtx,
 			keyStr = "device_id"
 		}
 
-		apm_helper.AddApmLabel(apmTransaction, keyStr, valueStr)
+		apm_helper.AddApmDataWithContext(ctx, keyStr, valueStr)
 	})
 }
 

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
@@ -34,11 +35,11 @@ func NewAdminCommand(methodName string, fn CommandFunc, accessLevel common.Acces
 	}
 }
 
-func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, authWrapper auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+func (a AdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, authWrapper auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
 	currentUserId := int64(0)
 
-	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") { // external auth
-		if userIdHead := ctx.Request.Header.Peek("Admin-Id"); len(userIdHead) > 0 {
+	if externalAuthValue := httpCtx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") { // external auth
+		if userIdHead := httpCtx.Request.Header.Peek("Admin-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
 				return 0, false, &rpc.RpcError{
 					Code:        error_codes.InvalidJwtToken,
@@ -53,13 +54,13 @@ func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.T
 	}
 
 	if currentUserId == 0 { // TODO temporary remove after fix for istio fallback auth
-		if jwtAuthData := ctx.Request.Header.Peek("Authorization-Admin"); len(jwtAuthData) > 0 {
+		if jwtAuthData := httpCtx.Request.Header.Peek("Authorization-Admin"); len(jwtAuthData) > 0 {
 			forwardAuthWrapper := auth.NewAuthWrapper(boilerplate.WrapperConfig{
 				ApiUrl:     "http://forward-auth",
 				TimeoutSec: 3,
 			})
 
-			resp := <-forwardAuthWrapper.ParseNewAdminToken(string(jwtAuthData), false, apmTransaction, false)
+			resp := <-forwardAuthWrapper.ParseNewAdminToken(string(jwtAuthData), false, apm.TransactionFromContext(ctx), false)
 
 			if resp.Error != nil {
 				return 0, false, resp.Error
@@ -82,7 +83,7 @@ func (a AdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.T
 		return currentUserId, false, nil
 	}
 
-	ch := <-authWrapper.CheckAdminPermissions(currentUserId, a.obj, apmTransaction, false)
+	ch := <-authWrapper.CheckAdminPermissions(currentUserId, a.obj, apm.TransactionFromContext(ctx), false)
 
 	if ch.Error != nil {
 		return 0, false, ch.Error

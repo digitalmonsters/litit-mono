@@ -1,10 +1,11 @@
 package apm_helper
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/digitalmonsters/go-common/common"
-	"github.com/pkg/errors"
+	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
@@ -12,6 +13,10 @@ import (
 	"strconv"
 	"time"
 )
+
+func init() {
+	boilerplate.SetupZeroLog()
+}
 
 func StartNewApmTransaction(methodName string, transactionType string, request interface{}, parentTx *apm.Transaction) *apm.Transaction {
 	traceContext := apm.TraceContext{}
@@ -63,7 +68,15 @@ func AppendResponseBody(response interface{}, transaction *apm.Transaction) {
 	AddApmData(transaction, "response", response)
 }
 
-func CaptureApmError(err error, transaction *apm.Transaction) {
+func AppendRequestBodyWithContext(request interface{}, ctx context.Context) {
+	AppendRequestBody(request, apm.TransactionFromContext(ctx))
+}
+
+func AppendResponseBodyWithContext(response interface{}, ctx context.Context) {
+	AppendResponseBody(response, apm.TransactionFromContext(ctx))
+}
+
+func LogError(err error, ctx context.Context) {
 	if err == nil {
 		return
 	}
@@ -72,32 +85,17 @@ func CaptureApmError(err error, transaction *apm.Transaction) {
 		_ = recover()
 	}()
 
-	if transaction == nil || transaction.TransactionData == nil {
-		return
-	}
+	log.Ctx(ctx).Err(err).Send()
 
-	exx := apm.DefaultTracer.NewError(err)
+	apmError := apm.CaptureError(ctx, err)
 
-	AddApmData(transaction, "exception", err)
-
-	if exx != nil && transaction != nil {
-		exx.SetTransaction(transaction)
-		exx.Context = transaction.Context
-
-		exx.Send()
+	if err != nil {
+		apmError.Send()
 	}
 }
 
-func CaptureApmErrorSpan(err error, span *apm.Span) {
-	if span == nil || span.Dropped() || span.SpanData == nil {
-		return
-	}
-
-	exx := apm.DefaultTracer.NewError(err)
-
-	exx.SetSpan(span)
-
-	exx.Send()
+func AddApmLabelWithContext(ctx context.Context, key string, value string) {
+	AddApmLabel(apm.TransactionFromContext(ctx), key, value)
 }
 
 func AddApmLabel(transaction *apm.Transaction, key string, value interface{}) {
@@ -120,6 +118,10 @@ func AddApmLabel(transaction *apm.Transaction, key string, value interface{}) {
 	}
 }
 
+func AddSpanApmLabelWithContext(ctx context.Context, key string, value string) {
+	AddSpanApmLabel(apm.SpanFromContext(ctx), key, value)
+}
+
 func AddSpanApmLabel(span *apm.Span, key string, value string) {
 	if span == nil || span.Dropped() || span.SpanData == nil {
 		return
@@ -138,6 +140,10 @@ func AddSpanApmLabel(span *apm.Span, key string, value string) {
 	if span.SpanData != nil {
 		span.Context.SetLabel(key, resultStr)
 	}
+}
+
+func AddApmDataWithContext(ctx context.Context, key string, value interface{}) {
+	AddApmData(apm.TransactionFromContext(ctx), key, value)
 }
 
 func AddApmData(transaction *apm.Transaction, key string, value interface{}) {
@@ -179,58 +185,14 @@ func stringify(value interface{}) string {
 	return ""
 }
 
-func SendHttpRequestWithClient(client *fasthttp.Client, request *fasthttp.Request, response *fasthttp.Response, parentTx *apm.Transaction,
-	timeout time.Duration, logResponse bool) error {
-	if request == nil {
-		return errors.New("request should not be nil")
-	}
-	if response == nil {
-		return errors.New("response should not be nil")
-	}
-
-	tx := StartNewApmTransaction(
-		fmt.Sprintf("[%v] %v", string(request.Header.Method()), request.URI().String()),
-		"http_external",
-		nil,
-		parentTx,
-	)
-
-	defer tx.End()
-
-	err := client.DoTimeout(request, response, timeout)
-
-	if err != nil {
-		return err
-	}
-
-	data, _ := common.UnpackFastHttpBody(response)
-
-	tx.Context.SetHTTPStatusCode(response.StatusCode())
-
-	if logResponse || (response.StatusCode() != 200 && response.StatusCode() != 201) {
-		headers := map[string]string{}
-
-		response.Header.VisitAll(func(key, value []byte) {
-			headers[string(key)] = string(value)
-		})
-
-		b, _ := json.Marshal(headers)
-
-		AddApmData(tx, "headers", string(b))
-		tx.Context.SetCustom("response_body", string(data))
-	}
-
-	return nil
-}
-
-func AddDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, apmTransaction *apm.Transaction) {
+func AddDataToSpanTrance(rqSpan *apm.Span, req *fasthttp.Request, ctx context.Context) {
 	if rqSpan != nil && !rqSpan.Dropped() {
 		r, err := http.NewRequest(
 			string(req.Header.Method()),
 			string(req.URI().FullURI()), nil)
 
 		if err != nil {
-			CaptureApmError(err, apmTransaction)
+			LogError(err, ctx)
 		} else {
 			rqSpan.Context.SetHTTPRequest(r)
 		}

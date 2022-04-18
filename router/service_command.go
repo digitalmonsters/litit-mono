@@ -1,11 +1,11 @@
 package router
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/valyala/fasthttp"
-	"go.elastic.co/apm"
 	"strings"
 )
 
@@ -29,7 +29,7 @@ func NewServiceCommand(methodName string, fn CommandFunc, forceLog bool) IComman
 	}
 }
 
-func (a ServiceCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+func (a ServiceCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
 	return 0, false, nil
 }
 

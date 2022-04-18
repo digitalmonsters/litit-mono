@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -28,8 +29,8 @@ func NewLegacyAdminCommand(methodName string, fn CommandFunc) ICommand {
 	}
 }
 
-func (a LegacyAdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
-	userId, isGuest, err := publicCanExecuteLogic(ctx, a.requireIdentityValidation)
+func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+	userId, isGuest, err := publicCanExecuteLogic(httpCtx, a.requireIdentityValidation)
 
 	if err != nil {
 		return 0, isGuest, err
@@ -44,7 +45,7 @@ func (a LegacyAdminCommand) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction 
 		}
 	}
 
-	resp := <-auth.CheckLegacyAdmin(userId, apmTransaction, false)
+	resp := <-auth.CheckLegacyAdmin(userId, apm.TransactionFromContext(ctx), false)
 
 	if resp.Error != nil {
 		return 0, isGuest, resp.Error

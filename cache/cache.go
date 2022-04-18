@@ -54,8 +54,9 @@ func (s *Service) BulkGet(keys []string, ctx context.Context, apmTransaction *ap
 	}
 
 	redisResult, err := s.getFromRedisInternal(missingInCache, ctx)
+
 	if err != nil {
-		apm_helper.CaptureApmError(err, apmTransaction)
+		apm_helper.LogError(err, ctx)
 	}
 
 	for k, v := range redisResult {
@@ -102,7 +103,7 @@ func (s *Service) saveToRedisInternal(keys []string, values []interface{}, exp t
 	for i := range keys {
 		marshalled, err := json.Marshal(values[i])
 		if err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
+			apm_helper.LogError(err, ctx)
 			continue
 		}
 

@@ -1,13 +1,13 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/valyala/fasthttp"
-	"go.elastic.co/apm"
 	"strconv"
 	"strings"
 )
@@ -21,7 +21,7 @@ type ICommand interface {
 	GetPath() string
 	GetHttpMethod() string
 	GetObj() string
-	CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (userId int64, isGuest bool, err *rpc.RpcError)
+	CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (userId int64, isGuest bool, err *rpc.RpcError)
 }
 
 type CommandFunc func(request []byte, executionData MethodExecutionData) (interface{}, *error_codes.ErrorWithCode)
@@ -74,8 +74,8 @@ func (c Command) GetFn() CommandFunc {
 	return c.fn
 }
 
-func (c Command) CanExecute(ctx *fasthttp.RequestCtx, apmTransaction *apm.Transaction, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
-	return publicCanExecuteLogic(ctx, c.requireIdentityValidation)
+func (c Command) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+	return publicCanExecuteLogic(httpCtx, c.requireIdentityValidation)
 }
 
 func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation bool) (int64, bool, *rpc.RpcError) {

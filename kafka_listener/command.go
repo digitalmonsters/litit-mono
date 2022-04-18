@@ -46,7 +46,7 @@ func (c *Command) Execute(executionData ExecutionData, request ...kafka.Message)
 				err = errors.New("unknown panic")
 			}
 
-			apm_helper.CaptureApmError(err, executionData.ApmTransaction)
+			apm_helper.LogError(err, executionData.Context)
 		}
 	}()
 
