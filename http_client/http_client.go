@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/imroc/req/v3"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
@@ -95,6 +96,8 @@ func NewHttpClient() *HttpClient {
 			span.Name = fmt.Sprintf("HTTP [%v] [%v]", response.Request.RawRequest.Method,
 				response.Request.RawURL)
 			span.Type = targetServiceName
+
+			apm_helper.AddSpanApmLabel(span, "full_url", response.Request.RawURL)
 
 			finalStatement := ""
 
