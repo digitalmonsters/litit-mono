@@ -242,5 +242,13 @@ func getMigrations() []*gormigrate.Migration {
 					"alter table notifications add column if not exists custom_data jsonb default '{}' not null;")
 			},
 		},
+		{
+			ID: "add_daily_max_amount_of_paid_views_reached_template_310320221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('daily_max_amount_of_paid_views_reached', 'You just earned maximum daily LIT points for watching videos!', 'You can earn up to {{.pointsAmount}} LIT per day for watching videos', '2022-04-18 12:00:00.000000', '2022-04-18 12:00:00.000000',  'popup', 'Congrats!');",
+				)
+			},
+		},
 	}
 }
