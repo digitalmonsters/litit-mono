@@ -265,5 +265,20 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "change_push_titles_and_messages_140420221100",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set title = 'Litit', body = 'Complete your account creation & start earning LIT rewards' where id = 'guest_after_install_second_push';",
+					"update public.render_templates set title = 'Litit', body = 'On Lit.it the more viral videos you watch the more your earn' where id = 'guest_after_install_second_push';",
+					"update public.render_templates set title = 'Litit', body = 'Check this out. We picked our TOP viral videos for you' where id = 'guest_after_install_third_push';",
+					"update public.render_templates set title = 'Litit', body = 'Few things you need to know about Lit.it' where id = 'user_after_signup_first_push';",
+					"update public.render_templates set title = 'Litit', body = 'Check who earned the most for inviting friends to Lit.it' where id = 'user_after_signup_second_push';",
+					"update public.render_templates set title = 'Litit', body = 'Who earned the most LIT points? Check this out' where id = 'user_after_signup_third_push';",
+					"update public.render_templates set title = 'Litit', body = 'Check out TOP viral videos on Lit.it & earn LIT points' where id = 'user_after_signup_fourth_push';",
+					"update public.render_templates set title = 'Litit', body = 'How many LIT points in your wallet? Check this out' where id = 'user_after_signup_fifth_push';",
+				)
+			},
+		},
 	}
 }
