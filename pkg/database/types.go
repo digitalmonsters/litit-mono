@@ -141,13 +141,19 @@ func GetNotificationType(templateId string) string {
 	case "megabonus":
 		return "push.referral.megabonus"
 	case "guest_after_install_first_push":
+		return "push.guest.after_install"
 	case "guest_after_install_second_push":
+		return "push.guest.after_install"
 	case "guest_after_install_third_push":
 		return "push.guest.after_install"
 	case "user_after_signup_first_push":
+		return "push.user.after_signup"
 	case "user_after_signup_second_push":
+		return "push.user.after_signup"
 	case "user_after_signup_third_push":
+		return "push.user.after_signup"
 	case "user_after_signup_fourth_push":
+		return "push.user.after_signup"
 	case "user_after_signup_fifth_push":
 		return "push.user.after_signup"
 	}
