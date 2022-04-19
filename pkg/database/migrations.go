@@ -280,5 +280,20 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "change_push_titles_and_messages_190420222115",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set title = 'Lit.it', body = 'Complete your account creation & start earning LIT rewards' where id = 'guest_after_install_first_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'guest_after_install_second_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'guest_after_install_third_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_first_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_second_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_third_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_fourth_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_fifth_push';",
+				)
+			},
+		},
 	}
 }
