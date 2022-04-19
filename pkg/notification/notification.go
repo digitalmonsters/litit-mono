@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -13,7 +14,7 @@ import (
 )
 
 func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction) (*NotificationsResponse, error) {
+	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) (*NotificationsResponse, error) {
 	notifications := make([]database.Notification, 0)
 
 	p := paginator.New(
@@ -45,7 +46,7 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 		return nil, err
 	}
 
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction)
+	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction, ctx)
 
 	resp := NotificationsResponse{
 		Data:        notificationsResp,
@@ -87,6 +88,8 @@ func getFrontendSupportedNotificationTypes() []string { // temp fix https://trac
 		"push.content-creator.status",
 		"push.referral.other",
 		"push.referral.first",
+		"push.referral.megabonus",
+		"push.user.after_signup",
 	}
 }
 
@@ -148,7 +151,7 @@ func IncrementUnreadNotificationsCounter(db *gorm.DB, userId int64) error {
 }
 
 func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction) (*ListNotificationsByAdminResponse, error) {
+	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) (*ListNotificationsByAdminResponse, error) {
 	notifications := make([]database.Notification, 0)
 	query := db.Model(notifications)
 
@@ -175,7 +178,7 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 		return nil, err
 	}
 
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction)
+	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction, ctx)
 
 	return &ListNotificationsByAdminResponse{
 		Items:      notificationsResp,

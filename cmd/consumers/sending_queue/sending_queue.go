@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
+	"strconv"
 	"time"
 )
 
@@ -27,7 +29,19 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	var relatedUserId null.Int
+	var isReferralsTemplate = event.TemplateName == "other_referrals_joined" || event.TemplateName == "first_referral_joined"
 
+	if isReferralsTemplate {
+		if val, ok := event.RenderingVariables["referral_id"]; ok {
+			parsed, err := strconv.ParseInt(val, 10, 64)
+			if err != nil {
+				apm_helper.CaptureApmError(err, apmTransaction)
+			} else {
+				relatedUserId = null.IntFrom(parsed)
+			}
+		}
+	}
 	nf := &database.Notification{
 		UserId:             event.UserId,
 		Type:               database.GetNotificationType(event.TemplateName),
@@ -35,7 +49,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Message:            body,
 		CreatedAt:          time.Now().UTC(),
 		RenderingVariables: event.RenderingVariables,
+		RelatedUserId:      relatedUserId,
 	}
+
+	customData := event.CustomData
+
+	if isReferralsTemplate && relatedUserId.Valid {
+		customData = map[string]interface{}{}
+		customData["user_id"] = relatedUserId.Int64
+	}
+
+	nf.CustomData = customData
 
 	if err := tx.Create(nf).Error; err != nil {
 		return nil, err
@@ -50,9 +74,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
-	_, err = notifySender.SendTemplateToUser(notification_handler.NotificationChannelPush,
-		title, body, headline, renderingTemplate, event.UserId, event.RenderingVariables, ctx)
 
+	if isReferralsTemplate {
+		_, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId,
+			renderingTemplate.Id, renderingTemplate.Kind, title, body, headline, customData, ctx)
+	} else {
+		_, err = notifySender.SendTemplateToUser(notification_handler.NotificationChannelPush,
+			title, body, headline, renderingTemplate, event.UserId, event.RenderingVariables, customData, ctx)
+	}
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	}

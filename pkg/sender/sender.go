@@ -28,10 +28,10 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper) *Sender
 
 func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationChannel,
 	title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
-	ctx context.Context) (interface{}, error) {
+	customData map[string]interface{}, ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
-	return s.sendPushTemplateMessageToUser(title, body, headline, renderingTemplate, userId, renderingData, db, ctx)
+	return s.sendPushTemplateMessageToUser(title, body, headline, renderingTemplate, userId, renderingData, customData, db, ctx)
 }
 
 func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
@@ -47,7 +47,7 @@ func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, c
 
 func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
 	renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
-	db *gorm.DB, ctx context.Context) (interface{}, error) {
+	customData map[string]interface{}, db *gorm.DB, ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(db, userId)
 
 	if err != nil {
@@ -58,7 +58,7 @@ func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
 		return nil, nil
 	}
 	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body,
-		headline, renderingTemplate, fmt.Sprint(userId), renderingData), ctx)
+		headline, renderingTemplate, fmt.Sprint(userId), renderingData, customData), ctx)
 
 	return nil, sendResult
 }
@@ -81,13 +81,20 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 }
 
 func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, headline string, template database.RenderTemplate,
-	key string, renderingData map[string]string) []notification_gateway.SendPushRequest {
+	key string, renderingData map[string]string, customData map[string]interface{}) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
 
 	extraData := map[string]string{
 		"type":     template.Id,
 		"kind":     template.Kind,
 		"headline": headline,
+	}
+	if customData != nil {
+		js, err := json.Marshal(&customData)
+		if err != nil {
+			log.Error().Str("push_type", template.Id).Str("push_kind", template.Kind).Err(err).Send()
+		}
+		extraData["custom_data"] = string(js)
 	}
 
 	for k, v := range renderingData {
@@ -134,7 +141,7 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 	if customData != nil {
 		js, err := json.Marshal(&customData)
 		if err != nil {
-			log.Error().Str("push_kind", "user_follow").Err(err)
+			log.Error().Str("push_type", pushType).Str("push_kind", kind).Err(err).Send()
 		}
 		extraData["custom_data"] = string(js)
 	}

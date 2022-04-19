@@ -84,13 +84,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	notification := database.Notification{
-		UserId:        event.Payload.UserId,
-		Type:          templateType,
-		Title:         title,
-		Message:       body,
-		CreatedAt:     time.Now().UTC(),
-		ContentId:     contentId,
-		RelatedUserId: event.Payload.RelatedUserId,
+		UserId:             event.Payload.UserId,
+		Type:               templateType,
+		Title:              title,
+		Message:            body,
+		CreatedAt:          time.Now().UTC(),
+		ContentId:          contentId,
+		RelatedUserId:      event.Payload.RelatedUserId,
+		RenderingVariables: rendererData,
 	}
 
 	if err = db.Create(&notification).Error; err != nil {
