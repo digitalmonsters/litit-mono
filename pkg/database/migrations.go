@@ -250,5 +250,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_first_avtar_added_template_140420221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('first_time_avatar_added','Congrats!', 'You received {{.first_avatar_bonus}} LIT points to your wallet for adding a photo', '2022-04-18 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.avatar.first') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
