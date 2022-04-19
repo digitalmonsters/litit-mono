@@ -243,6 +243,13 @@ func getMigrations() []*gormigrate.Migration {
 			},
 		},
 		{
+			ID: "description_popup_180420221434",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('add_description_bonus', 'Congrats!', 'You received {{.description_bonus}} LIT points to your wallet for adding a description', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'popup', 'Ok') on conflict do nothing;")
+			},
+		},
+		{
 			ID: "add_daily_max_amount_of_paid_views_reached_template_310320221200",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
