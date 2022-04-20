@@ -10,13 +10,15 @@ type UpsertRequest struct {
 }
 
 type rejectReason struct {
-	Id     null.Int `json:"id"`
-	Reason string   `json:"reason"`
+	Id     null.Int            `json:"id"`
+	Type   database.ReasonType `json:"type"`
+	Reason string              `json:"reason"`
 }
 
 type ListRequest struct {
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
+	Type   database.ReasonType `json:"type"`
+	Limit  int                 `json:"limit"`
+	Offset int                 `json:"offset"`
 }
 
 type ListResponse struct {

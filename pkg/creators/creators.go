@@ -5,7 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/wrappers/user"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/global"
 	"github.com/pkg/errors"
@@ -69,7 +69,7 @@ func (s *Service) BecomeMusicCreator(req BecomeMusicCreatorRequest, db *gorm.DB,
 	return nil
 }
 
-func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThreshold int, apmTransaction *apm.Transaction, userWrapper user.IUserWrapper) (*CreatorRequestsListResponse, error) {
+func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThreshold int, apmTransaction *apm.Transaction, userGoWrapper user_go.IUserGoWrapper) (*CreatorRequestsListResponse, error) {
 	query := db.Model(database.Creator{}).Preload("Reason")
 
 	if req.UserId.Valid {
@@ -111,7 +111,7 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 		}
 	}
 
-	userResp := <-userWrapper.GetUsers(userIds, apmTransaction, false)
+	userResp := <-userGoWrapper.GetUsers(userIds, apmTransaction, false)
 	if userResp.Error != nil {
 		apm_helper.CaptureApmError(userResp.Error.ToError(), apmTransaction)
 	}

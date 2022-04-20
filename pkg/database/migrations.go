@@ -458,5 +458,17 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "creator_songs_reject_reason_300320221312",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creator_songs add column if not exists reject_reason int;
+						  alter table creator_reject_reasons add column if not exists type int;
+						  update creator_reject_reasons set type = 1;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

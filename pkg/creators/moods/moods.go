@@ -21,6 +21,7 @@ func Upsert(req UpsertRequest, db *gorm.DB) ([]database.Mood, error) {
 	for _, item := range req.Items {
 		r := database.Mood{
 			Name:      item.Name,
+			IsActive:  item.IsActive,
 			SortOrder: item.SortOrder,
 			CreatedAt: time.Now(),
 		}

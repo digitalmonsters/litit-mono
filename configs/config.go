@@ -3,6 +3,8 @@ package configs
 import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/rs/zerolog/log"
+	"os"
 )
 
 type Settings struct {
@@ -47,9 +49,11 @@ func init() {
 		panic(err)
 	}
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
-		settings.MasterDb.Db = fmt.Sprintf("ci_%v", boilerplate.GetGenerator().Generate().String())
+		settings.MasterDb.Db = fmt.Sprintf("ci_%v", int64(os.Getpid()))
+		log.Info().Msg(fmt.Sprintf("ci db name generated: %v", settings.MasterDb.Db))
 		settings.ReadonlyDb.Db = settings.MasterDb.Db
 	}
+
 }
 
 func GetConfig() Settings {
