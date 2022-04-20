@@ -28,6 +28,7 @@ type IGoTokenomicsWrapper interface {
 	GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan
 	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan
 	GetReferralsInfo(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse]
+	GetActivitiesInfo(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse]
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
@@ -220,5 +221,11 @@ func (w *Wrapper) GetReferralsInfo(referrerId int64, referralIds []int64, apmTra
 	return wrappers.ExecuteRpcRequestAsync[GetReferralInfoResponse](w.baseWrapper, w.apiUrl, "GetReferralsInfo", GetReferralInfoRequest{
 		ReferralIds: referralIds,
 		ReferrerId:  referrerId,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w *Wrapper) GetActivitiesInfo(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetActivitiesInfoResponse](w.baseWrapper, w.apiUrl, "GetActivitiesInfo", GetActivitiesInfoRequest{
+		UserId: userId,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }

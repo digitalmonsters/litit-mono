@@ -12,6 +12,7 @@ type GoTokenomicsWrapperMock struct {
 	GetTokenomicsStatsByUserIdFn          func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan
 	GetConfigPropertiesFn                 func(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan
 	GetReferralsInfoFn                    func(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse]
+	GetActivitiesInfoFn                   func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse]
 }
 
 func (w *GoTokenomicsWrapperMock) GetUsersTokenomicsInfo(userIds []int64, filters []Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan {
@@ -35,6 +36,9 @@ func (w *GoTokenomicsWrapperMock) GetConfigProperties(properties []string, apmTr
 }
 func (w *GoTokenomicsWrapperMock) GetReferralsInfo(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse] {
 	return w.GetReferralsInfoFn(referrerId, referralIds, apmTransaction, forceLog)
+}
+func (w *GoTokenomicsWrapperMock) GetActivitiesInfo(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse] {
+	return w.GetActivitiesInfoFn(userId, apmTransaction, forceLog)
 }
 
 func GetMock() IGoTokenomicsWrapper {

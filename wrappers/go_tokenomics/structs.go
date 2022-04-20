@@ -141,3 +141,18 @@ type GetReferralInfoResponse struct {
 	TotalCollectedPoints decimal.Decimal           `json:"total_collected_points"`
 	Referrals            map[int64]decimal.Decimal `json:"referrals"`
 }
+
+type GetActivitiesInfoRequest struct {
+	UserId int64 `json:"user_id"`
+}
+
+type GetActivitiesInfoResponse struct {
+	Items map[int64]UserActivity `json:"items"`
+	Error *rpc.RpcError
+}
+
+type UserActivity struct {
+	AddDescriptionBonus  bool `json:"add_description_bonus"`
+	FirstVideoUploaded   bool `json:"first_video_uploaded"`
+	FirstTimeAvatarAdded bool `json:"first_time_avatar_added"`
+}
