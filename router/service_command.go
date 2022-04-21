@@ -29,7 +29,7 @@ func NewServiceCommand(methodName string, fn CommandFunc, forceLog bool) IComman
 	}
 }
 
-func (a ServiceCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+func (a ServiceCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.ExtendedLocalRpcError) {
 	return 0, false, nil
 }
 

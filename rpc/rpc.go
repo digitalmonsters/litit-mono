@@ -18,13 +18,18 @@ type RpcRequest struct {
 
 //goland:noinspection ALL
 type RpcResponse struct {
-	JsonRpc           string      `json:"jsonrpc"`
-	Result            interface{} `json:"result"`
-	Error             *RpcError   `json:"error"`
-	Id                string      `json:"id"`
-	ExecutionTimingMs int64       `json:"execution_timing"`
-	TotalTimingMs     int64       `json:"total_timing_ms"`
-	Hostname          string      `json:"hostname"`
+	JsonRpc           string                 `json:"jsonrpc"`
+	Result            interface{}            `json:"result"`
+	Error             *ExtendedLocalRpcError `json:"error"`
+	Id                string                 `json:"id"`
+	ExecutionTimingMs int64                  `json:"execution_timing"`
+	TotalTimingMs     int64                  `json:"total_timing_ms"`
+	Hostname          string                 `json:"hostname"`
+}
+
+type ExtendedLocalRpcError struct {
+	RpcError
+	LocalHandlingError error `json:"-"`
 }
 
 //goland:noinspection ALL

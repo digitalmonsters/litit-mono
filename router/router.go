@@ -370,7 +370,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 			case error:
 				panicErr = errors.Wrap(val, fmt.Sprintf("panic! %v", val))
 			default:
-				panicErr = errors.New(fmt.Sprintf("panic! : %v", val))
+				panicErr = errors.New(fmt.Sprintf("panic! default! : %v", val))
 			}
 
 			if panicErr == nil {
@@ -378,11 +378,14 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 			}
 
 			rpcResponse.Result = nil
-			rpcResponse.Error = &rpc.RpcError{
-				Code:     error_codes.GenericPanicError,
-				Message:  panicErr.Error(),
-				Data:     nil,
-				Hostname: r.hostname,
+			rpcResponse.Error = &rpc.ExtendedLocalRpcError{
+				RpcError: rpc.RpcError{
+					Code:     error_codes.GenericPanicError,
+					Message:  panicErr.Error(),
+					Data:     nil,
+					Hostname: r.hostname,
+				},
+				LocalHandlingError: panicErr,
 			}
 
 			if !r.isProd {
@@ -406,10 +409,13 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 	if userId <= 0 && (cmd.RequireIdentityValidation() || cmd.AccessLevel() > common.AccessLevelPublic) {
 		err := errors.New("missing jwt token for auth")
 
-		rpcError = &rpc.RpcError{
-			Code:     error_codes.MissingJwtToken,
-			Message:  "missing jwt token for auth",
-			Hostname: r.hostname,
+		rpcError = &rpc.ExtendedLocalRpcError{
+			RpcError: rpc.RpcError{
+				Code:     error_codes.MissingJwtToken,
+				Message:  err.Error(),
+				Hostname: r.hostname,
+			},
+			LocalHandlingError: err,
 		}
 
 		if !r.isProd {
@@ -445,11 +451,14 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 	}
 
 	if resp, err := cmd.GetFn()(rpcRequest.Params, executionData); err != nil {
-		rpcResponse.Error = &rpc.RpcError{
-			Code:     err.GetCode(),
-			Message:  err.GetMessage(),
-			Data:     nil,
-			Hostname: r.hostname,
+		rpcResponse.Error = &rpc.ExtendedLocalRpcError{
+			RpcError: rpc.RpcError{
+				Code:     err.GetCode(),
+				Message:  err.GetMessage(),
+				Data:     nil,
+				Hostname: r.hostname,
+			},
+			LocalHandlingError: err.GetError(),
 		}
 
 		shouldLog = true
@@ -510,11 +519,17 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 				if respBody, err := json.Marshal(rpcResponse); err != nil {
 					shouldLog = true
 					rpcResponse.Result = nil
-					rpcResponse.Error = &rpc.RpcError{
-						Code:     error_codes.GenericMappingError,
-						Message:  errors.Wrap(err, "error during response serialization").Error(),
-						Data:     nil,
-						Hostname: r.hostname,
+
+					innerErr := errors.Wrap(err, "error during response serialization")
+
+					rpcResponse.Error = &rpc.ExtendedLocalRpcError{
+						RpcError: rpc.RpcError{
+							Code:     error_codes.GenericMappingError,
+							Message:  innerErr.Error(),
+							Data:     nil,
+							Hostname: r.hostname,
+						},
+						LocalHandlingError: innerErr,
 					}
 					if !r.isProd {
 						rpcResponse.Error.Stack = fmt.Sprintf("%+v", err)
@@ -546,11 +561,14 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 		requestBody = httpCtx.PostBody()
 
 		if err := json.Unmarshal(requestBody, &rpcRequest); err != nil {
-			rpcResponse.Error = &rpc.RpcError{
-				Code:     error_codes.GenericMappingError,
-				Message:  err.Error(),
-				Data:     nil,
-				Hostname: r.hostname,
+			rpcResponse.Error = &rpc.ExtendedLocalRpcError{
+				RpcError: rpc.RpcError{
+					Code:     error_codes.GenericMappingError,
+					Message:  err.Error(),
+					Data:     nil,
+					Hostname: r.hostname,
+				},
+				LocalHandlingError: err,
 			}
 
 			if !r.isProd {
@@ -560,14 +578,19 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			return
 		}
 
+		apmTransaction.Name = rpcRequest.Method
+
 		cmd, err := endpoint.GetCommand(rpcRequest.Method)
 
 		if err != nil {
-			rpcResponse.Error = &rpc.RpcError{
-				Code:     error_codes.CommandNotFoundError,
-				Message:  err.Error(),
-				Data:     nil,
-				Hostname: r.hostname,
+			rpcResponse.Error = &rpc.ExtendedLocalRpcError{
+				RpcError: rpc.RpcError{
+					Code:     error_codes.CommandNotFoundError,
+					Message:  err.Error(),
+					Data:     nil,
+					Hostname: r.hostname,
+				},
+				LocalHandlingError: err,
 			}
 
 			if !r.isProd {
@@ -619,7 +642,11 @@ func (r *HttpRouter) logResponseBody(responseBody []byte,
 
 func (r *HttpRouter) logRpcResponseError(rpcResponse rpc.RpcResponse, ctx context.Context) {
 	if rpcResponse.Error != nil {
-		apm_helper.LogError(rpcResponse.Error.ToError(), ctx)
+		if rpcResponse.Error.LocalHandlingError != nil {
+			apm_helper.LogError(rpcResponse.Error.LocalHandlingError, ctx)
+		} else {
+			apm_helper.LogError(rpcResponse.Error.ToError(), ctx)
+		}
 	}
 }
 

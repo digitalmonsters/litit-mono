@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
+	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
 	"strings"
@@ -29,7 +30,7 @@ func NewLegacyAdminCommand(methodName string, fn CommandFunc) ICommand {
 	}
 }
 
-func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.RpcError) {
+func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.ExtendedLocalRpcError) {
 	userId, isGuest, err := publicCanExecuteLogic(httpCtx, a.requireIdentityValidation)
 
 	if err != nil {
@@ -37,30 +38,41 @@ func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context
 	}
 
 	if userId <= 0 {
-		return 0, isGuest, &rpc.RpcError{
-			Code:        error_codes.MissingJwtToken,
-			Message:     "legacy admin method requires identity validation",
-			Hostname:    hostName,
-			ServiceName: hostName,
+		err := errors.New("legacy admin method requires identity validation")
+
+		return 0, isGuest, &rpc.ExtendedLocalRpcError{
+			RpcError: rpc.RpcError{
+				Code:        error_codes.MissingJwtToken,
+				Message:     "legacy admin method requires identity validation",
+				Hostname:    hostName,
+				ServiceName: hostName,
+			},
+			LocalHandlingError: err,
 		}
 	}
 
 	resp := <-auth.CheckLegacyAdmin(userId, apm.TransactionFromContext(ctx), false)
 
 	if resp.Error != nil {
-		return 0, isGuest, resp.Error
+		return 0, isGuest, &rpc.ExtendedLocalRpcError{
+			RpcError: *resp.Error,
+		}
 	}
 
 	if resp.Resp.IsAdmin || resp.Resp.IsSuperAdmin {
 		return userId, isGuest, nil
 	}
 
-	return 0, isGuest, &rpc.RpcError{
-		Code:        error_codes.InvalidJwtToken,
-		Message:     "user is not marked as admin",
-		Stack:       "",
-		Hostname:    hostName,
-		ServiceName: hostName,
+	err1 := errors.New("user is not marked as admin")
+	return 0, isGuest, &rpc.ExtendedLocalRpcError{
+		RpcError: rpc.RpcError{
+			Code:        error_codes.InvalidJwtToken,
+			Message:     err1.Error(),
+			Stack:       "",
+			Hostname:    hostName,
+			ServiceName: hostName,
+		},
+		LocalHandlingError: err1,
 	}
 }
 
