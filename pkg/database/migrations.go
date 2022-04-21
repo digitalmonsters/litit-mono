@@ -295,5 +295,15 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "description_change_type_210420221239",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set kind = 'push.description.first' where id = 'add_description_bonus'",
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('first_video_uploaded', 'Congrats!', 'You received {{.first_upload_bonus}} LIT points to your wallet for uploading your first video', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'push.upload.first', 'Ok') on conflict do nothing;",
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_need_to_first_upload', 'Lit.it', 'Upload your first video on Lit.it & get rewarded {{.avatar_upload_bonus}} LIT points', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'push.user.need.upload') on conflict do nothing;",
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_need_to_upload_avatar', 'Lit.it', 'Upload your picture on Lit.it & get rewarded {{.description_upload_bonus}}  LIT points', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'push.user.need.avatar') on conflict do nothing;")
+			},
+		},
 	}
 }
