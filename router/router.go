@@ -270,9 +270,9 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 				return
 			}
 
-			r.logRequestBody(requestBody, ctx)
-			r.logResponseBody(responseBody, ctx)
-			r.logRpcResponseError(rpcResponse, ctx)
+			r.logRequestBody(requestBody, executionCtx)
+			r.logResponseBody(responseBody, executionCtx)
+			r.logRpcResponseError(rpcResponse, executionCtx)
 		}()
 
 		finalStatusCode := int(error_codes.None)
@@ -661,7 +661,7 @@ func (r *HttpRouter) logRequestHeaders(httpCtx *fasthttp.RequestCtx,
 			keyStr = "device_id"
 		}
 
-		apm_helper.AddApmDataWithContext(ctx, keyStr, valueStr)
+		apm_helper.AddApmLabelWithContext(ctx, keyStr, valueStr)
 	})
 }
 
