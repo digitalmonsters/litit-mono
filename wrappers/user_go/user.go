@@ -9,14 +9,13 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
-	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"time"
 )
 
 type IUserGoWrapper interface {
-	GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan
+	GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]GetUsersResponseChan]
 
 	GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
 	GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
@@ -40,7 +39,6 @@ type UserGoWrapper struct {
 	serviceApiUrl  string
 	publicApiUrl   string
 	serviceName    string
-	cache          *cache.Cache
 }
 
 func NewUserGoWrapper(config boilerplate.WrapperConfig) IUserGoWrapper {
@@ -62,74 +60,14 @@ func NewUserGoWrapper(config boilerplate.WrapperConfig) IUserGoWrapper {
 		serviceApiUrl:  fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		publicApiUrl:   common.StripSlashFromUrl(config.ApiUrl),
 		serviceName:    "user-go",
-		cache:          cache.New(4*time.Minute, 5*time.Minute),
 	}
 }
 
-func (w UserGoWrapper) GetUsers(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersResponseChan {
-	respCh := make(chan GetUsersResponseChan, 2)
-
-	cachedItems := map[int64]UserRecord{}
-	var userIdsToFetch []int64
-
-	for _, userId := range userIds {
-		cachedItem, hasCachedItem := w.cache.Get(fmt.Sprint(userId))
-
-		if hasCachedItem {
-			cachedItems[userId] = cachedItem.(UserRecord)
-		} else {
-			userIdsToFetch = append(userIdsToFetch, userId)
-		}
-	}
-
-	finalResponse := GetUsersResponseChan{}
-
-	if len(userIdsToFetch) == 0 {
-		finalResponse.Items = cachedItems
-		respCh <- finalResponse
-		close(respCh)
-		return respCh
-	}
-
-	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetUsersInternal", GetUsersRequest{
-		UserIds: userIdsToFetch,
-	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
-
-	go func() {
-		defer func() {
-			close(respCh)
-		}()
-
-		resp := <-respChan
-
-		result := GetUsersResponseChan{
-			Error: resp.Error,
-		}
-
-		if len(resp.Result) > 0 {
-			data := map[int64]UserRecord{}
-
-			if err := json.Unmarshal(resp.Result, &data); err != nil {
-				result.Error = &rpc.RpcError{
-					Code:        error_codes.GenericMappingError,
-					Message:     err.Error(),
-					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
-				}
-			} else {
-				for userId, item := range data {
-					w.cache.Set(fmt.Sprint(userId), item, cache.DefaultExpiration)
-					cachedItems[userId] = item
-				}
-				result.Items = cachedItems
-			}
-		}
-
-		respCh <- result
-	}()
-
-	return respCh
+func (w UserGoWrapper) GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]GetUsersResponseChan] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]GetUsersResponseChan](w.baseWrapper, w.serviceApiUrl,
+		"GetUsersInternal", GetUsersRequest{
+			UserIds: userIds,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
 func (w UserGoWrapper) GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord] {
