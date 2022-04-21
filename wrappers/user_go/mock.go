@@ -8,7 +8,7 @@ import (
 
 //goland:noinspection ALL
 type UserGoWrapperMock struct {
-	GetUsersFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]GetUsersResponseChan]
+	GetUsersFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord]
 
 	GetUsersDetailFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
 	GetUserDetailsFn func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
@@ -41,7 +41,7 @@ func (m *UserGoWrapperMock) UpdateUserMetadataAfterRegistration(request UpdateUs
 	return m.UpdateUserMetadataAfterRegistrationFn(request, ctx, forceLog)
 }
 
-func (m *UserGoWrapperMock) GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]GetUsersResponseChan] {
+func (m *UserGoWrapperMock) GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord] {
 	return m.GetUsersFn(userIds, ctx, forceLog)
 }
 

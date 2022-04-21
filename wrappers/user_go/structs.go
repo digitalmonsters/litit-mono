@@ -6,11 +6,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
-type GetUsersResponseChan struct {
-	Error *rpc.RpcError
-	Items map[int64]UserRecord `json:"items"`
-}
-
 type NamePrivacyStatus int
 
 const (

@@ -15,7 +15,7 @@ import (
 )
 
 type IUserGoWrapper interface {
-	GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]GetUsersResponseChan]
+	GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord]
 
 	GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
 	GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
@@ -63,8 +63,8 @@ func NewUserGoWrapper(config boilerplate.WrapperConfig) IUserGoWrapper {
 	}
 }
 
-func (w UserGoWrapper) GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]GetUsersResponseChan] {
-	return wrappers.ExecuteRpcRequestAsync[map[int64]GetUsersResponseChan](w.baseWrapper, w.serviceApiUrl,
+func (w UserGoWrapper) GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]UserRecord](w.baseWrapper, w.serviceApiUrl,
 		"GetUsersInternal", GetUsersRequest{
 			UserIds: userIds,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
