@@ -9,13 +9,20 @@ import (
 	"time"
 )
 
+type IUploader interface {
+	GetObjectSignedUrl(path string, urlExpiration time.Duration) (string, error)
+	PutObjectSignedUrl(path string, urlExpiration time.Duration) (string, error)
+	GetObjectSize(path string) (int64, error)
+	UploadObject(path string, data []byte, contentType string) error
+}
+
 type Uploader struct {
 	config   *boilerplate.S3Config
 	session  *session.Session
 	s3Client *s3.S3
 }
 
-func NewUploader(cfg *boilerplate.S3Config) *Uploader {
+func NewUploader(cfg *boilerplate.S3Config) IUploader {
 	u := &Uploader{
 		config: cfg,
 	}
