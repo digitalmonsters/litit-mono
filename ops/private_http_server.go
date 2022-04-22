@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
+	"time"
 )
 
 type PrivateHttpServer struct {
@@ -59,6 +60,8 @@ func (r *PrivateHttpServer) Ready() {
 
 func (r *PrivateHttpServer) UnHealthy() {
 	r.healthy = false
+
+	time.Sleep(7 * time.Second)
 }
 
 func (r *PrivateHttpServer) StartAsync(port int) *PrivateHttpServer {

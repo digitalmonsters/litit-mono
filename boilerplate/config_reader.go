@@ -137,6 +137,18 @@ type KafkaWriterConfiguration struct {
 	Tls       bool      `json:"Tls"`
 }
 
+type KafkaBatchWriterV2Configuration struct {
+	Hosts                           string           `json:"Hosts"`
+	KafkaAuth                       KafkaAuth        `json:"KafkaAuth"`
+	Tls                             bool             `json:"Tls"`
+	MaxRetryCount                   int              `json:"MaxRetryCount"`
+	FlushTimeMilliseconds           int              `json:"FlushTimeMilliseconds"`
+	FlushAtSize                     int              `json:"FlushAtSize"`
+	BackOffTimeMaxMilliseconds      int              `json:"BackOffTimeMaxMilliseconds"`
+	BackOffTimeIntervalMilliseconds int              `json:"BackOffTimeIntervalMilliseconds"`
+	Topic                           KafkaTopicConfig `json:"Topic"`
+}
+
 type KafkaAuth struct {
 	Type     string `json:"Type"`
 	User     string `json:"User"`
