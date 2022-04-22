@@ -60,6 +60,23 @@ func (u *Uploader) PutObjectSignedUrl(path string, urlExpiration time.Duration) 
 	return signedUrl, nil
 }
 
+func (u *Uploader) GetObjectSize(path string) (int64, error) {
+	client, err := u.getClient()
+	if err != nil {
+		return 0, err
+	}
+
+	fileMetadata, err := client.HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(u.config.Bucket),
+		Key:    aws.String(path),
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return *fileMetadata.ContentLength, nil
+}
+
 func (u *Uploader) UploadObject(path string, data []byte, contentType string) error {
 	client, err := u.getClient()
 	if err != nil {
