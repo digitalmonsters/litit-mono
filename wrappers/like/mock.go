@@ -1,6 +1,8 @@
 package like
 
 import (
+	"context"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
 )
@@ -11,6 +13,7 @@ type LikeWrapperMock struct {
 	GetInternalLikedByUserFn    func(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalLikedByUserResponseChan
 	GetInternalUserLikesFn      func(userId int64, size int, pageState string, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan
 	GetInternalDislikedByUserFn func(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]bool]
+	AddLikesInternalFn          func(likeEvents []eventsourcing.LikeEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddLikesResponse]
 }
 
 func (w *LikeWrapperMock) GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponseChan {
@@ -25,6 +28,9 @@ func (w *LikeWrapperMock) GetInternalUserLikes(userId int64, size int, pageState
 }
 func (w *LikeWrapperMock) GetInternalDislikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]bool] {
 	return w.GetInternalDislikedByUserFn(contentIds, userId, apmTransaction, forceLog)
+}
+func (w *LikeWrapperMock) AddLikesInternal(likeEvents []eventsourcing.LikeEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddLikesResponse] {
+	return w.AddLikesInternalFn(likeEvents, ctx, forceLog)
 }
 
 func GetMock() ILikeWrapper { // for compiler errors

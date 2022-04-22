@@ -1,11 +1,13 @@
 package like
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/rs/zerolog/log"
@@ -18,6 +20,7 @@ type ILikeWrapper interface {
 	GetInternalLikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalLikedByUserResponseChan
 	GetInternalDislikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]bool]
 	GetInternalUserLikes(userId int64, size int, pageState string, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan
+	AddLikesInternal(likeEvents []eventsourcing.LikeEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddLikesResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -179,4 +182,11 @@ func (w *LikeWrapper) GetInternalDislikedByUser(contentIds []int64, userId int64
 		UserId:     userId,
 		ContentIds: contentIds,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w LikeWrapper) AddLikesInternal(likeEvents []eventsourcing.LikeEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddLikesResponse] {
+	return wrappers.ExecuteRpcRequestAsync[AddLikesResponse](w.baseWrapper, w.apiUrl,
+		"AddLikesInternal", AddLikesRequest{
+			LikeEvents: likeEvents,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

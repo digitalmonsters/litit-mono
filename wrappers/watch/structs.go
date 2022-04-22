@@ -1,6 +1,9 @@
 package watch
 
-import "github.com/digitalmonsters/go-common/rpc"
+import (
+	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/rpc"
+)
 
 type LastWatchesByUserRecord struct {
 	ContentId  int64   `json:"content_id"`
@@ -34,4 +37,12 @@ type GetCategoriesByViewsRequest struct {
 type GetCategoriesResponseChan struct {
 	Error *rpc.RpcError  `json:"error"`
 	Items []CategoryInfo `json:"items"`
+}
+
+type AddViewsRequest struct {
+	ViewEvents []eventsourcing.ViewEvent `json:"view_events"`
+}
+
+type AddViewsResponse struct {
+	Success bool `json:"success"`
 }

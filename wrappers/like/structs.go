@@ -1,6 +1,9 @@
 package like
 
-import "github.com/digitalmonsters/go-common/rpc"
+import (
+	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/rpc"
+)
 
 type LastLikedByUserResponseChan struct {
 	Error *rpc.RpcError          `json:"error"`
@@ -49,4 +52,12 @@ type getInternalUserLikesResponse struct {
 type GetInternalDislikedByUserRequest struct {
 	UserId     int64   `json:"user_id"`
 	ContentIds []int64 `json:"content_ids"`
+}
+
+type AddLikesRequest struct {
+	LikeEvents []eventsourcing.LikeEvent `json:"like_events"`
+}
+
+type AddLikesResponse struct {
+	Success bool `json:"success"`
 }
