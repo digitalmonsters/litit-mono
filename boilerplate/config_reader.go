@@ -74,6 +74,7 @@ type Wrappers struct {
 	SolanaApiGate       WrapperConfig `json:"SolanaApiGate"`
 	AdminWs             WrapperConfig `json:"AdminWs"`
 	Comment             WrapperConfig `json:"Comment"`
+	TesseractOcrApi     WrapperConfig `json:"TesseractOcrApi"`
 }
 
 type WrapperConfig struct {
