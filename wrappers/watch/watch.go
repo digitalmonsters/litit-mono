@@ -1,11 +1,13 @@
 package watch
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/rs/zerolog/log"
@@ -15,6 +17,7 @@ import (
 
 type IWatchWrapper interface {
 	GetLastWatchesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastWatcherByUserResponseChan
+	AddViewsInternal(viewEvents []eventsourcing.ViewEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddViewsResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -126,4 +129,11 @@ func (w *WatchWrapper) GetCategoriesByViews(limit int64, offset int64, apmTransa
 	}()
 
 	return respCh
+}
+
+func (w WatchWrapper) AddViewsInternal(viewEvents []eventsourcing.ViewEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddViewsResponse] {
+	return wrappers.ExecuteRpcRequestAsync[AddViewsResponse](w.baseWrapper, w.apiUrl,
+		"AddViewsInternal", AddViewsRequest{
+			ViewEvents: viewEvents,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
