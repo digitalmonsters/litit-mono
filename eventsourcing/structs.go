@@ -73,6 +73,21 @@ func (l FollowEvent) GetPublishKey() string {
 	return fmt.Sprintf("{\"user_id\":%v,\"to_user_id\":%v}", l.UserId, l.ToUserId)
 }
 
+type ContentType int
+
+const (
+	ContentTypeVideo = ContentType(0)
+	ContentTypeSpot  = ContentType(1)
+)
+
+type UploadStatus int
+
+const (
+	UploadStatusNotStarted = UploadStatus(0)
+	UploadStatusInProgress = UploadStatus(1)
+	UploadStatusCompleted  = UploadStatus(2)
+)
+
 type ContentEvent struct {
 	Id               int64                 `json:"id"`
 	UserId           int64                 `json:"user_id"`
@@ -111,7 +126,7 @@ type ContentEvent struct {
 	Draft            bool                  `json:"draft"`
 	Width            int                   `json:"width"`
 	Height           int                   `json:"height"`
-	UploadStatus     int                   `json:"upload_status"`
+	UploadStatus     UploadStatus          `json:"upload_status"`
 	ByAdmin          bool                  `json:"by_admin"`
 	Fps              string                `json:"fps"`
 	Bitrate          string                `json:"bitrate"`
@@ -121,6 +136,7 @@ type ContentEvent struct {
 	CommentsCount    int64                 `json:"comments_count"`
 	RejectReason     frontend.RejectReason `json:"reject_reason"`
 	IsNewVisible     bool                  `json:"is_new_visible"`
+	Type             ContentType           `json:"type"`
 	BaseChangeEvent
 }
 
