@@ -242,3 +242,7 @@ type ForceResetUserIdentityWithNewGuestResponse struct {
 type VerifyUserRequest struct {
 	UserId int64 `json:"user_id"`
 }
+
+type GetAllActiveBotsResponse struct {
+	UserIds int64 `json:"user_ids"`
+}

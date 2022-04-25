@@ -30,6 +30,7 @@ type IUserGoWrapper interface {
 	UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	ForceResetUserWithNewGuestIdentity(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
+	GetAllActiveBots(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -305,4 +306,9 @@ func (w UserGoWrapper) VerifyUser(userId int64, ctx context.Context, forceLog bo
 		"VerifyUser", VerifyUserRequest{
 			UserId: userId,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GetAllActiveBots(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetAllActiveBotsResponse](w.baseWrapper, w.serviceApiUrl,
+		"GetAllActiveBots", nil, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
