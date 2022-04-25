@@ -244,5 +244,5 @@ type VerifyUserRequest struct {
 }
 
 type GetAllActiveBotsResponse struct {
-	UserIds int64 `json:"user_ids"`
+	UserIds []int64 `json:"user_ids"`
 }
