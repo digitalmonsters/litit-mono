@@ -8,6 +8,7 @@ import (
 	eagerlock "github.com/RichardKnop/machinery/v1/locks/eager"
 	lockiface "github.com/RichardKnop/machinery/v1/locks/iface"
 	redislock "github.com/RichardKnop/machinery/v1/locks/redis"
+	"github.com/rs/zerolog"
 	"strings"
 )
 
@@ -35,7 +36,8 @@ func NewServer(cnf *config.Config) (*machinery.Server, error) {
 		// we don't have to call worker.Launch in eager mode
 		eager.AssignWorker(srv.NewWorker("eager", 0))
 	}
-
+	var logger = zerolog.DefaultContextLogger
+	SetMachineryZeroLogLogger(*logger)
 	return srv, nil
 }
 

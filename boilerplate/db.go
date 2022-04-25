@@ -21,7 +21,12 @@ func GetGormConnection(config DbConfig) (*gorm.DB, error) {
 	}
 
 	mainDb, err := gorm.Open(postgres.Open(connStr), &gorm.Config{
-		QueryFields: true,
+		QueryFields: false,
+		Logger: NewDbLogger(CustomLoggerConfig{
+			SlowThreshold:         1 * time.Second,
+			SkipErrRecordNotFound: true,
+			HasStackTrace:         true,
+		}),
 	})
 
 	if err != nil {
