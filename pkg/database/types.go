@@ -122,6 +122,16 @@ func GetNotificationType(templateId string) string {
 		return "push.bonus.weekly_time.first"
 	case "first_x_paid_views":
 		return "push.paid_views.first"
+	case "first_time_avatar_added":
+		return "push.avatar.first"
+	case "add_description_bonus":
+		return "push.description.first"
+	case "first_video_uploaded":
+		return "push.upload.first"
+	case "user_need_to_first_upload":
+		return "push.user.need.upload"
+	case "user_need_to_upload_avatar":
+		return "push.user.need.avatar"
 	case "first_x_paid_views_as_content_owner":
 		return "push.content_owner.paid_views.first"
 	case "guest_max_earned_points_for_views":
@@ -139,13 +149,19 @@ func GetNotificationType(templateId string) string {
 	case "megabonus":
 		return "push.referral.megabonus"
 	case "guest_after_install_first_push":
+		return "push.guest.after_install"
 	case "guest_after_install_second_push":
+		return "push.guest.after_install"
 	case "guest_after_install_third_push":
 		return "push.guest.after_install"
 	case "user_after_signup_first_push":
+		return "push.user.after_signup"
 	case "user_after_signup_second_push":
+		return "push.user.after_signup"
 	case "user_after_signup_third_push":
+		return "push.user.after_signup"
 	case "user_after_signup_fourth_push":
+		return "push.user.after_signup"
 	case "user_after_signup_fifth_push":
 		return "push.user.after_signup"
 	}
@@ -159,6 +175,6 @@ func GetMarketingNotifications() []string {
 		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
 		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
 		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus", "push.guest.after_install",
-		"push.user.after_signup",
+		"push.user.after_signup", "push.avatar.first", "push.upload.first", "push.description.first",
 	}
 }

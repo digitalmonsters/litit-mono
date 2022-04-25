@@ -242,5 +242,68 @@ func getMigrations() []*gormigrate.Migration {
 					"alter table notifications add column if not exists custom_data jsonb default '{}' not null;")
 			},
 		},
+		{
+			ID: "description_popup_180420221434",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('add_description_bonus', 'Congrats!', 'You received {{.description_bonus}} LIT points to your wallet for adding a description', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'popup', 'Ok') on conflict do nothing;")
+			},
+		},
+		{
+			ID: "add_daily_max_amount_of_paid_views_reached_template_310320221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('daily_max_amount_of_paid_views_reached', 'You just earned maximum daily LIT points for watching videos!', 'You can earn up to {{.pointsAmount}} LIT per day for watching videos', '2022-04-18 12:00:00.000000', '2022-04-18 12:00:00.000000',  'popup', 'Congrats!');",
+				)
+			},
+		},
+		{
+			ID: "add_first_avtar_added_template_140420221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('first_time_avatar_added','Congrats!', 'You received {{.first_avatar_bonus}} LIT points to your wallet for adding a photo', '2022-04-18 11:00:00.000000', '2022-04-14 11:00:00.000000', 'push.avatar.first') on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "change_push_titles_and_messages_140420221100",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set title = 'Litit', body = 'Complete your account creation & start earning LIT rewards' where id = 'guest_after_install_second_push';",
+					"update public.render_templates set title = 'Litit', body = 'On Lit.it the more viral videos you watch the more your earn' where id = 'guest_after_install_second_push';",
+					"update public.render_templates set title = 'Litit', body = 'Check this out. We picked our TOP viral videos for you' where id = 'guest_after_install_third_push';",
+					"update public.render_templates set title = 'Litit', body = 'Few things you need to know about Lit.it' where id = 'user_after_signup_first_push';",
+					"update public.render_templates set title = 'Litit', body = 'Check who earned the most for inviting friends to Lit.it' where id = 'user_after_signup_second_push';",
+					"update public.render_templates set title = 'Litit', body = 'Who earned the most LIT points? Check this out' where id = 'user_after_signup_third_push';",
+					"update public.render_templates set title = 'Litit', body = 'Check out TOP viral videos on Lit.it & earn LIT points' where id = 'user_after_signup_fourth_push';",
+					"update public.render_templates set title = 'Litit', body = 'How many LIT points in your wallet? Check this out' where id = 'user_after_signup_fifth_push';",
+				)
+			},
+		},
+		{
+			ID: "change_push_titles_and_messages_190420222115",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set title = 'Lit.it', body = 'Complete your account creation & start earning LIT rewards' where id = 'guest_after_install_first_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'guest_after_install_second_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'guest_after_install_third_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_first_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_second_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_third_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_fourth_push';",
+					"update public.render_templates set title = 'Lit.it' where id = 'user_after_signup_fifth_push';",
+				)
+			},
+		},
+		{
+			ID: "description_change_type_210420221239",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set kind = 'push.description.first' where id = 'add_description_bonus'",
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('first_video_uploaded', 'Congrats!', 'You received {{.first_upload_bonus}} LIT points to your wallet for uploading your first video', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'push.upload.first', 'Ok') on conflict do nothing;",
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_need_to_first_upload', 'Lit.it', 'Upload your first video on Lit.it & get rewarded {{.avatar_upload_bonus}} LIT points', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'push.user.need.upload') on conflict do nothing;",
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_need_to_upload_avatar', 'Lit.it', 'Upload your picture on Lit.it & get rewarded {{.description_upload_bonus}}  LIT points', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'push.user.need.avatar') on conflict do nothing;")
+			},
+		},
 	}
 }
