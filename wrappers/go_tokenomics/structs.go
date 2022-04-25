@@ -108,3 +108,15 @@ type UserActivity struct {
 	FirstVideoUploaded   bool `json:"first_video_uploaded"`
 	FirstTimeAvatarAdded bool `json:"first_time_avatar_added"`
 }
+
+type FilterField string
+
+const (
+	TotalPoints        FilterField = "total_points"
+	CurrentPoints      FilterField = "current_points"
+	VaultPoints        FilterField = "vault_points"
+	AllTimeVaultPoints FilterField = "all_time_vault_points"
+	CurrentTokens      FilterField = "current_tokens"
+	CurrentRate        FilterField = "current_rate"
+	WithdrawnTokens    FilterField = "withdrawn_tokens"
+)
