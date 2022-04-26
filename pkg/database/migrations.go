@@ -315,5 +315,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "fix_template_260420221415",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set body = 'Upload your picture on Lit.it & get rewarded {{.avatar_upload_bonus}}  LIT points' where id = 'user_need_to_upload_avatar'",
+					"update public.render_templates set body = 'Upload your first video on Lit.it & get rewarded {{.first_upload_bonus}} LIT points' where id = 'user_need_to_first_upload'")
+			},
+		},
 	}
 }
