@@ -23,6 +23,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, nil
 	}
 
+	if event.CrudOperationReason != "kyc_status_updated" {
+		return &event.Messages, nil
+	}
+
 	var err error
 	var title string
 	var body string
@@ -37,7 +41,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	} else if event.KycStatus == eventsourcing.KycStatusRejected {
 		templateName = "kyc_status_rejected"
 		renderData = map[string]string{
-			"reason": event.CrudOperationReason,
+			"reason": event.KycReason.ValueOrZero(),
 		}
 	} else {
 		return &event.Messages, nil
@@ -54,7 +58,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		title, body, headline, nil, ctx); err != nil {
 		return nil, err
 	}
-	
+
 	reason := eventsourcing.KycReason(event.CrudOperationReason)
 
 	var dbReason *eventsourcing.KycReason
@@ -71,7 +75,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		CreatedAt:          time.Now().UTC(),
 		KycStatus:          &event.KycStatus,
 		RenderingVariables: renderData,
-		KycReason: dbReason,
+		KycReason:          dbReason,
 	}).Error; err != nil {
 		return nil, err
 	}

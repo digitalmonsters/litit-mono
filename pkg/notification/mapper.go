@@ -68,7 +68,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 
 	for _, c := range routines {
 		if err := <-c; err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
+			apm_helper.LogError(err, ctx)
 		}
 	}
 

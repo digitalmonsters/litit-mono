@@ -37,10 +37,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		fallthrough
 	case "first_referral_joined":
 		isCustomTemplate = true
-		relatedUserId = GetRelatedUserIdFromRenderData(event.RenderingVariables, "referral_id", apmTransaction)
+		relatedUserId = GetRelatedUserIdFromRenderData(event.RenderingVariables, "referral_id", ctx)
 	case "referral_greeting":
 		isCustomTemplate = true
-		relatedUserId = GetRelatedUserIdFromRenderData(event.RenderingVariables, "referrer_id", apmTransaction)
+		relatedUserId = GetRelatedUserIdFromRenderData(event.RenderingVariables, "referrer_id", ctx)
 	}
 	nf := &database.Notification{
 		UserId:             event.UserId,
@@ -91,12 +91,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	return &event.Messages, nil
 }
 
-func GetRelatedUserIdFromRenderData(renderingVariables map[string]string, relatedUser string, transaction *apm.Transaction) null.Int {
+func GetRelatedUserIdFromRenderData(renderingVariables map[string]string, relatedUser string, ctx context.Context) null.Int {
 	var relatedUserId null.Int
 	if val, ok := renderingVariables[relatedUser]; ok {
 		parsed, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			apm_helper.CaptureApmError(err, transaction)
+			apm_helper.LogError(err, ctx)
 		} else {
 			relatedUserId = null.IntFrom(parsed)
 		}

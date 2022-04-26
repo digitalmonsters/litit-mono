@@ -33,13 +33,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	case eventsourcing.TokenomicsNotificationTip:
 		var userData user_go.UserRecord
 
-		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.RelatedUserId.ValueOrZero()}, apmTransaction, false)
+		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.RelatedUserId.ValueOrZero()}, ctx, false)
 		if resp.Error != nil {
 			return nil, resp.Error.ToError()
 		}
 
 		var ok bool
-		if userData, ok = resp.Items[event.Payload.RelatedUserId.ValueOrZero()]; !ok {
+		if userData, ok = resp.Response[event.Payload.RelatedUserId.ValueOrZero()]; !ok {
 			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 

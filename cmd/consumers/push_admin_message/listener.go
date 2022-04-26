@@ -18,7 +18,7 @@ func InitListener(appCtx context.Context, configuration boilerplate.KafkaListene
 			mapped, err := mapKafkaMessages(singleMessage)
 
 			if err != nil {
-				apm_helper.CaptureApmError(err, executionData.ApmTransaction)
+				apm_helper.LogError(err, executionData.Context)
 
 				return []kafka.Message{singleMessage}
 			}
@@ -26,7 +26,7 @@ func InitListener(appCtx context.Context, configuration boilerplate.KafkaListene
 			result, err := process(*mapped, executionData.Context, notificationSender, executionData.ApmTransaction)
 
 			if err != nil {
-				apm_helper.CaptureApmError(err, executionData.ApmTransaction)
+				apm_helper.LogError(err, executionData.Context)
 			}
 
 			successfulMessages := make([]kafka.Message, 0)
