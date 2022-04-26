@@ -55,7 +55,7 @@ require (
 	github.com/elastic/go-licenser v0.4.0 // indirect
 	github.com/elastic/go-sysinfo v1.7.1 // indirect
 	github.com/elastic/go-windows v1.0.1 // indirect
-	github.com/fsnotify/fsnotify v1.5.2 // indirect
+	github.com/fsnotify/fsnotify v1.5.3 // indirect
 	github.com/gammazero/deque v0.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-redis/redis v6.15.9+incompatible // indirect
@@ -63,14 +63,14 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/golang/snappy v0.0.4 // indirect; indirect`
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.3.0 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
