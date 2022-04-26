@@ -246,3 +246,11 @@ type VerifyUserRequest struct {
 type GetAllActiveBotsResponse struct {
 	UserIds []int64 `json:"user_ids"`
 }
+
+type GetConfigPropertiesResponseChan struct {
+	Items map[string]string `json:"items"`
+	Error *rpc.RpcError
+}
+type GetConfigPropertiesRequest struct {
+	Properties []string `json:"properties"`
+}
