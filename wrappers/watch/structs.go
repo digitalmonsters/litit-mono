@@ -46,3 +46,7 @@ type AddViewsRequest struct {
 type AddViewsResponse struct {
 	Success bool `json:"success"`
 }
+
+type GetUsersTotalTimeWatchingInternalRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
