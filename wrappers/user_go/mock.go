@@ -24,6 +24,7 @@ type UserGoWrapperMock struct {
 	ForceResetUserWithNewGuestIdentityFn  func(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUserFn                          func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	GetAllActiveBotsFn                    func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
+	GetConfigPropertiesInternalFn         func(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan]
 }
 
 func (m *UserGoWrapperMock) GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord] {
@@ -80,6 +81,10 @@ func (m *UserGoWrapperMock) GetUserBlock(blockedTo int64, blockedBy int64, apmTr
 
 func (m *UserGoWrapperMock) GetAllActiveBots(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse] {
 	return m.GetAllActiveBotsFn(ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) GetConfigPropertiesInternal(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan] {
+	return m.GetConfigPropertiesInternalFn(properties, ctx, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors

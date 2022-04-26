@@ -18,6 +18,7 @@ import (
 type IWatchWrapper interface {
 	GetLastWatchesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastWatcherByUserResponseChan
 	AddViewsInternal(viewEvents []eventsourcing.ViewEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddViewsResponse]
+	GetUsersTotalTimeWatchingInternal(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -135,5 +136,12 @@ func (w WatchWrapper) AddViewsInternal(viewEvents []eventsourcing.ViewEvent, ctx
 	return wrappers.ExecuteRpcRequestAsync[AddViewsResponse](w.baseWrapper, w.apiUrl,
 		"AddViewsInternal", AddViewsRequest{
 			ViewEvents: viewEvents,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w WatchWrapper) GetUsersTotalTimeWatchingInternal(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]int64](w.baseWrapper, w.apiUrl,
+		"GetUsersTotalTimeWatchingInternal", GetUsersTotalTimeWatchingInternalRequest{
+			UserIds: userIds,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
