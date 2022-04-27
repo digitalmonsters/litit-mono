@@ -1,12 +1,10 @@
 package solana_api_gate
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
-	"github.com/digitalmonsters/go-common/error_codes"
-	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
@@ -15,8 +13,8 @@ import (
 )
 
 type ISolanaApiGateWrapper interface {
-	TransferToken(from string, amount string, account string, recipientType string, apmTransaction *apm.Transaction, forceLog bool) chan TransferTokenResponseChan
-	CreateVesting(from string, to string, amounts string, timestamps string, apmTransaction *apm.Transaction, forceLog bool) chan CreateVestingResponseChan
+	TransferToken(from string, amount string, account string, recipientType string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[TransferTokenResponseData]
+	CreateVesting(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateVestingResponseData]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -50,91 +48,29 @@ func NewSolanaApiGateWrapper(config boilerplate.WrapperConfig) ISolanaApiGateWra
 	}
 }
 
-func (w SolanaApiGateWrapper) TransferToken(from string, amount string, account string, recipientType string, apmTransaction *apm.Transaction, forceLog bool) chan TransferTokenResponseChan {
-	respCh := make(chan TransferTokenResponseChan, 2)
+func (w SolanaApiGateWrapper) TransferToken(from string, amount string, account string, recipientType string, withdrawalTransactionId int64,
+	ctx context.Context,
+	forceLog bool) chan wrappers.GenericResponseChan[TransferTokenResponseData] {
 
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "TransferToken", TransferRequest{
-		From:   from,
-		Amount: amount,
+	return wrappers.ExecuteRpcRequestAsync[TransferTokenResponseData](w.baseWrapper, w.apiUrl, "TransferToken", TransferRequest{
+		From:                    from,
+		Amount:                  amount,
+		WithdrawalTransactionId: withdrawalTransactionId,
 		To: &Recipient{
 			Account: account,
 			Type:    recipientType,
 		},
-	},map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
-
-	go func() {
-		defer func() {
-			close(respCh)
-		}()
-
-		resp := <-respChan
-
-		result := TransferTokenResponseChan{
-			Error: resp.Error,
-		}
-
-		if len(resp.Result) > 0 {
-			var transferTokenResponse TransferTokenResponseData
-
-			if err := json.Unmarshal(resp.Result, &transferTokenResponse); err != nil {
-				result.Error = &rpc.RpcError{
-					Code:        error_codes.GenericMappingError,
-					Message:     err.Error(),
-					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
-				}
-			} else {
-				result.Data = &transferTokenResponse
-			}
-		}
-
-		respCh <- result
-	}()
-
-	return respCh
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
+func (w SolanaApiGateWrapper) CreateVesting(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64,
+	ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateVestingResponseData] {
 
-func (w SolanaApiGateWrapper) CreateVesting(from string, to string, amounts string, timestamps string, apmTransaction *apm.Transaction, forceLog bool) chan CreateVestingResponseChan {
-	respCh := make(chan CreateVestingResponseChan, 2)
-
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "CreateVesting", CreateVestingRequest{
-		From:       from,
-		To:         to,
-		Amounts:    amounts,
-		Timestamps: timestamps,
-	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
-
-	go func() {
-		defer func() {
-			close(respCh)
-		}()
-
-		resp := <-respChan
-
-		result := CreateVestingResponseChan{
-			Error: resp.Error,
-		}
-
-		if len(resp.Result) > 0 {
-			var createVestingResponse CreateVestingResponseData
-
-			if err := json.Unmarshal(resp.Result, &createVestingResponse); err != nil {
-				result.Error = &rpc.RpcError{
-					Code:        error_codes.GenericMappingError,
-					Message:     err.Error(),
-					Data:        nil,
-					Hostname:    w.baseWrapper.GetHostName(),
-					ServiceName: w.serviceName,
-				}
-			} else {
-				result.Data = &createVestingResponse
-			}
-		}
-
-		respCh <- result
-	}()
-
-	return respCh
+	return wrappers.ExecuteRpcRequestAsync[CreateVestingResponseData](w.baseWrapper, w.apiUrl, "CreateVesting", CreateVestingRequest{
+		From:                    from,
+		To:                      to,
+		Amounts:                 amounts,
+		Timestamps:              timestamps,
+		WithdrawalTransactionId: withdrawalTransactionId,
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

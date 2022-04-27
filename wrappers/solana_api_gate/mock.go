@@ -1,19 +1,22 @@
 package solana_api_gate
 
-import "go.elastic.co/apm"
+import (
+	"context"
+	"github.com/digitalmonsters/go-common/wrappers"
+)
 
 //goland:noinspection ALL
 type SolanaApiGateWrapperMock struct {
-	TransferTokenFn func(from string, amount string, account string, recipientType string, apmTransaction *apm.Transaction, forceLog bool) chan TransferTokenResponseChan
-	CreateVestingFn func(from string, to string, amounts string, timestamps string, apmTransaction *apm.Transaction, forceLog bool) chan CreateVestingResponseChan
+	TransferTokenFn func(from string, amount string, account string, recipientType string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[TransferTokenResponseData]
+	CreateVestingFn func(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateVestingResponseData]
 }
 
-func (m *SolanaApiGateWrapperMock) TransferToken(from string, amount string, account string, recipientType string, apmTransaction *apm.Transaction, forceLog bool) chan TransferTokenResponseChan {
-	return m.TransferTokenFn(from, amount, account, recipientType, apmTransaction, forceLog)
+func (m *SolanaApiGateWrapperMock) TransferToken(from string, amount string, account string, recipientType string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[TransferTokenResponseData] {
+	return m.TransferTokenFn(from, amount, account, recipientType, withdrawalTransactionId, ctx, forceLog)
 }
 
-func (m *SolanaApiGateWrapperMock) CreateVesting(from string, to string, amounts string, timestamps string, apmTransaction *apm.Transaction, forceLog bool) chan CreateVestingResponseChan {
-	return m.CreateVestingFn(from, to, amounts, timestamps, apmTransaction, forceLog)
+func (m *SolanaApiGateWrapperMock) CreateVesting(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateVestingResponseData] {
+	return m.CreateVestingFn(from, to, amounts, timestamps, withdrawalTransactionId, ctx, forceLog)
 }
 
 func GetMock() ISolanaApiGateWrapper { // for compiler errors
