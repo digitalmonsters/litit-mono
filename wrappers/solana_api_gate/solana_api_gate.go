@@ -27,7 +27,7 @@ type SolanaApiGateWrapper struct {
 }
 
 func NewSolanaApiGateWrapper(config boilerplate.WrapperConfig) ISolanaApiGateWrapper {
-	timeout := 5 * time.Second
+	timeout := 25 * time.Second
 
 	if config.TimeoutSec > 0 {
 		timeout = time.Duration(config.TimeoutSec) * time.Second
