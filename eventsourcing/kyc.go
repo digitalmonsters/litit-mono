@@ -5,10 +5,11 @@ package eventsourcing
 type KycStatusType string
 
 const (
-	KycStatusNone     = KycStatusType("none")
-	KycStatusPending  = KycStatusType("pending")
-	KycStatusRejected = KycStatusType("rejected")
-	KycStatusVerified = KycStatusType("verified")
+	KycStatusNone        = KycStatusType("none")
+	KycStatusPending     = KycStatusType("pending")
+	KycStatusRejected    = KycStatusType("rejected")
+	KycStatusVerified    = KycStatusType("verified")
+	KycStatusRobotReview = KycStatusType("robot_review")
 )
 
 type KycReason string

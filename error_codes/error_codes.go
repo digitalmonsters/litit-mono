@@ -42,10 +42,13 @@ const (
 )
 
 const (
-	TokenomicsNotEnoughBalance ErrorCode = 1500
+	TokenomicsNotEnoughBalance        ErrorCode = 1500
+	TokenomicsReceivingUserWithoutKyc ErrorCode = 1501
 )
 
 var TokenomicsNotEnoughBalanceError = errors.New("user doesn't have enough money to execute operation")
+var TokenomicsErrorCannotProceedWithoutKyc = errors.New("You cannot proceed without KYC")
+var TokenomicsErrorReceivingUserWithoutKyc = errors.New("You cannot tip user without KYC")
 
 type ErrorWithCode struct {
 	error error

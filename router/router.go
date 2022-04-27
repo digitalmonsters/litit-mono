@@ -301,6 +301,12 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			if strings.EqualFold(restResponse.Error, error_codes.TokenomicsNotEnoughBalanceError.Error()) {
 				restResponse.Code = int(error_codes.TokenomicsNotEnoughBalance)
 			}
+			if strings.EqualFold(restResponse.Error, error_codes.TokenomicsErrorCannotProceedWithoutKyc.Error()) {
+				restResponse.Code = int(error_codes.KYCRequiredError)
+			}
+			if strings.EqualFold(restResponse.Error, error_codes.TokenomicsErrorReceivingUserWithoutKyc.Error()) {
+				restResponse.Code = int(error_codes.TokenomicsReceivingUserWithoutKyc)
+			}
 			if originalCode > 0 {
 				finalStatusCode = originalCode
 			} else {
