@@ -323,5 +323,12 @@ func getMigrations() []*gormigrate.Migration {
 					"update public.render_templates set body = 'Upload your first video on Lit.it & get rewarded {{.first_upload_bonus}} LIT points' where id = 'user_need_to_first_upload'")
 			},
 		},
+		{
+			ID: "fix_kind_2704202214408",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set kind = 'popup', headline = null where id in ('first_video_uploaded', 'first_time_avatar_added', 'add_description_bonus')")
+			},
+		},
 	}
 }
