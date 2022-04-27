@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
+	"time"
 )
 
 type NamePrivacyStatus int
@@ -82,6 +83,7 @@ type UserDetailRecord struct {
 	Comments            int               `json:"comments"`
 	CreatorStatus       int               `json:"creator_status"`
 	CreatorRejectReason null.String       `json:"creator_reject_reason"`
+	CreatedAt           time.Time         `json:"created_at"`
 }
 
 func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
