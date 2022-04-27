@@ -136,7 +136,7 @@ type ContentEvent struct {
 	CommentsCount    int64                 `json:"comments_count"`
 	RejectReason     frontend.RejectReason `json:"reject_reason"`
 	IsNewVisible     bool                  `json:"is_new_visible"`
-	Type             ContentType           `json:"type"`
+	ContentType      ContentType           `json:"content_type"`
 	BaseChangeEvent
 }
 
