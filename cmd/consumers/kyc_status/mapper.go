@@ -44,7 +44,10 @@ func mapKafkaMessages(message kafka.Message) (*newSendingEvent, error) {
 				event.CrudOperationReason = "kyc_status_updated"
 			}
 			if len(event.CrudOperationReason) <= 0 {
-				event.KycReason = lEvent.Reason
+				var reason = lEvent.Reason.ValueOrZero()
+				if len(event.KycReason) > 0 {
+					event.KycReason = eventsourcing.KycReason(reason)
+				}
 			}
 		}
 	}

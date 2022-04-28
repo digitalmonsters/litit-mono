@@ -41,7 +41,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	} else if event.KycStatus == eventsourcing.KycStatusRejected {
 		templateName = "kyc_status_rejected"
 		renderData = map[string]string{
-			"reason": event.KycReason.ValueOrZero(),
+			"reason": string(event.KycReason),
 		}
 	} else {
 		return &event.Messages, nil
