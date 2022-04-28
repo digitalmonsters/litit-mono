@@ -3,10 +3,9 @@ package message
 import (
 	"fmt"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
-	"go.elastic.co/apm"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"math"
@@ -68,15 +67,19 @@ func UpsertMessageBulkAdmin(req UpsertMessageAdminRequest, db *gorm.DB) ([]datab
 	records = []database.Message{}
 	for _, item := range req.Items {
 		r := database.Message{
-			Title:              item.Title,
-			Description:        item.Description,
-			Countries:          item.Countries,
-			VerificationStatus: item.VerificationStatus,
-			AgeFrom:            item.AgeFrom,
-			AgeTo:              item.AgeTo,
-			PointsFrom:         item.PointsFrom,
-			PointsTo:           item.PointsTo,
-			IsActive:           item.IsActive,
+			Title:       item.Title,
+			Description: item.Description,
+			Countries:   item.Countries,
+			AgeFrom:     item.AgeFrom,
+			AgeTo:       item.AgeTo,
+			PointsFrom:  item.PointsFrom,
+			PointsTo:    item.PointsTo,
+			IsActive:    item.IsActive,
+		}
+
+		if item.VerificationStatus.Valid {
+			status := database.VerificationStatus(int8(item.VerificationStatus.Int64))
+			r.VerificationStatus = &status
 		}
 
 		if item.Id.Valid {
@@ -130,7 +133,7 @@ func MessagesListAdmin(req MessagesListAdminRequest, db *gorm.DB) (*MessagesList
 			Or("description ilike ?", fmt.Sprintf("%%%v%%", req.Keyword.String))
 	}
 
-	if req.VerificationStatus > 0 {
+	if req.VerificationStatus != nil {
 		query = query.Where("verification_status = ?", req.VerificationStatus)
 	}
 
@@ -171,18 +174,18 @@ func MessagesListAdmin(req MessagesListAdminRequest, db *gorm.DB) (*MessagesList
 	}, nil
 }
 
-func GetMessageForUser(userId int64, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction) (*NotificationMessage, error) {
-	userRespCh := <-userGoWrapper.GetUsersDetails([]int64{userId}, apmTransaction, true)
+func GetMessageForUser(userId int64, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, executionData router.MethodExecutionData) (*NotificationMessage, error) {
+	userRespCh := <-userGoWrapper.GetUsersDetails([]int64{userId}, executionData.Context, true)
 	if userRespCh.Error != nil {
 		return nil, userRespCh.Error.ToError()
 	}
 
-	userInfo, ok := userRespCh.Items[userId]
+	userInfo, ok := userRespCh.Response[userId]
 	if !ok {
 		return nil, errors.New("user info not found")
 	}
 
-	q := fmt.Sprintf("select * from messages where countries && ARRAY['%v'] and verification_status = %v "+
+	q := fmt.Sprintf("select * from messages where countries && ARRAY['%v'] and (verification_status = %v or verification_status is null) "+
 		"and int4range(messages.age_from, messages.age_to) @> %v "+
 		"and (numrange(messages.points_from, messages.points_to) @> %.2f OR (points_from = 0 and points_to = 0)) "+
 		"and is_active is true and deleted_at is null", userInfo.CountryCode, database.VerificationStatusFromString(userInfo.KycStatus),
@@ -201,7 +204,7 @@ func GetMessageForUser(userId int64, db *gorm.DB, userGoWrapper user_go.IUserGoW
 			Description: records[0].Description,
 		}, nil
 	default:
-		r := getProperMessage(records, userInfo.VaultPoints)
+		r := getProperMessage(records, userInfo)
 		return &NotificationMessage{
 			Title:       r.Title,
 			Description: r.Description,
@@ -209,9 +212,13 @@ func GetMessageForUser(userId int64, db *gorm.DB, userGoWrapper user_go.IUserGoW
 	}
 }
 
-func getProperMessage(records []database.Message, points decimal.Decimal) database.Message {
+func getProperMessage(records []database.Message, user user_go.UserDetailRecord) database.Message {
 	for _, r := range records {
-		if (r.PointsFrom >= points.InexactFloat64()) && (r.PointsTo <= points.InexactFloat64()) {
+		if (r.PointsFrom >= user.VaultPoints.InexactFloat64()) && (r.PointsTo <= user.VaultPoints.InexactFloat64()) {
+			return r
+		}
+
+		if r.VerificationStatus != nil && *r.VerificationStatus == database.VerificationStatusFromString(user.KycStatus) {
 			return r
 		}
 	}

@@ -13,7 +13,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 	getAdsMessagePath := "/ads/message/me"
 
 	getAdsMessageRoute := router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		resp, err := message.GetMessageForUser(executionData.UserId, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), userGoWrapper, executionData.ApmTransaction)
+		resp, err := message.GetMessageForUser(executionData.UserId, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), userGoWrapper, executionData)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

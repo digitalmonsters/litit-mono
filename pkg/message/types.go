@@ -11,16 +11,16 @@ type UpsertMessageAdminRequest struct {
 }
 
 type adminMessage struct {
-	Id                 null.Int                    `json:"id"`
-	Title              string                      `json:"title"`
-	Description        string                      `json:"description"`
-	Countries          pq.StringArray              `json:"countries"`
-	VerificationStatus database.VerificationStatus `json:"verification_status"`
-	AgeFrom            int8                        `json:"age_from"`
-	AgeTo              int8                        `json:"age_to"`
-	PointsFrom         float64                     `json:"points_from"`
-	PointsTo           float64                     `json:"points_to"`
-	IsActive           bool                        `json:"is_active"`
+	Id                 null.Int       `json:"id"`
+	Title              string         `json:"title"`
+	Description        string         `json:"description"`
+	Countries          pq.StringArray `json:"countries"`
+	VerificationStatus null.Int       `json:"verification_status"`
+	AgeFrom            int8           `json:"age_from"`
+	AgeTo              int8           `json:"age_to"`
+	PointsFrom         float64        `json:"points_from"`
+	PointsTo           float64        `json:"points_to"`
+	IsActive           bool           `json:"is_active"`
 }
 
 type DeleteMessagesBulkAdminRequest struct {
@@ -28,16 +28,16 @@ type DeleteMessagesBulkAdminRequest struct {
 }
 
 type MessagesListAdminRequest struct {
-	Keyword            null.String                 `json:"keyword"`
-	Countries          []string                    `json:"countries"`
-	VerificationStatus database.VerificationStatus `json:"verification_status"`
-	AgeFrom            int8                        `json:"age_from"`
-	AgeTo              int8                        `json:"age_to"`
-	PointsFrom         float64                     `json:"points_from"`
-	PointsTo           float64                     `json:"points_to"`
-	IsActive           bool                        `json:"is_active"`
-	Limit              int                         `json:"limit"`
-	Offset             int                         `json:"offset"`
+	Keyword            null.String                  `json:"keyword"`
+	Countries          []string                     `json:"countries"`
+	VerificationStatus *database.VerificationStatus `json:"verification_status"`
+	AgeFrom            int8                         `json:"age_from"`
+	AgeTo              int8                         `json:"age_to"`
+	PointsFrom         float64                      `json:"points_from"`
+	PointsTo           float64                      `json:"points_to"`
+	IsActive           bool                         `json:"is_active"`
+	Limit              int                          `json:"limit"`
+	Offset             int                          `json:"offset"`
 }
 
 type MessagesListAdminResponse struct {
