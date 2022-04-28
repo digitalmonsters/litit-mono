@@ -84,6 +84,8 @@ func main() {
 		notificationSender).ListenAsync()
 	userDeleteListener := user_delete.InitListener(ctx, cfg.UserDeleteListener).ListenAsync()
 
+	api.InitInternalApi(httpRouter.GetRpcServiceEndpoint())
+
 	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, cfg); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin creator api")
 	}
