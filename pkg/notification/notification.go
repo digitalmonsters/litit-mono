@@ -29,8 +29,7 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	)
 
 	query := db.Model(notifications).
-		Where("user_id = ? and type in ?", userId, getNotificationsTypesByTypeGroup(typeGroup)).
-		Where("type in ?", getFrontendSupportedNotificationTypes())
+		Where("user_id = ? and type in ?", userId, getNotificationsTypesByTypeGroup(typeGroup))
 	result, cursor, err := p.Paginate(query, &notifications)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -68,29 +67,29 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	return &resp, nil
 }
 
-func getFrontendSupportedNotificationTypes() []string { // temp fix https://tracki-workspace.slack.com/archives/C02LP6X90PL/p1648825668159999?thread_ts=1648825150.159869&cid=C02LP6X90PL
-	return []string{
-		"push.content.comment",
-		"push.profile.comment",
-		"push.comment.reply",
-		"push.profile.following",
-		"system",
-		"push.admin.bulk",
-		"push.comment.vote",
-		"push.content.like",
-		"push.bonus.daily",
-		"push.bonus.followers",
-		"push.content.successful-upload",
-		"push.content.new-posted",
-		"push.tip",
-		"push.content.rejected",
-		"push.kyc.status",
-		"push.content-creator.status",
-		"push.referral.other",
-		"push.referral.first",
-		"push.referral.megabonus",
-	}
-}
+//func getFrontendSupportedNotificationTypes() []string { // temp fix https://tracki-workspace.slack.com/archives/C02LP6X90PL/p1648825668159999?thread_ts=1648825150.159869&cid=C02LP6X90PL
+//	return []string{
+//		"push.content.comment",
+//		"push.profile.comment",
+//		"push.comment.reply",
+//		"push.profile.following",
+//		"system",
+//		"push.admin.bulk",
+//		"push.comment.vote",
+//		"push.content.like",
+//		"push.bonus.daily",
+//		"push.bonus.followers",
+//		"push.content.successful-upload",
+//		"push.content.new-posted",
+//		"push.tip",
+//		"push.content.rejected",
+//		"push.kyc.status",
+//		"push.content-creator.status",
+//		"push.referral.other",
+//		"push.referral.first",
+//		"push.referral.megabonus",
+//	}
+//}
 
 func getNotificationsTypesByTypeGroup(typeGroup TypeGroup) []string {
 	switch typeGroup {

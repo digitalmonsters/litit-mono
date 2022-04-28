@@ -38,13 +38,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
 
-		resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, apmTransaction, false)
+		resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, ctx, false)
 		if resp.Error != nil {
 			return nil, resp.Error.ToError()
 		}
 
 		var ok bool
-		if userData, ok = resp.Items[payload.UserId]; !ok {
+		if userData, ok = resp.Response[payload.UserId]; !ok {
 			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 
@@ -87,13 +87,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		var userData user_go.UserRecord
 
-		resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, apmTransaction, false)
+		resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, ctx, false)
 		if resp.Error != nil {
 			return nil, resp.Error.ToError()
 		}
 
 		var ok bool
-		if userData, ok = resp.Items[payload.UserId]; !ok {
+		if userData, ok = resp.Response[payload.UserId]; !ok {
 			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 

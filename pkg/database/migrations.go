@@ -305,5 +305,30 @@ func getMigrations() []*gormigrate.Migration {
 					"insert into public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('user_need_to_upload_avatar', 'Lit.it', 'Upload your picture on Lit.it & get rewarded {{.description_upload_bonus}}  LIT points', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'push.user.need.avatar') on conflict do nothing;")
 			},
 		},
+		{
+			ID: "referral_greeting_template_14042022",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('referral_greeting'::text, "+
+						"'You were invited by {{.referrer_name}}, do you want to follow him?'::text, 'You can share videos with your friends on Lit.it and earn 10 LIT points for each share.'::text, '2022-04-14 18:35:38.000000'::timestamp, "+
+						"'2022-04-14 18:35:38.000000'::timestamp, 'popup'::text, 'Welcome on Lit.it!'::text) on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "fix_template_260420221415",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set body = 'Upload your picture on Lit.it & get rewarded {{.avatar_upload_bonus}}  LIT points' where id = 'user_need_to_upload_avatar'",
+					"update public.render_templates set body = 'Upload your first video on Lit.it & get rewarded {{.first_upload_bonus}} LIT points' where id = 'user_need_to_first_upload'")
+			},
+		},
+		{
+			ID: "fix_kind_2704202214408",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set kind = 'popup', headline = null where id in ('first_video_uploaded', 'first_time_avatar_added', 'add_description_bonus')")
+			},
+		},
 	}
 }
