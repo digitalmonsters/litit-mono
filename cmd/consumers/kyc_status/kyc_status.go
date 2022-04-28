@@ -19,10 +19,6 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	apm_helper.AddApmLabel(apmTransaction, "crud_operation", event.BaseChangeEvent.CrudOperation)
 	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
 
-	if event.CrudOperation != eventsourcing.ChangeEventTypeUpdated || !(event.KycStatus == eventsourcing.KycStatusRejected || event.KycStatus == eventsourcing.KycStatusVerified) {
-		return &event.Messages, nil
-	}
-
 	if event.CrudOperationReason != "kyc_status_updated" {
 		return &event.Messages, nil
 	}
@@ -59,7 +55,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	reason := eventsourcing.KycReason(event.CrudOperationReason)
+	reason := event.KycReason
 
 	var dbReason *eventsourcing.KycReason
 
