@@ -164,6 +164,8 @@ func GetNotificationType(templateId string) string {
 		return "push.user.after_signup"
 	case "user_after_signup_fifth_push":
 		return "push.user.after_signup"
+	case "daily_max_amount_of_paid_views_reached":
+		return "push.user.paid_views.daily_max"
 	}
 	return ""
 }
