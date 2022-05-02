@@ -170,3 +170,25 @@ const (
 	ChangeEventTypeUpdated = ChangeEvenType("updated")
 	ChangeEventTypeDeleted = ChangeEvenType("deleted")
 )
+
+type DisLikeEvent struct {
+	UserId    int64 `json:"user_id"`
+	ContentId int64 `json:"content_id"`
+	Dislike   bool  `json:"dislike"`
+	CreatedAt int64 `json:"created_at"`
+}
+
+func (l DisLikeEvent) GetPublishKey() string {
+	return fmt.Sprintf("{\"content_id\":%v,\"user_id\":%v}", l.ContentId, l.UserId)
+}
+
+type LoveEvent struct {
+	UserId    int64 `json:"user_id"`
+	ContentId int64 `json:"content_id"`
+	Love      bool  `json:"love"`
+	CreatedAt int64 `json:"created_at"`
+}
+
+func (l LoveEvent) GetPublishKey() string {
+	return fmt.Sprintf("{\"content_id\":%v,\"user_id\":%v}", l.ContentId, l.UserId)
+}
