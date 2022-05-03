@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/http_client"
+	"time"
 )
 
 type Service struct {
@@ -43,7 +44,7 @@ func (s *Service) generateDeeplink(link string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp, err := s.httpClient.NewRequest(s.ctx).SetBody(requestJsonBody).Post(s.url)
+	resp, err := s.httpClient.NewRequest(s.ctx).SetContentType("application/json").SetBody(requestJsonBody).Post(s.url)
 
 	if err != nil {
 		return "", err
@@ -59,7 +60,8 @@ func (s *Service) generateDeeplink(link string) (string, error) {
 
 func (s *Service) GetVideoShareLink(contentId int64, userId int64, referralCode string) (string, error) {
 	link := fmt.Sprintf("%v/video/%v", s.config.URI, contentId)
-	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content", userId)
+	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
+	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v", userId, shareCode)
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
