@@ -1,0 +1,68 @@
+{
+  "HttpPort": 5215,
+  "PrivateHttpPort": 5211,
+  "MasterDb": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "local_configurator",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "ReadonlyDb": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "local_configurator",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "Wrappers": {
+    "Content": {
+      "ApiUrl": ""
+    },
+    "UserInfo": {
+      "ApiUrl": ""
+    },
+    "UserBlock": {
+      "ApiUrl": ""
+    },
+    "AuthGo": {
+      "ApiUrl": ""
+    },
+    "Auth": {
+      "ApiUrl": ""
+    },
+    "Likes": {
+      "ApiUrl": ""
+    },
+    "Follows": {
+      "ApiUrl": ""
+    },
+    "Views": {
+      "ApiUrl": ""
+    },
+    "UserCategories": {
+      "ApiUrl": ""
+    },
+    "UserHashtags": {
+      "ApiUrl": ""
+    },
+    "UserLikes": {
+      "ApiUrl": ""
+    },
+    "Categories": {
+      "ApiUrl": ""
+    },
+    "Hashtags": {
+      "ApiUrl": ""
+    },
+    "PointsCount": {
+      "ApiUrl": ""
+    },
+    "BaseApi": {
+      "ApiUrl": ""
+    },
+    "UserGo": {
+      "ApiUrl": ""
+    }
+  }
+}
