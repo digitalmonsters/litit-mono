@@ -330,5 +330,13 @@ func getMigrations() []*gormigrate.Migration {
 					"update public.render_templates set kind = 'popup', headline = null where id in ('first_video_uploaded', 'first_time_avatar_added', 'add_description_bonus')")
 			},
 		},
+		{
+			ID: "add_first_x_paid_views_gender_push_template_040520221300",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind) VALUES ('first_x_paid_views_gender_push','Lit.it', 'What you gender identity?', '2022-04-05 13:00:00.000000', '2022-04-05 13:00:00.000000', 'push.gender.first_x_paid_views') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
