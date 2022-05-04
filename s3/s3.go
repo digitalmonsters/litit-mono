@@ -11,7 +11,7 @@ import (
 
 type IUploader interface {
 	GetObjectSignedUrl(path string, urlExpiration time.Duration) (string, error)
-	PutObjectSignedUrl(path string, urlExpiration time.Duration) (string, error)
+	PutObjectSignedUrl(path string, urlExpiration time.Duration, acl string) (string, error)
 	GetObjectSize(path string) (int64, error)
 	UploadObject(path string, data []byte, contentType string) error
 }
@@ -48,16 +48,22 @@ func (u *Uploader) GetObjectSignedUrl(path string, urlExpiration time.Duration) 
 	return signedUrl, nil
 }
 
-func (u *Uploader) PutObjectSignedUrl(path string, urlExpiration time.Duration) (string, error) {
+func (u *Uploader) PutObjectSignedUrl(path string, urlExpiration time.Duration, acl string) (string, error) {
 	client, err := u.getClient()
 	if err != nil {
 		return "", err
 	}
 
-	req, _ := client.PutObjectRequest(&s3.PutObjectInput{
+	putReq := &s3.PutObjectInput{
 		Bucket: aws.String(u.config.Bucket),
 		Key:    aws.String(path),
-	})
+	}
+
+	if len(acl) > 0 {
+		putReq.ACL = &acl
+	}
+
+	req, _ := client.PutObjectRequest(putReq)
 
 	signedUrl, err := req.Presign(urlExpiration)
 	if err != nil {
