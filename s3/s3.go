@@ -50,6 +50,7 @@ func (u *Uploader) GetObjectSignedUrl(path string, urlExpiration time.Duration) 
 
 func (u *Uploader) PutObjectSignedUrl(path string, urlExpiration time.Duration, acl string) (string, error) {
 	client, err := u.getClient()
+
 	if err != nil {
 		return "", err
 	}
@@ -58,6 +59,8 @@ func (u *Uploader) PutObjectSignedUrl(path string, urlExpiration time.Duration, 
 		Bucket: aws.String(u.config.Bucket),
 		Key:    aws.String(path),
 	}
+
+	putReq.SetChecksumSHA256("UNSIGNED-PAYLOAD")
 
 	if len(acl) > 0 {
 		putReq.ACL = &acl
@@ -116,5 +119,6 @@ func (u *Uploader) getClient() (*s3.S3, error) {
 	if u.s3Client == nil {
 		u.s3Client = s3.New(u.session)
 	}
+
 	return u.s3Client, nil
 }
