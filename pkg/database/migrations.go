@@ -338,5 +338,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "set_kind_popup_first_x_paid_views_gender_push_template_040520221638",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set kind = 'popup' where id = 'first_x_paid_views_gender_push'",
+				)
+			},
+		},
 	}
 }
