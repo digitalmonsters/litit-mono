@@ -60,13 +60,13 @@ func (u *Uploader) PutObjectSignedUrl(path string, urlExpiration time.Duration, 
 		Key:    aws.String(path),
 	}
 
-	putReq.SetChecksumSHA256("UNSIGNED-PAYLOAD")
-
 	if len(acl) > 0 {
 		putReq.ACL = &acl
 	}
 
 	req, _ := client.PutObjectRequest(putReq)
+
+	req.HTTPRequest.Header.Set("x-amz-content-sha256", "UNSIGNED-PAYLOAD")
 
 	signedUrl, err := req.Presign(urlExpiration)
 	if err != nil {
