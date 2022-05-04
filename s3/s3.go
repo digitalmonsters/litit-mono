@@ -66,8 +66,6 @@ func (u *Uploader) PutObjectSignedUrl(path string, urlExpiration time.Duration, 
 
 	req, _ := client.PutObjectRequest(putReq)
 
-	req.HTTPRequest.Header.Set("x-amz-content-sha256", "UNSIGNED-PAYLOAD")
-
 	signedUrl, err := req.Presign(urlExpiration)
 	if err != nil {
 		return "", err
