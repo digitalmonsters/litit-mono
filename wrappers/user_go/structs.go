@@ -231,6 +231,7 @@ type UpdateUserMetaDataRequest struct {
 	Birthdate   null.Time   `json:"birthdate"`
 	CountryCode string      `json:"country_code"`
 	Username    null.String `json:"username"`
+	Gender      null.String `json:"gender"`
 }
 
 type ForceResetUserIdentityWithNewGuestRequest struct {
