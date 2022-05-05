@@ -8,11 +8,12 @@ import (
 )
 
 type Settings struct {
-	HttpPort        int                  `json:"HttpPort"`
-	PrivateHttpPort int                  `json:"PrivateHttpPort"`
-	MasterDb        boilerplate.DbConfig `json:"MasterDb"`
-	ReadonlyDb      boilerplate.DbConfig `json:"ReadonlyDb"`
-	Wrappers        boilerplate.Wrappers `json:"Wrappers"`
+	HttpPort        int                                         `json:"HttpPort"`
+	PrivateHttpPort int                                         `json:"PrivateHttpPort"`
+	MasterDb        boilerplate.DbConfig                        `json:"MasterDb"`
+	ReadonlyDb      boilerplate.DbConfig                        `json:"ReadonlyDb"`
+	Wrappers        boilerplate.Wrappers                        `json:"Wrappers"`
+	ConfigNotifier  boilerplate.KafkaBatchWriterV2Configuration `json:"ConfigNotifier"`
 }
 
 var settings Settings

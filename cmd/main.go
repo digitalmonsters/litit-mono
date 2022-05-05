@@ -1,9 +1,13 @@
 package main
 
 import (
-	"github.com/digitalmonsters/configurator/cmd/api"
+	"context"
+	"github.com/digitalmonsters/configurator/cmd/configurator"
 	"github.com/digitalmonsters/configurator/configs"
+	configsPkg "github.com/digitalmonsters/configurator/pkg/configs"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
@@ -29,14 +33,17 @@ func main() {
 		config.PrivateHttpPort,
 	)
 	apiDescription := map[string]swagger.ApiDescription{}
+	var rootApplication application.RootApplication
+
+	var configPublisher = eventsourcing.NewKafkaBatchPublisher[configsPkg.ConfigEvent]("config_upsert", config.ConfigNotifier, context.Background())
+
+	configService := configsPkg.ConfigService{}
+	rootApplication.
+		AddApplication(configurator.Application(fastHttpRouter, apiDescription, configService, configPublisher)).
+		MustInit()
 
 	log.Info().Msg("bootstrapping configurator")
-	if err := api.InitInternalApi(fastHttpRouter.GetRpcServiceEndpoint(), apiDescription); err != nil {
-		log.Fatal().Err(err).Msgf("[HTTP] Could not init internal api")
-	}
-	if err := api.InitAdminApi(fastHttpRouter.GetRpcAdminEndpoint(), apiDescription); err != nil {
-		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin api")
-	}
+
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		fastHttpRouter.RegisterDocs(apiDescription, []swagger.ConstantDescription{})
 	}

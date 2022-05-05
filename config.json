@@ -64,5 +64,18 @@
     "UserGo": {
       "ApiUrl": ""
     }
+  },
+  "ConfigNotifier": {
+    "Hosts": "127.0.0.1",
+    "KafkaAuth": {},
+    "Tls": true,
+    "MaxRetryCount": 3,
+    "FlushTimeMilliseconds": 100,
+    "FlushAtSize": 20,
+    "Topic": {
+      "Name": "local.new_config",
+      "NumPartitions": 12,
+      "ReplicationFactor": 2
+    }
   }
 }

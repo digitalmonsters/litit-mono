@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )
@@ -38,6 +39,36 @@ created_at timestamp with time zone default current_timestamp);`,
 					}
 				}
 				return nil
+			},
+		},
+		{
+			ID: "create_configs_table_20220503",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"create table if not exists configs (     key         varchar(255)  not null         primary key,     value       varchar(255),     type  varchar(255),     description varchar(255),     admin_only  boolean,     created_at  timestamp with time zone default CURRENT_TIMESTAMP not null,     updated_at  timestamp with time zone default CURRENT_TIMESTAMP not null,     category    varchar(255) );")
+			},
+		},
+		{
+			ID: "create_config_logs_table_20220504",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `create table if not exists config_logs
+(
+    id         bigserial
+        primary key,
+    key        varchar(255),
+    value      varchar(255),
+    related_user_id      bigint,
+    created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+    updated_at timestamp with time zone default CURRENT_TIMESTAMP not null
+);`)
+			},
+		},
+		{
+			ID: "cleanup_20220504",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+drop table if exists feature_toggle_events;
+drop table if exists  feature_toggles;`)
 			},
 		},
 	}
