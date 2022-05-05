@@ -136,16 +136,22 @@ func NewKafkaBatchPublisher[T IEventData](publisherName string, cfg boilerplate.
 	}
 
 	if cfg.FlushTimeMilliseconds == 0 {
-		cfg.FlushTimeMilliseconds = int(100 * time.Millisecond)
+		cfg.FlushTimeMilliseconds = 100
 	}
+
+	cfg.FlushTimeMilliseconds = cfg.FlushTimeMilliseconds * int(time.Millisecond)
 
 	if cfg.BackOffTimeMaxMilliseconds <= 0 {
-		cfg.BackOffTimeMaxMilliseconds = int(30 * time.Second)
+		cfg.BackOffTimeMaxMilliseconds = 30 * 1000 // 30 sec
 	}
 
+	cfg.BackOffTimeMaxMilliseconds = cfg.BackOffTimeMaxMilliseconds * int(time.Millisecond)
+
 	if cfg.BackOffTimeIntervalMilliseconds <= 0 {
-		cfg.BackOffTimeIntervalMilliseconds = int(1 * time.Second)
+		cfg.BackOffTimeIntervalMilliseconds = 1 * 1000 // 1 sec
 	}
+
+	cfg.BackOffTimeIntervalMilliseconds = cfg.BackOffTimeIntervalMilliseconds * int(time.Millisecond)
 
 	if cfg.FlushAtSize == 0 {
 		cfg.FlushAtSize = 20
