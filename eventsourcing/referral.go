@@ -12,6 +12,7 @@ type ReferrerVerifiedEvent struct {
 	IsVerifiedReferrer      bool                  `json:"is_verified_referrer"`
 	GrandReferrerId         int64                 `json:"grand_referrer_id"`
 	IsVerifiedGrandReferrer bool                  `json:"is_verified_grand_referrer"`
+	BaseChangeEvent
 }
 
 func (c ReferrerVerifiedEvent) GetPublishKey() string {
