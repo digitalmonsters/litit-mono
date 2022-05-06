@@ -19,7 +19,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	apm_helper.AddApmLabel(apmTransaction, "crud_operation", event.BaseChangeEvent.CrudOperation)
 	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
 
-	if event.CrudOperation != eventsourcing.ChangeEventTypeUpdated || !(event.KycStatus == eventsourcing.KycStatusRejected || event.KycStatus == eventsourcing.KycStatusVerified) {
+	if event.CrudOperationReason != "kyc_status_updated" {
 		return &event.Messages, nil
 	}
 
@@ -37,7 +37,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	} else if event.KycStatus == eventsourcing.KycStatusRejected {
 		templateName = "kyc_status_rejected"
 		renderData = map[string]string{
-			"reason": event.CrudOperationReason,
+			"reason": string(event.KycReason),
 		}
 	} else {
 		return &event.Messages, nil
@@ -54,8 +54,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		title, body, headline, nil, ctx); err != nil {
 		return nil, err
 	}
-	
-	reason := eventsourcing.KycReason(event.CrudOperationReason)
+
+	reason := event.KycReason
 
 	var dbReason *eventsourcing.KycReason
 
@@ -71,7 +71,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		CreatedAt:          time.Now().UTC(),
 		KycStatus:          &event.KycStatus,
 		RenderingVariables: renderData,
-		KycReason: dbReason,
+		KycReason:          dbReason,
 	}).Error; err != nil {
 		return nil, err
 	}

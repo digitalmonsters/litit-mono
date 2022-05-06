@@ -41,9 +41,13 @@ func mapKafkaMessages(message kafka.Message) (*newSendingEvent, error) {
 		case LegacyEventTypeKycStatusUpdated:
 			if len(event.CrudOperation) <= 0 {
 				event.CrudOperation = eventsourcing.ChangeEventTypeUpdated
+				event.CrudOperationReason = "kyc_status_updated"
 			}
 			if len(event.CrudOperationReason) <= 0 {
-				event.CrudOperationReason = lEvent.Reason.ValueOrZero()
+				var reason = lEvent.Reason.ValueOrZero()
+				if len(event.KycReason) > 0 {
+					event.KycReason = eventsourcing.KycReason(reason)
+				}
 			}
 		}
 	}

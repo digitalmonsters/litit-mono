@@ -169,12 +169,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var userData user_go.UserRecord
 
-	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, apmTransaction, false)
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
 	if resp.Error != nil {
 		return nil, resp.Error.ToError()
 	}
 
-	if userData, ok = resp.Items[event.UserId]; !ok {
+	if userData, ok = resp.Response[event.UserId]; !ok {
 		if err = tx.Commit().Error; err != nil {
 			return nil, err
 		}

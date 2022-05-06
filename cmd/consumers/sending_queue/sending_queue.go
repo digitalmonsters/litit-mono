@@ -30,17 +30,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, errors.WithStack(err)
 	}
 	var relatedUserId null.Int
-	var isReferralsTemplate = event.TemplateName == "other_referrals_joined" || event.TemplateName == "first_referral_joined"
+	var isCustomTemplate bool
 
-	if isReferralsTemplate {
-		if val, ok := event.RenderingVariables["referral_id"]; ok {
-			parsed, err := strconv.ParseInt(val, 10, 64)
-			if err != nil {
-				apm_helper.CaptureApmError(err, apmTransaction)
-			} else {
-				relatedUserId = null.IntFrom(parsed)
-			}
-		}
+	switch event.TemplateName {
+	case "other_referrals_joined":
+		fallthrough
+	case "first_referral_joined":
+		isCustomTemplate = true
+		relatedUserId = GetRelatedUserIdFromRenderData(event.RenderingVariables, "referral_id", ctx)
+	case "referral_greeting":
+		isCustomTemplate = true
+		relatedUserId = GetRelatedUserIdFromRenderData(event.RenderingVariables, "referrer_id", ctx)
 	}
 	nf := &database.Notification{
 		UserId:             event.UserId,
@@ -54,7 +54,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	customData := event.CustomData
 
-	if isReferralsTemplate && relatedUserId.Valid {
+	if isCustomTemplate && relatedUserId.Valid {
 		customData = map[string]interface{}{}
 		customData["user_id"] = relatedUserId.Int64
 	}
@@ -75,7 +75,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if isReferralsTemplate {
+	if isCustomTemplate && relatedUserId.Valid {
 		_, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId,
 			renderingTemplate.Id, renderingTemplate.Kind, title, body, headline, customData, ctx)
 	} else {
@@ -89,4 +89,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 	return &event.Messages, nil
+}
+
+func GetRelatedUserIdFromRenderData(renderingVariables map[string]string, relatedUser string, ctx context.Context) null.Int {
+	var relatedUserId null.Int
+	if val, ok := renderingVariables[relatedUser]; ok {
+		parsed, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			apm_helper.LogError(err, ctx)
+		} else {
+			relatedUserId = null.IntFrom(parsed)
+		}
+	}
+	return relatedUserId
 }

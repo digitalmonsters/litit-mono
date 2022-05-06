@@ -26,13 +26,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var userData user_go.UserRecord
 	var err error
 
-	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, apmTransaction, false)
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
 	if resp.Error != nil {
 		return nil, resp.Error.ToError()
 	}
 
 	var ok bool
-	if userData, ok = resp.Items[event.UserId]; !ok {
+	if userData, ok = resp.Response[event.UserId]; !ok {
 		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 	}
 

@@ -20,7 +20,7 @@ import (
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
 	apmTransaction *apm.Transaction) (*kafka.Message, error) {
 	var err error
-	var rendererData map[string]string
+	rendererData := map[string]string{}
 	var templateName string
 	var templateType string
 	contentId := null.Int{}
@@ -29,17 +29,21 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	apm_helper.AddApmLabel(apmTransaction, "user_id", event.Payload.UserId)
 	apm_helper.AddApmLabel(apmTransaction, "related_user_id", event.Payload.RelatedUserId.ValueOrZero())
 
+	if event.Payload.PointsAmount.Valid {
+		rendererData["pointsAmount"] = event.Payload.PointsAmount.Decimal.String()
+	}
+
 	switch event.Type {
 	case eventsourcing.TokenomicsNotificationTip:
 		var userData user_go.UserRecord
 
-		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.RelatedUserId.ValueOrZero()}, apmTransaction, false)
+		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.RelatedUserId.ValueOrZero()}, ctx, false)
 		if resp.Error != nil {
 			return nil, resp.Error.ToError()
 		}
 
 		var ok bool
-		if userData, ok = resp.Items[event.Payload.RelatedUserId.ValueOrZero()]; !ok {
+		if userData, ok = resp.Response[event.Payload.RelatedUserId.ValueOrZero()]; !ok {
 			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 
@@ -48,11 +52,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-		rendererData = map[string]string{
-			"firstname":    firstName,
-			"lastname":     lastName,
-			"pointsAmount": event.Payload.PointsAmount.Decimal.String(),
-		}
+		rendererData["firstname"] = firstName
+		rendererData["lastname"] = lastName
 
 		contentId = null.IntFrom(0)
 	case eventsourcing.TokenomicsNotificationDailyBonusTime:

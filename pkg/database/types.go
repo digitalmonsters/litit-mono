@@ -164,17 +164,20 @@ func GetNotificationType(templateId string) string {
 		return "push.user.after_signup"
 	case "user_after_signup_fifth_push":
 		return "push.user.after_signup"
+	case "daily_max_amount_of_paid_views_reached":
+		return "push.user.paid_views.daily_max"
 	}
 	return ""
 }
 
+//without push.user.after_signup, push.guest.after_install
 func GetMarketingNotifications() []string {
 	return []string{
 		"push.bonus.daily_followers.first", "push.bonus.daily_time.first", "push.earned_points.first",
 		"push.paid_views.first", "push.referral.first", "push.share.first", "push.bonus.weekly_followers.first",
 		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
 		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
-		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus", "push.guest.after_install",
-		"push.user.after_signup", "push.avatar.first", "push.upload.first", "push.description.first",
+		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
+		"push.avatar.first", "push.upload.first", "push.description.first",
 	}
 }
