@@ -4,10 +4,12 @@ import (
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"go.elastic.co/apm"
+	"golang.org/x/net/context"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
@@ -38,19 +40,19 @@ func TestMethods(t *testing.T) {
 				Description:        "desc_test_1",
 				Countries:          []string{"UA"},
 				IsActive:           true,
-				VerificationStatus: database.VerificationStatusVerified,
+				VerificationStatus: null.IntFrom(int64(database.VerificationStatusVerified)),
 			},
 			{
 				Title:              "test2",
 				Description:        "desc_test_2",
 				Countries:          []string{"UA", "US"},
-				VerificationStatus: database.VerificationStatusPending,
+				VerificationStatus: null.IntFrom(int64(database.VerificationStatusPending)),
 			},
 			{
-				Title:              "test3",
-				Description:        "desc_test_3",
-				Countries:          []string{"RU"},
-				VerificationStatus: database.VerificationStatusRejected,
+				Title:       "test3",
+				Description: "desc_test_3",
+				Countries:   []string{"RU"},
+				//VerificationStatus: &statusRejected,
 			},
 		},
 	}, gormDb)
@@ -104,50 +106,64 @@ func TestGetMessageForUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	statusVerified := database.VerificationStatusVerified
+
 	resp, err := UpsertMessageBulkAdmin(UpsertMessageAdminRequest{
 		Items: []adminMessage{
 			{
-				Title:              "test1",
-				Description:        "desc_test_1",
+				Title:       "test1",
+				Description: "desc_test_1",
+				Countries:   []string{"UA"},
+				AgeFrom:     18,
+				AgeTo:       25,
+				IsActive:    true,
+			},
+			{
+				Title:              "test2",
+				Description:        "desc_test_2",
 				Countries:          []string{"UA"},
 				AgeFrom:            18,
 				AgeTo:              25,
 				IsActive:           true,
-				VerificationStatus: database.VerificationStatusVerified,
+				VerificationStatus: null.IntFrom(int64(statusVerified)),
 			},
 		},
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp, 1)
+	assert.Len(t, resp, 2)
 
 	userId := int64(1)
-	userGoWrapper.GetUsersDetailFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user_go.GetUsersDetailsResponseChan {
-		respCh := make(chan user_go.GetUsersDetailsResponseChan, 2)
-		defer close(respCh)
 
-		result := user_go.GetUsersDetailsResponseChan{
-			Error: nil,
-			Items: map[int64]user_go.UserDetailRecord{
-				userId: {
-					Id:          userId,
-					Firstname:   "test",
-					Lastname:    "test",
-					Birthdate:   null.TimeFrom(time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC)),
-					KycStatus:   "verified",
-					CountryCode: "UA",
-					VaultPoints: decimal.NewFromFloat(200),
-				},
-			},
+	userGoWrapper.GetUsersDetailFn = func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserDetailRecord] {
+		ch := make(chan wrappers.GenericResponseChan[map[int64]user_go.UserDetailRecord], 2)
+		defer close(ch)
+
+		userMap := map[int64]user_go.UserDetailRecord{}
+		for _, id := range userIds {
+			userMap[id] = user_go.UserDetailRecord{
+				Id:          userId,
+				Firstname:   "test",
+				Lastname:    "test",
+				Birthdate:   null.TimeFrom(time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC)),
+				KycStatus:   "verified",
+				CountryCode: "UA",
+				VaultPoints: decimal.NewFromFloat(200),
+			}
 		}
 
-		respCh <- result
+		ch <- wrappers.GenericResponseChan[map[int64]user_go.UserDetailRecord]{
+			Error:    nil,
+			Response: userMap,
+		}
 
-		return respCh
+		return ch
 	}
 
-	message, err := GetMessageForUser(userId, gormDb, userGoWrapper, nil)
+	message, err := GetMessageForUser(userId, gormDb, userGoWrapper, router.MethodExecutionData{
+		Context: context.TODO(),
+	})
 	assert.Nil(t, err)
 	assert.NotNil(t, message)
-	assert.Equal(t, message.Title, resp[0].Title)
-	assert.Equal(t, message.Description, resp[0].Description)
+	assert.Equal(t, message.Title, resp[1].Title)
+	assert.Equal(t, message.Description, resp[1].Description)
 }
