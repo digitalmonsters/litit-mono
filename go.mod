@@ -12,6 +12,7 @@ require (
 	github.com/gammazero/workerpool v1.1.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gocql/gocql v1.0.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req/v3 v3.10.0
 	github.com/jackc/pgx/v4 v4.16.0
 	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b
@@ -70,7 +71,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.3.0 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect

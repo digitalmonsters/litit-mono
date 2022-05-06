@@ -75,6 +75,7 @@ type Wrappers struct {
 	AdminWs             WrapperConfig `json:"AdminWs"`
 	Comment             WrapperConfig `json:"Comment"`
 	TesseractOcrApi     WrapperConfig `json:"TesseractOcrApi"`
+	Configurator        WrapperConfig `json:"Configurator"`
 }
 
 type WrapperConfig struct {
