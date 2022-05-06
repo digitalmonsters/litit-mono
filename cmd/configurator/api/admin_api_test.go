@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/digitalmonsters/configurator/pkg/configs"
-	"github.com/digitalmonsters/configurator/pkg/database"
+	"github.com/digitalmonsters/go-common/application"
+	"github.com/digitalmonsters/go-common/callback"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -21,26 +22,26 @@ func TestGetConfigs(t *testing.T) {
 		service: &configs.ConfigServiceMock{
 			AdminGetConfigsFn: func(db *gorm.DB, req configs.GetConfigRequest) (*configs.GetConfigResponse, error) {
 				return &configs.GetConfigResponse{
-					Items: []configs.ConfigModel{
-						configs.ConfigModel{
+					Items: []application.ConfigModel{
+						application.ConfigModel{
 							Key:         "test_key1",
 							Value:       "45",
-							Type:        database.ConfigTypeNumber,
+							Type:        application.ConfigTypeNumber,
 							Description: "test key 1",
 							AdminOnly:   false,
 							CreatedAt:   time.Now().Add(-1 * time.Minute),
 							UpdatedAt:   time.Now().Add(-1 * time.Minute),
-							Category:    database.ConfigCategoryAd,
+							Category:    application.ConfigCategoryAd,
 						},
-						configs.ConfigModel{
+						application.ConfigModel{
 							Key:         "test_key2",
 							Value:       "some text",
-							Type:        database.ConfigTypeString,
+							Type:        application.ConfigTypeString,
 							Description: "test key 2",
 							AdminOnly:   false,
 							CreatedAt:   time.Now().Add(-1 * time.Minute),
 							UpdatedAt:   time.Now().Add(-1 * time.Minute),
-							Category:    database.ConfigCategoryContent,
+							Category:    application.ConfigCategoryContent,
 						},
 					},
 					TotalCount: 2,
@@ -50,10 +51,10 @@ func TestGetConfigs(t *testing.T) {
 	}
 	var req = configs.GetConfigRequest{
 		Keys:                []string{"test_key1", "test_key2"},
-		Types:               []database.ConfigType{database.ConfigTypeNumber, database.ConfigTypeString},
+		Types:               []application.ConfigType{application.ConfigTypeNumber, application.ConfigTypeString},
 		DescriptionContains: null.StringFrom("test"),
 		AdminOnly:           null.BoolFrom(false),
-		Categories:          []database.ConfigCategory{database.ConfigCategoryAd, database.ConfigCategoryContent},
+		Categories:          []application.ConfigCategory{application.ConfigCategoryAd, application.ConfigCategoryContent},
 		CreatedFrom:         null.TimeFrom(time.Now().UTC().Add(-15 * time.Minute)),
 		CreatedTo:           null.TimeFrom(time.Now().UTC()),
 		UpdatedFrom:         null.TimeFrom(time.Now().UTC().Add(-10 * time.Minute)),
@@ -90,7 +91,7 @@ func TestGetConfigLogs(t *testing.T) {
 							Value:         "45",
 							CreatedAt:     time.Now().Add(-1 * time.Minute),
 							UpdatedAt:     time.Now().Add(-1 * time.Minute),
-							RelatedUserId: int64(1),
+							RelatedUserId: null.IntFrom(1),
 						},
 						configs.ConfigLogModel{
 							Id:            int64(2),
@@ -98,7 +99,7 @@ func TestGetConfigLogs(t *testing.T) {
 							Value:         "some text",
 							CreatedAt:     time.Now().Add(-1 * time.Minute),
 							UpdatedAt:     time.Now().Add(-1 * time.Minute),
-							RelatedUserId: int64(1),
+							RelatedUserId: null.IntFrom(1),
 						},
 					},
 					TotalCount: 2,
@@ -137,9 +138,9 @@ func TestUpsertConfig(t *testing.T) {
 		apiDef: map[string]swagger.ApiDescription{},
 		service: &configs.ConfigServiceMock{
 			AdminUpsertConfigFn: func(db *gorm.DB, req configs.UpsertConfigRequest, userId int64,
-				publisher eventsourcing.Publisher[configs.ConfigEvent], ctx context.Context) (*configs.ConfigModel, error) {
+				publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error) {
 				assert.Equal(t, userId, adminUserId)
-				return &configs.ConfigModel{
+				return &application.ConfigModel{
 					Key:         req.Key,
 					Value:       req.Value,
 					Type:        req.Type,
@@ -148,17 +149,17 @@ func TestUpsertConfig(t *testing.T) {
 					CreatedAt:   time.Now().UTC(),
 					UpdatedAt:   time.Now().UTC(),
 					Category:    req.Category,
-				}, nil
+				}, nil, nil
 			},
 		},
 	}
 	var req = configs.UpsertConfigRequest{
 		Key:         "test_key3",
 		Value:       "657",
-		Type:        database.ConfigTypeNumber,
+		Type:        application.ConfigTypeNumber,
 		Description: "test number",
 		AdminOnly:   true,
-		Category:    database.ConfigCategoryTokens,
+		Category:    application.ConfigCategoryTokens,
 	}
 	js, err := json.Marshal(&req)
 	if err != nil {
@@ -171,7 +172,7 @@ func TestUpsertConfig(t *testing.T) {
 	if wrappedErr != nil {
 		t.Fatal(wrappedErr.GetError())
 	}
-	var mappedResp = resp.(*configs.ConfigModel)
+	var mappedResp = resp.(*application.ConfigModel)
 	assert.Equal(t, req.Type, mappedResp.Type)
 	assert.Equal(t, req.Value, mappedResp.Value)
 	assert.Equal(t, req.Category, mappedResp.Category)

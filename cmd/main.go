@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/digitalmonsters/configurator/cmd/configurator"
 	"github.com/digitalmonsters/configurator/configs"
 	configsPkg "github.com/digitalmonsters/configurator/pkg/configs"
@@ -35,9 +36,9 @@ func main() {
 	apiDescription := map[string]swagger.ApiDescription{}
 	var rootApplication application.RootApplication
 
-	var configPublisher = eventsourcing.NewKafkaBatchPublisher[configsPkg.ConfigEvent]("config_upsert", config.ConfigNotifier, context.Background())
+	var configPublisher = eventsourcing.NewKafkaBatchPublisher[eventsourcing.ConfigEvent]("config_upsert", config.ConfigNotifier, context.Background())
 
-	configService := configsPkg.ConfigService{}
+	configService := &configsPkg.ConfigService{}
 	rootApplication.
 		AddApplication(configurator.Application(fastHttpRouter, apiDescription, configService, configPublisher)).
 		MustInit()
@@ -45,7 +46,25 @@ func main() {
 	log.Info().Msg("bootstrapping configurator")
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
-		fastHttpRouter.RegisterDocs(apiDescription, []swagger.ConstantDescription{})
+		fastHttpRouter.RegisterDocs(apiDescription, []swagger.ConstantDescription{
+			{
+				Ref: application.ConfigTypeString,
+				Values: []string{
+					fmt.Sprintf("%v - string config type", application.ConfigTypeString),
+					fmt.Sprintf("%v - number config type", application.ConfigTypeNumber),
+					fmt.Sprintf("%v - object config type", application.ConfigTypeObject),
+				},
+			},
+			{
+				Ref: application.ConfigCategoryApplications,
+				Values: []string{
+					fmt.Sprintf("%v - applications category", application.ConfigCategoryApplications),
+					fmt.Sprintf("%v - tokens category", application.ConfigCategoryTokens),
+					fmt.Sprintf("%v - content category", application.ConfigCategoryContent),
+					fmt.Sprintf("%v - ad category", application.ConfigCategoryAd),
+				},
+			},
+		})
 	}
 
 	fastHttpRouter.RegisterProfiler()

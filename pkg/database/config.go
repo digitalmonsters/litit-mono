@@ -1,38 +1,26 @@
 package database
 
-import "time"
+import (
+	"github.com/digitalmonsters/go-common/application"
+	"gopkg.in/guregu/null.v4"
+	"time"
+)
 
 type Config struct {
-	Key         string
-	Value       string
-	Type        ConfigType
-	Description string
-	AdminOnly   bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Category    ConfigCategory
+	Key            string
+	Value          string
+	Type           application.ConfigType
+	Description    string
+	AdminOnly      bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Category       application.ConfigCategory
+	ReleaseVersion string
 }
 
 func (Config) TableName() string {
 	return "configs"
 }
-
-type ConfigType string
-
-const (
-	ConfigTypeString = ConfigType("string")
-	ConfigTypeNumber = ConfigType("number")
-	ConfigTypeObject = ConfigType("object")
-)
-
-type ConfigCategory string
-
-const (
-	ConfigCategoryApplications = ConfigCategory("applications")
-	ConfigCategoryTokens       = ConfigCategory("tokens")
-	ConfigCategoryContent      = ConfigCategory("content")
-	ConfigCategoryAd           = ConfigCategory("ad")
-)
 
 type ConfigLog struct {
 	Id            int64
@@ -40,7 +28,7 @@ type ConfigLog struct {
 	Value         string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
-	RelatedUserId int64
+	RelatedUserId null.Int
 }
 
 func (ConfigLog) TableName() string {

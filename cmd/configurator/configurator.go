@@ -13,7 +13,7 @@ func Application(
 	httpRouter *router.HttpRouter,
 	apiDef map[string]swagger.ApiDescription,
 	service configs.IConfigService,
-	publisher eventsourcing.Publisher[configs.ConfigEvent],
+	publisher eventsourcing.Publisher[eventsourcing.ConfigEvent],
 ) *application.BaseApplication {
 	return application.NewBaseApplication("configurator").
 		AddSubApplication(api.SubApp(httpRouter, apiDef, service, publisher))

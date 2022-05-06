@@ -71,5 +71,13 @@ drop table if exists feature_toggle_events;
 drop table if exists  feature_toggles;`)
 			},
 		},
+		{
+			ID: "add_realease_version_on_configs_20220504",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+alter table configs add column if not exists release_version varchar(255);
+`)
+			},
+		},
 	}
 }

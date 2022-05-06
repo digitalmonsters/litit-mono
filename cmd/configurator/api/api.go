@@ -13,14 +13,14 @@ type apiApp struct {
 	apiDef     map[string]swagger.ApiDescription
 	httpRouter *router.HttpRouter
 	service    configs.IConfigService
-	publisher  eventsourcing.Publisher[configs.ConfigEvent]
+	publisher  eventsourcing.Publisher[eventsourcing.ConfigEvent]
 }
 
 func SubApp(
 	httpRouter *router.HttpRouter,
 	apiDef map[string]swagger.ApiDescription,
 	service configs.IConfigService,
-	publisher eventsourcing.Publisher[configs.ConfigEvent],
+	publisher eventsourcing.Publisher[eventsourcing.ConfigEvent],
 ) application.SubApplication {
 	return &apiApp{
 		httpRouter: httpRouter,

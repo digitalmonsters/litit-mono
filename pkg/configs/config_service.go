@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/configurator/pkg/database"
-	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/application"
+	"github.com/digitalmonsters/go-common/callback"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/pkg/errors"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
 
@@ -14,14 +16,15 @@ type IConfigService interface {
 	GetAllConfigs(db *gorm.DB) ([]database.Config, error)
 	GetConfigsByIds(db *gorm.DB, ids []string) ([]database.Config, error)
 	AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error)
-	AdminUpsertConfig(db *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[ConfigEvent], ctx context.Context) (*ConfigModel, error)
+	AdminUpsertConfig(db *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error)
 	AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest) (*GetConfigLogsResponse, error)
+	MigrateConfigs(db *gorm.DB, newConfigs map[string]application.MigrateConfigModel, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) ([]application.ConfigModel, []callback.Callback, error)
 }
 
 type ConfigService struct {
 }
 
-func (c ConfigService) GetAllConfigs(db *gorm.DB) ([]database.Config, error) {
+func (c *ConfigService) GetAllConfigs(db *gorm.DB) ([]database.Config, error) {
 	var cfg []database.Config
 
 	if err := db.Find(&cfg).Error; err != nil {
@@ -31,7 +34,7 @@ func (c ConfigService) GetAllConfigs(db *gorm.DB) ([]database.Config, error) {
 	return cfg, nil
 }
 
-func (c ConfigService) GetConfigsByIds(db *gorm.DB, ids []string) ([]database.Config, error) {
+func (c *ConfigService) GetConfigsByIds(db *gorm.DB, ids []string) ([]database.Config, error) {
 	var cfg []database.Config
 
 	if err := db.Where("key in ?", ids).Find(&cfg).Error; err != nil {
@@ -41,7 +44,7 @@ func (c ConfigService) GetConfigsByIds(db *gorm.DB, ids []string) ([]database.Co
 	return cfg, nil
 }
 
-func (c ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error) {
+func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error) {
 	var cfg []database.Config
 	var q = db.Model(cfg)
 
@@ -58,7 +61,8 @@ func (c ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetC
 		q = q.Where("key in ?", req.Keys)
 	}
 	if req.DescriptionContains.Valid {
-		q = q.Where("description ilike ?", fmt.Sprintf("%%%s%%", req.DescriptionContains.ValueOrZero()))
+		var search = fmt.Sprintf("%%%s%%", req.DescriptionContains.ValueOrZero())
+		q = q.Where("(description ilike ? or key ilike ?)", search, search)
 	}
 	if req.CreatedFrom.Valid {
 		q = q.Where("created_at > ?", req.CreatedFrom.Time)
@@ -72,6 +76,9 @@ func (c ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetC
 	if req.UpdatedTo.Valid {
 		q = q.Where("updated_at < ?", req.CreatedTo.Time)
 	}
+	if len(req.ReleaseVersions) > 0 {
+		q = q.Where("release_version in ?", req.ReleaseVersions)
+	}
 	var count int64
 	if err := q.Count(&count).Error; err != nil {
 		return nil, err
@@ -79,17 +86,18 @@ func (c ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetC
 	if err := q.Order("created_at desc").Find(&cfg).Error; err != nil {
 		return nil, err
 	}
-	var respItems []ConfigModel
+	var respItems []application.ConfigModel
 	for _, c := range cfg {
-		respItems = append(respItems, ConfigModel{
-			Key:         c.Key,
-			Value:       c.Value,
-			Type:        c.Type,
-			Description: c.Description,
-			AdminOnly:   c.AdminOnly,
-			CreatedAt:   c.CreatedAt,
-			UpdatedAt:   c.UpdatedAt,
-			Category:    c.Category,
+		respItems = append(respItems, application.ConfigModel{
+			Key:            c.Key,
+			Value:          c.Value,
+			Type:           c.Type,
+			Description:    c.Description,
+			AdminOnly:      c.AdminOnly,
+			CreatedAt:      c.CreatedAt,
+			UpdatedAt:      c.UpdatedAt,
+			Category:       c.Category,
+			ReleaseVersion: c.ReleaseVersion,
 		})
 	}
 	return &GetConfigResponse{
@@ -98,97 +106,114 @@ func (c ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetC
 	}, nil
 }
 
-func (c ConfigService) AdminUpsertConfig(db *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[ConfigEvent], ctx context.Context) (*ConfigModel, error) {
+func validateNewConfigRequest(req UpsertConfigRequest) error {
 	if len(req.Key) == 0 {
-		return nil, errors.New("invalid key")
+		return errors.New("invalid key")
 	}
 	if len(req.Type) == 0 {
-		return nil, errors.New("invalid type")
+		return errors.New("invalid type")
 	}
 	if len(req.Value) == 0 {
-		return nil, errors.New("invalid value")
+		return errors.New("invalid value")
 	}
 	if len(req.Category) == 0 {
-		return nil, errors.New("invalid category")
+		return errors.New("invalid category")
 	}
 	if len(req.Description) == 0 {
-		return nil, errors.New("invalid decsription")
+		return errors.New("invalid description")
+	}
+	if len(req.ReleaseVersion) == 0 {
+		return errors.New("invalid release version")
+	}
+	return nil
+}
+
+func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error) {
+	if err := validateNewConfigRequest(req); err != nil {
+		return nil, nil, err
 	}
 	var currentConfig database.Config
-	if err := db.Where("key = ?", req.Key).Find(&currentConfig).Error; err != nil {
-		return nil, err
+	if err := tx.Where("key = ?", req.Key).Find(&currentConfig).Error; err != nil {
+		return nil, nil, err
 	}
-	var tx = db.Begin()
-	defer tx.Rollback()
 	if len(currentConfig.Key) > 0 {
 		if err := tx.Model(currentConfig).Where("key = ?", req.Key).Updates(map[string]interface{}{
-			"value":       req.Value,
-			"description": req.Description,
-			"admin_only":  req.AdminOnly,
-			"category":    req.Category,
-			"type":        req.Type,
+			"value":           req.Value,
+			"description":     req.Description,
+			"admin_only":      req.AdminOnly,
+			"category":        req.Category,
+			"type":            req.Type,
+			"release_version": req.ReleaseVersion,
 		}).Error; err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if err := tx.Create(&database.ConfigLog{
 			Key:           req.Key,
 			Value:         req.Value,
-			RelatedUserId: userId,
+			RelatedUserId: null.IntFrom(userId),
 		}).Error; err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if err := tx.Where("key = ?", req.Key).Find(&currentConfig).Error; err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		currentConfig = database.Config{
-			Key:         req.Key,
-			Value:       req.Value,
-			Type:        req.Type,
-			Description: req.Description,
-			AdminOnly:   req.AdminOnly,
-			Category:    req.Category,
+			Key:            req.Key,
+			Value:          req.Value,
+			Type:           req.Type,
+			Description:    req.Description,
+			AdminOnly:      req.AdminOnly,
+			Category:       req.Category,
+			ReleaseVersion: req.ReleaseVersion,
 		}
 		if err := tx.Create(&currentConfig).Error; err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if err := tx.Create(&database.ConfigLog{
 			Key:           req.Key,
 			Value:         req.Value,
-			RelatedUserId: userId,
+			RelatedUserId: null.IntFrom(userId),
 		}).Error; err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
-	if err := tx.Commit().Error; err != nil {
-		return nil, err
+	callbacks := []callback.Callback{
+		func(ctx context.Context) error {
+			if publisher != nil {
+				err := <-publisher.PublishImmediate(ctx, eventsourcing.ConfigEvent{
+					Key:   currentConfig.Key,
+					Value: currentConfig.Value,
+				})
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
 	}
-
-	if publisher != nil {
-		err := <-publisher.PublishImmediate(ctx, ConfigEvent{
-			Key:   currentConfig.Key,
-			Value: currentConfig.Value,
-		})
-		apm_helper.LogError(err, ctx)
-	}
-	return &ConfigModel{
-		Key:         currentConfig.Key,
-		Value:       currentConfig.Value,
-		Type:        currentConfig.Type,
-		Description: currentConfig.Description,
-		AdminOnly:   currentConfig.AdminOnly,
-		CreatedAt:   currentConfig.CreatedAt,
-		UpdatedAt:   currentConfig.UpdatedAt,
-		Category:    currentConfig.Category,
-	}, nil
+	return &application.ConfigModel{
+		Key:            currentConfig.Key,
+		Value:          currentConfig.Value,
+		Type:           currentConfig.Type,
+		Description:    currentConfig.Description,
+		AdminOnly:      currentConfig.AdminOnly,
+		CreatedAt:      currentConfig.CreatedAt,
+		UpdatedAt:      currentConfig.UpdatedAt,
+		Category:       currentConfig.Category,
+		ReleaseVersion: currentConfig.ReleaseVersion,
+	}, callbacks, nil
 }
 
-func (c ConfigService) AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest) (*GetConfigLogsResponse, error) {
+func (c *ConfigService) AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest) (*GetConfigLogsResponse, error) {
 	var items []database.ConfigLog
 
 	var q = db.Model(items)
 	if len(req.Keys) > 0 {
 		q = q.Where("key in ?", req.Keys)
+	}
+	if req.KeyContains.Valid {
+		q = q.Where("key ilike ?", fmt.Sprintf("%%%s%%", req.KeyContains.ValueOrZero()))
 	}
 	if len(req.RelatedUserIds) > 0 {
 		q = q.Where("related_user_id in ?", req.RelatedUserIds)
@@ -227,4 +252,75 @@ func (c ConfigService) AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest)
 		Items:      respItems,
 		TotalCount: count,
 	}, nil
+}
+
+func (c *ConfigService) MigrateConfigs(tx *gorm.DB, newConfigs map[string]application.MigrateConfigModel,
+	publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) ([]application.ConfigModel, []callback.Callback, error) {
+	var keys []string
+
+	for key := range newConfigs {
+		keys = append(keys, key)
+	}
+	var currentConfigsKey []string
+	if err := tx.Model(database.Config{}).Where("key in ?", keys).Pluck("key", &currentConfigsKey).Error; err != nil {
+		return nil, nil, err
+	}
+	if len(currentConfigsKey) == len(keys) {
+		return []application.ConfigModel{}, nil, nil
+	}
+	var currentConfigsMap = make(map[string]bool)
+
+	for _, val := range currentConfigsKey {
+		currentConfigsMap[val] = false
+	}
+	var events []eventsourcing.ConfigEvent
+	var configModels []application.ConfigModel
+
+	for key, val := range newConfigs {
+		if _, ok := currentConfigsMap[key]; !ok {
+			var newConfig = database.Config{
+				Key:            val.Key,
+				Value:          val.Value,
+				Type:           val.Type,
+				Description:    val.Description,
+				AdminOnly:      val.AdminOnly,
+				Category:       val.Category,
+				ReleaseVersion: val.ReleaseVersion,
+			}
+			if err := tx.Create(&newConfig).Error; err != nil {
+				return nil, nil, err
+			}
+			if err := tx.Create(&database.ConfigLog{
+				Key:   val.Key,
+				Value: val.Value,
+			}).Error; err != nil {
+				return nil, nil, err
+			}
+			events = append(events, eventsourcing.ConfigEvent{Key: val.Key, Value: val.Value})
+			configModels = append(configModels, application.ConfigModel{
+				Key:            newConfig.Key,
+				Value:          newConfig.Value,
+				Type:           newConfig.Type,
+				Description:    newConfig.Description,
+				AdminOnly:      newConfig.AdminOnly,
+				Category:       newConfig.Category,
+				ReleaseVersion: newConfig.ReleaseVersion,
+				CreatedAt:      newConfig.CreatedAt,
+				UpdatedAt:      newConfig.UpdatedAt,
+			})
+		}
+	}
+
+	callbacks := []callback.Callback{
+		func(ctx context.Context) error {
+			if publisher != nil {
+				err := <-publisher.PublishImmediate(ctx, events...)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+	return configModels, callbacks, nil
 }

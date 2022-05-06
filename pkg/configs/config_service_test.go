@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/digitalmonsters/configurator/configs"
 	"github.com/digitalmonsters/configurator/pkg/database"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/stretchr/testify/assert"
@@ -32,22 +33,22 @@ func insertConfigs(t *testing.T, withConfigLog bool) ([]database.Config, []datab
 		{
 			Key:         "test_key1",
 			Value:       "50",
-			Type:        database.ConfigTypeNumber,
+			Type:        application.ConfigTypeNumber,
 			Description: "test",
 			AdminOnly:   false,
 			CreatedAt:   time.Now().UTC(),
 			UpdatedAt:   time.Now().UTC(),
-			Category:    database.ConfigCategoryTokens,
+			Category:    application.ConfigCategoryTokens,
 		},
 		{
 			Key:         "test_key2",
 			Value:       "test",
-			Type:        database.ConfigTypeString,
+			Type:        application.ConfigTypeString,
 			Description: "new description",
 			AdminOnly:   false,
 			CreatedAt:   time.Now().UTC(),
 			UpdatedAt:   time.Now().UTC(),
-			Category:    database.ConfigCategoryTokens,
+			Category:    application.ConfigCategoryTokens,
 		},
 	}
 	if err := gormDb.Create(&configs).Error; err != nil {
@@ -58,32 +59,32 @@ func insertConfigs(t *testing.T, withConfigLog bool) ([]database.Config, []datab
 			database.ConfigLog{
 				Key:           configs[0].Key,
 				Value:         "165",
-				RelatedUserId: 1,
+				RelatedUserId: null.IntFrom(1),
 			},
 			database.ConfigLog{
 				Key:           configs[0].Key,
 				Value:         "89",
-				RelatedUserId: 2,
+				RelatedUserId: null.IntFrom(2),
 			},
 			database.ConfigLog{
 				Key:           configs[0].Key,
 				Value:         configs[0].Value,
-				RelatedUserId: 3,
+				RelatedUserId: null.IntFrom(3),
 			},
 			database.ConfigLog{
 				Key:           configs[1].Key,
 				Value:         "some other text",
-				RelatedUserId: 1,
+				RelatedUserId: null.IntFrom(1),
 			},
 			database.ConfigLog{
 				Key:           configs[1].Key,
 				Value:         "some other text 2",
-				RelatedUserId: 2,
+				RelatedUserId: null.IntFrom(2),
 			},
 			database.ConfigLog{
 				Key:           configs[1].Key,
 				Value:         configs[1].Value,
-				RelatedUserId: 3,
+				RelatedUserId: null.IntFrom(3),
 			},
 		}
 		if err := gormDb.Create(&configLogs).Error; err != nil {
@@ -104,7 +105,7 @@ func checkConfig(t *testing.T, old, new database.Config) {
 	assert.Equal(t, old.UpdatedAt.UTC().Format(time.RFC3339), new.UpdatedAt.UTC().Format(time.RFC3339))
 	assert.Equal(t, old.CreatedAt.UTC().Format(time.RFC3339), new.CreatedAt.UTC().Format(time.RFC3339))
 }
-func checkConfigModel(t *testing.T, old database.Config, new ConfigModel) {
+func checkConfigModel(t *testing.T, old database.Config, new application.ConfigModel) {
 	assert.Equal(t, old.Key, new.Key)
 	assert.Equal(t, old.AdminOnly, new.AdminOnly)
 	assert.Equal(t, old.Type, new.Type)
@@ -114,7 +115,23 @@ func checkConfigModel(t *testing.T, old database.Config, new ConfigModel) {
 	assert.Equal(t, old.UpdatedAt.UTC().Format(time.RFC3339), new.UpdatedAt.UTC().Format(time.RFC3339))
 	assert.Equal(t, old.CreatedAt.UTC().Format(time.RFC3339), new.CreatedAt.UTC().Format(time.RFC3339))
 }
-func checkConfigRequest(t *testing.T, old UpsertConfigRequest, new ConfigModel) {
+func checkConfigRequest(t *testing.T, old UpsertConfigRequest, new application.ConfigModel) {
+	assert.Equal(t, old.Key, new.Key)
+	assert.Equal(t, old.AdminOnly, new.AdminOnly)
+	assert.Equal(t, old.Type, new.Type)
+	assert.Equal(t, old.Category, new.Category)
+	assert.Equal(t, old.Value, new.Value)
+	assert.Equal(t, old.Description, new.Description)
+}
+func checkConfigMigrate(t *testing.T, old application.MigrateConfigModel, new application.ConfigModel) {
+	assert.Equal(t, old.Key, new.Key)
+	assert.Equal(t, old.AdminOnly, new.AdminOnly)
+	assert.Equal(t, old.Type, new.Type)
+	assert.Equal(t, old.Category, new.Category)
+	assert.Equal(t, old.Value, new.Value)
+	assert.Equal(t, old.Description, new.Description)
+}
+func checkConfigMigrateWithModel(t *testing.T, old application.MigrateConfigModel, new database.Config) {
 	assert.Equal(t, old.Key, new.Key)
 	assert.Equal(t, old.AdminOnly, new.AdminOnly)
 	assert.Equal(t, old.Type, new.Type)
@@ -125,7 +142,7 @@ func checkConfigRequest(t *testing.T, old UpsertConfigRequest, new ConfigModel) 
 func checkConfigLogs(t *testing.T, old database.ConfigLog, new ConfigLogModel, keyValues []string, relatedUserIds []int64) {
 	assert.True(t, new.Id != 0)
 	assert.Equal(t, old.Key, new.Key)
-	assert.True(t, funk.Contains(relatedUserIds, new.RelatedUserId))
+	assert.True(t, funk.Contains(relatedUserIds, new.RelatedUserId.Int64))
 	assert.True(t, funk.Contains(keyValues, new.Value))
 	assert.Equal(t, old.UpdatedAt.UTC().Format(time.RFC3339), new.UpdatedAt.UTC().Format(time.RFC3339))
 	assert.Equal(t, old.CreatedAt.UTC().Format(time.RFC3339), new.CreatedAt.UTC().Format(time.RFC3339))
@@ -201,10 +218,10 @@ func TestConfigService_AdminGetConfigs(t *testing.T) {
 
 	resp, err = service.AdminGetConfigs(gormDb, GetConfigRequest{
 		Keys:                []string{configs[0].Key},
-		Types:               []database.ConfigType{configs[0].Type, configs[1].Type},
+		Types:               []application.ConfigType{configs[0].Type, configs[1].Type},
 		DescriptionContains: null.StringFrom(configs[0].Description),
 		AdminOnly:           null.BoolFrom(configs[0].AdminOnly),
-		Categories:          []database.ConfigCategory{configs[0].Category, configs[1].Category},
+		Categories:          []application.ConfigCategory{configs[0].Category, configs[1].Category},
 		CreatedFrom:         null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
 		CreatedTo:           null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
 		UpdatedFrom:         null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
@@ -231,7 +248,7 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 	for _, c := range configLogs {
 		keys = append(keys, c.Key)
 		values[c.Key] = append(values[c.Key], c.Value)
-		relatedUsers[c.Key] = append(relatedUsers[c.Key], c.RelatedUserId)
+		relatedUsers[c.Key] = append(relatedUsers[c.Key], c.RelatedUserId.Int64)
 	}
 	resp, err := service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{
 		Limit:  10,
@@ -257,6 +274,7 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 
 	resp, err = service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{
 		Keys:        []string{configLogs[0].Key},
+		KeyContains: null.StringFrom("test"),
 		CreatedFrom: null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
 		CreatedTo:   null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
 		UpdatedFrom: null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
@@ -285,9 +303,9 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, []string{"public.config"}, t); err != nil {
 		t.Fatal(err)
 	}
-	var publishedEvent ConfigEvent
+	var publishedEvent eventsourcing.ConfigEvent
 
-	var fn = func(ctx context.Context, messages ...ConfigEvent) chan error {
+	var fn = func(ctx context.Context, messages ...eventsourcing.ConfigEvent) chan error {
 		publishedEvent = messages[0]
 		var errCh = make(chan error, 2)
 		go func() {
@@ -297,21 +315,27 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 		return errCh
 	}
 
-	var publishMock = &eventsourcing.PublisherMock[ConfigEvent]{
+	var publishMock = &eventsourcing.PublisherMock[eventsourcing.ConfigEvent]{
 		PublishFn:          fn,
 		PublishImmediateFn: fn,
 	}
 	req := UpsertConfigRequest{
-		Key:         "test key 3",
-		Value:       "70",
-		Type:        database.ConfigTypeNumber,
-		Description: "test number 3",
-		AdminOnly:   false,
-		Category:    database.ConfigCategoryContent,
+		Key:            "test key 3",
+		Value:          "70",
+		Type:           application.ConfigTypeNumber,
+		Description:    "test number 3",
+		AdminOnly:      false,
+		Category:       application.ConfigCategoryContent,
+		ReleaseVersion: "v1.2",
 	}
-	resp, wrappedErr := service.AdminUpsertConfig(gormDb, req, int64(9), publishMock, context.TODO())
+	resp, callbacks, wrappedErr := service.AdminUpsertConfig(gormDb, req, int64(9), publishMock)
 	if wrappedErr != nil {
 		t.Fatal(wrappedErr)
+	}
+	for _, fn := range callbacks {
+		if err := fn(context.TODO()); err != nil {
+			t.Fatal(err)
+		}
 	}
 	assert.Equal(t, resp.Key, publishedEvent.Key)
 	assert.Equal(t, resp.Value, publishedEvent.Value)
@@ -327,16 +351,22 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 	checkConfigModel(t, cfg, *resp)
 
 	req = UpsertConfigRequest{
-		Key:         "test key 3",
-		Value:       "test 71",
-		Type:        database.ConfigTypeString,
-		Description: "test number 7",
-		AdminOnly:   true,
-		Category:    database.ConfigCategoryTokens,
+		Key:            "test key 3",
+		Value:          "test 71",
+		Type:           application.ConfigTypeString,
+		Description:    "test number 7",
+		AdminOnly:      true,
+		Category:       application.ConfigCategoryTokens,
+		ReleaseVersion: "v1.1",
 	}
-	resp, wrappedErr = service.AdminUpsertConfig(gormDb, req, int64(9), publishMock, context.TODO())
+	resp, callbacks, wrappedErr = service.AdminUpsertConfig(gormDb, req, int64(9), publishMock)
 	if wrappedErr != nil {
 		t.Fatal(wrappedErr)
+	}
+	for _, fn := range callbacks {
+		if err := fn(context.TODO()); err != nil {
+			t.Fatal(err)
+		}
 	}
 	assert.Equal(t, resp.Key, publishedEvent.Key)
 	assert.Equal(t, resp.Value, publishedEvent.Value)
@@ -356,4 +386,170 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(configsResp))
+}
+
+func TestConfigService_MigrateConfigs(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, []string{"public.config"}, t); err != nil {
+		t.Fatal(err)
+	}
+	var publishedEvent []eventsourcing.ConfigEvent
+
+	var fn = func(ctx context.Context, messages ...eventsourcing.ConfigEvent) chan error {
+		publishedEvent = messages
+		var errCh = make(chan error, 2)
+		go func() {
+			errCh <- nil
+			defer close(errCh)
+		}()
+		return errCh
+	}
+
+	var publishMock = &eventsourcing.PublisherMock[eventsourcing.ConfigEvent]{
+		PublishFn:          fn,
+		PublishImmediateFn: fn,
+	}
+	var reqMap = make(map[string]application.MigrateConfigModel)
+	reqMap["test key 1"] = application.MigrateConfigModel{
+		Key:            "test key 1",
+		Value:          "50",
+		Type:           application.ConfigTypeNumber,
+		Description:    "test key 1 description",
+		AdminOnly:      false,
+		Category:       application.ConfigCategoryAd,
+		ReleaseVersion: "v1.32",
+	}
+	reqMap["test key 2"] = application.MigrateConfigModel{
+		Key:            "test key 2",
+		Value:          "some text",
+		Type:           application.ConfigTypeString,
+		Description:    "some text description",
+		AdminOnly:      true,
+		Category:       application.ConfigCategoryTokens,
+		ReleaseVersion: "v12.3",
+	}
+	reqMap["test key 3"] = application.MigrateConfigModel{
+		Key:            "test key 3",
+		Value:          "{}",
+		Type:           application.ConfigTypeObject,
+		Description:    "object description",
+		AdminOnly:      true,
+		Category:       application.ConfigCategoryAd,
+		ReleaseVersion: "v308.1",
+	}
+	resp, callbacks, wrappedErr := service.MigrateConfigs(gormDb, reqMap, publishMock)
+	if wrappedErr != nil {
+		t.Fatal(wrappedErr)
+	}
+	for _, fn := range callbacks {
+		if err := fn(context.TODO()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var foundCounter int
+	for _, val := range resp {
+		if reqVal, ok := reqMap[val.Key]; ok {
+			foundCounter++
+			checkConfigMigrate(t, reqVal, val)
+			assert.True(t, val.CreatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+			assert.True(t, val.UpdatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+		} else {
+			t.Fatal("unknown config")
+		}
+	}
+	assert.Equal(t, 3, foundCounter)
+	var respMap = make(map[string]application.ConfigModel)
+	for _, r := range resp {
+		respMap[r.Key] = r
+	}
+
+	var cfg []database.Config
+
+	if err := gormDb.Find(&cfg).Error; err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 3, len(cfg))
+	foundCounter = 0
+	for _, val := range cfg {
+		if respVal, ok := respMap[val.Key]; ok {
+			foundCounter++
+			checkConfigModel(t, val, respVal)
+			assert.True(t, val.CreatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+			assert.True(t, val.UpdatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+		} else {
+			t.Fatal("unknown config")
+		}
+	}
+	assert.Equal(t, 3, len(publishedEvent))
+	assert.Equal(t, 3, foundCounter)
+	foundCounter = 0
+	for _, ev := range publishedEvent {
+		if reqVal, ok := reqMap[ev.Key]; ok {
+			foundCounter++
+			assert.Equal(t, reqVal.Value, ev.Value)
+		}
+	}
+	assert.Equal(t, 3, foundCounter)
+
+	publishedEvent = []eventsourcing.ConfigEvent{}
+	reqMap["test key 4"] = application.MigrateConfigModel{
+		Key:            "test key 4",
+		Value:          "123",
+		Type:           application.ConfigTypeNumber,
+		Description:    "test key 4 description",
+		AdminOnly:      true,
+		Category:       application.ConfigCategoryAd,
+		ReleaseVersion: "v1.212",
+	}
+	resp, callbacks, wrappedErr = service.MigrateConfigs(gormDb, reqMap, publishMock)
+	if wrappedErr != nil {
+		t.Fatal(wrappedErr)
+	}
+	for _, fn := range callbacks {
+		if err := fn(context.TODO()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	foundCounter = 0
+	for _, val := range resp {
+		if reqVal, ok := reqMap[val.Key]; ok {
+			foundCounter++
+			assert.Equal(t, "test key 4", val.Key)
+			checkConfigMigrate(t, reqVal, val)
+			assert.True(t, val.CreatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+			assert.True(t, val.UpdatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+		} else {
+			t.Fatal("unknown config")
+		}
+	}
+	assert.Equal(t, 1, foundCounter)
+	respMap = make(map[string]application.ConfigModel)
+	for _, r := range resp {
+		respMap[r.Key] = r
+	}
+	cfg = []database.Config{}
+
+	if err := gormDb.Find(&cfg).Error; err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 4, len(cfg))
+	foundCounter = 0
+	for _, val := range cfg {
+		if reqVal, ok := reqMap[val.Key]; ok {
+			foundCounter++
+			checkConfigMigrateWithModel(t, reqVal, val)
+			assert.True(t, val.CreatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+			assert.True(t, val.UpdatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
+		}
+	}
+	assert.Equal(t, 4, foundCounter)
+	assert.Equal(t, 1, len(publishedEvent))
+	foundCounter = 0
+	for _, ev := range publishedEvent {
+		if reqVal, ok := reqMap[ev.Key]; ok {
+			foundCounter++
+			assert.Equal(t, "test key 4", ev.Key)
+			assert.Equal(t, reqVal.Value, ev.Value)
+		}
+	}
+	assert.Equal(t, 1, foundCounter)
 }

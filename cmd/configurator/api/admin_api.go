@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/digitalmonsters/configurator/pkg/configs"
 	"github.com/digitalmonsters/configurator/pkg/database"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
@@ -80,7 +81,7 @@ func (a *apiApp) upsertConfig() router.ICommand {
 
 	a.apiDef["UpsertConfig"] = swagger.ApiDescription{
 		Request:           configs.UpsertConfigRequest{},
-		Response:          configs.ConfigModel{},
+		Response:          application.ConfigModel{},
 		MethodDescription: "Upsert config on admin panel",
 		Summary:           "Upsert config",
 		Tags:              []string{"configs", "admin"},
@@ -93,10 +94,19 @@ func (a *apiApp) upsertConfig() router.ICommand {
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
-		resp, err := a.service.AdminUpsertConfig(database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
-			req, executionData.UserId, a.publisher, executionData.Context)
+		tx := database.GetDb(database.DbTypeMaster).WithContext(executionData.Context).Begin()
+		defer tx.Rollback()
+		resp, callbacks, err := a.service.AdminUpsertConfig(tx, req, executionData.UserId, a.publisher)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+		if err := tx.Commit().Error; err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+		for _, callbackFn := range callbacks {
+			if err := callbackFn(executionData.Context); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			}
 		}
 		return resp, nil
 	}, common.AccessLevelWrite, "configs:upsert")
