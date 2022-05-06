@@ -93,7 +93,7 @@ func (a *apiApp) upsertConfig() router.ICommand {
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
-		resp, err := a.service.AdminUpsertConfig(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context),
+		resp, err := a.service.AdminUpsertConfig(database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
 			req, executionData.UserId, a.publisher, executionData.Context)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)

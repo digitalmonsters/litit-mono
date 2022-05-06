@@ -99,6 +99,21 @@ func (c ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetC
 }
 
 func (c ConfigService) AdminUpsertConfig(db *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[ConfigEvent], ctx context.Context) (*ConfigModel, error) {
+	if len(req.Key) == 0 {
+		return nil, errors.New("invalid key")
+	}
+	if len(req.Type) == 0 {
+		return nil, errors.New("invalid type")
+	}
+	if len(req.Value) == 0 {
+		return nil, errors.New("invalid value")
+	}
+	if len(req.Category) == 0 {
+		return nil, errors.New("invalid category")
+	}
+	if len(req.Description) == 0 {
+		return nil, errors.New("invalid decsription")
+	}
 	var currentConfig database.Config
 	if err := db.Where("key = ?", req.Key).Find(&currentConfig).Error; err != nil {
 		return nil, err
