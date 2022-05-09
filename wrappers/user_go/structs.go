@@ -84,6 +84,7 @@ type UserDetailRecord struct {
 	CreatorStatus       int               `json:"creator_status"`
 	CreatorRejectReason null.String       `json:"creator_reject_reason"`
 	CreatedAt           time.Time         `json:"created_at"`
+	AdDisabled          bool              `json:"ad_disabled"`
 }
 
 func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
