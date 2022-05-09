@@ -35,6 +35,7 @@ func (a apiApp) Init(subAppLogger zerolog.Logger) error {
 		return err
 	}
 	a.httpRouter.Router().Handle(a.jsonApi())
+	a.httpRouter.Router().Handle(a.jsonMigratorApi())
 	return nil
 }
 
