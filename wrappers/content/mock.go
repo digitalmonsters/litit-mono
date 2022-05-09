@@ -1,6 +1,7 @@
 package content
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -18,6 +19,7 @@ type ContentWrapperMock struct {
 	GetUserBlacklistedCategoriesFn func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetUserBlacklistedCategoriesResponse]
 	GetUserLikesFn                 func(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[LikedContent]
 	GetConfigPropertiesFn          func(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string]
+	GetRejectReasonFn              func(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason]
 }
 
 func (w *ContentWrapperMock) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent] {
@@ -52,6 +54,10 @@ func (w *ContentWrapperMock) GetUserLikes(userId int64, limit int, offset int, a
 }
 func (w *ContentWrapperMock) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string] {
 	return w.GetConfigPropertiesFn(properties, apmTransaction, forceLog)
+}
+
+func (w *ContentWrapperMock) GetRejectReason(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason] {
+	return w.GetRejectReasonFn(ids, includeDeleted, ctx, forceLog)
 }
 
 func GetMock() IContentWrapper { // for compiler errors

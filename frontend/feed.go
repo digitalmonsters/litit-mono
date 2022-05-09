@@ -41,32 +41,33 @@ type ContentModel struct {
 	Subcategory VideoSubcategoryModel `json:"subcategory"`
 	User        VideoUserModel        `json:"user"`
 
-	UserId           int64        `json:"user_id"`
-	VideoId          string       `json:"video_id"`
-	Thumbnail        string       `json:"thumbnail"`
-	VideoUrl         string       `json:"video_url"`
-	PageUrl          string       `json:"page_url"`
-	Title            null.String  `json:"title"`
-	Artist           null.String  `json:"artist"`
-	Description      string       `json:"description"`
-	CategoryId       null.Int     `json:"category_id"`
-	SubcategoryId    null.Int     `json:"subcategory_id"`
-	Duration         float64      `json:"duration"`
-	AgeRestricted    bool         `json:"age_restricted"`
-	LiveAt           null.Time    `json:"live_at"`
-	LiveAtTs         int64        `json:"live_at_ts"`
-	Flagged          bool         `json:"flagged"`
-	CreatedAt        time.Time    `json:"created_at"`
-	CreatedAtTs      int64        `json:"created_at_ts"`
-	UpdatedAt        time.Time    `json:"updated_at"`
-	UpdatedAtTs      int64        `json:"updated_at_ts"`
-	OhwApplicationId null.Int     `json:"ohw_application_id"`
-	HashtagsArray    []string     `json:"hashtags_array"`
-	AllowComments    bool         `json:"allow_comments"`
-	NotToRepeat      bool         `json:"not_to_repeat"`
-	VideoShareLink   string       `json:"video_share_link"`
-	RejectReason     RejectReason `json:"reject_reason"`
-	Draft            bool         `json:"draft"`
+	UserId           int64       `json:"user_id"`
+	VideoId          string      `json:"video_id"`
+	Thumbnail        string      `json:"thumbnail"`
+	VideoUrl         string      `json:"video_url"`
+	PageUrl          string      `json:"page_url"`
+	Title            null.String `json:"title"`
+	Artist           null.String `json:"artist"`
+	Description      string      `json:"description"`
+	CategoryId       null.Int    `json:"category_id"`
+	SubcategoryId    null.Int    `json:"subcategory_id"`
+	Duration         float64     `json:"duration"`
+	AgeRestricted    bool        `json:"age_restricted"`
+	LiveAt           null.Time   `json:"live_at"`
+	LiveAtTs         int64       `json:"live_at_ts"`
+	Flagged          bool        `json:"flagged"`
+	CreatedAt        time.Time   `json:"created_at"`
+	CreatedAtTs      int64       `json:"created_at_ts"`
+	UpdatedAt        time.Time   `json:"updated_at"`
+	UpdatedAtTs      int64       `json:"updated_at_ts"`
+	OhwApplicationId null.Int    `json:"ohw_application_id"`
+	HashtagsArray    []string    `json:"hashtags_array"`
+	AllowComments    bool        `json:"allow_comments"`
+	NotToRepeat      bool        `json:"not_to_repeat"`
+	VideoShareLink   string      `json:"video_share_link"`
+	RejectReason     int64       `json:"reject_reason"`
+	RejectReasonText null.String `json:"reject_reason_text"`
+	Draft            bool        `json:"draft"`
 
 	Width        int   `json:"width"`
 	Height       int   `json:"height"`
@@ -75,18 +76,6 @@ type ContentModel struct {
 	WatchCount   int64 `json:"watch_count"`
 	ShareCount   int64 `json:"shares_count"`
 }
-
-type RejectReason int
-
-const (
-	RejectReasonNone                       = RejectReason(0)
-	RejectReasonFakeIdentity               = RejectReason(1)
-	RejectReasonOffensive                  = RejectReason(2)
-	RejectReasonHateSpeech                 = RejectReason(3)
-	RejectReasonHateNudityOrSexualActivity = RejectReason(4)
-	RejectReasonViolence                   = RejectReason(5)
-	RejectReasonHarassment                 = RejectReason(6)
-)
 
 type ContentWithPointsCount struct {
 	ContentModel

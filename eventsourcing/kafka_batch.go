@@ -365,6 +365,7 @@ func (p *KafkaEventPublisherV2[T]) flush(calculateAsRetry bool) error {
 	return err
 }
 
+//nolint
 func (p *KafkaEventPublisherV2[T]) fancyServiceMapAsync() {
 	go func() {
 		for !p.isClosed {

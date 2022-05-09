@@ -15,7 +15,6 @@ type ConfiguratorBuilder[T any] struct {
 	migrator    Migrator
 	logger      zerolog.Logger
 	interval    time.Duration
-	record      T
 }
 
 func NewConfigurator[T any]() *ConfiguratorBuilder[T] {

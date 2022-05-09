@@ -3,6 +3,7 @@ package content
 import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"gopkg.in/guregu/null.v4"
+	"time"
 )
 
 type SimpleContent struct {
@@ -124,4 +125,26 @@ type GetUserLikesRequest struct {
 
 type GetConfigValuesRequest struct {
 	Properties []string `json:"properties"`
+}
+
+type RejectReasonType int
+
+const (
+	ReasonTypeNone  = RejectReasonType(0)
+	ReasonTypeVideo = RejectReasonType(1)
+	ReasonTypeSpot  = RejectReasonType(2)
+)
+
+type RejectReason struct {
+	Id        int64            `json:"id"`
+	Type      RejectReasonType `json:"type"`
+	Reason    string           `json:"reason"`
+	Active    bool             `json:"active"`
+	CreatedAt time.Time        `json:"created_at"`
+	DeletedAt null.Time        `json:"deleted_at"`
+}
+
+type GetContentRejectReasonRequest struct {
+	Ids            []int64 `json:"ids"`
+	IncludeDeleted bool    `json:"include_deleted"`
 }

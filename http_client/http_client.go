@@ -103,9 +103,8 @@ func NewHttpClient() *HttpClient {
 
 			if forceLog {
 				var rawBodyRequest []byte
-				var rawBodyResponse []byte
 
-				rawBodyResponse = response.Bytes()
+				rawBodyResponse := response.Bytes()
 
 				if r, err := ioutil.ReadAll(response.Request.RawRequest.Body); err != nil {
 					log.Ctx(ctx).Err(err).Send()

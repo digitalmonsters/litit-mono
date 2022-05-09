@@ -122,7 +122,7 @@ func TestPublishImmediateFailed(t *testing.T) {
 	expectedMessageCount = 4
 
 	lastEvent := UserEvent{UserId: 4}
-	_ = <-mapped.PublishImmediate(context.TODO(), lastEvent)
+	<-mapped.PublishImmediate(context.TODO(), lastEvent)
 
 	time.Sleep(time.Duration(flushEveryMs) * 2)
 

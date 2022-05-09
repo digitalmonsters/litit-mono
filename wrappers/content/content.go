@@ -1,6 +1,7 @@
 package content
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
@@ -23,6 +24,7 @@ type IContentWrapper interface {
 	GetUserBlacklistedCategories(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetUserBlacklistedCategoriesResponse]
 	GetUserLikes(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[LikedContent]
 	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string]
+	GetRejectReason(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -121,4 +123,11 @@ func (w *ContentWrapper) GetUserLikes(userId int64, limit int, offset int, apmTr
 func (w *ContentWrapper) GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string] {
 	return wrappers.ExecuteRpcRequestAsync[map[string]string](w.baseWrapper, w.apiUrl, "InternalGetConfigValues", GetConfigValuesRequest{Properties: properties},
 		map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w *ContentWrapper) GetRejectReason(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]RejectReason](w.baseWrapper, w.apiUrl, "InternalGetContentRejectReason", GetContentRejectReasonRequest{
+		Ids:            ids,
+		IncludeDeleted: includeDeleted,
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
