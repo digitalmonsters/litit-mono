@@ -34,7 +34,7 @@ func (h *HttpMigrator) Migrate(ctx context.Context) (map[string]ConfigModel, err
 		return map[string]ConfigModel{}, nil
 	}
 
-	resp, err := http_client.DefaultHttpClient.NewRequest(ctx).
+	resp, err := http_client.DefaultHttpClient.NewRequest(ctx).WithForceLog().EnableDump().
 		SetBody(MigratorRequest{
 			Configs: h.migratorMap,
 		}).
