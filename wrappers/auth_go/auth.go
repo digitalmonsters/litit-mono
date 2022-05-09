@@ -21,6 +21,7 @@ type IAuthGoWrapper interface {
 	GetAdminsInfoById(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
 	AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
 	IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
+	GetUsersRegistrationType(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
 }
 
 type AuthGoWrapper struct {
@@ -241,4 +242,10 @@ func (u AuthGoWrapper) GetAdminsInfoById(adminIds []int64, apmTransaction *apm.T
 	}()
 
 	return respCh
+}
+
+func (u AuthGoWrapper) GetUsersRegistrationType(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]SocialProviderType](u.baseWrapper, u.apiUrl, "GetUsersRegistrationType", GetUsersRegistrationTypeRequest{
+		UserIds: userIds,
+	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 }

@@ -72,3 +72,16 @@ type AdminGeneralInfo struct {
 	Name        string `json:"name"`
 	Country     string `json:"country"`
 }
+
+type GetUsersRegistrationTypeRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
+type SocialProviderType int
+
+const (
+	SocialProviderTypeGoogle   = SocialProviderType(1)
+	SocialProviderTypeApple    = SocialProviderType(2)
+	SocialProviderTypeFacebook = SocialProviderType(3)
+	SocialProviderTypeEmail    = SocialProviderType(4)
+)

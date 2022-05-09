@@ -13,6 +13,7 @@ type AuthGoWrapperMock struct {
 	GetAdminsInfoByIdFn        func(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
 	AddNewUserFn               func(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
 	IsGuestFn                  func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
+	GetUsersRegistrationTypeFn func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
 }
 
 func (w *AuthGoWrapperMock) IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse] {
@@ -37,6 +38,10 @@ func (w *AuthGoWrapperMock) GetAdminIdsFilterByEmail(adminIds []int64, searchQue
 
 func (w *AuthGoWrapperMock) GetAdminsInfoById(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan {
 	return w.GetAdminsInfoByIdFn(adminIds, apmTransaction, forceLog)
+}
+
+func (w *AuthGoWrapperMock) GetUsersRegistrationType(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType] {
+	return w.GetUsersRegistrationTypeFn(userIds, apmTransaction, forceLog)
 }
 
 func GetMock() IAuthGoWrapper { // for compiler errors
