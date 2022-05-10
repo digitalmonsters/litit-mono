@@ -153,11 +153,7 @@ func TestConfigService_GetAllConfigs(t *testing.T) {
 		t.Fatal(err)
 	}
 	configs, _ := insertConfigs(t, false)
-	var keys []string
 
-	for _, c := range configs {
-		keys = append(keys, c.Key)
-	}
 	resp, err := service.GetAllConfigs(gormDb)
 	if err != nil {
 		t.Fatal(err)
@@ -174,6 +170,7 @@ func TestConfigService_GetAllConfigs(t *testing.T) {
 	}
 	assert.Equal(t, 2, foundCounter)
 }
+
 func TestConfigService_GetConfigsByIds(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, []string{"public.config"}, t); err != nil {
 		t.Fatal(err)
@@ -191,11 +188,7 @@ func TestConfigService_AdminGetConfigs(t *testing.T) {
 		t.Fatal(err)
 	}
 	configs, _ := insertConfigs(t, false)
-	var keys []string
 
-	for _, c := range configs {
-		keys = append(keys, c.Key)
-	}
 	resp, err := service.AdminGetConfigs(gormDb, GetConfigRequest{
 		Limit:  10,
 		Offset: 0,
@@ -241,15 +234,14 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, configLogs := insertConfigs(t, true)
-	var keys []string
 	var values = make(map[string][]string)
 	var relatedUsers = make(map[string][]int64)
 
 	for _, c := range configLogs {
-		keys = append(keys, c.Key)
 		values[c.Key] = append(values[c.Key], c.Value)
 		relatedUsers[c.Key] = append(relatedUsers[c.Key], c.RelatedUserId.Int64)
 	}
+
 	resp, err := service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{
 		Limit:  10,
 		Offset: 0,

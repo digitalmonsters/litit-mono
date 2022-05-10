@@ -71,7 +71,7 @@ func TestJsonApi(t *testing.T) {
 	}
 
 	if resp.StatusCode != 200 {
-		t.Fatal(fmt.Sprintf("unexpected status code %v. body %v", resp.StatusCode, resp.String()))
+		t.Fatalf("unexpected status code %v. body %v", resp.StatusCode, resp.String())
 	}
 
 	var results map[string]string
@@ -161,7 +161,7 @@ func TestJsonApiMigrator(t *testing.T) {
 	}
 
 	if resp.StatusCode != 200 {
-		t.Fatal(fmt.Sprintf("unexpected status code %v. body %v", resp.StatusCode, resp.String()))
+		t.Fatalf("unexpected status code %v. body %v", resp.StatusCode, resp.String())
 	}
 
 	var resultsMap map[string]application.ConfigModel
