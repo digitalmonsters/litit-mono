@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/frontend"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -20,7 +20,7 @@ import (
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, followWrapper follow.IFollowWrapper,
-	userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
+	userGoWrapper user_go.IUserGoWrapper, contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
 	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
@@ -75,8 +75,23 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		notificationType = "push.content.successful-upload"
 	} else if event.CrudOperation == eventsourcing.ChangeEventTypeUpdated {
 		if string(event.CrudOperationReason) == "rejected" {
+			rejectReasonText := ""
+
+			if event.RejectReason.Valid {
+				rejectReasonResp := <-contentWrapper.GetRejectReason([]int64{event.RejectReason.Int64}, true, ctx, false)
+				if rejectReasonResp.Error != nil {
+					return nil, err
+				}
+
+				if rejectReason, ok := rejectReasonResp.Response[event.RejectReason.Int64]; ok {
+					rejectReasonText = rejectReason.Reason
+				} else {
+					rejectReasonText = "unknown reason"
+				}
+			}
+
 			renderData = map[string]string{
-				"reason": getRejectionReason(event.RejectReason),
+				"reason": rejectReasonText,
 			}
 			templateName = "content_reject"
 			notificationType = "push.content.rejected"
@@ -229,28 +244,4 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	return &event.Messages, nil
-}
-
-func getRejectionReason(reason frontend.RejectReason) string {
-	reasonStr := ""
-
-	switch reason {
-	case frontend.RejectReasonFakeIdentity:
-		reasonStr = "fake identity"
-	case frontend.RejectReasonOffensive:
-		reasonStr = "offensive"
-	case frontend.RejectReasonHateSpeech:
-		reasonStr = "hate speech"
-	case frontend.RejectReasonHateNudityOrSexualActivity:
-		reasonStr = "hate nudity or sexual activity"
-	case frontend.RejectReasonViolence:
-		reasonStr = "violence"
-	case frontend.RejectReasonHarassment:
-		reasonStr = "harassment"
-	case frontend.RejectReasonNone:
-	default:
-		reasonStr = "no reason"
-	}
-
-	return reasonStr
 }
