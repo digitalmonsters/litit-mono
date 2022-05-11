@@ -1,6 +1,7 @@
 package go_tokenomics
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -23,8 +24,8 @@ type Wrapper struct {
 }
 
 type IGoTokenomicsWrapper interface {
-	GetUsersTokenomicsInfo(userIds []int64, filters []filters.Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan
-	GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan
+	GetUsersTokenomicsInfo(userIds []int64, filters []filters.Filter, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserTokenomicsInfo]
+	GetWithdrawalsAmountsByAdminIds(adminIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]decimal.Decimal]
 	GetContentEarningsTotalByContentIds(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetContentEarningsTotalByContentIdsResponseChan
 	GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan
 	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan
@@ -53,52 +54,17 @@ func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapp
 	}
 }
 
-func (w *Wrapper) GetUsersTokenomicsInfo(userIds []int64, filters []filters.Filter, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersTokenomicsInfoResponseChan {
-	respCh := make(chan GetUsersTokenomicsInfoResponseChan, 2)
-
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetUsersTokenomicsInfo", GetUsersTokenomicsInfoRequest{
+func (w *Wrapper) GetUsersTokenomicsInfo(userIds []int64, filters []filters.Filter, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserTokenomicsInfo] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]UserTokenomicsInfo](w.baseWrapper, w.apiUrl, "GetUsersTokenomicsInfo", GetUsersTokenomicsInfoRequest{
 		UserIds: userIds,
 		Filters: filters,
-	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
-
-	go func() {
-		defer func() {
-			close(respCh)
-		}()
-
-		resp := <-respChan
-
-		result := GetUsersTokenomicsInfoResponseChan{
-			Error: resp.Error,
-		}
-		respCh <- result
-	}()
-
-	return respCh
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w *Wrapper) GetWithdrawalsAmountsByAdminIds(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetWithdrawalsAmountsByAdminIdsResponseChan {
-	respCh := make(chan GetWithdrawalsAmountsByAdminIdsResponseChan, 2)
-
-	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetWithdrawalsAmountsByAdminIds", GetWithdrawalsAmountsByAdminIdsRequest{
+func (w *Wrapper) GetWithdrawalsAmountsByAdminIds(adminIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]decimal.Decimal] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]decimal.Decimal](w.baseWrapper, w.apiUrl, "GetUsersTokenomicsInfo", GetWithdrawalsAmountsByAdminIdsRequest{
 		AdminIds: adminIds,
-	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
-
-	go func() {
-		defer func() {
-			close(respCh)
-		}()
-
-		resp := <-respChan
-
-		result := GetWithdrawalsAmountsByAdminIdsResponseChan{
-			Error: resp.Error,
-		}
-
-		respCh <- result
-	}()
-
-	return respCh
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
 func (w *Wrapper) GetContentEarningsTotalByContentIds(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetContentEarningsTotalByContentIdsResponseChan {
