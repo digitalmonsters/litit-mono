@@ -1,6 +1,7 @@
 package go_tokenomics
 
 import (
+	"fmt"
 	"github.com/digitalmonsters/go-common/filters"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/shopspring/decimal"
@@ -52,24 +53,92 @@ type GetTokenomicsStatsByUserIdResponseChan struct {
 	Error *rpc.RpcError
 }
 
+type PointsEarnedType int16
+
+const (
+	PointsEarnedTypeNone                = PointsEarnedType(0)
+	PointsEarnedTypeBonusVerify         = PointsEarnedType(1)  // "extra bonus"
+	PointsEarnedTypeBonusVerifyReferrer = PointsEarnedType(2)  // "bonus verify referer"
+	PointsEarnedTypeTipSent             = PointsEarnedType(3)  // "tip sent"
+	PointsEarnedTypeTipReceived         = PointsEarnedType(4)  // "tip received"
+	PointsEarnedTypeWithdraw            = PointsEarnedType(5)  // "withdraw"
+	PointsEarnedTypeDailyTime           = PointsEarnedType(6)  // "daily time"
+	PointsEarnedTypeUserView            = PointsEarnedType(7)  // "user view"
+	PointsEarnedTypeSharerView          = PointsEarnedType(8)  // "sharer view"
+	PointsEarnedTypeCreatorView         = PointsEarnedType(9)  // "creator view"
+	PointsEarnedTypeBonusPerformance    = PointsEarnedType(10) // "bonus performance"
+	PointsEarnedTypeDailyFollowers      = PointsEarnedType(11) // "daily followers"
+	PointsEarnedTypeUserShare           = PointsEarnedType(12) // "user share"
+	PointsEarnedTypeVerifyGrandReferer  = PointsEarnedType(13) // "bonus verify grand referer"
+	PointsEarnedTypeAdmin               = PointsEarnedType(14) // "admin"
+	PointsEarnedTypeCreatorShare        = PointsEarnedType(15) // "creator share"
+	PointsEarnedTypeCreatorShareGuest   = PointsEarnedType(16) // "creator share guest"
+	PointsEarnedTypeKycPayment          = PointsEarnedType(17) // "kyc payment"
+	PointsEarnedTypeBonusKyc            = PointsEarnedType(18) // "bonus kyc"
+	PointsEarnedTypeCreatorViewGuest    = PointsEarnedType(19) // "creator view guest"
+	PointsEarnedTypeTapJoy              = PointsEarnedType(20) // "tapjoy"
+	PointsEarnedTypeWeeklyTime          = PointsEarnedType(21) // "weekly time"
+	PointsEarnedTypeWeeklyFollowers     = PointsEarnedType(22) // "weekly followers"
+	PointsEarnedTypeSharerViewGuest     = PointsEarnedType(23) // "sharer view guest"
+	PointsEarnedTypeTransfer            = PointsEarnedType(24) // new type
+	PointsEarnedTypeFeatureBought       = PointsEarnedType(25)
+	PointsEarnedTypeApplovin            = PointsEarnedType(26) // "applovin"
+	PointsEarnedTypeWithdrawRejected    = PointsEarnedType(27)
+	PointsEarnedTypeMegaBonus           = PointsEarnedType(28) // "mega bonus"
+	PointsEarnedTypeAvatarAdded         = PointsEarnedType(29) // "avatar added"
+	PointsEarnedTypeDescription         = PointsEarnedType(30) // "adding description"
+	PointsEarnedTypeUploadFirstVideo    = PointsEarnedType(31)
+	PointsEarnedTypePointsWriteOff      = PointsEarnedType(32) // write off money
+	PointsEarnedTypeTechnicTransfer     = PointsEarnedType(33) //technical transfer
+)
+
+type WithdrawalStatus int16
+
+const (
+	WithdrawalStatusNone           WithdrawalStatus = 0
+	WithdrawalStatusPending        WithdrawalStatus = 1
+	WithdrawalStatusApproved       WithdrawalStatus = 2
+	WithdrawalStatusRejected       WithdrawalStatus = 3 // final
+	WithdrawalStatusFailed         WithdrawalStatus = 4 // final
+	WithdrawalStatusPaymentPending WithdrawalStatus = 5
+	WithdrawalStatusPaid           WithdrawalStatus = 6 // final
+)
+
+func (s WithdrawalStatus) ToString() string {
+	switch s {
+	case WithdrawalStatusPending:
+		return "pending"
+	case WithdrawalStatusApproved:
+		return "approved"
+	case WithdrawalStatusRejected:
+		return "rejected"
+	case WithdrawalStatusFailed:
+		return "failed"
+	case WithdrawalStatusPaymentPending:
+		return "payment pending"
+	case WithdrawalStatusPaid:
+		return "paid"
+	default:
+		return fmt.Sprint(s)
+	}
+}
+
 type UserTokenomicsStats struct {
-	LITITBalance                  decimal.Decimal `json:"litit_balance"`
-	PointsForViews                decimal.Decimal `json:"points_for_views"`
-	TipsNumber                    int             `json:"tips_number"`
-	PointsForTips                 decimal.Decimal `json:"points_for_tips"`
-	TapjoyActivityNumber          int             `json:"tapjoy_activity_number"`
-	PointsForTapjoyActivity       decimal.Decimal `json:"points_for_tapjoy_activity"`
-	PointsForInviting             decimal.Decimal `json:"points_for_inviting"`
-	ApprovedTransactionsNumber    int             `json:"approved_transactions_number"`
-	PointsForApprovedTransactions decimal.Decimal `json:"points_for_approved_transactions"`
-	RejectedTransactionsNumber    int             `json:"rejected_transactions_number"`
-	PointsForRejectedTransactions decimal.Decimal `json:"points_for_rejected_transactions"`
-	PendingTransactionsNumber     int             `json:"pending_transactions_number"`
-	PointsForPendingTransactions  decimal.Decimal `json:"points_for_pending_transactions"`
-	SharedVideoNumber             int             `json:"shared_video_number"`
-	PointsForSharedVideo          decimal.Decimal `json:"points_for_shared_video"`
-	InvitedFromShareNumber        int             `json:"invited_from_share_number"`
-	PointsForInvitedFromShare     decimal.Decimal `json:"points_for_invited_from_share"`
+	LITITBalance decimal.Decimal `json:"litit_balance"`
+
+	PointsEarnedStats map[PointsEarnedType]UserTokenomicsPointsEarnedStats `json:"points_earned_stats"`
+	WithdrawalsStats  map[WithdrawalStatus]UserTokenomicsWithdrawalsStats  `json:"withdrawals_stats"`
+}
+
+type UserTokenomicsPointsEarnedStats struct {
+	TotalOperationsAmount       decimal.Decimal `json:"total_operations_amount"`        // sum of ALL OPERATIONS ; always increase
+	TotalOperationsAmountTokens decimal.Decimal `json:"total_operations_amount_tokens"` // sum of ALL OPERATIONS ; always increase
+	TotalOperationsCount        int             `json:"total_operations_count"`
+}
+
+type UserTokenomicsWithdrawalsStats struct {
+	TotalOperationsCount  int             `json:"total_operations_count"`
+	TotalOperationsAmount decimal.Decimal `json:"total_operations_amount"`
 }
 
 type GetConfigPropertiesResponseChan struct {
