@@ -29,7 +29,7 @@ type IGoTokenomicsWrapper interface {
 	GetContentEarningsTotalByContentIds(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetContentEarningsTotalByContentIdsResponseChan
 	GetTokenomicsStatsByUserId(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetTokenomicsStatsByUserIdResponseChan
 	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan GetConfigPropertiesResponseChan
-	GetReferralsInfo(referrerId int64, referralIds []int64, grandReferralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse]
+	GetReferralsInfo(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse]
 	GetActivitiesInfo(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse]
 }
 
@@ -184,11 +184,10 @@ func (w *Wrapper) GetConfigProperties(properties []string, apmTransaction *apm.T
 	return respCh
 }
 
-func (w *Wrapper) GetReferralsInfo(referrerId int64, referralIds []int64, grandReferralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse] {
+func (w *Wrapper) GetReferralsInfo(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse] {
 	return wrappers.ExecuteRpcRequestAsync[GetReferralInfoResponse](w.baseWrapper, w.apiUrl, "GetReferralsInfo", GetReferralInfoRequest{
-		ReferralIds:      referralIds,
-		GrandReferralIds: grandReferralIds,
-		ReferrerId:       referrerId,
+		ReferralIds: referralIds,
+		ReferrerId:  referrerId,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }
 

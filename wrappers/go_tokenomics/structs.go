@@ -81,15 +81,13 @@ type GetConfigPropertiesRequest struct {
 }
 
 type GetReferralInfoRequest struct {
-	ReferrerId       int64   `json:"referrer_id"`
-	ReferralIds      []int64 `json:"referral_ids"`
-	GrandReferralIds []int64 `json:"grand_referral_ids"`
+	ReferrerId  int64   `json:"referrer_id"`
+	ReferralIds []int64 `json:"referral_ids"`
 }
 type GetReferralInfoResponse struct {
 	TotalCollectedPoints      decimal.Decimal           `json:"total_collected_points"`
 	Referrals                 map[int64]decimal.Decimal `json:"referrals"`
 	TotalGrandCollectedPoints decimal.Decimal           `json:"total_grand_collected_points"`
-	GrandReferrals            map[int64]decimal.Decimal `json:"grand_referrals"`
 }
 
 type GetActivitiesInfoRequest struct {
