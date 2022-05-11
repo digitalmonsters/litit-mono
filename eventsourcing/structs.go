@@ -9,10 +9,11 @@ import (
 )
 
 type LikeEvent struct {
-	UserId    int64 `json:"user_id"`
-	ContentId int64 `json:"content_id"`
-	Like      bool  `json:"like"`
-	CreatedAt int64 `json:"created_at"`
+	UserId      int64       `json:"user_id"`
+	ContentId   int64       `json:"content_id"`
+	ContentType ContentType `json:"content_type"`
+	Like        bool        `json:"like"`
+	CreatedAt   int64       `json:"created_at"`
 }
 
 func (l LikeEvent) GetPublishKey() string {
@@ -47,6 +48,7 @@ func (l UserHashtagEvent) GetPublishKey() string {
 type ViewEvent struct {
 	UserId       int64       `json:"user_id"`
 	ContentId    int64       `json:"content_id"`
+	ContentType  ContentType `json:"content_type"`
 	Duration     int         `json:"duration"`
 	UserIp       string      `json:"user_ip"`
 	SharerId     null.Int    `json:"sharer_id"`
@@ -171,10 +173,11 @@ const (
 )
 
 type DisLikeEvent struct {
-	UserId    int64 `json:"user_id"`
-	ContentId int64 `json:"content_id"`
-	Dislike   bool  `json:"dislike"`
-	CreatedAt int64 `json:"created_at"`
+	UserId      int64       `json:"user_id"`
+	ContentId   int64       `json:"content_id"`
+	ContentType ContentType `json:"content_type"`
+	Dislike     bool        `json:"dislike"`
+	CreatedAt   int64       `json:"created_at"`
 }
 
 func (l DisLikeEvent) GetPublishKey() string {
@@ -182,10 +185,11 @@ func (l DisLikeEvent) GetPublishKey() string {
 }
 
 type LoveEvent struct {
-	UserId    int64 `json:"user_id"`
-	ContentId int64 `json:"content_id"`
-	Love      bool  `json:"love"`
-	CreatedAt int64 `json:"created_at"`
+	UserId      int64       `json:"user_id"`
+	ContentId   int64       `json:"content_id"`
+	ContentType ContentType `json:"content_type"`
+	Love        bool        `json:"love"`
+	CreatedAt   int64       `json:"created_at"`
 }
 
 func (l LoveEvent) GetPublishKey() string {

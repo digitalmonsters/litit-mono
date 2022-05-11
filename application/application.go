@@ -27,6 +27,31 @@ func (b *RootApplication) MustInit() {
 	}
 }
 
+func (b *RootApplication) Close() error {
+	var chs = make([]chan error, len(b.applications))
+	for _, a := range b.applications {
+		var application = a
+		ch := make(chan error)
+		chs = append(chs, ch)
+		go func() {
+			now := time.Now()
+			application.logger.Info().Msgf("[root] application [%v] closing", application.Name())
+			ch <- application.Close()
+			application.logger.Info().Msgf("[root] application [%v] closed in %v", application.Name(), time.Since(now).String())
+			close(ch)
+		}()
+	}
+
+	var final error
+	for _, ch := range chs {
+		if err := <-ch; err != nil {
+			final = multierror.Append(final, err)
+		}
+	}
+
+	return final
+}
+
 func NewBaseApplication(appName string) *BaseApplication {
 	return &BaseApplication{
 		logger: log.Logger.With().Str("app_name", appName).Logger(),
