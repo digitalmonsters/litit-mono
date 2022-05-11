@@ -11,11 +11,6 @@ type GetUsersTokenomicsInfoRequest struct {
 	Filters []filters.Filter `json:"filters"`
 }
 
-type GetUsersTokenomicsInfoResponseChan struct {
-	Items map[int64]UserTokenomicsInfo
-	Error *rpc.RpcError
-}
-
 type UserTokenomicsInfo struct {
 	TotalPoints        decimal.Decimal `json:"total_points"`
 	CurrentPoints      decimal.Decimal `json:"current_points"`
