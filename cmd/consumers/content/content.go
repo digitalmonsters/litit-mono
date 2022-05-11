@@ -183,6 +183,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	templateName = "content_posted"
+	//nolint
 	notificationType = "push.content.new-posted"
 
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
@@ -192,6 +193,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		"lastname":  lastName,
 	}
 
+	//nolint
 	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
@@ -199,30 +201,30 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	for _, followerId := range userFollowersResp.FollowerIds {
-		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, followerId, templateName, "default",
-			title, body, headline, nil, ctx); err != nil {
-			return nil, err
-		}
-
-		if err = tx.Create(&database.Notification{
-			UserId:             followerId,
-			Type:               notificationType,
-			Title:              title,
-			Message:            body,
-			ContentId:          null.IntFrom(event.Id),
-			Content:            notificationContent,
-			CreatedAt:          time.Now().UTC(),
-			RelatedUserId:      null.IntFrom(event.UserId),
-			RenderingVariables: renderData,
-		}).Error; err != nil {
-			return nil, err
-		}
-
-		if err = notification.IncrementUnreadNotificationsCounter(tx, followerId); err != nil {
-			return nil, err
-		}
-	}
+	//for _, followerId := range userFollowersResp.FollowerIds {
+	//	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, followerId, templateName, "default",
+	//		title, body, headline, nil, ctx); err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	if err = tx.Create(&database.Notification{
+	//		UserId:             followerId,
+	//		Type:               notificationType,
+	//		Title:              title,
+	//		Message:            body,
+	//		ContentId:          null.IntFrom(event.Id),
+	//		Content:            notificationContent,
+	//		CreatedAt:          time.Now().UTC(),
+	//		RelatedUserId:      null.IntFrom(event.UserId),
+	//		RenderingVariables: renderData,
+	//	}).Error; err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	if err = notification.IncrementUnreadNotificationsCounter(tx, followerId); err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	if err = tx.Commit().Error; err != nil {
 		return nil, err
