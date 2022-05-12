@@ -346,5 +346,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "set_title_litit_for_all_non_popup_templates_120520221550",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set title = 'Lit.it' where kind != 'popup'",
+				)
+			},
+		},
 	}
 }
