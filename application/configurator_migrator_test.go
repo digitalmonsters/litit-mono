@@ -18,7 +18,7 @@ func TestHttpMigrator(t *testing.T) {
 		"test key 1": {
 			Key:            "test key 1",
 			Value:          "50",
-			Type:           ConfigTypeNumber,
+			Type:           ConfigTypeInteger,
 			Description:    "test key 1 description",
 			AdminOnly:      false,
 			Category:       ConfigCategoryAd,

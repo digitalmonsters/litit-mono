@@ -14,9 +14,11 @@ type MigrateConfigModel struct {
 type ConfigType string
 
 const (
-	ConfigTypeString = ConfigType("string")
-	ConfigTypeNumber = ConfigType("number")
-	ConfigTypeObject = ConfigType("object")
+	ConfigTypeString  = ConfigType("string")
+	ConfigTypeDecimal = ConfigType("decimal")
+	ConfigTypeInteger = ConfigType("integer")
+	ConfigTypeObject  = ConfigType("object")
+	ConfigTypeBool    = ConfigType("bool")
 )
 
 type ConfigCategory string
