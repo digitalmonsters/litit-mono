@@ -33,7 +33,7 @@ func insertConfigs(t *testing.T, withConfigLog bool) ([]database.Config, []datab
 		{
 			Key:         "test_key1",
 			Value:       "50",
-			Type:        application.ConfigTypeNumber,
+			Type:        application.ConfigTypeInteger,
 			Description: "test",
 			AdminOnly:   false,
 			CreatedAt:   time.Now().UTC(),
@@ -114,14 +114,6 @@ func checkConfigModel(t *testing.T, old database.Config, new application.ConfigM
 	assert.Equal(t, old.Description, new.Description)
 	assert.Equal(t, old.UpdatedAt.UTC().Format(time.RFC3339), new.UpdatedAt.UTC().Format(time.RFC3339))
 	assert.Equal(t, old.CreatedAt.UTC().Format(time.RFC3339), new.CreatedAt.UTC().Format(time.RFC3339))
-}
-func checkConfigRequest(t *testing.T, old UpsertConfigRequest, new application.ConfigModel) {
-	assert.Equal(t, old.Key, new.Key)
-	assert.Equal(t, old.AdminOnly, new.AdminOnly)
-	assert.Equal(t, old.Type, new.Type)
-	assert.Equal(t, old.Category, new.Category)
-	assert.Equal(t, old.Value, new.Value)
-	assert.Equal(t, old.Description, new.Description)
 }
 func checkConfigMigrate(t *testing.T, old application.MigrateConfigModel, new application.ConfigModel) {
 	assert.Equal(t, old.Key, new.Key)
@@ -311,12 +303,24 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 		PublishFn:          fn,
 		PublishImmediateFn: fn,
 	}
+	if err := gormDb.Create(&database.Config{
+		CreatedAt:      time.Time{},
+		UpdatedAt:      time.Time{},
+		Key:            "test key 3",
+		Value:          "",
+		Type:           "",
+		Description:    "something other",
+		AdminOnly:      false,
+		Category:       "",
+		ReleaseVersion: "",
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
 	req := UpsertConfigRequest{
 		Key:            "test key 3",
 		Value:          "70",
-		Type:           application.ConfigTypeNumber,
+		Type:           application.ConfigTypeInteger,
 		Description:    "test number 3",
-		AdminOnly:      false,
 		Category:       application.ConfigCategoryContent,
 		ReleaseVersion: "v1.2",
 	}
@@ -331,7 +335,13 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 	}
 	assert.Equal(t, resp.Key, publishedEvent.Key)
 	assert.Equal(t, resp.Value, publishedEvent.Value)
-	checkConfigRequest(t, req, *resp)
+	assert.Equal(t, req.Key, resp.Key)
+	assert.Equal(t, false, resp.AdminOnly)
+	assert.Equal(t, application.ConfigTypeInteger, resp.Type)
+	assert.Equal(t, application.ConfigCategoryContent, resp.Category)
+	assert.Equal(t, req.Value, resp.Value)
+	assert.Equal(t, req.Description, resp.Description)
+
 	assert.True(t, resp.CreatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
 	assert.True(t, resp.UpdatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
 
@@ -347,7 +357,6 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 		Value:          "test 71",
 		Type:           application.ConfigTypeString,
 		Description:    "test number 7",
-		AdminOnly:      true,
 		Category:       application.ConfigCategoryTokens,
 		ReleaseVersion: "v1.1",
 	}
@@ -362,7 +371,12 @@ func TestConfigService_AdminUpsertConfig(t *testing.T) {
 	}
 	assert.Equal(t, resp.Key, publishedEvent.Key)
 	assert.Equal(t, resp.Value, publishedEvent.Value)
-	checkConfigRequest(t, req, *resp)
+	assert.Equal(t, resp.Key, req.Key)
+	assert.Equal(t, false, resp.AdminOnly)
+	assert.Equal(t, application.ConfigTypeInteger, resp.Type)
+	assert.Equal(t, application.ConfigCategoryContent, resp.Category)
+	assert.Equal(t, req.Value, resp.Value)
+	assert.Equal(t, req.Description, resp.Description)
 	assert.True(t, resp.CreatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
 	assert.True(t, resp.UpdatedAt.After(time.Now().UTC().Add(-1*time.Minute)))
 
@@ -404,7 +418,7 @@ func TestConfigService_MigrateConfigs(t *testing.T) {
 	reqMap["test key 1"] = application.MigrateConfigModel{
 		Key:            "test key 1",
 		Value:          "50",
-		Type:           application.ConfigTypeNumber,
+		Type:           application.ConfigTypeInteger,
 		Description:    "test key 1 description",
 		AdminOnly:      false,
 		Category:       application.ConfigCategoryAd,
@@ -486,7 +500,7 @@ func TestConfigService_MigrateConfigs(t *testing.T) {
 	reqMap["test key 4"] = application.MigrateConfigModel{
 		Key:            "test key 4",
 		Value:          "123",
-		Type:           application.ConfigTypeNumber,
+		Type:           application.ConfigTypeInteger,
 		Description:    "test key 4 description",
 		AdminOnly:      true,
 		Category:       application.ConfigCategoryAd,
