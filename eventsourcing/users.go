@@ -58,6 +58,7 @@ type UserEvent struct {
 	KycReason              KycReason                 `json:"kyc_reason"`
 	NamePrivacyStatus      user_go.NamePrivacyStatus `json:"name_privacy_status"`
 	AdDisabled             bool                      `json:"ad_disabled"`
+	GrandReferrer          bool                      `json:"grand_referrer"`
 	BaseChangeEvent
 }
 
