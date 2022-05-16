@@ -8,8 +8,12 @@ import (
 	"github.com/digitalmonsters/go-common/callback"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
+	"github.com/thoas/go-funk"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"strconv"
+	"strings"
 )
 
 type IConfigService interface {
@@ -23,6 +27,11 @@ type IConfigService interface {
 
 type ConfigService struct {
 }
+
+var allConfigTypes = []application.ConfigType{application.ConfigTypeDecimal, application.ConfigTypeInteger, application.ConfigTypeBool,
+	application.ConfigTypeString, application.ConfigTypeObject}
+var allCategoryTypes = []application.ConfigCategory{application.ConfigCategoryAd, application.ConfigCategoryApplications,
+	application.ConfigCategoryTokens, application.ConfigCategoryContent}
 
 func (c *ConfigService) GetAllConfigs(db *gorm.DB) ([]database.Config, error) {
 	var cfg []database.Config
@@ -112,12 +121,16 @@ func validateNewConfigRequest(req UpsertConfigRequest) error {
 	}
 	if len(req.Type) == 0 {
 		return errors.New("invalid type")
+	} else if !funk.Contains(allConfigTypes, req.Type) {
+		return errors.New("type does not exist")
 	}
 	if len(req.Value) == 0 {
 		return errors.New("invalid value")
 	}
 	if len(req.Category) == 0 {
 		return errors.New("invalid category")
+	} else if !funk.Contains(allCategoryTypes, req.Category) {
+		return errors.New("category does not exist")
 	}
 	if len(req.Description) == 0 {
 		return errors.New("invalid description")
@@ -125,7 +138,22 @@ func validateNewConfigRequest(req UpsertConfigRequest) error {
 	if len(req.ReleaseVersion) == 0 {
 		return errors.New("invalid release version")
 	}
-	return nil
+	return validateValueAccordingToType(req.Type, req.Value)
+}
+func validateValueAccordingToType(reqType application.ConfigType, value string) error {
+	var err error
+	switch reqType {
+	case application.ConfigTypeInteger:
+		_, err = strconv.Atoi(value)
+	case application.ConfigTypeDecimal:
+		_, err = decimal.NewFromString(value)
+	case application.ConfigTypeBool:
+		var lowerVal = strings.ToLower(value)
+		if lowerVal != "true" && lowerVal != "false" {
+			return errors.New("invalid value")
+		}
+	}
+	return err
 }
 
 func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error) {
@@ -137,14 +165,19 @@ func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, u
 		return nil, nil, err
 	}
 	if len(currentConfig.Key) > 0 {
-		if err := tx.Model(currentConfig).Where("key = ?", req.Key).Updates(map[string]interface{}{
-			"value":           req.Value,
-			"description":     req.Description,
-			"admin_only":      req.AdminOnly,
-			"category":        req.Category,
-			"type":            req.Type,
-			"release_version": req.ReleaseVersion,
-		}).Error; err != nil {
+		if len(currentConfig.Type) == 0 {
+			currentConfig.Type = req.Type
+		}
+		if len(currentConfig.Category) == 0 {
+			currentConfig.Category = req.Category
+		}
+		if len(currentConfig.ReleaseVersion) == 0 {
+			currentConfig.ReleaseVersion = req.ReleaseVersion
+		}
+		currentConfig.Description = req.Description
+		currentConfig.Value = req.Value
+
+		if err := tx.Where("key = ?", currentConfig.Key).Save(&currentConfig).Error; err != nil {
 			return nil, nil, err
 		}
 		if err := tx.Create(&database.ConfigLog{
@@ -152,31 +185,10 @@ func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, u
 			Value:         req.Value,
 			RelatedUserId: null.IntFrom(userId),
 		}).Error; err != nil {
-			return nil, nil, err
-		}
-		if err := tx.Where("key = ?", req.Key).Find(&currentConfig).Error; err != nil {
 			return nil, nil, err
 		}
 	} else {
-		currentConfig = database.Config{
-			Key:            req.Key,
-			Value:          req.Value,
-			Type:           req.Type,
-			Description:    req.Description,
-			AdminOnly:      req.AdminOnly,
-			Category:       req.Category,
-			ReleaseVersion: req.ReleaseVersion,
-		}
-		if err := tx.Create(&currentConfig).Error; err != nil {
-			return nil, nil, err
-		}
-		if err := tx.Create(&database.ConfigLog{
-			Key:           req.Key,
-			Value:         req.Value,
-			RelatedUserId: null.IntFrom(userId),
-		}).Error; err != nil {
-			return nil, nil, err
-		}
+		return nil, nil, errors.New("config doesn't exist")
 	}
 	callbacks := []callback.Callback{
 		func(ctx context.Context) error {
