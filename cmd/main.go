@@ -73,7 +73,7 @@ func main() {
 	voteListener := vote.InitListener(ctx, cfg.VoteListener, notificationSender, userGoWrapper).ListenAsync()
 	likeListener := like.InitListener(ctx, cfg.LikeListener, notificationSender, userGoWrapper, contentWrapper).ListenAsync()
 	contentListener := contentConsumer.InitListener(ctx, cfg.ContentListener, notificationSender, followWrapper,
-		userGoWrapper).ListenAsync()
+		userGoWrapper, contentWrapper).ListenAsync()
 	kycStatusListener := kyc_status.InitListener(ctx, cfg.KysStatusListener, notificationSender).ListenAsync()
 	followListener := followConsumer.InitListener(ctx, cfg.FollowListener, notificationSender, userGoWrapper).ListenAsync()
 	tokenomicsNotificationListener := tokenomics_notification.InitListener(ctx, cfg.TokenomicsNotificationListener,
