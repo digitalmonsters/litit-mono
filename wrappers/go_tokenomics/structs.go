@@ -90,6 +90,7 @@ const (
 	PointsEarnedTypeUploadFirstVideo    = PointsEarnedType(31)
 	PointsEarnedTypePointsWriteOff      = PointsEarnedType(32) // write off money
 	PointsEarnedTypeTechnicTransfer     = PointsEarnedType(33) //technical transfer
+	PointsEarnedTypeUploadFirstSpot     = PointsEarnedType(34)
 )
 
 type WithdrawalStatus int16
