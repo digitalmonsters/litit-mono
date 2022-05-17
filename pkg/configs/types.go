@@ -27,11 +27,11 @@ type GetConfigResponse struct {
 }
 
 type UpsertConfigRequest struct {
-	Key            string                     `json:"key"`
-	Value          string                     `json:"value"`
-	Type           application.ConfigType     `json:"type"`
-	Description    string                     `json:"description"`
-	AdminOnly      bool                       `json:"admin_only"`
+	Key         string                 `json:"key"`
+	Value       string                 `json:"value"`
+	Type        application.ConfigType `json:"type"`
+	Description string                 `json:"description"`
+	//AdminOnly      bool                       `json:"admin_only"`
 	Category       application.ConfigCategory `json:"category"`
 	ReleaseVersion string                     `json:"release_version"`
 }

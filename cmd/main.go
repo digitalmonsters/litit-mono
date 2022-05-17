@@ -51,7 +51,9 @@ func main() {
 				Ref: application.ConfigTypeString,
 				Values: []string{
 					fmt.Sprintf("%v - string config type", application.ConfigTypeString),
-					fmt.Sprintf("%v - number config type", application.ConfigTypeNumber),
+					fmt.Sprintf("%v - integer config type", application.ConfigTypeInteger),
+					fmt.Sprintf("%v - decimal config type", application.ConfigTypeDecimal),
+					fmt.Sprintf("%v - bool config type", application.ConfigTypeBool),
 					fmt.Sprintf("%v - object config type", application.ConfigTypeObject),
 				},
 			},

@@ -26,7 +26,7 @@ func TestGetConfigs(t *testing.T) {
 						application.ConfigModel{
 							Key:         "test_key1",
 							Value:       "45",
-							Type:        application.ConfigTypeNumber,
+							Type:        application.ConfigTypeInteger,
 							Description: "test key 1",
 							AdminOnly:   false,
 							CreatedAt:   time.Now().Add(-1 * time.Minute),
@@ -51,7 +51,7 @@ func TestGetConfigs(t *testing.T) {
 	}
 	var req = configs.GetConfigRequest{
 		Keys:                []string{"test_key1", "test_key2"},
-		Types:               []application.ConfigType{application.ConfigTypeNumber, application.ConfigTypeString},
+		Types:               []application.ConfigType{application.ConfigTypeInteger, application.ConfigTypeString},
 		DescriptionContains: null.StringFrom("test"),
 		AdminOnly:           null.BoolFrom(false),
 		Categories:          []application.ConfigCategory{application.ConfigCategoryAd, application.ConfigCategoryContent},
@@ -145,7 +145,7 @@ func TestUpsertConfig(t *testing.T) {
 					Value:       req.Value,
 					Type:        req.Type,
 					Description: req.Description,
-					AdminOnly:   req.AdminOnly,
+					AdminOnly:   false,
 					CreatedAt:   time.Now().UTC(),
 					UpdatedAt:   time.Now().UTC(),
 					Category:    req.Category,
@@ -156,9 +156,8 @@ func TestUpsertConfig(t *testing.T) {
 	var req = configs.UpsertConfigRequest{
 		Key:         "test_key3",
 		Value:       "657",
-		Type:        application.ConfigTypeNumber,
+		Type:        application.ConfigTypeInteger,
 		Description: "test number",
-		AdminOnly:   true,
 		Category:    application.ConfigCategoryTokens,
 	}
 	js, err := json.Marshal(&req)
@@ -176,6 +175,6 @@ func TestUpsertConfig(t *testing.T) {
 	assert.Equal(t, req.Type, mappedResp.Type)
 	assert.Equal(t, req.Value, mappedResp.Value)
 	assert.Equal(t, req.Category, mappedResp.Category)
-	assert.Equal(t, req.AdminOnly, mappedResp.AdminOnly)
+	assert.Equal(t, false, mappedResp.AdminOnly)
 	assert.Equal(t, req.Description, mappedResp.Description)
 }

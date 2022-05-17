@@ -135,9 +135,8 @@ func TestJsonApiMigrator(t *testing.T) {
 		"test_key_1": configs.UpsertConfigRequest{
 			Key:            "test_key_1",
 			Value:          "50",
-			Type:           application.ConfigTypeNumber,
+			Type:           application.ConfigTypeInteger,
 			Description:    "test_key_1 description",
-			AdminOnly:      false,
 			Category:       application.ConfigCategoryContent,
 			ReleaseVersion: "v1.5",
 		},
@@ -146,7 +145,6 @@ func TestJsonApiMigrator(t *testing.T) {
 			Value:          "some text",
 			Type:           application.ConfigTypeString,
 			Description:    "test_key_2 description",
-			AdminOnly:      true,
 			Category:       application.ConfigCategoryAd,
 			ReleaseVersion: "v2.69",
 		},
@@ -179,7 +177,7 @@ func TestJsonApiMigrator(t *testing.T) {
 			assert.Equal(t, reqModel.Value, resultModel.Value)
 			assert.Equal(t, reqModel.Category, resultModel.Category)
 			assert.Equal(t, reqModel.Type, resultModel.Type)
-			assert.Equal(t, reqModel.AdminOnly, resultModel.AdminOnly)
+			assert.Equal(t, false, resultModel.AdminOnly)
 			assert.Equal(t, reqModel.ReleaseVersion, resultModel.ReleaseVersion)
 			assert.Equal(t, reqModel.Description, resultModel.Description)
 			assert.True(t, resultModel.CreatedAt.After(time.Now().UTC().Add(-5*time.Minute)))
