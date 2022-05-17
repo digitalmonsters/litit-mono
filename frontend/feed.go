@@ -69,12 +69,14 @@ type ContentModel struct {
 	RejectReasonText null.String `json:"reject_reason_text"`
 	Draft            bool        `json:"draft"`
 
-	Width        int   `json:"width"`
-	Height       int   `json:"height"`
-	UploadStatus int   `json:"upload_status"`
-	LikesCount   int64 `json:"likes_count"`
-	WatchCount   int64 `json:"watch_count"`
-	ShareCount   int64 `json:"shares_count"`
+	Width         int   `json:"width"`
+	Height        int   `json:"height"`
+	UploadStatus  int   `json:"upload_status"`
+	LikesCount    int64 `json:"likes_count"`
+	WatchCount    int64 `json:"watch_count"`
+	ShareCount    int64 `json:"shares_count"`
+	LovesCount    int64 `json:"loves_count"`
+	DislikesCount int64 `json:"dislikes_count"`
 }
 
 type ContentWithPointsCount struct {
