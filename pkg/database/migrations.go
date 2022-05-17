@@ -354,5 +354,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_first_spot_uploaded_120520221559",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('first_spot_uploaded', 'Congrats!', 'You received {{.first_upload_bonus}} LIT points to your wallet for uploading your first spot', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'popup', null) on conflict do nothing;",
+				)
+			},
+		},
 	}
 }

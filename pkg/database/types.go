@@ -128,6 +128,8 @@ func GetNotificationType(templateId string) string {
 		return "push.description.first"
 	case "first_video_uploaded":
 		return "push.upload.first"
+	case "first_spot_uploaded":
+		return "push.upload.spot.first"
 	case "user_need_to_first_upload":
 		return "push.user.need.upload"
 	case "user_need_to_upload_avatar":
