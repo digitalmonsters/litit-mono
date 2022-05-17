@@ -13,7 +13,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"strconv"
-	"strings"
 )
 
 type IConfigService interface {
@@ -30,8 +29,6 @@ type ConfigService struct {
 
 var allConfigTypes = []application.ConfigType{application.ConfigTypeDecimal, application.ConfigTypeInteger, application.ConfigTypeBool,
 	application.ConfigTypeString, application.ConfigTypeObject}
-var allCategoryTypes = []application.ConfigCategory{application.ConfigCategoryAd, application.ConfigCategoryApplications,
-	application.ConfigCategoryTokens, application.ConfigCategoryContent}
 
 func (c *ConfigService) GetAllConfigs(db *gorm.DB) ([]database.Config, error) {
 	var cfg []database.Config
@@ -129,15 +126,16 @@ func validateNewConfigRequest(req UpsertConfigRequest) error {
 	}
 	if len(req.Category) == 0 {
 		return errors.New("invalid category")
-	} else if !funk.Contains(allCategoryTypes, req.Category) {
-		return errors.New("category does not exist")
 	}
+
 	if len(req.Description) == 0 {
 		return errors.New("invalid description")
 	}
+
 	if len(req.ReleaseVersion) == 0 {
 		return errors.New("invalid release version")
 	}
+
 	return validateValueAccordingToType(req.Type, req.Value)
 }
 func validateValueAccordingToType(reqType application.ConfigType, value string) error {
@@ -148,8 +146,7 @@ func validateValueAccordingToType(reqType application.ConfigType, value string) 
 	case application.ConfigTypeDecimal:
 		_, err = decimal.NewFromString(value)
 	case application.ConfigTypeBool:
-		var lowerVal = strings.ToLower(value)
-		if lowerVal != "true" && lowerVal != "false" {
+		if value != "true" && value != "false" {
 			return errors.New("invalid value")
 		}
 	}
