@@ -171,6 +171,7 @@ type GetActivitiesInfoResponse struct {
 type UserActivity struct {
 	AddDescriptionBonus  bool `json:"add_description_bonus"`
 	FirstVideoUploaded   bool `json:"first_video_uploaded"`
+	FirstSpotUploaded    bool `json:"first_spot_uploaded"`
 	FirstTimeAvatarAdded bool `json:"first_time_avatar_added"`
 }
 
