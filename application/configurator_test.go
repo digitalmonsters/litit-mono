@@ -20,6 +20,7 @@ type testingConfig struct {
 func TestConfigurator(t *testing.T) {
 	configurator := NewConfigurator[testingConfig]().
 		WithRetriever(NewFileRetriever("./test_data/configurator.json")).
+		WithMigrator(&mockMigrator{}, map[string]MigrateConfigModel{}).
 		MustInit()
 
 	assert.Equal(t, 5566, configurator.Values.IntValue)
@@ -27,6 +28,25 @@ func TestConfigurator(t *testing.T) {
 	assert.Equal(t, "Totally Random value", configurator.Values.StringValue)
 	assert.Equal(t, true, configurator.Values.BoolValue)
 	assert.Equal(t, "225.6852", configurator.Values.DecimalValue.StringFixed(4))
+
+	raw := configurator.GetRawData()
+
+	assert.Equal(t, 5, len(raw))
+	assert.Equal(t, "5566", raw["IntValue"])
+	assert.Equal(t, "32563246435322", raw["Int64Value"])
+	assert.Equal(t, "Totally Random value", raw["StringValue"])
+	assert.Equal(t, "true", raw["BoolValue"])
+	assert.Equal(t, "225.6852", raw["DecimalValue"])
+}
+
+type mockMigrator struct {
+}
+
+func (m *mockMigrator) SetMigratorMap(configsMap map[string]MigrateConfigModel) {
+
+}
+func (m *mockMigrator) Migrate(ctx context.Context) (map[string]ConfigModel, error) {
+	return map[string]ConfigModel{}, nil
 }
 
 type mockRetriever struct {

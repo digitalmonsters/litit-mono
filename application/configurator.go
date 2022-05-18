@@ -12,8 +12,13 @@ import (
 
 type Configurator[T any] struct {
 	builder ConfiguratorBuilder[T]
+	raw     map[string]string
 	keys    []string
 	Values  T
+}
+
+func (c *Configurator[T]) GetRawData() map[string]string {
+	return c.raw
 }
 
 func (c *Configurator[T]) init() {
@@ -56,6 +61,7 @@ func (c *Configurator[T]) setValues(inputData map[string]string) error {
 	}
 
 	c.Values = updated
+	c.raw = inputData
 
 	return err
 }
