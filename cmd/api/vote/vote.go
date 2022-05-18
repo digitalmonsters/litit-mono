@@ -36,14 +36,14 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 
 		if _, err := vote.VoteComment(db.WithContext(executionData.Context), commentId,
 			reportRequest.VoteUp, executionData.UserId, commentNotifier, voteNotifier,
-			executionData.ApmTransaction, contentWrapper); err != nil {
+			executionData.Context, contentWrapper); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return successResponse{
 				Success: true,
 			}, nil
 		}
-	}, "/{comment_id}/vote", http.MethodPost, true, false)); err != nil {
+	}, "/{comment_id}/vote", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
