@@ -34,6 +34,7 @@ type Settings struct {
 	EmailNotificationListener      boilerplate.KafkaListenerConfiguration `json:"EmailNotificationListener"`
 	PushAdminMessageListener       boilerplate.KafkaListenerConfiguration `json:"PushAdminMessageListener"`
 	UserDeleteListener             boilerplate.KafkaListenerConfiguration `json:"UserDeleteListener"`
+	UserBannedListener             boilerplate.KafkaListenerConfiguration `json:"UserBannedListener"`
 	EmailLinks                     EmailLinks                             `json:"EmailLinks"`
 }
 

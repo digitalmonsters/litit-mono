@@ -362,5 +362,16 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_user_banned_templates_160520221800",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('user_banned', 'Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('banned_first_popup','Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('banned_second_popup','Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('banned_third_popup','Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }

@@ -38,7 +38,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		}
 
 		return resp, nil
-	}, notificationsPath, http.MethodGet, true, false)); err != nil {
+	}, notificationsPath, http.MethodGet).RequireIdentityValidation().AllowBanned().Build()); err != nil {
 		return err
 	}
 
@@ -61,7 +61,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		}
 
 		return nil, nil
-	}, deleteNotificationPath, http.MethodDelete, true, false)); err != nil {
+	}, deleteNotificationPath, http.MethodDelete).RequireIdentityValidation().AllowBanned().Build()); err != nil {
 		return err
 	}
 
@@ -79,7 +79,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		}
 
 		return nil, nil
-	}, readAllNotificationsPath, http.MethodPatch, true, false)); err != nil {
+	}, readAllNotificationsPath, http.MethodPatch).RequireIdentityValidation().AllowBanned().Build()); err != nil {
 		return err
 	}
 
