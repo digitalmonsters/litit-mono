@@ -126,9 +126,23 @@ func (w *AuthWrapper) GenerateToken(userId int64, isGuest bool, meta MetaData, a
 	resChan := make(chan GenerateTokenResponseChan, 2)
 
 	go func() {
-		link := fmt.Sprintf("%v/token/%v", w.apiUrl, userId)
+		link := fmt.Sprintf("%v/token/%v?", w.apiUrl, userId)
+		queryParams := map[string]string{}
+
 		if isGuest {
-			link = fmt.Sprintf("%v?guest=true", link)
+			queryParams["guest"] = "true"
+		}
+
+		i := 0
+		for k, v := range queryParams {
+			if i == 0 {
+				link = fmt.Sprintf("%v?", link)
+			} else {
+				link = fmt.Sprintf("%v&", link)
+			}
+
+			link = fmt.Sprintf("%v%v=%v", link, k, v)
+			i++
 		}
 
 		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(link,

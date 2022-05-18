@@ -59,6 +59,7 @@ type UserEvent struct {
 	NamePrivacyStatus      user_go.NamePrivacyStatus `json:"name_privacy_status"`
 	AdDisabled             bool                      `json:"ad_disabled"`
 	GrandReferrer          bool                      `json:"grand_referrer"`
+	BannedTill             null.Time                 `json:"banned_till"`
 	BaseChangeEvent
 }
 

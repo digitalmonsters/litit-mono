@@ -1,19 +1,25 @@
 package auth_go
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
 )
 
 type AuthGoWrapperMock struct {
-	CheckAdminPermissionsFn    func(userId int64, obj string, transaction *apm.Transaction, forceLog bool) chan CheckAdminPermissionsResponseChan
-	CheckLegacyAdminFn         func(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan
-	GetAdminIdsFilterByEmailFn func(adminIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminIdsFilterByEmailResponseChan
-	GetAdminsInfoByIdFn        func(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
-	AddNewUserFn               func(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
-	IsGuestFn                  func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
-	GetUsersRegistrationTypeFn func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
+	CheckAdminPermissionsFn         func(userId int64, obj string, transaction *apm.Transaction, forceLog bool) chan CheckAdminPermissionsResponseChan
+	CheckLegacyAdminFn              func(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan
+	GetAdminIdsFilterByEmailFn      func(adminIds []int64, searchQuery string, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminIdsFilterByEmailResponseChan
+	GetAdminsInfoByIdFn             func(adminIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetAdminsInfoByIdResponseChan
+	AddNewUserFn                    func(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
+	IsGuestFn                       func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
+	GetUsersRegistrationTypeFn      func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
+	InternalGetUsersForValidationFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
+}
+
+func (w *AuthGoWrapperMock) InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator] {
+	return w.InternalGetUsersForValidationFn(userIds, ctx, forceLog)
 }
 
 func (w *AuthGoWrapperMock) IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse] {

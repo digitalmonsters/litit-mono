@@ -43,7 +43,7 @@ func NewSolanaApiGateWrapper(config boilerplate.WrapperConfig) ISolanaApiGateWra
 		baseWrapper:    wrappers.GetBaseWrapper(),
 		defaultTimeout: timeout,
 		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
-		serviceName:    "user-go",
+		serviceName:    "solana-api-gate",
 		cache:          cache.New(4*time.Minute, 5*time.Minute),
 	}
 }

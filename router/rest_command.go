@@ -30,10 +30,15 @@ type RestCommand struct {
 	forceLog                  bool
 	accessLevel               common.AccessLevel
 	requireIdentityValidation bool
+	allowBanned               bool
 }
 
 func (r RestCommand) RequireIdentityValidation() bool {
 	return r.requireIdentityValidation
+}
+
+func (r RestCommand) AllowBanned() bool {
+	return r.allowBanned
 }
 
 func (r RestCommand) AccessLevel() common.AccessLevel {
@@ -52,14 +57,40 @@ func (r RestCommand) GetObj() string {
 	return ""
 }
 
-func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodType, requiredIdentityValidation bool,
-	forceLog bool) *RestCommand {
-	return &RestCommand{commandFn: commandFn, path: path, method: string(httpMethod), forceLog: forceLog, accessLevel: common.AccessLevelPublic,
-		requireIdentityValidation: requiredIdentityValidation}
+type RestCommandBuilder struct {
+	cmd RestCommand
 }
 
-func (r RestCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.ExtendedLocalRpcError) {
-	return publicCanExecuteLogic(httpCtx, r.requireIdentityValidation)
+func (r RestCommandBuilder) AllowBanned() RestCommandBuilder {
+	r.cmd.allowBanned = true
+
+	return r
+}
+
+func (r RestCommandBuilder) ForceLog() RestCommandBuilder {
+	r.cmd.forceLog = true
+
+	return r
+}
+
+func (r RestCommandBuilder) RequireIdentityValidation() RestCommandBuilder {
+	r.cmd.requireIdentityValidation = true
+
+	return r
+}
+
+func (r RestCommandBuilder) Build() *RestCommand {
+	return &r.cmd
+}
+
+func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodType) RestCommandBuilder {
+	c := RestCommand{commandFn: commandFn, path: path, method: string(httpMethod), accessLevel: common.AccessLevelPublic}
+
+	return RestCommandBuilder{cmd: c}
+}
+
+func (r RestCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, *rpc.ExtendedLocalRpcError) {
+	return publicCanExecuteLogic(httpCtx, r.requireIdentityValidation, r.allowBanned, userValidator)
 }
 
 func (r RestCommand) GetPath() string {

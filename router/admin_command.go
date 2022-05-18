@@ -21,6 +21,7 @@ type AdminCommand struct {
 	forceLog                  bool
 	fn                        CommandFunc
 	requireIdentityValidation bool
+	allowBanned               bool
 	obj                       string
 }
 
@@ -32,17 +33,18 @@ func NewAdminCommand(methodName string, fn CommandFunc, accessLevel common.Acces
 		fn:                        fn,
 		obj:                       rbacObj,
 		requireIdentityValidation: true,
+		allowBanned:               false,
 	}
 }
 
-func (a AdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, authWrapper auth_go.IAuthGoWrapper) (int64, bool, *rpc.ExtendedLocalRpcError) {
+func (a AdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, authWrapper auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, *rpc.ExtendedLocalRpcError) {
 	currentUserId := int64(0)
 
 	if externalAuthValue := httpCtx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") { // external auth
 		if userIdHead := httpCtx.Request.Header.Peek("Admin-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
 				err = errors.Wrapf(err, "can not parse str to int for admin-id. input string %v.", userIdHead)
-				return 0, false, &rpc.ExtendedLocalRpcError{
+				return 0, false, false, &rpc.ExtendedLocalRpcError{
 					RpcError: rpc.RpcError{
 						Code:        error_codes.InvalidJwtToken,
 						Message:     err.Error(),
@@ -67,7 +69,7 @@ func (a AdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Conte
 			resp := <-forwardAuthWrapper.ParseNewAdminToken(string(jwtAuthData), false, apm.TransactionFromContext(ctx), false)
 
 			if resp.Error != nil {
-				return 0, false, &rpc.ExtendedLocalRpcError{
+				return 0, false, false, &rpc.ExtendedLocalRpcError{
 					RpcError: *resp.Error,
 				}
 			}
@@ -79,7 +81,7 @@ func (a AdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Conte
 	if currentUserId == 0 {
 		err := errors.New("new admin method requires new admin authorization header")
 
-		return 0, false, &rpc.ExtendedLocalRpcError{
+		return 0, false, false, &rpc.ExtendedLocalRpcError{
 			RpcError: rpc.RpcError{
 				Code:        error_codes.MissingJwtToken,
 				Message:     err.Error(),
@@ -91,24 +93,24 @@ func (a AdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Conte
 	}
 
 	if a.accessLevel == common.AccessLevelPublic {
-		return currentUserId, false, nil
+		return currentUserId, false, false, nil
 	}
 
 	ch := <-authWrapper.CheckAdminPermissions(currentUserId, a.obj, apm.TransactionFromContext(ctx), false)
 
 	if ch.Error != nil {
-		return 0, false, &rpc.ExtendedLocalRpcError{
+		return 0, false, false, &rpc.ExtendedLocalRpcError{
 			RpcError: *ch.Error,
 		}
 	}
 
 	if ch.Resp.HasAccess {
-		return currentUserId, false, nil
+		return currentUserId, false, false, nil
 	}
 
 	err := errors.New("admin user does not have access to this method")
 
-	return 0, false, &rpc.ExtendedLocalRpcError{
+	return 0, false, false, &rpc.ExtendedLocalRpcError{
 		RpcError: rpc.RpcError{
 			Code:        error_codes.InvalidJwtToken,
 			Message:     err.Error(),
@@ -137,6 +139,10 @@ func (a AdminCommand) GetObj() string {
 
 func (a AdminCommand) RequireIdentityValidation() bool {
 	return a.requireIdentityValidation
+}
+
+func (a AdminCommand) AllowBanned() bool {
+	return a.allowBanned
 }
 
 func (a AdminCommand) AccessLevel() common.AccessLevel {

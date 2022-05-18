@@ -12,6 +12,7 @@ import (
 type IApiCommand interface {
 	GetPath() string
 	RequireIdentityValidation() bool
+	AllowBanned() bool
 	AccessLevel() common.AccessLevel
 	GetHttpMethod() string
 	GetObj() string
@@ -177,6 +178,15 @@ func buildPath(commands []IApiCommand, apiDescriptions map[string]ApiDescription
 					"rbac_object": []interface{}{
 						cmd.GetObj(),
 					},
+					"can_banned_interact": {
+						cmd.AllowBanned(),
+					},
+				},
+			}
+		} else if cmd.AllowBanned() {
+			methodInfo["security"] = []interface{}{
+				map[string][]interface{}{
+					"can_banned_interact": {true},
 				},
 			}
 		}

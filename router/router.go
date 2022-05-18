@@ -10,7 +10,7 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/swagger"
-	auth_go "github.com/digitalmonsters/go-common/wrappers/auth_go"
+	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	fastRouter "github.com/fasthttp/router"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -31,6 +31,7 @@ type HttpRouter struct {
 	restCommands             map[string]*RestCommand
 	isProd                   bool
 	authGoWrapper            auth_go.IAuthGoWrapper
+	userExecutorValidator    UserExecutorValidator
 	srv                      *fasthttp.Server
 	rpcEndpointPublic        IRpcEndpoint
 	rpcEndpointAdmin         IRpcEndpoint
@@ -58,6 +59,7 @@ func NewRouter(rpcEndpointPath string, auth auth_go.IAuthGoWrapper) *HttpRouter 
 		endpointRegistratorMutex: sync.Mutex{},
 		authGoWrapper:            auth,
 		restCommands:             map[string]*RestCommand{},
+		userExecutorValidator:    NewDefaultUserExecutorValidator(auth),
 	}
 
 	if hostname, _ := os.Hostname(); len(hostname) > 0 {
@@ -407,7 +409,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 
 	shouldLog = forceLog
 
-	userId, isGuest, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper)
+	userId, isGuest, isBanned, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
 
 	if rpcError != nil {
 		rpcResponse.Error = rpcError
@@ -451,6 +453,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 		Context:        ctx,
 		UserId:         userId,
 		IsGuest:        isGuest,
+		IsBanned:       isBanned,
 		UserIp:         common.GetRealIp(httpCtx),
 		getUserValueFn: getUserValue,
 	}

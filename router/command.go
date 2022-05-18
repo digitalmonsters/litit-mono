@@ -14,6 +14,7 @@ import (
 
 type ICommand interface {
 	RequireIdentityValidation() bool
+	AllowBanned() bool
 	AccessLevel() common.AccessLevel
 	GetMethodName() string
 	GetFn() CommandFunc
@@ -21,7 +22,8 @@ type ICommand interface {
 	GetPath() string
 	GetHttpMethod() string
 	GetObj() string
-	CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (userId int64, isGuest bool, err *rpc.ExtendedLocalRpcError)
+	CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper,
+		userValidator UserExecutorValidator) (userId int64, isGuest bool, isBanned bool, err *rpc.ExtendedLocalRpcError)
 }
 
 type CommandFunc func(request []byte, executionData MethodExecutionData) (interface{}, *error_codes.ErrorWithCode)
@@ -31,6 +33,7 @@ type Command struct {
 	forceLog                  bool
 	fn                        CommandFunc
 	requireIdentityValidation bool
+	allowBanned               bool
 }
 
 func (c *Command) Execute(request []byte, data MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -43,6 +46,7 @@ func NewCommand(methodName string, fn CommandFunc, forceLog bool, requireIdentit
 		forceLog:                  forceLog,
 		fn:                        fn,
 		requireIdentityValidation: requireIdentityValidation,
+		allowBanned:               false,
 	}
 }
 
@@ -66,6 +70,10 @@ func (c Command) RequireIdentityValidation() bool {
 	return c.requireIdentityValidation
 }
 
+func (c Command) AllowBanned() bool {
+	return c.allowBanned
+}
+
 func (c Command) GetHttpMethod() string {
 	return "post"
 }
@@ -74,20 +82,21 @@ func (c Command) GetFn() CommandFunc {
 	return c.fn
 }
 
-func (c Command) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.ExtendedLocalRpcError) {
-	return publicCanExecuteLogic(httpCtx, c.requireIdentityValidation)
+func (c Command) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, *rpc.ExtendedLocalRpcError) {
+	return publicCanExecuteLogic(httpCtx, c.requireIdentityValidation, c.allowBanned, userValidator)
 }
 
-func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation bool) (int64, bool, *rpc.ExtendedLocalRpcError) {
+func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation bool, allowBanned bool, userValidator UserExecutorValidator) (int64, bool, bool, *rpc.ExtendedLocalRpcError) {
 	var userId int64
 	var isGuest bool
+	var isBanned bool
 
 	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
 		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
 				err = errors.Wrapf(err, "can not parse str to int for user-id. input string %v", userIdHead)
 
-				return 0, isGuest, &rpc.ExtendedLocalRpcError{
+				return 0, isGuest, isBanned, &rpc.ExtendedLocalRpcError{
 					RpcError: rpc.RpcError{
 						Code:        error_codes.InvalidJwtToken,
 						Message:     err.Error(),
@@ -103,11 +112,57 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 	}
 
 	if userId > 0 {
+		usersResp, err := userValidator.Validate(userId, ctx)
+
+		if err != nil {
+			err = errors.Wrap(err, "can not get user info from auth service")
+
+			return 0, isGuest, false, &rpc.ExtendedLocalRpcError{
+				RpcError: rpc.RpcError{
+					Code:        error_codes.GenericServerError,
+					Message:     err.Error(),
+					Hostname:    hostName,
+					ServiceName: hostName,
+				},
+				LocalHandlingError: err,
+			}
+		}
+
+		isBanned = usersResp.BannedTill.Valid
+
+		if !allowBanned && isBanned {
+			err := errors.WithStack(errors.New("user banned"))
+
+			return 0, isGuest, isBanned, &rpc.ExtendedLocalRpcError{
+				RpcError: rpc.RpcError{
+					Code:        error_codes.Forbidden,
+					Message:     err.Error(),
+					Hostname:    hostName,
+					ServiceName: hostName,
+				},
+				LocalHandlingError: err,
+			}
+		}
+
+		if usersResp.Deleted {
+			err := errors.WithStack(errors.New("user deleted"))
+
+			return 0, isGuest, isBanned, &rpc.ExtendedLocalRpcError{
+				RpcError: rpc.RpcError{
+					Code:        error_codes.Forbidden,
+					Message:     err.Error(),
+					Hostname:    hostName,
+					ServiceName: hostName,
+				},
+				LocalHandlingError: err,
+			}
+		}
+
 		if isGuestHeader := ctx.Request.Header.Peek("Is-Guest"); len(isGuestHeader) > 0 {
 			if parsedIsGuest, err := strconv.ParseBool(string(isGuestHeader)); err != nil {
 				err = errors.Wrapf(err, "can not parse str to int for is-guest. input string %v", isGuestHeader)
 
-				return 0, isGuest, &rpc.ExtendedLocalRpcError{
+				return 0, usersResp.Guest, isBanned, &rpc.ExtendedLocalRpcError{
 					RpcError: rpc.RpcError{
 						Code:        error_codes.InvalidJwtToken,
 						Message:     err.Error(),
@@ -125,7 +180,7 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 	if requireIdentityValidation && userId <= 0 {
 		err := errors.New("public method requires identity validation")
 
-		return 0, isGuest, &rpc.ExtendedLocalRpcError{
+		return 0, isGuest, isBanned, &rpc.ExtendedLocalRpcError{
 			RpcError: rpc.RpcError{
 				Code:        error_codes.MissingJwtToken,
 				Message:     err.Error(),
@@ -136,7 +191,7 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 		}
 	}
 
-	return userId, isGuest, nil
+	return userId, isGuest, isBanned, nil
 }
 
 func (c Command) ForceLog() bool {

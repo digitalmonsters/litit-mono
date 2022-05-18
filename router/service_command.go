@@ -15,6 +15,7 @@ type ServiceCommand struct {
 	forceLog                  bool
 	fn                        CommandFunc
 	requireIdentityValidation bool
+	allowBanned               bool
 	obj                       string
 }
 
@@ -26,11 +27,12 @@ func NewServiceCommand(methodName string, fn CommandFunc, forceLog bool) IComman
 		fn:                        fn,
 		obj:                       "",
 		requireIdentityValidation: false,
+		allowBanned:               true,
 	}
 }
 
-func (a ServiceCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper) (int64, bool, *rpc.ExtendedLocalRpcError) {
-	return 0, false, nil
+func (a ServiceCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, *rpc.ExtendedLocalRpcError) {
+	return 0, false, false, nil
 }
 
 func (a ServiceCommand) ForceLog() bool {
@@ -43,6 +45,10 @@ func (a ServiceCommand) GetObj() string {
 
 func (a ServiceCommand) RequireIdentityValidation() bool {
 	return a.requireIdentityValidation
+}
+
+func (a ServiceCommand) AllowBanned() bool {
+	return a.allowBanned
 }
 
 func (a ServiceCommand) AccessLevel() common.AccessLevel {

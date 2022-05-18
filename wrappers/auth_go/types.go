@@ -3,6 +3,7 @@ package auth_go
 import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/rpc"
+	"gopkg.in/guregu/null.v4"
 )
 
 type IsGuestRequest struct {
@@ -85,3 +86,15 @@ const (
 	SocialProviderTypeFacebook = SocialProviderType(3)
 	SocialProviderTypeEmail    = SocialProviderType(4)
 )
+
+type InternalGetUsersForValidatorFromCacheRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
+type UserForValidator struct {
+	Id         int64     `json:"id"`
+	Deleted    bool      `json:"deleted"`
+	BannedTill null.Time `json:"banned_till"`
+	Guest      bool      `json:"guest"`
+	Verified   bool      `json:"verified"`
+}

@@ -12,6 +12,7 @@ type MethodExecutionData struct {
 	Context        context.Context
 	UserId         int64
 	IsGuest        bool
+	IsBanned       bool
 	UserIp         string
 	DeviceId       string
 	getUserValueFn func(key string) interface{}

@@ -1,6 +1,7 @@
 package auth_go
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -22,6 +23,7 @@ type IAuthGoWrapper interface {
 	AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan
 	IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
 	GetUsersRegistrationType(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
+	InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
 }
 
 type AuthGoWrapper struct {
@@ -248,4 +250,11 @@ func (u AuthGoWrapper) GetUsersRegistrationType(userIds []int64, apmTransaction 
 	return wrappers.ExecuteRpcRequestAsync[map[int64]SocialProviderType](u.baseWrapper, u.apiUrl, "GetUsersRegistrationType", GetUsersRegistrationTypeRequest{
 		UserIds: userIds,
 	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+}
+
+func (u AuthGoWrapper) InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]UserForValidator](u.baseWrapper,
+		u.apiUrl, "InternalGetUsersForValidation", InternalGetUsersForValidatorFromCacheRequest{
+			UserIds: userIds,
+		}, map[string]string{}, 5*time.Second, apm.TransactionFromContext(ctx), u.serviceName, forceLog)
 }

@@ -26,6 +26,7 @@ type UserRecord struct {
 	Email                      string            `json:"email"`
 	Verified                   bool              `json:"verified"`
 	Guest                      bool              `json:"guest"`
+	BannedTill                 null.Time         `json:"banned_till"`
 	EnableAgeRestrictedContent bool              `json:"enable_age_restricted_content"`
 	IsTipEnabled               bool              `json:"is_tip_enabled"`
 	NamePrivacyStatus          NamePrivacyStatus `json:"name_privacy_status"`
@@ -72,6 +73,7 @@ type UserDetailRecord struct {
 	Avatar              null.String       `json:"avatar"`
 	IsTipEnabled        bool              `json:"is_tip_enabled"`
 	Guest               bool              `json:"guest"`
+	BannedTill          null.Time         `json:"banned_till"`
 	Deleted             bool              `json:"deleted"`
 	NamePrivacyStatus   NamePrivacyStatus `json:"name_privacy_status"`
 	Email               string            `json:"email"`
