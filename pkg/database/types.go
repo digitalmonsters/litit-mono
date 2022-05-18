@@ -182,6 +182,6 @@ func GetMarketingNotifications() []string {
 		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
 		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
 		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
-		"push.avatar.first", "push.upload.first", "push.description.first", "push.gender.first_x_paid_views",
+		"push.avatar.first", "push.upload.first", "push.upload.spot.first", "push.description.first", "push.gender.first_x_paid_views",
 	}
 }

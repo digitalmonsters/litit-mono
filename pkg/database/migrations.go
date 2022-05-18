@@ -373,5 +373,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_spot_uploaded_120520221565",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('spot_upload', 'Spot uploaded', 'Your spot was successfully uploaded', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.spot.successful-upload', null) on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
