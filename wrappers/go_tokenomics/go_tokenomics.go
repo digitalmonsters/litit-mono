@@ -62,7 +62,7 @@ func (w *Wrapper) GetUsersTokenomicsInfo(userIds []int64, filters []filters.Filt
 }
 
 func (w *Wrapper) GetWithdrawalsAmountsByAdminIds(adminIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]decimal.Decimal] {
-	return wrappers.ExecuteRpcRequestAsync[map[int64]decimal.Decimal](w.baseWrapper, w.apiUrl, "GetUsersTokenomicsInfo", GetWithdrawalsAmountsByAdminIdsRequest{
+	return wrappers.ExecuteRpcRequestAsync[map[int64]decimal.Decimal](w.baseWrapper, w.apiUrl, "GetWithdrawalsAmountsByAdminIds", GetWithdrawalsAmountsByAdminIdsRequest{
 		AdminIds: adminIds,
 	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
