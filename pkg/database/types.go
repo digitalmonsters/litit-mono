@@ -128,6 +128,8 @@ func GetNotificationType(templateId string) string {
 		return "push.description.first"
 	case "first_video_uploaded":
 		return "push.upload.first"
+	case "first_spot_uploaded":
+		return "push.upload.spot.first"
 	case "user_need_to_first_upload":
 		return "push.user.need.upload"
 	case "user_need_to_upload_avatar":
@@ -166,6 +168,8 @@ func GetNotificationType(templateId string) string {
 		return "push.user.after_signup"
 	case "daily_max_amount_of_paid_views_reached":
 		return "push.user.paid_views.daily_max"
+	case "daily_max_amount_of_paid_spot_views_reached":
+		return "push.user.paid_spot_views.daily_max"
 	case "first_x_paid_views_gender_push":
 		return "push.gender.first_x_paid_views"
 	}
@@ -180,6 +184,6 @@ func GetMarketingNotifications() []string {
 		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
 		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
 		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
-		"push.avatar.first", "push.upload.first", "push.description.first", "push.gender.first_x_paid_views",
+		"push.avatar.first", "push.upload.first", "push.upload.spot.first", "push.description.first", "push.gender.first_x_paid_views",
 	}
 }

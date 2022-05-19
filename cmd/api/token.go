@@ -37,7 +37,7 @@ func InitTokenApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return resp, nil
-	}, createTokenPath, http.MethodPost, true, false)); err != nil {
+	}, createTokenPath, http.MethodPost).RequireIdentityValidation().AllowBanned().Build()); err != nil {
 		return err
 	}
 
@@ -57,7 +57,7 @@ func InitTokenApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		}
 
 		return nil, nil
-	}, deleteTokenPath, http.MethodDelete, true, false)); err != nil {
+	}, deleteTokenPath, http.MethodDelete).RequireIdentityValidation().AllowBanned().Build()); err != nil {
 		return err
 	}
 

@@ -71,8 +71,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	if event.CrudOperation == eventsourcing.ChangeEventTypeCreated && !event.Unlisted && !event.Draft && !event.Deleted {
-		templateName = "content_upload"
-		notificationType = "push.content.successful-upload"
+		if event.ContentType == eventsourcing.ContentTypeVideo {
+			templateName = "content_upload"
+			notificationType = "push.content.successful-upload"
+		} else if event.ContentType == eventsourcing.ContentTypeSpot {
+			templateName = "spot_upload"
+			notificationType = "push.spot.successful-upload"
+		}
 	} else if event.CrudOperation == eventsourcing.ChangeEventTypeUpdated {
 		if string(event.CrudOperationReason) == "rejected" {
 			rejectReasonText := ""

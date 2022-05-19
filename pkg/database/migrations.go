@@ -354,5 +354,40 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_first_spot_uploaded_120520221559",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('first_spot_uploaded', 'Congrats!', 'You received {{.first_upload_bonus}} LIT points to your wallet for uploading your first spot', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'popup', null) on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "add_user_banned_templates_160520221800",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('user_banned', 'Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('banned_first_popup','Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('banned_second_popup','Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, title, body, headline, created_at, updated_at, kind) VALUES ('banned_third_popup','Your account is banned in Lit.it', 'You have done some forbidden content and your account is banned. We sent to your account what to do.', 'Attention!', '2022-05-16 18:00:00.000000', '2022-05-16 18:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "add_spot_uploaded_120520221565",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('spot_upload', 'Spot uploaded', 'Your spot was successfully uploaded', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.spot.successful-upload', null) on conflict do nothing;",
+				)
+			},
+		},
+		{
+			ID: "add_daily_max_amount_of_paid_spots_views_reached_template_120520221570",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('daily_max_amount_of_paid_spots_views_reached', 'You just earned maximum daily LIT points for watching spots!', 'You can earn up to {{.pointsAmount}} LIT per day for watching spots', '2022-04-18 12:00:00.000000', '2022-04-18 12:00:00.000000',  'popup', 'Congrats!');",
+				)
+			},
+		},
 	}
 }
