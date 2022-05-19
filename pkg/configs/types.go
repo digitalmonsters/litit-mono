@@ -7,18 +7,18 @@ import (
 )
 
 type GetConfigRequest struct {
-	Keys                []string                     `json:"keys"`
-	Types               []application.ConfigType     `json:"types"`
-	ReleaseVersions     []string                     `json:"release_versions"`
-	DescriptionContains null.String                  `json:"description_contains"`
-	AdminOnly           null.Bool                    `json:"admin_only"`
-	Categories          []application.ConfigCategory `json:"categories"`
-	CreatedFrom         null.Time                    `json:"created_from"`
-	CreatedTo           null.Time                    `json:"created_to"`
-	UpdatedFrom         null.Time                    `json:"updated_from"`
-	UpdatedTo           null.Time                    `json:"updated_to"`
-	Limit               int                          `json:"limit"`
-	Offset              int                          `json:"offset"`
+	KeyLike            string `json:"key_like"`
+	ReleaseVersionLike string `json:"release_version_like"`
+	TypeLike           string `json:"type_like"`
+	DescriptionLike    string `json:"description_contains"`
+	CategoryLike       string `json:"category_like"`
+
+	CreatedFrom null.Time `json:"created_from"`
+	CreatedTo   null.Time `json:"created_to"`
+	UpdatedFrom null.Time `json:"updated_from"`
+	UpdatedTo   null.Time `json:"updated_to"`
+	Limit       int       `json:"limit"`
+	Offset      int       `json:"offset"`
 }
 
 type GetConfigResponse struct {
