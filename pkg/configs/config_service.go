@@ -54,22 +54,20 @@ func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*Get
 	var cfg []database.Config
 	var q = db.Model(cfg)
 
-	if req.AdminOnly.Valid {
-		q = q.Where("admin_only = ?", req.AdminOnly)
+	if len(req.CategoryLike) > 0 {
+		q = q.Where("category ILIKE '%' || ? || '%'", req.CategoryLike)
 	}
-	if len(req.Categories) > 0 {
-		q = q.Where("category in ?", req.Categories)
+
+	if len(req.TypeLike) > 0 {
+		q = q.Where("type ILIKE '%' || ? || '%'", req.TypeLike)
 	}
-	if len(req.Types) > 0 {
-		q = q.Where("type in ?", req.Types)
+	if len(req.KeyLike) > 0 {
+		q = q.Where("key ILIKE '%' || ? || '%'", req.KeyLike)
 	}
-	if len(req.Keys) > 0 {
-		q = q.Where("key in ?", req.Keys)
+	if len(req.DescriptionLike) > 0 {
+		q = q.Where("description ILIKE '%' || ? || '%'", req.DescriptionLike)
 	}
-	if req.DescriptionContains.Valid {
-		var search = fmt.Sprintf("%%%s%%", req.DescriptionContains.ValueOrZero())
-		q = q.Where("(description ilike ? or key ilike ?)", search, search)
-	}
+
 	if req.CreatedFrom.Valid {
 		q = q.Where("created_at > ?", req.CreatedFrom.Time)
 	}
@@ -82,16 +80,20 @@ func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*Get
 	if req.UpdatedTo.Valid {
 		q = q.Where("updated_at < ?", req.CreatedTo.Time)
 	}
-	if len(req.ReleaseVersions) > 0 {
-		q = q.Where("release_version in ?", req.ReleaseVersions)
+	if len(req.ReleaseVersionLike) > 0 {
+		q = q.Where("release_version ILIKE '%' || ? || '%'", req.ReleaseVersionLike)
 	}
+
 	var count int64
 	if err := q.Count(&count).Error; err != nil {
 		return nil, err
 	}
-	if err := q.Order("created_at desc").Find(&cfg).Error; err != nil {
+
+	if err := q.Order("created_at desc").Limit(req.Limit).Offset(req.Offset).
+		Find(&cfg).Error; err != nil {
 		return nil, err
 	}
+
 	var respItems []application.ConfigModel
 	for _, c := range cfg {
 		respItems = append(respItems, application.ConfigModel{

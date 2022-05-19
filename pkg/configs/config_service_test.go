@@ -202,17 +202,13 @@ func TestConfigService_AdminGetConfigs(t *testing.T) {
 	assert.Equal(t, 2, foundCounter)
 
 	resp, err = service.AdminGetConfigs(gormDb, GetConfigRequest{
-		Keys:                []string{configs[0].Key},
-		Types:               []application.ConfigType{configs[0].Type, configs[1].Type},
-		DescriptionContains: null.StringFrom(configs[0].Description),
-		AdminOnly:           null.BoolFrom(configs[0].AdminOnly),
-		Categories:          []application.ConfigCategory{configs[0].Category, configs[1].Category},
-		CreatedFrom:         null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
-		CreatedTo:           null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
-		UpdatedFrom:         null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
-		UpdatedTo:           null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
-		Limit:               10,
-		Offset:              0,
+		KeyLike:     "test_key1",
+		CreatedFrom: null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
+		CreatedTo:   null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
+		UpdatedFrom: null.TimeFrom(time.Now().UTC().Add(-10 * time.Hour)),
+		UpdatedTo:   null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
+		Limit:       10,
+		Offset:      0,
 	})
 	if err != nil {
 		t.Fatal(err)
