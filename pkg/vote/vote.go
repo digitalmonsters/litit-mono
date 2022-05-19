@@ -1,6 +1,7 @@
 package vote
 
 import (
+	"context"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
 	"github.com/digitalmonsters/comments/cmd/api/vote/notifiers/vote"
 	"github.com/digitalmonsters/comments/pkg/comments"
@@ -9,14 +10,13 @@ import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/pkg/errors"
-	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId int64, commentNotifier *comment.Notifier,
-	voteNotifier *vote.Notifier, apmTransaction *apm.Transaction,
+	voteNotifier *vote.Notifier, ctx context.Context,
 	contentWrapper content.IContentWrapper) (*database.CommentVote, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
@@ -95,12 +95,12 @@ func VoteComment(db *gorm.DB, commentId int64, voteUp null.Bool, currentUserId i
 			eventType = eventsourcing.CommentChangeReasonContent
 
 			extenders := []chan error{
-				comments.ExtendWithContent(contentWrapper, apmTransaction, &mapped),
+				comments.ExtendWithContent(contentWrapper, ctx, &mapped),
 			}
 
 			for _, e := range extenders {
 				if err := <-e; err != nil {
-					apm_helper.CaptureApmError(err, apmTransaction)
+					apm_helper.LogError(err, ctx)
 				}
 			}
 		} else {

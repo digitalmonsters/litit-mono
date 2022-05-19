@@ -40,7 +40,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 				Success: true,
 			}, nil
 		}
-	}, "/{comment_id}/report", http.MethodPost, true, false)); err != nil {
+	}, "/{comment_id}/report", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 

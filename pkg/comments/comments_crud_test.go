@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"context"
 	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"strings"
 	"testing"
@@ -35,7 +36,7 @@ var mockNotBlockRecord = user.UserBlockData{
 func TestCreateComment(t *testing.T) {
 	baseSetup(t)
 	comment, err := CreateComment(db, 1017738, "test_create_comment", null.NewInt(0, false),
-		contentWrapperMock, userWrapperMock, nil, 10, nil, nil, nil)
+		contentWrapperMock, userWrapperMock, context.TODO(), 10, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +52,7 @@ func TestCreateComment(t *testing.T) {
 	a.Equal(false, c1.ParentId.Valid)
 
 	comment2, err := CreateComment(db, 1017738, "test_create_comment2", null.IntFrom(comment.Id),
-		contentWrapperMock, userWrapperMock, nil, 10, nil, nil, nil)
+		contentWrapperMock, userWrapperMock, context.TODO(), 10, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +72,7 @@ func TestCreateComment(t *testing.T) {
 	}
 	a.Equal(int64(2), content.CommentsCount)
 	_, err = CreateComment(db, 1017738, "test_create_comment2", null.IntFrom(comment.Id), contentWrapperMock, userWrapperMock,
-		nil, 1, nil, nil, nil)
+		context.TODO(), 1, nil, nil, nil)
 	a.NotEqual(nil, err)
 
 }
@@ -79,7 +80,7 @@ func TestCreateComment(t *testing.T) {
 func TestUpdateCommentById(t *testing.T) {
 	baseSetup(t)
 	updatedComment, err := UpdateCommentById(db, 9700, "updated comment", 1074240,
-		nil, nil, nil)
+		nil, nil, context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,13 +93,13 @@ func TestUpdateCommentById(t *testing.T) {
 	a.Equal(updatedComment.Comment, comment.Comment)
 
 	updatedComment, err = UpdateCommentById(db, 1, "updated comment", 1074240,
-		nil, nil, nil)
+		nil, nil, context.TODO())
 	a.Nil(updatedComment)
 	a.NotNil(err)
 	a.True(strings.Contains(err.Error(), "record not found"))
 
 	updatedComment, err = UpdateCommentById(db, 9700, "updated comment", 1074241,
-		nil, nil, nil)
+		nil, nil, context.TODO())
 	a.Nil(updatedComment)
 	a.NotNil(err)
 	a.True(strings.Contains(err.Error(), "record not found"))
@@ -141,7 +142,7 @@ func TestDeleteCommentById(t *testing.T) {
 func TestCreateCommentOnProfile(t *testing.T) {
 	baseSetup(t)
 	comment, err := CreateCommentOnProfile(db, 11108, "test_create_comment_on_profile",
-		null.NewInt(0, false), userWrapperMock, nil, 10, nil, nil, nil)
+		null.NewInt(0, false), userWrapperMock, context.TODO(), 10, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +158,7 @@ func TestCreateCommentOnProfile(t *testing.T) {
 	a.Equal(false, c1.ParentId.Valid)
 
 	comment2, err := CreateCommentOnProfile(db, 11108, "test_create_comment2_on_profile",
-		null.IntFrom(comment.Id), userWrapperMock, nil, 10, nil, nil, nil)
+		null.IntFrom(comment.Id), userWrapperMock, context.TODO(), 10, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,7 +173,7 @@ func TestCreateCommentOnProfile(t *testing.T) {
 	a.Equal(c1.Id, c2.ParentId.ValueOrZero())
 
 	_, err = CreateCommentOnProfile(db, 11108, "test_create_comment2_on_profile",
-		null.IntFrom(comment.Id), userWrapperMock, nil, 1, nil, nil, nil)
+		null.IntFrom(comment.Id), userWrapperMock, context.TODO(), 1, nil, nil, nil)
 	a.NotEqual(nil, err)
 
 }

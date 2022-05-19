@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
@@ -36,17 +37,17 @@ func TestMain(m *testing.M) {
 	db = database.GetDb()
 
 	userWrapperMock = &user.UserGoWrapperMock{
-		GetUsersFn: func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUsersResponseChan {
-			ch := make(chan user.GetUsersResponseChan, 2)
+		GetUsersFn: func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user.UserRecord] {
+			ch := make(chan wrappers.GenericResponseChan[map[int64]user.UserRecord], 2)
 			go func() {
 				defer func() {
 					close(ch)
 				}()
 
 				if userIds[0] == mockUserRecord.UserId {
-					ch <- user.GetUsersResponseChan{
+					ch <- wrappers.GenericResponseChan[map[int64]user.UserRecord]{
 						Error: nil,
-						Items: map[int64]user.UserRecord{
+						Response: map[int64]user.UserRecord{
 							mockUserRecord.UserId: mockUserRecord,
 						},
 					}
@@ -55,22 +56,22 @@ func TestMain(m *testing.M) {
 
 			return ch
 		},
-		GetUserBlockFn: func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan user.GetUserBlockResponseChan {
-			ch := make(chan user.GetUserBlockResponseChan, 2)
+		GetUserBlockFn: func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[user.UserBlockData] {
+			ch := make(chan wrappers.GenericResponseChan[user.UserBlockData], 2)
 			go func() {
 				defer func() {
 					close(ch)
 				}()
 
 				if blockedTo == 1 || blockedBy == 2 {
-					ch <- user.GetUserBlockResponseChan{
-						Error: nil,
-						Data:  mockBlockRecord,
+					ch <- wrappers.GenericResponseChan[user.UserBlockData]{
+						Error:    nil,
+						Response: mockBlockRecord,
 					}
 				} else {
-					ch <- user.GetUserBlockResponseChan{
-						Error: nil,
-						Data:  mockNotBlockRecord,
+					ch <- wrappers.GenericResponseChan[user.UserBlockData]{
+						Error:    nil,
+						Response: mockNotBlockRecord,
 					}
 				}
 			}()
@@ -123,7 +124,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		After:      "",
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
+	}, 0, db, userWrapperMock, context.TODO(), ResourceTypeContent)
 
 	if err != nil {
 		t.Fatal(err)
@@ -137,7 +138,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		After:      result.Paging.After,
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
+	}, 0, db, userWrapperMock, context.TODO(), ResourceTypeContent)
 
 	if err != nil {
 		t.Fatal(err)
@@ -151,7 +152,7 @@ func TestGetCommentsByContent(t *testing.T) {
 		After:      result.Paging.After,
 		Count:      9999,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ResourceTypeContent)
+	}, 0, db, userWrapperMock, context.TODO(), ResourceTypeContent)
 
 	if err != nil {
 		t.Fatal(err)
@@ -172,7 +173,7 @@ func TestGetCommentById(t *testing.T) {
 		VoteUp:    null.BoolFrom(true),
 	})
 
-	_, err := GetCommentById(db, commentId, userId, userWrapperMock, nil)
+	_, err := GetCommentById(db, commentId, userId, userWrapperMock, context.TODO())
 
 	if err != nil {
 		t.Fatal(err)
@@ -222,7 +223,7 @@ func TestGetCommentById_ChildrenComments(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := GetCommentById(db, parentComments[0].Id, userId, userWrapperMock, nil)
+	resp, err := GetCommentById(db, parentComments[0].Id, userId, userWrapperMock, context.TODO())
 
 	if err != nil {
 		t.Fatal(err)
@@ -251,7 +252,7 @@ func TestGetCommentById_ChildrenComments(t *testing.T) {
 		}
 		assert.True(t, isFound)
 	}
-	resp, err = GetCommentById(db, comments[1].Id, userId, userWrapperMock, nil)
+	resp, err = GetCommentById(db, comments[1].Id, userId, userWrapperMock, context.TODO())
 
 	if err != nil {
 		t.Fatal(err)
@@ -290,7 +291,7 @@ func TestGetCommentsByProfile(t *testing.T) {
 		After:      "",
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ResourceTypeProfile)
+	}, 0, db, userWrapperMock, context.TODO(), ResourceTypeProfile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -304,7 +305,7 @@ func TestGetCommentsByProfile(t *testing.T) {
 		After:      result.Paging.After,
 		Count:      2,
 		SortOrder:  "",
-	}, 0, db, userWrapperMock, nil, ResourceTypeProfile)
+	}, 0, db, userWrapperMock, context.TODO(), ResourceTypeProfile)
 
 	if err != nil {
 		t.Fatal(err)
