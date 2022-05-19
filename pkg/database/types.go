@@ -168,6 +168,8 @@ func GetNotificationType(templateId string) string {
 		return "push.user.after_signup"
 	case "daily_max_amount_of_paid_views_reached":
 		return "push.user.paid_views.daily_max"
+	case "daily_max_amount_of_paid_spot_views_reached":
+		return "push.user.paid_spot_views.daily_max"
 	case "first_x_paid_views_gender_push":
 		return "push.gender.first_x_paid_views"
 	}
