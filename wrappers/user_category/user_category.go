@@ -33,7 +33,7 @@ func NewUserCategoryWrapper(config boilerplate.WrapperConfig) IUserCategoryWrapp
 	}
 
 	if len(config.ApiUrl) == 0 {
-		config.ApiUrl = "http://user-categories"
+		config.ApiUrl = "http://event-publisher"
 
 		log.Warn().Msgf("Api Url is missing for UserCategories. Setting as default : %v", config.ApiUrl)
 	}

@@ -37,7 +37,7 @@ func NewWatchWrapper(config boilerplate.WrapperConfig) IWatchWrapper {
 	}
 
 	if len(config.ApiUrl) == 0 {
-		config.ApiUrl = "http://views"
+		config.ApiUrl = "http://event-publisher"
 
 		log.Warn().Msgf("Api Url is missing for Views. Setting as default : %v", config.ApiUrl)
 	}

@@ -33,7 +33,7 @@ func NewUserCategoryWrapper(config boilerplate.WrapperConfig) IUserHashtagWrappe
 	}
 
 	if len(config.ApiUrl) == 0 {
-		config.ApiUrl = "http://user-hashtags"
+		config.ApiUrl = "http://event-publisher"
 
 		log.Warn().Msgf("Api Url is missing for UserHashtag. Setting as default : %v", config.ApiUrl)
 	}

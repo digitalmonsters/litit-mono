@@ -187,6 +187,10 @@ func (b *BaseWrapper) sendHttpRequestAsync(ctx context.Context, url string, meth
 			common.ContentEncodingGzip, common.ContentEncodingDeflate))
 		req.Header.SetContentType(contentType)
 
+		if len(b.hostName) > 0 {
+			req.Header.Set("X-Requester-Host", b.hostName)
+		}
+
 		for k, v := range headers {
 			req.Header.Set(k, v)
 		}

@@ -36,7 +36,7 @@ func NewFollowWrapper(config boilerplate.WrapperConfig) IFollowWrapper {
 	}
 
 	if len(config.ApiUrl) == 0 {
-		config.ApiUrl = "http://follows"
+		config.ApiUrl = "http://event-publisher"
 
 		log.Warn().Msgf("Api Url is missing for Follow. Setting as default : %v", config.ApiUrl)
 	}

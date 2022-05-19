@@ -39,7 +39,7 @@ func NewLikeWrapper(config boilerplate.WrapperConfig) ILikeWrapper {
 	}
 
 	if len(config.ApiUrl) == 0 {
-		config.ApiUrl = "http://likes"
+		config.ApiUrl = "http://event-publisher"
 
 		log.Warn().Msgf("Api Url is missing for Likes. Setting as default : %v", config.ApiUrl)
 	}
