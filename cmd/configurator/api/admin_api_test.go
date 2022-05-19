@@ -49,18 +49,14 @@ func TestGetConfigs(t *testing.T) {
 			},
 		},
 	}
+
 	var req = configs.GetConfigRequest{
-		Keys:                []string{"test_key1", "test_key2"},
-		Types:               []application.ConfigType{application.ConfigTypeInteger, application.ConfigTypeString},
-		DescriptionContains: null.StringFrom("test"),
-		AdminOnly:           null.BoolFrom(false),
-		Categories:          []application.ConfigCategory{application.ConfigCategoryAd, application.ConfigCategoryContent},
-		CreatedFrom:         null.TimeFrom(time.Now().UTC().Add(-15 * time.Minute)),
-		CreatedTo:           null.TimeFrom(time.Now().UTC()),
-		UpdatedFrom:         null.TimeFrom(time.Now().UTC().Add(-10 * time.Minute)),
-		UpdatedTo:           null.TimeFrom(time.Now().UTC()),
-		Limit:               10,
-		Offset:              0,
+		CreatedFrom: null.TimeFrom(time.Now().UTC().Add(-15 * time.Minute)),
+		CreatedTo:   null.TimeFrom(time.Now().UTC()),
+		UpdatedFrom: null.TimeFrom(time.Now().UTC().Add(-10 * time.Minute)),
+		UpdatedTo:   null.TimeFrom(time.Now().UTC()),
+		Limit:       10,
+		Offset:      0,
 	}
 	js, err := json.Marshal(&req)
 	if err != nil {
