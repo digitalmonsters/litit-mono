@@ -3,7 +3,7 @@ module github.com/digitalmonsters/comments
 go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.30.0
+	github.com/digitalmonsters/go-common v1.30.3
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
