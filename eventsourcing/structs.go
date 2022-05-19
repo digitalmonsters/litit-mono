@@ -57,6 +57,7 @@ type ViewEvent struct {
 	IsSharedView bool        `json:"is_shared_view"`
 	CreatedAt    int64       `json:"created_at"`
 	IsGuest      bool        `json:"is_guest"`
+	IsBot        bool        `json:"is_bot"`
 }
 
 func (l ViewEvent) GetPublishKey() string {
