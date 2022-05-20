@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"context"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
@@ -17,7 +18,7 @@ import (
 )
 
 func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int, contentWrapper content.IContentWrapper,
-	userWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction, currentUserId int64,
+	userWrapper user_go.IUserGoWrapper, ctx context.Context, currentUserId int64,
 	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) (*SimpleComment, error) {
 	var parentComment database.Comment
@@ -34,16 +35,16 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 	mappedParentComment := MapDbCommentToComment(parentComment)
 
 	extenders := []chan error{
-		ExtendWithContent(contentWrapper, apmTransaction, &mappedParentComment),
+		ExtendWithContent(contentWrapper, ctx, &mappedParentComment),
 	}
 
 	for _, e := range extenders {
 		if err := <-e; err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
+			apm_helper.LogError(err, ctx)
 		}
 	}
 
-	blockedUserType, err := isBlocked(userWrapper, apmTransaction, currentUserId, mappedParentComment.AuthorId)
+	blockedUserType, err := isBlocked(userWrapper, ctx, currentUserId, mappedParentComment.AuthorId)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -89,12 +90,12 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 
 	if commentNotifier != nil {
 		extenders = []chan error{
-			ExtendWithContent(contentWrapper, apmTransaction, &mapped),
+			ExtendWithContent(contentWrapper, ctx, &mapped),
 		}
 
 		for _, e := range extenders {
 			if err := <-e; err != nil {
-				apm_helper.CaptureApmError(err, apmTransaction)
+				apm_helper.LogError(err, ctx)
 			}
 		}
 
@@ -107,7 +108,7 @@ func CreateComment(db *gorm.DB, resourceId int64, commentStr string, parentId nu
 
 func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, currentUserId int64,
 	contentWrapper content.IContentWrapper, commentNotifier *comment.Notifier,
-	apmTransaction *apm.Transaction) (*SimpleComment, error) {
+	ctx context.Context) (*SimpleComment, error) {
 	var modifiedComment database.Comment
 
 	tx := db.Begin()
@@ -135,12 +136,12 @@ func UpdateCommentById(db *gorm.DB, commentId int64, updatedComment string, curr
 			eventType = eventsourcing.CommentChangeReasonContent
 
 			extenders := []chan error{
-				ExtendWithContent(contentWrapper, apmTransaction, &mapped),
+				ExtendWithContent(contentWrapper, ctx, &mapped),
 			}
 
 			for _, e := range extenders {
 				if err := <-e; err != nil {
-					apm_helper.CaptureApmError(err, apmTransaction)
+					apm_helper.LogError(err, ctx)
 				}
 			}
 		} else {
@@ -317,7 +318,7 @@ func DeleteCommentById(db *gorm.DB, commentId int64, currentUserId int64, conten
 }
 
 func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, parentId null.Int,
-	userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction, currentUserId int64,
+	userGoWrapper user_go.IUserGoWrapper, ctx context.Context, currentUserId int64,
 	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) (*SimpleComment, error) {
 	var parentComment database.Comment
@@ -330,7 +331,7 @@ func CreateCommentOnProfile(db *gorm.DB, resourceId int64, commentStr string, pa
 
 	mappedParentComment := mapDbCommentToCommentOnProfile(parentComment)
 
-	blockedUserType, err := isBlocked(userGoWrapper, apmTransaction, currentUserId, mappedParentComment.AuthorId)
+	blockedUserType, err := isBlocked(userGoWrapper, ctx, currentUserId, mappedParentComment.AuthorId)
 
 	if err != nil {
 		return nil, errors.WithStack(err)

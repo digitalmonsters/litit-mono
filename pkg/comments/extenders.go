@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/wrappers/content"
@@ -60,7 +61,7 @@ func extendWithLikedByMe(db *gorm.DB, currentUserId int64, comments ...*Comment)
 
 	return ch
 }
-func extendWithAuthor(userInfoWrapper user.IUserGoWrapper, apmTransaction *apm.Transaction, comments ...*Comment) chan error {
+func extendWithAuthor(userInfoWrapper user.IUserGoWrapper, ctx context.Context, comments ...*Comment) chan error {
 	ch := make(chan error)
 
 	if len(comments) == 0 {
@@ -83,7 +84,7 @@ func extendWithAuthor(userInfoWrapper user.IUserGoWrapper, apmTransaction *apm.T
 		}
 
 		if len(authors) > 0 {
-			responseData := <-userInfoWrapper.GetUsers(authors, apmTransaction, false)
+			responseData := <-userInfoWrapper.GetUsers(authors, ctx, false)
 
 			if responseData.Error != nil {
 				ch <- errors.New(fmt.Sprintf("invalid response from user service [%v]", responseData.Error.Message))
@@ -91,7 +92,7 @@ func extendWithAuthor(userInfoWrapper user.IUserGoWrapper, apmTransaction *apm.T
 			}
 
 			for _, comment := range comments {
-				if v, ok := responseData.Items[comment.AuthorId]; ok {
+				if v, ok := responseData.Response[comment.AuthorId]; ok {
 					comment.Author = Author{
 						Id:                v.UserId,
 						Username:          v.Username,
@@ -108,7 +109,7 @@ func extendWithAuthor(userInfoWrapper user.IUserGoWrapper, apmTransaction *apm.T
 	return ch
 }
 
-func ExtendWithContent(contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction, comments ...*Comment) chan error {
+func ExtendWithContent(contentWrapper content.IContentWrapper, ctx context.Context, comments ...*Comment) chan error {
 	ch := make(chan error)
 
 	go func() {
@@ -129,7 +130,7 @@ func ExtendWithContent(contentWrapper content.IContentWrapper, apmTransaction *a
 		}
 
 		if len(contentIds) > 0 {
-			responseData := <-contentWrapper.GetInternal(contentIds, false, apmTransaction, false)
+			responseData := <-contentWrapper.GetInternal(contentIds, false, apm.TransactionFromContext(ctx), false)
 
 			if responseData.Error != nil {
 				ch <- errors.New(fmt.Sprintf("invalid response from content service [%v]", responseData.Error.Message))

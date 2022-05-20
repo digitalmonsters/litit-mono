@@ -32,12 +32,12 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 
 		if comment, err := comments.GetCommentById(db.WithContext(executionData.Context), commentId, executionData.UserId,
-			userWrapper, executionData.ApmTransaction); err != nil {
+			userWrapper, executionData.Context); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return commentToFrontendCommentWithCursorResponse(*comment), nil
 		}
-	}, "/{comment_id}", http.MethodGet, false, false)); err != nil {
+	}, "/{comment_id}", http.MethodGet).Build()); err != nil {
 		return err
 	}
 
@@ -80,7 +80,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 				Success: true,
 			}, nil
 		}
-	}, "/{delete_comment_id}", http.MethodDelete, true, true)); err != nil {
+	}, "/{delete_comment_id}", http.MethodDelete).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -125,14 +125,14 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 
 		if _, err := comments.UpdateCommentById(db.WithContext(executionData.Context), commentId,
-			updateRequest.Comment, executionData.UserId, contentWrapper, commentNotifier, executionData.ApmTransaction); err != nil {
+			updateRequest.Comment, executionData.UserId, contentWrapper, commentNotifier, executionData.Context); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return successResponse{
 				Success: true,
 			}, nil
 		}
-	}, "/{update_comment_id}", http.MethodPatch, true, true)); err != nil {
+	}, "/{update_comment_id}", http.MethodPatch).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -173,13 +173,13 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 			Count:      count,
 			SortOrder:  sortOrder,
 			ResourceId: commentId,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction,
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.Context,
 			comments.ResourceTypeParentComment); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericValidationError)
 		} else {
 			return resp, nil
 		}
-	}, "/{comment_id}/replies", http.MethodGet, false, false)); err != nil {
+	}, "/{comment_id}/replies", http.MethodGet).Build()); err != nil {
 		return err
 	}
 
@@ -253,12 +253,12 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 			Before:     before,
 			Count:      count,
 			SortOrder:  sortOrder,
-		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.ApmTransaction, mappedResourceType); err != nil {
+		}, executionData.UserId, db.WithContext(executionData.Context), userWrapper, executionData.Context, mappedResourceType); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
 			return commentsWithPagingToFrontendPaginationResponse(*resp), nil
 		}
-	}, "/{type}/{resource_id}", http.MethodGet, false, false)); err != nil {
+	}, "/{type}/{resource_id}", http.MethodGet).Build()); err != nil {
 		return err
 	}
 
@@ -331,7 +331,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 
 		if resp, err := comments.CreateComment(db.WithContext(executionData.Context), contentId,
-			createRequest.Comment, createRequest.ParentId, contentWrapper, userWrapper, executionData.ApmTransaction,
+			createRequest.Comment, createRequest.ParentId, contentWrapper, userWrapper, executionData.Context,
 			executionData.UserId, commentNotifier, contentCommentsNotifier, userCommentsNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
@@ -342,7 +342,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 				ContentId: resp.ContentId.ValueOrZero(),
 			}, nil
 		}
-	}, "/content/{content_id_to_create_comment_on}", http.MethodPost, true, true)); err != nil {
+	}, "/content/{content_id_to_create_comment_on}", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -380,7 +380,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 
 		if resp, err := comments.CreateCommentOnProfile(db.WithContext(executionData.Context), profileId,
-			createRequest.Comment, createRequest.ParentId, userWrapper, executionData.ApmTransaction,
+			createRequest.Comment, createRequest.ParentId, userWrapper, executionData.Context,
 			executionData.UserId, commentNotifier, contentCommentsNotifier, userCommentsNotifier); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		} else {
@@ -390,7 +390,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 				AuthorId: resp.AuthorId,
 			}, nil
 		}
-	}, "/profile/{profile_id_to_create_comment_on}", http.MethodPost, true, true)); err != nil {
+	}, "/profile/{profile_id_to_create_comment_on}", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 

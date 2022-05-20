@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
@@ -17,7 +18,7 @@ import (
 )
 
 func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, currentUserId int64, db *gorm.DB,
-	userWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction, resourceType ResourceType) (*GetCommentsByTypeWithResourceResponse, error) {
+	userWrapper user_go.IUserGoWrapper, ctx context.Context, resourceType ResourceType) (*GetCommentsByTypeWithResourceResponse, error) {
 	var comments []database.Comment
 
 	if request.ResourceId == 0 {
@@ -148,13 +149,13 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 
 	if len(comments) > 0 {
 		extenders := []chan error{
-			extendWithAuthor(userWrapper, apmTransaction, resultComments...),
+			extendWithAuthor(userWrapper, ctx, resultComments...),
 			extendWithLikedByMe(db, currentUserId, resultComments...),
 		}
 
 		for _, e := range extenders {
 			if err = <-e; err != nil {
-				apm_helper.CaptureApmError(err, apmTransaction)
+				apm_helper.LogError(err, ctx)
 			}
 		}
 	}
@@ -181,7 +182,7 @@ func GetCommentsByResourceId(request GetCommentsByTypeWithResourceRequest, curre
 }
 
 func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapper user_go.IUserGoWrapper,
-	apmTransaction *apm.Transaction) (*CommentWithCursor, error) {
+	ctx context.Context) (*CommentWithCursor, error) {
 	var comment database.Comment
 
 	if err := db.Take(&comment, commentId).Error; err != nil {
@@ -220,7 +221,7 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 		ResourceId: resourceId,
 		Count:      index,
 		SortOrder:  "newest",
-	}, currentUserId, db, userWrapper, nil, resourceType)
+	}, currentUserId, db, userWrapper, ctx, resourceType)
 
 	if err != nil {
 		return nil, err
@@ -228,13 +229,13 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 	resultComment := MapDbCommentToComment(comment)
 
 	extenders := []chan error{
-		extendWithAuthor(userWrapper, apmTransaction, &resultComment),
+		extendWithAuthor(userWrapper, ctx, &resultComment),
 		extendWithLikedByMe(db, currentUserId, &resultComment),
 	}
 
 	for _, e := range extenders {
 		if err := <-e; err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
+			apm_helper.LogError(err, ctx)
 		}
 	}
 
@@ -253,15 +254,15 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 	}, nil
 }
 
-func isBlocked(userWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction,
+func isBlocked(userWrapper user_go.IUserGoWrapper, ctx context.Context,
 	blockedTo int64, blockedBy int64) (*user_go.BlockedUserType, error) {
-	responseData := <-userWrapper.GetUserBlock(blockedTo, blockedBy, apmTransaction, false)
+	responseData := <-userWrapper.GetUserBlock(blockedTo, blockedBy, apm.TransactionFromContext(ctx), false)
 
 	if responseData.Error != nil {
 		return nil, errors.New(fmt.Sprintf("invalid response from user block service [%v]", responseData.Error.Message))
 	}
 
-	return responseData.Data.Type, nil
+	return responseData.Response.Type, nil
 }
 
 func updateUserStatsComments(tx *gorm.DB, authorId int64, contentId int64, isContentComment bool,
