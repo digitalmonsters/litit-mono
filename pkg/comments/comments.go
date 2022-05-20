@@ -221,7 +221,7 @@ func GetCommentById(db *gorm.DB, commentId int64, currentUserId int64, userWrapp
 		ResourceId: resourceId,
 		Count:      index,
 		SortOrder:  "newest",
-	}, currentUserId, db, userWrapper, nil, resourceType)
+	}, currentUserId, db, userWrapper, ctx, resourceType)
 
 	if err != nil {
 		return nil, err
