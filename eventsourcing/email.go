@@ -3,6 +3,7 @@ package eventsourcing
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 )
 
 type EmailNotificationType string
@@ -29,6 +30,15 @@ type EmailNotificationConfirmAddressPayload struct {
 	Email     string `json:"email"`
 	Username  string `json:"username"`
 	Firstname string `json:"firstname"`
+}
+
+type EmailMarketingNotificationConfirmAddressPayload struct {
+	EmailNotificationBasePayload
+	Token        string          `json:"token"`
+	Email        string          `json:"email"`
+	Username     string          `json:"username"`
+	Firstname    string          `json:"firstname"`
+	RewardPoints decimal.Decimal `json:"reward_points"`
 }
 
 type EmailNotificationReferralPayload struct {
