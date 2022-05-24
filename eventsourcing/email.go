@@ -11,6 +11,7 @@ const (
 	EmailNotificationPasswordForgot EmailNotificationType = "email.password.forgot"
 	EmailNotificationConfirmAddress EmailNotificationType = "email.confirm.address"
 	EmailNotificationReferral       EmailNotificationType = "email.referral"
+	EmailMarketingConfirmAddress    EmailNotificationType = "email_marketing.confirm.address"
 )
 
 type EmailNotificationBasePayload struct {
