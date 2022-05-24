@@ -60,6 +60,8 @@ type UserEvent struct {
 	AdDisabled             bool                      `json:"ad_disabled"`
 	GrandReferrer          bool                      `json:"grand_referrer"`
 	BannedTill             null.Time                 `json:"banned_till"`
+	EmailMarketing         null.String               `json:"email_marketing"`
+	EmailMarketingVerified bool                      `json:"email_marketing_verified"`
 	BaseChangeEvent
 }
 

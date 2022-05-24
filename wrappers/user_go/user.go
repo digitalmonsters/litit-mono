@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
 	"time"
 )
 
@@ -32,6 +33,7 @@ type IUserGoWrapper interface {
 	VerifyUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	GetAllActiveBots(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
 	GetConfigPropertiesInternal(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan]
+	UpdateEmailMarketing(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -318,5 +320,15 @@ func (w UserGoWrapper) GetConfigPropertiesInternal(properties []string, ctx cont
 	return wrappers.ExecuteRpcRequestAsync[GetConfigPropertiesResponseChan](w.baseWrapper, w.serviceApiUrl,
 		"GetConfigPropertiesInternal", GetConfigPropertiesRequest{
 			Properties: properties,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) UpdateEmailMarketing(userId int64, emailMarketing null.String, emailMarketingVerified bool,
+	ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+	return wrappers.ExecuteRpcRequestAsync[any](w.baseWrapper, w.serviceApiUrl,
+		"UpdateEmailMarketing", UpdateEmailMarketingRequest{
+			UserId:                 userId,
+			EmailMarketing:         emailMarketing,
+			EmailMarketingVerified: emailMarketingVerified,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

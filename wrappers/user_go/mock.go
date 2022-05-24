@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
 )
 
 //goland:noinspection ALL
@@ -25,6 +26,7 @@ type UserGoWrapperMock struct {
 	VerifyUserFn                          func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	GetAllActiveBotsFn                    func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
 	GetConfigPropertiesInternalFn         func(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan]
+	UpdateEmailMarketingFn                func(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 }
 
 func (m *UserGoWrapperMock) GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord] {
@@ -85,6 +87,10 @@ func (m *UserGoWrapperMock) GetAllActiveBots(ctx context.Context, forceLog bool)
 
 func (m *UserGoWrapperMock) GetConfigPropertiesInternal(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan] {
 	return m.GetConfigPropertiesInternalFn(properties, ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) UpdateEmailMarketing(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+	return m.UpdateEmailMarketingFn(userId, emailMarketing, emailMarketingVerified, ctx, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors

@@ -95,6 +95,7 @@ const (
 	PointsEarnedTypeSpotsCreatorView      = PointsEarnedType(36)
 	PointsEarnedTypeSpotsCreatorViewGuest = PointsEarnedType(37)
 	PointsEarnedTypeSpotsBonusPerformance = PointsEarnedType(38)
+	PointsEarnedTypeEmailMarketingAdded   = PointsEarnedType(39) // "email marketing added"
 )
 
 type WithdrawalStatus int16
@@ -174,10 +175,11 @@ type GetActivitiesInfoResponse struct {
 }
 
 type UserActivity struct {
-	AddDescriptionBonus  bool `json:"add_description_bonus"`
-	FirstVideoUploaded   bool `json:"first_video_uploaded"`
-	FirstSpotUploaded    bool `json:"first_spot_uploaded"`
-	FirstTimeAvatarAdded bool `json:"first_time_avatar_added"`
+	AddDescriptionBonus      bool `json:"add_description_bonus"`
+	FirstVideoUploaded       bool `json:"first_video_uploaded"`
+	FirstSpotUploaded        bool `json:"first_spot_uploaded"`
+	FirstTimeAvatarAdded     bool `json:"first_time_avatar_added"`
+	FirstEmailMarketingAdded bool `json:"first_email_marketing_added"`
 }
 
 type FilterField string

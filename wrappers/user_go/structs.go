@@ -228,14 +228,16 @@ type GetUserBlockRequest struct {
 }
 
 type UpdateUserMetaDataRequest struct {
-	UserId      int64       `json:"user_id"`
-	Email       null.String `json:"email"`
-	Firstname   null.String `json:"firstname"`
-	Lastname    null.String `json:"lastname"`
-	Birthdate   null.Time   `json:"birthdate"`
-	CountryCode string      `json:"country_code"`
-	Username    null.String `json:"username"`
-	Gender      null.String `json:"gender"`
+	UserId                 int64       `json:"user_id"`
+	Email                  null.String `json:"email"`
+	Firstname              null.String `json:"firstname"`
+	Lastname               null.String `json:"lastname"`
+	Birthdate              null.Time   `json:"birthdate"`
+	CountryCode            string      `json:"country_code"`
+	Username               null.String `json:"username"`
+	Gender                 null.String `json:"gender"`
+	EmailMarketing         null.String `json:"email_marketing"`
+	EmailMarketingVerified bool        `json:"email_marketing_verified"`
 }
 
 type ForceResetUserIdentityWithNewGuestRequest struct {
@@ -260,4 +262,15 @@ type GetConfigPropertiesResponseChan struct {
 }
 type GetConfigPropertiesRequest struct {
 	Properties []string `json:"properties"`
+}
+
+type VerifyEmailMarketingRequest struct {
+	UserId                 int64 `json:"user_id"`
+	EmailMarketingVerified bool  `json:"email_marketing_verified"`
+}
+
+type UpdateEmailMarketingRequest struct {
+	UserId                 int64       `json:"user_id"`
+	EmailMarketing         null.String `json:"email_marketing"`
+	EmailMarketingVerified bool        `json:"email_marketing_verified"`
 }
