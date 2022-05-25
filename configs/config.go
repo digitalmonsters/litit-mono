@@ -39,9 +39,10 @@ type Settings struct {
 }
 
 type EmailLinks struct {
-	VerifyHost    string `json:"VerifyHost"`
-	VerifyPath    string `json:"VerifyPath"`
-	MarketingSite string `json:"MarketingSite"`
+	VerifyHost               string `json:"VerifyHost"`
+	VerifyPath               string `json:"VerifyPath"`
+	MarketingSite            string `json:"MarketingSite"`
+	VerifyEmailMarketingPath string `json:"VerifyEmailMarketingPath"`
 }
 
 var settings Settings
