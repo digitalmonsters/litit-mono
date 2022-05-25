@@ -195,6 +195,7 @@ const (
 	ConstantExceedingOfLimits Tag = 1 << 2
 	LargeWalletBalance        Tag = 1 << 3
 	SuspiciousUser            Tag = 1 << 4
+	Bot                       Tag = 1 << 5
 )
 
 type AuthGuestRequest struct {
