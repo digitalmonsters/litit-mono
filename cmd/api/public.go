@@ -8,7 +8,6 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
-	"github.com/pkg/errors"
 )
 
 func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper) error {
@@ -17,7 +16,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 	getAdsMessageRoute := router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		messageType := database.MessageType(int(utils.ExtractInt64(executionData.GetUserValue, "type", 1, 50)))
 		if messageType < database.MessageTypeMobile || messageType > database.MessageTypeWeb {
-			return nil, error_codes.NewErrorWithCodeRef(errors.New("wrong message type"), error_codes.GenericServerError)
+			messageType = database.MessageTypeMobile
 		}
 
 		resp, err := message.GetMessageForUser(executionData.UserId, messageType, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), userGoWrapper, executionData)
@@ -33,6 +32,15 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 	}
 
 	apiDef[getAdsMessagePath] = swagger.ApiDescription{
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "type",
+				In:          swagger.ParameterInPath,
+				Description: "message type",
+				Required:    true,
+				Type:        "integer",
+			},
+		},
 		Response: message.NotificationMessage{},
 		Tags:     []string{"ads", "message"},
 	}
