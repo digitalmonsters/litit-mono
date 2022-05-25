@@ -30,6 +30,7 @@ type UserRecord struct {
 	EnableAgeRestrictedContent bool              `json:"enable_age_restricted_content"`
 	IsTipEnabled               bool              `json:"is_tip_enabled"`
 	NamePrivacyStatus          NamePrivacyStatus `json:"name_privacy_status"`
+	Tags                       Tag               `json:"tags"`
 }
 
 func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
@@ -194,6 +195,7 @@ const (
 	ConstantExceedingOfLimits Tag = 1 << 2
 	LargeWalletBalance        Tag = 1 << 3
 	SuspiciousUser            Tag = 1 << 4
+	Bot                       Tag = 1 << 5
 )
 
 type AuthGuestRequest struct {
