@@ -49,7 +49,7 @@ type UserEvent struct {
 	TiktokAvatarKey        null.String               `json:"tiktok_avatar_key"`
 	SegmentId              null.Int                  `json:"segment_id"`
 	ZammadId               null.Int                  `json:"zammad_id"`
-	CreatorStatus          CreatorStatus             `json:"creator_status"`
+	CreatorStatus          user_go.CreatorStatus     `json:"creator_status"`
 	Tags                   null.Int                  `json:"tags"`
 	DeviceId               null.String               `json:"device_id"`
 	Guest                  bool                      `json:"guest"`
