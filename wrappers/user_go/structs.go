@@ -30,6 +30,7 @@ type UserRecord struct {
 	EnableAgeRestrictedContent bool              `json:"enable_age_restricted_content"`
 	IsTipEnabled               bool              `json:"is_tip_enabled"`
 	NamePrivacyStatus          NamePrivacyStatus `json:"name_privacy_status"`
+	Tags                       null.Int          `json:"tags"`
 }
 
 func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
