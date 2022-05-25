@@ -2,13 +2,11 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/rs/zerolog/log"
-	postgres "go.elastic.co/apm/module/apmgormv2/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -33,10 +31,7 @@ func init() {
 
 	log.Info().Msg("setup postgres database")
 
-	mainDb, err := gorm.Open(postgres.Open(fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v",
-		config.MasterDb.Host, config.MasterDb.User, config.MasterDb.Password, config.MasterDb.Db, config.MasterDb.Port)), &gorm.Config{
-		QueryFields: true,
-	})
+	mainDb, err := boilerplate.GetGormConnection(config.MasterDb)
 
 	if err != nil {
 		panic(err)
@@ -51,10 +46,7 @@ func init() {
 		log.Warn().Msgf("[DB Connection] no configuration for read-only db. Will use Master DB")
 	}
 
-	readDb, err := gorm.Open(postgres.Open(fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v",
-		readOnlyConfig.Host, readOnlyConfig.User, readOnlyConfig.Password, readOnlyConfig.Db, readOnlyConfig.Port)), &gorm.Config{
-		QueryFields: true,
-	})
+	readDb, err := boilerplate.GetGormConnection(readOnlyConfig)
 
 	if err != nil {
 		log.Err(err).Msg("[Db Connection] can not setup connection to read-only db, will use master")
