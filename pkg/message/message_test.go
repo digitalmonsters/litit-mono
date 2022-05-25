@@ -36,6 +36,7 @@ func TestMethods(t *testing.T) {
 	resp, err := UpsertMessageBulkAdmin(UpsertMessageAdminRequest{
 		Items: []adminMessage{
 			{
+				Type:               database.MessageTypeMobile,
 				Title:              "test1",
 				Description:        "desc_test_1",
 				Countries:          []string{"UA"},
@@ -43,16 +44,17 @@ func TestMethods(t *testing.T) {
 				VerificationStatus: null.IntFrom(int64(database.VerificationStatusVerified)),
 			},
 			{
+				Type:               database.MessageTypeMobile,
 				Title:              "test2",
 				Description:        "desc_test_2",
 				Countries:          []string{"UA", "US"},
 				VerificationStatus: null.IntFrom(int64(database.VerificationStatusPending)),
 			},
 			{
+				Type:        database.MessageTypeMobile,
 				Title:       "test3",
 				Description: "desc_test_3",
 				Countries:   []string{"RU"},
-				//VerificationStatus: &statusRejected,
 			},
 		},
 	}, gormDb)
@@ -111,6 +113,7 @@ func TestGetMessageForUser(t *testing.T) {
 	resp, err := UpsertMessageBulkAdmin(UpsertMessageAdminRequest{
 		Items: []adminMessage{
 			{
+				Type:        database.MessageTypeMobile,
 				Title:       "test1",
 				Description: "desc_test_1",
 				Countries:   []string{"UA"},
@@ -119,6 +122,7 @@ func TestGetMessageForUser(t *testing.T) {
 				IsActive:    true,
 			},
 			{
+				Type:               database.MessageTypeMobile,
 				Title:              "test2",
 				Description:        "desc_test_2",
 				Countries:          []string{"UA"},
@@ -127,10 +131,16 @@ func TestGetMessageForUser(t *testing.T) {
 				IsActive:           true,
 				VerificationStatus: null.IntFrom(int64(statusVerified)),
 			},
+			{
+				Type:        database.MessageTypeWeb,
+				Title:       "front_test",
+				Description: "front_test_d",
+				IsActive:    true,
+			},
 		},
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp, 2)
+	assert.Len(t, resp, 3)
 
 	userId := int64(1)
 
@@ -159,11 +169,20 @@ func TestGetMessageForUser(t *testing.T) {
 		return ch
 	}
 
-	message, err := GetMessageForUser(userId, gormDb, userGoWrapper, router.MethodExecutionData{
+	message, err := GetMessageForUser(userId, database.MessageTypeMobile, gormDb, userGoWrapper, router.MethodExecutionData{
 		Context: context.TODO(),
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, message)
 	assert.Equal(t, message.Title, resp[1].Title)
 	assert.Equal(t, message.Description, resp[1].Description)
+
+	message, err = GetMessageForUser(userId, database.MessageTypeWeb, gormDb, userGoWrapper, router.MethodExecutionData{
+		Context: context.TODO(),
+	})
+	assert.Nil(t, err)
+	assert.NotNil(t, message)
+	assert.Equal(t, message.Title, resp[2].Title)
+	assert.Equal(t, message.Description, resp[2].Description)
+
 }

@@ -34,7 +34,7 @@ func main() {
 
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 
-	if err := api.InitLegacyAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef); err != nil {
+	if err := api.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
 		panic(err)
 	}

@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/ads-manager/pkg/message"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/pkg/errors"
 )
 
-func InitLegacyAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription) error {
-	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("UpsertMessageBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+func InitAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription) error {
+	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewAdminCommand("UpsertMessageBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req message.UpsertMessageAdminRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -19,37 +20,47 @@ func InitLegacyAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[stri
 		}
 
 		if len(req.Items) == 0 {
-			return nil, error_codes.NewErrorWithCodeRef(errors.New("items are empty"), error_codes.GenericMappingError)
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("items are empty"), error_codes.GenericValidationError)
 		}
 
 		for _, i := range req.Items {
+			if i.Type < database.MessageTypeMobile || i.Type > database.MessageTypeWeb {
+				return nil, error_codes.NewErrorWithCodeRef(errors.New("wrong message type"), error_codes.GenericValidationError)
+			}
+
+			if i.Type == database.MessageTypeWeb {
+				if len(i.Countries) > 0 || i.AgeFrom > 0 || i.AgeTo > 0 || i.PointsFrom > 0 || i.PointsTo > 0 {
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("wrong message type"), error_codes.GenericValidationError)
+				}
+			}
+
 			if len(i.Countries) == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("countries is required"), error_codes.GenericMappingError)
+				return nil, error_codes.NewErrorWithCodeRef(errors.New("countries is required"), error_codes.GenericValidationError)
 			}
 
 			if len(i.Title) == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("title is required"), error_codes.GenericMappingError)
+				return nil, error_codes.NewErrorWithCodeRef(errors.New("title is required"), error_codes.GenericValidationError)
 			}
 
 			if len(i.Description) == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("description is required"), error_codes.GenericMappingError)
+				return nil, error_codes.NewErrorWithCodeRef(errors.New("description is required"), error_codes.GenericValidationError)
 			}
 
 			if i.AgeFrom == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_from is required"), error_codes.GenericMappingError)
+				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_from is required"), error_codes.GenericValidationError)
 			}
 
 			if i.AgeTo == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is required"), error_codes.GenericMappingError)
+				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is required"), error_codes.GenericValidationError)
 			}
 
 			if i.AgeFrom > i.AgeTo {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is less than age_from"), error_codes.GenericMappingError)
+				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is less than age_from"), error_codes.GenericValidationError)
 			}
 
 			if i.PointsFrom > 0 || i.PointsTo > 0 {
 				if i.PointsFrom == 0 || i.PointsTo == 0 {
-					return nil, error_codes.NewErrorWithCodeRef(errors.New("if you need points condition, points_from and points_to is required"), error_codes.GenericMappingError)
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("if you need points condition, points_from and points_to is required"), error_codes.GenericValidationError)
 				}
 			}
 		}
@@ -60,11 +71,11 @@ func InitLegacyAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[stri
 		}
 
 		return resp, nil
-	})); err != nil {
+	}, common.AccessLevelWrite, "ads:upsert")); err != nil {
 		return err
 	}
 
-	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("DeleteMessagesBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewAdminCommand("DeleteMessagesBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req message.DeleteMessagesBulkAdminRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -80,11 +91,11 @@ func InitLegacyAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[stri
 		}
 
 		return "ok", nil
-	})); err != nil {
+	}, common.AccessLevelWrite, "ads:delete")); err != nil {
 		return err
 	}
 
-	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewLegacyAdminCommand("MessagesListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewAdminCommand("MessagesListAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req message.MessagesListAdminRequest
 
 		if err := json.Unmarshal(request, &req); err != nil {
@@ -97,7 +108,7 @@ func InitLegacyAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[stri
 		}
 
 		return resp, nil
-	})); err != nil {
+	}, common.AccessLevelWrite, "ads:list")); err != nil {
 		return err
 	}
 
