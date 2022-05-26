@@ -93,9 +93,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		publishKey = strconv.FormatInt(payload.UserId, 10)
 		templateData["token"] = payload.Token
 		templateData["username"] = payload.Username
-		templateData["verifyMarketingSiteHost"] = emailLinks.VerifyHost
+		templateData["verifymarketingsitehost"] = emailLinks.VerifyHost
 		templateData["verify_url_path"] = emailLinks.VerifyEmailMarketingPath
-		templateData["marketingSiteHost"] = emailLinks.MarketingSite
 		templateData["reward_points"] = payload.RewardPoints.String()
 	//case eventsourcing.EmailNotificationReferral:
 	//	var payload eventsourcing.EmailNotificationReferralPayload
