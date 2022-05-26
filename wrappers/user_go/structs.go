@@ -251,6 +251,24 @@ type UpdateUserMetaDataRequest struct {
 	EmailMarketingVerified bool        `json:"email_marketing_verified"`
 }
 
+type UpdateGuestMetaDataRequest struct {
+	UserId                 int64       `json:"user_id"`
+	Email                  null.String `json:"email"`
+	Firstname              null.String `json:"firstname"`
+	Lastname               null.String `json:"lastname"`
+	Birthdate              null.Time   `json:"birthdate"`
+	CountryCode            string      `json:"country_code"`
+	Username               null.String `json:"username"`
+	Gender                 null.String `json:"gender"`
+	EmailMarketing         null.String `json:"email_marketing"`
+	EmailMarketingVerified bool        `json:"email_marketing_verified"`
+	ReturnDeepLink         bool        `json:"return_deep_link"`
+}
+
+type UpdateGuestMetaDataResponse struct {
+	DeepLink null.String `json:"deep_link"`
+}
+
 type ForceResetUserIdentityWithNewGuestRequest struct {
 	DeviceId string `json:"device_id"`
 }
