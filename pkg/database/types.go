@@ -8,6 +8,7 @@ import (
 
 type Message struct {
 	Id                 int64               `json:"id"`
+	Type               MessageType         `json:"type"`
 	Title              string              `json:"title"`
 	Description        string              `json:"description"`
 	Countries          pq.StringArray      `json:"countries" gorm:"type:text[]"`
@@ -26,6 +27,13 @@ type Message struct {
 func (Message) TableName() string {
 	return "messages"
 }
+
+type MessageType int
+
+const (
+	MessageTypeMobile = MessageType(1)
+	MessageTypeWeb    = MessageType(2)
+)
 
 type VerificationStatus int8
 
