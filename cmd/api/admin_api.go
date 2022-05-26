@@ -30,37 +30,39 @@ func InitAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[string]swa
 
 			if i.Type == database.MessageTypeWeb {
 				if len(i.Countries) > 0 || i.AgeFrom > 0 || i.AgeTo > 0 || i.PointsFrom > 0 || i.PointsTo > 0 {
-					return nil, error_codes.NewErrorWithCodeRef(errors.New("wrong message type"), error_codes.GenericValidationError)
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("for web available field is title, description only"), error_codes.GenericValidationError)
 				}
 			}
 
-			if len(i.Countries) == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("countries is required"), error_codes.GenericValidationError)
-			}
+			if i.Type == database.MessageTypeMobile {
+				if len(i.Countries) == 0 {
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("countries is required"), error_codes.GenericValidationError)
+				}
 
-			if len(i.Title) == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("title is required"), error_codes.GenericValidationError)
-			}
+				if len(i.Title) == 0 {
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("title is required"), error_codes.GenericValidationError)
+				}
 
-			if len(i.Description) == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("description is required"), error_codes.GenericValidationError)
-			}
+				if len(i.Description) == 0 {
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("description is required"), error_codes.GenericValidationError)
+				}
 
-			if i.AgeFrom == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_from is required"), error_codes.GenericValidationError)
-			}
+				if i.AgeFrom == 0 {
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("age_from is required"), error_codes.GenericValidationError)
+				}
 
-			if i.AgeTo == 0 {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is required"), error_codes.GenericValidationError)
-			}
+				if i.AgeTo == 0 {
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is required"), error_codes.GenericValidationError)
+				}
 
-			if i.AgeFrom > i.AgeTo {
-				return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is less than age_from"), error_codes.GenericValidationError)
-			}
+				if i.AgeFrom > i.AgeTo {
+					return nil, error_codes.NewErrorWithCodeRef(errors.New("age_to is less than age_from"), error_codes.GenericValidationError)
+				}
 
-			if i.PointsFrom > 0 || i.PointsTo > 0 {
-				if i.PointsFrom == 0 || i.PointsTo == 0 {
-					return nil, error_codes.NewErrorWithCodeRef(errors.New("if you need points condition, points_from and points_to is required"), error_codes.GenericValidationError)
+				if i.PointsFrom > 0 || i.PointsTo > 0 {
+					if i.PointsFrom == 0 || i.PointsTo == 0 {
+						return nil, error_codes.NewErrorWithCodeRef(errors.New("if you need points condition, points_from and points_to is required"), error_codes.GenericValidationError)
+					}
 				}
 			}
 		}
