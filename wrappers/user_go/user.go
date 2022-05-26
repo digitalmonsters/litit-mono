@@ -29,6 +29,7 @@ type IUserGoWrapper interface {
 	GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string][]int64]
 	GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[UserBlockData]
 	UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
+	UpdateGuestMetadata(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	ForceResetUserWithNewGuestIdentity(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	GetAllActiveBots(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
@@ -294,6 +295,11 @@ func (w *UserGoWrapper) GetUserBlock(blockedTo int64, blockedBy int64, apmTransa
 
 func (w UserGoWrapper) UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord] {
 	return wrappers.ExecuteRpcRequestAsync[UserRecord](w.baseWrapper, w.serviceApiUrl, "UpdateUserMetadataAfterRegistration", request,
+		map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) UpdateGuestMetadata(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+	return wrappers.ExecuteRpcRequestAsync[any](w.baseWrapper, w.serviceApiUrl, "UpdateGuestMetadata", request,
 		map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 

@@ -22,6 +22,7 @@ type UserGoWrapperMock struct {
 	GetBlockListFn                        func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string][]int64]
 	GetUserBlockFn                        func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[UserBlockData]
 	UpdateUserMetadataAfterRegistrationFn func(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
+	UpdateGuestMetadataFn                 func(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	ForceResetUserWithNewGuestIdentityFn  func(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUserFn                          func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	GetAllActiveBotsFn                    func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
@@ -43,6 +44,10 @@ func (m *UserGoWrapperMock) ForceResetUserWithNewGuestIdentity(deviceId string, 
 
 func (m *UserGoWrapperMock) UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord] {
 	return m.UpdateUserMetadataAfterRegistrationFn(request, ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) UpdateGuestMetadata(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+	return m.UpdateGuestMetadataFn(request, ctx, forceLog)
 }
 
 func (m *UserGoWrapperMock) GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord] {
