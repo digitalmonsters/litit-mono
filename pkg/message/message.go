@@ -189,7 +189,7 @@ func GetMessageForUser(userId int64, messageType database.MessageType, db *gorm.
 
 	var q string
 	if messageType == database.MessageTypeWeb {
-		q = fmt.Sprintf("select * from messages where type = %v", messageType)
+		q = fmt.Sprintf("select * from messages where type = %v and is_active is true and deleted_at is null order by id desc", messageType)
 	} else if messageType == database.MessageTypeMobile {
 		q = fmt.Sprintf("select * from messages where type = %v and countries && ARRAY['%v'] and (verification_status = %v or verification_status is null) "+
 			"and int4range(messages.age_from, messages.age_to) @> %v "+
