@@ -397,5 +397,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "update_bonus_time_template_240520221100",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set body = 'Your +{{.pointsAmount}} LIT points daily reward for video views' where id = 'bonus_time'",
+				)
+			},
+		},
 	}
 }
