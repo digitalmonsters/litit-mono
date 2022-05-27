@@ -3,6 +3,7 @@ package auth_go
 import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/translation"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -92,9 +93,10 @@ type InternalGetUsersForValidatorFromCacheRequest struct {
 }
 
 type UserForValidator struct {
-	Id         int64     `json:"id"`
-	Deleted    bool      `json:"deleted"`
-	BannedTill null.Time `json:"banned_till"`
-	Guest      bool      `json:"guest"`
-	Verified   bool      `json:"verified"`
+	Id         int64                `json:"id"`
+	Deleted    bool                 `json:"deleted"`
+	BannedTill null.Time            `json:"banned_till"`
+	Guest      bool                 `json:"guest"`
+	Verified   bool                 `json:"verified"`
+	Language   translation.Language `json:"language"`
 }

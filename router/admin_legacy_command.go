@@ -5,6 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
@@ -32,17 +33,17 @@ func NewLegacyAdminCommand(methodName string, fn CommandFunc) ICommand {
 	}
 }
 
-func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, *rpc.ExtendedLocalRpcError) {
-	userId, isGuest, isBanned, err := publicCanExecuteLogic(httpCtx, a.requireIdentityValidation, a.allowBanned, userValidator)
+func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, translation.Language, *rpc.ExtendedLocalRpcError) {
+	userId, isGuest, isBanned, language, err := publicCanExecuteLogic(httpCtx, a.requireIdentityValidation, a.allowBanned, userValidator)
 
 	if err != nil {
-		return 0, isGuest, isBanned, err
+		return 0, isGuest, isBanned, language, err
 	}
 
 	if userId <= 0 {
 		err := errors.New("legacy admin method requires identity validation")
 
-		return 0, isGuest, isBanned, &rpc.ExtendedLocalRpcError{
+		return 0, isGuest, isBanned, language, &rpc.ExtendedLocalRpcError{
 			RpcError: rpc.RpcError{
 				Code:        error_codes.MissingJwtToken,
 				Message:     "legacy admin method requires identity validation",
@@ -56,17 +57,17 @@ func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context
 	resp := <-auth.CheckLegacyAdmin(userId, apm.TransactionFromContext(ctx), false)
 
 	if resp.Error != nil {
-		return 0, isGuest, isBanned, &rpc.ExtendedLocalRpcError{
+		return 0, isGuest, isBanned, language, &rpc.ExtendedLocalRpcError{
 			RpcError: *resp.Error,
 		}
 	}
 
 	if resp.Resp.IsAdmin || resp.Resp.IsSuperAdmin {
-		return userId, isGuest, isBanned, nil
+		return userId, isGuest, isBanned, language, nil
 	}
 
 	err1 := errors.New("user is not marked as admin")
-	return 0, isGuest, isBanned, &rpc.ExtendedLocalRpcError{
+	return 0, isGuest, isBanned, language, &rpc.ExtendedLocalRpcError{
 		RpcError: rpc.RpcError{
 			Code:        error_codes.InvalidJwtToken,
 			Message:     err1.Error(),

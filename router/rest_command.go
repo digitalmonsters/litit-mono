@@ -5,6 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/valyala/fasthttp"
 )
@@ -89,7 +90,7 @@ func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodTyp
 	return RestCommandBuilder{cmd: c}
 }
 
-func (r RestCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, *rpc.ExtendedLocalRpcError) {
+func (r RestCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, translation.Language, *rpc.ExtendedLocalRpcError) {
 	return publicCanExecuteLogic(httpCtx, r.requireIdentityValidation, r.allowBanned, userValidator)
 }
 

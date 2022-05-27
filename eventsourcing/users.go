@@ -2,6 +2,7 @@ package eventsourcing
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
@@ -62,6 +63,7 @@ type UserEvent struct {
 	BannedTill             null.Time                 `json:"banned_till"`
 	EmailMarketing         null.String               `json:"email_marketing"`
 	EmailMarketingVerified bool                      `json:"email_marketing_verified"`
+	Language               translation.Language      `json:"language"`
 	BaseChangeEvent
 }
 

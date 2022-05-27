@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
 )
@@ -15,6 +16,7 @@ type MethodExecutionData struct {
 	IsBanned       bool
 	UserIp         string
 	DeviceId       string
+	Language       translation.Language
 	getUserValueFn func(key string) interface{}
 }
 

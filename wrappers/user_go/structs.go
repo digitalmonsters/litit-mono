@@ -2,6 +2,7 @@ package user_go
 
 import (
 	"github.com/digitalmonsters/go-common/rpc"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"time"
@@ -27,19 +28,20 @@ const (
 
 //goland:noinspection GoNameStartsWithPackageName
 type UserRecord struct {
-	UserId                     int64             `json:"user_id"`
-	Avatar                     null.String       `json:"avatar"`
-	Username                   string            `json:"username"`
-	Firstname                  string            `json:"firstname"`
-	Lastname                   string            `json:"lastname"`
-	Email                      string            `json:"email"`
-	Verified                   bool              `json:"verified"`
-	Guest                      bool              `json:"guest"`
-	BannedTill                 null.Time         `json:"banned_till"`
-	EnableAgeRestrictedContent bool              `json:"enable_age_restricted_content"`
-	IsTipEnabled               bool              `json:"is_tip_enabled"`
-	NamePrivacyStatus          NamePrivacyStatus `json:"name_privacy_status"`
-	Tags                       Tag               `json:"tags"`
+	UserId                     int64                `json:"user_id"`
+	Avatar                     null.String          `json:"avatar"`
+	Username                   string               `json:"username"`
+	Firstname                  string               `json:"firstname"`
+	Lastname                   string               `json:"lastname"`
+	Email                      string               `json:"email"`
+	Verified                   bool                 `json:"verified"`
+	Guest                      bool                 `json:"guest"`
+	BannedTill                 null.Time            `json:"banned_till"`
+	EnableAgeRestrictedContent bool                 `json:"enable_age_restricted_content"`
+	IsTipEnabled               bool                 `json:"is_tip_enabled"`
+	NamePrivacyStatus          NamePrivacyStatus    `json:"name_privacy_status"`
+	Tags                       Tag                  `json:"tags"`
+	Language                   translation.Language `json:"language"`
 }
 
 func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
@@ -65,39 +67,40 @@ type GetProfileBulkResponseChan struct {
 }
 
 type UserDetailRecord struct {
-	Id                  int64             `json:"id"`
-	Username            null.String       `json:"username"`
-	Firstname           string            `json:"firstname"`
-	Lastname            string            `json:"lastname"`
-	Birthdate           null.Time         `json:"birthdate"`
-	KycStatus           string            `json:"kyc_status"`
-	CountryCode         string            `json:"country_code"`
-	VaultPoints         decimal.Decimal   `json:"vault_points"`
-	Gender              null.String       `json:"gender"`
-	Following           int               `json:"following"`
-	Followers           int               `json:"followers"`
-	VideosCount         int               `json:"videos_count"`
-	Privacy             UerPrivacy        `json:"privacy"`
-	Profile             UserProfile       `json:"profile"`
-	CountryName         string            `json:"country_name"`
-	Avatar              null.String       `json:"avatar"`
-	IsTipEnabled        bool              `json:"is_tip_enabled"`
-	Guest               bool              `json:"guest"`
-	BannedTill          null.Time         `json:"banned_till"`
-	Deleted             bool              `json:"deleted"`
-	NamePrivacyStatus   NamePrivacyStatus `json:"name_privacy_status"`
-	Email               string            `json:"email"`
-	Verified            bool              `json:"verified"`
-	Uploads             int               `json:"uploads"`
-	Views               int               `json:"views"`
-	Shares              int               `json:"shares"`
-	Likes               int               `json:"likes"`
-	Comments            int               `json:"comments"`
-	CreatorStatus       CreatorStatus     `json:"creator_status"`
-	CreatorRejectReason null.String       `json:"creator_reject_reason"`
-	CreatedAt           time.Time         `json:"created_at"`
-	AdDisabled          bool              `json:"ad_disabled"`
-	Influencer          bool              `json:"influencer"`
+	Id                  int64                `json:"id"`
+	Username            null.String          `json:"username"`
+	Firstname           string               `json:"firstname"`
+	Lastname            string               `json:"lastname"`
+	Birthdate           null.Time            `json:"birthdate"`
+	KycStatus           string               `json:"kyc_status"`
+	CountryCode         string               `json:"country_code"`
+	VaultPoints         decimal.Decimal      `json:"vault_points"`
+	Gender              null.String          `json:"gender"`
+	Following           int                  `json:"following"`
+	Followers           int                  `json:"followers"`
+	VideosCount         int                  `json:"videos_count"`
+	Privacy             UerPrivacy           `json:"privacy"`
+	Profile             UserProfile          `json:"profile"`
+	CountryName         string               `json:"country_name"`
+	Avatar              null.String          `json:"avatar"`
+	IsTipEnabled        bool                 `json:"is_tip_enabled"`
+	Guest               bool                 `json:"guest"`
+	BannedTill          null.Time            `json:"banned_till"`
+	Deleted             bool                 `json:"deleted"`
+	NamePrivacyStatus   NamePrivacyStatus    `json:"name_privacy_status"`
+	Email               string               `json:"email"`
+	Verified            bool                 `json:"verified"`
+	Uploads             int                  `json:"uploads"`
+	Views               int                  `json:"views"`
+	Shares              int                  `json:"shares"`
+	Likes               int                  `json:"likes"`
+	Comments            int                  `json:"comments"`
+	CreatorStatus       CreatorStatus        `json:"creator_status"`
+	CreatorRejectReason null.String          `json:"creator_reject_reason"`
+	CreatedAt           time.Time            `json:"created_at"`
+	AdDisabled          bool                 `json:"ad_disabled"`
+	Influencer          bool                 `json:"influencer"`
+	Language            translation.Language `json:"language"`
 }
 
 func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
@@ -239,30 +242,32 @@ type GetUserBlockRequest struct {
 }
 
 type UpdateUserMetaDataRequest struct {
-	UserId                 int64       `json:"user_id"`
-	Email                  null.String `json:"email"`
-	Firstname              null.String `json:"firstname"`
-	Lastname               null.String `json:"lastname"`
-	Birthdate              null.Time   `json:"birthdate"`
-	CountryCode            string      `json:"country_code"`
-	Username               null.String `json:"username"`
-	Gender                 null.String `json:"gender"`
-	EmailMarketing         null.String `json:"email_marketing"`
-	EmailMarketingVerified bool        `json:"email_marketing_verified"`
+	UserId                 int64                `json:"user_id"`
+	Email                  null.String          `json:"email"`
+	Firstname              null.String          `json:"firstname"`
+	Lastname               null.String          `json:"lastname"`
+	Birthdate              null.Time            `json:"birthdate"`
+	CountryCode            string               `json:"country_code"`
+	Username               null.String          `json:"username"`
+	Gender                 null.String          `json:"gender"`
+	EmailMarketing         null.String          `json:"email_marketing"`
+	EmailMarketingVerified bool                 `json:"email_marketing_verified"`
+	Language               translation.Language `json:"language"`
 }
 
 type UpdateGuestMetaDataRequest struct {
-	UserId                 int64       `json:"user_id"`
-	Email                  null.String `json:"email"`
-	Firstname              null.String `json:"firstname"`
-	Lastname               null.String `json:"lastname"`
-	Birthdate              null.Time   `json:"birthdate"`
-	CountryCode            string      `json:"country_code"`
-	Username               null.String `json:"username"`
-	Gender                 null.String `json:"gender"`
-	EmailMarketing         null.String `json:"email_marketing"`
-	EmailMarketingVerified bool        `json:"email_marketing_verified"`
-	ReturnDeepLink         bool        `json:"return_deep_link"`
+	UserId                 int64                `json:"user_id"`
+	Email                  null.String          `json:"email"`
+	Firstname              null.String          `json:"firstname"`
+	Lastname               null.String          `json:"lastname"`
+	Birthdate              null.Time            `json:"birthdate"`
+	CountryCode            string               `json:"country_code"`
+	Username               null.String          `json:"username"`
+	Gender                 null.String          `json:"gender"`
+	EmailMarketing         null.String          `json:"email_marketing"`
+	EmailMarketingVerified bool                 `json:"email_marketing_verified"`
+	Language               translation.Language `json:"language"`
+	ReturnDeepLink         bool                 `json:"return_deep_link"`
 }
 
 type UpdateGuestMetaDataResponse struct {

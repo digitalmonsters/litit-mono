@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
@@ -11,11 +12,12 @@ import (
 )
 
 type UserExecutorValidationResponse struct {
-	Id         int64     `json:"id"`
-	Deleted    bool      `json:"deleted"`
-	BannedTill null.Time `json:"banned_till"`
-	Guest      bool      `json:"guest"`
-	Verified   bool      `json:"verified"`
+	Id         int64                `json:"id"`
+	Deleted    bool                 `json:"deleted"`
+	BannedTill null.Time            `json:"banned_till"`
+	Guest      bool                 `json:"guest"`
+	Verified   bool                 `json:"verified"`
+	Language   translation.Language `json:"language"`
 }
 
 type UserExecutorValidator interface {
@@ -65,6 +67,7 @@ func (v DefaultUserExecutorValidator) Validate(userId int64, ctx context.Context
 		BannedTill: user.BannedTill,
 		Guest:      user.Guest,
 		Verified:   user.Verified,
+		Language:   user.Language,
 	}
 
 	v.cache.Set(key, resp, 2*time.Minute)

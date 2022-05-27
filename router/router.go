@@ -409,7 +409,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 
 	shouldLog = forceLog
 
-	userId, isGuest, isBanned, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
+	userId, isGuest, isBanned, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
 
 	if rpcError != nil {
 		rpcResponse.Error = rpcError
@@ -454,6 +454,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 		UserId:         userId,
 		IsGuest:        isGuest,
 		IsBanned:       isBanned,
+		Language:       language,
 		UserIp:         common.GetRealIp(httpCtx),
 		getUserValueFn: getUserValue,
 	}
