@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
@@ -42,14 +41,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var title string
 	var body string
-	var headline string
+	//var headline string
 
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
 	var template = "content_like"
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{
+	title, body, _, _, err = notifySender.RenderTemplate(db, template, map[string]string{
 		"firstname": firstName,
 		"lastname":  lastName,
 	})
@@ -59,10 +58,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ContentAuthorId, template, "default",
-		title, body, headline, nil, ctx); err != nil {
-		return nil, err
-	}
+	//if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ContentAuthorId, template, "default",
+	//	title, body, headline, nil, ctx); err != nil {
+	//	return nil, err
+	//}
 
 	contentResp := <-contentWrapper.GetInternal([]int64{event.ContentId}, false, apmTransaction, false)
 	if contentResp.Error != nil {
