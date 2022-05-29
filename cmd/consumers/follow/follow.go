@@ -3,7 +3,6 @@ package follow
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
-	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
@@ -29,7 +28,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var err error
 	var title string
 	var body string
-	var headline string
+	//var headline string
 
 	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
 	if resp.Error != nil {
@@ -45,7 +44,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, "follow", map[string]string{
+	title, body, _, _, err = notifySender.RenderTemplate(db, "follow", map[string]string{
 		"firstname": firstName,
 		"lastname":  lastName,
 	})
@@ -56,12 +55,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, "default", "user_follow",
-		title, body, headline, map[string]interface{}{
-			"user_id": event.UserId,
-		}, ctx); err != nil {
-		return nil, err
-	}
+	//if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, "default", "user_follow",
+	//	title, body, headline, map[string]interface{}{
+	//		"user_id": event.UserId,
+	//	}, ctx); err != nil {
+	//	return nil, err
+	//}
 
 	nt := &database.Notification{
 		UserId:        event.ToUserId,
