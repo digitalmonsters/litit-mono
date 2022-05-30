@@ -56,5 +56,18 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_messages_type_220520221310",
+			Migrate: func(db *gorm.DB) error {
+				query := `	alter table messages add column if not exists type int;
+							update messages set type = 1;
+							drop index messages_title_uindex;
+						  	create unique index messages_title_uindex on messages (title, type) where deleted_at is null;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

@@ -22,7 +22,8 @@ func UpsertMessageBulkAdmin(req UpsertMessageAdminRequest, db *gorm.DB) ([]datab
 
 		query := tx.Model(&database.Message{}).
 			Where("countries && ?::text[]", item.Countries).
-			Where("verification_status = ?", item.VerificationStatus)
+			Where("verification_status = ?", item.VerificationStatus).
+			Where("type = ?", item.Type)
 
 		if item.Id.Valid {
 			query = query.Where("id <> ?", item.Id.Int64)
@@ -68,6 +69,7 @@ func UpsertMessageBulkAdmin(req UpsertMessageAdminRequest, db *gorm.DB) ([]datab
 	for _, item := range req.Items {
 		r := database.Message{
 			Title:       item.Title,
+			Type:        item.Type,
 			Description: item.Description,
 			Countries:   item.Countries,
 			AgeFrom:     item.AgeFrom,
@@ -174,7 +176,7 @@ func MessagesListAdmin(req MessagesListAdminRequest, db *gorm.DB) (*MessagesList
 	}, nil
 }
 
-func GetMessageForUser(userId int64, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, executionData router.MethodExecutionData) (*NotificationMessage, error) {
+func GetMessageForUser(userId int64, messageType database.MessageType, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, executionData router.MethodExecutionData) (*NotificationMessage, error) {
 	userRespCh := <-userGoWrapper.GetUsersDetails([]int64{userId}, executionData.Context, true)
 	if userRespCh.Error != nil {
 		return nil, userRespCh.Error.ToError()
@@ -185,11 +187,17 @@ func GetMessageForUser(userId int64, db *gorm.DB, userGoWrapper user_go.IUserGoW
 		return nil, errors.New("user info not found")
 	}
 
-	q := fmt.Sprintf("select * from messages where countries && ARRAY['%v'] and (verification_status = %v or verification_status is null) "+
-		"and int4range(messages.age_from, messages.age_to) @> %v "+
-		"and (numrange(messages.points_from, messages.points_to) @> %.2f OR (points_from = 0 and points_to = 0)) "+
-		"and is_active is true and deleted_at is null", userInfo.CountryCode, database.VerificationStatusFromString(userInfo.KycStatus),
-		getAge(userInfo.Birthdate.ValueOrZero()), userInfo.VaultPoints.InexactFloat64())
+	var q string
+	if messageType == database.MessageTypeWeb {
+		q = fmt.Sprintf("select * from messages where type = %v and is_active is true and deleted_at is null order by id desc", messageType)
+	} else if messageType == database.MessageTypeMobile {
+		q = fmt.Sprintf("select * from messages where type = %v and countries && ARRAY['%v'] and (verification_status = %v or verification_status is null) "+
+			"and int4range(messages.age_from, messages.age_to) @> %v "+
+			"and (numrange(messages.points_from, messages.points_to) @> %.2f OR (points_from = 0 and points_to = 0)) "+
+			"and is_active is true and deleted_at is null", messageType, userInfo.CountryCode, database.VerificationStatusFromString(userInfo.KycStatus),
+			getAge(userInfo.Birthdate.ValueOrZero()), userInfo.VaultPoints.InexactFloat64())
+	}
+
 	var records []database.Message
 	if err := db.Raw(q).Scan(&records).Error; err != nil {
 		return nil, errors.WithStack(err)
