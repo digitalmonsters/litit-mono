@@ -29,12 +29,12 @@ type IUserGoWrapper interface {
 	GetBlockList(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string][]int64]
 	GetUserBlock(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[UserBlockData]
 	UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
-	UpdateGuestMetadata(request UpdateGuestMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UpdateGuestMetaDataResponse]
 	ForceResetUserWithNewGuestIdentity(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	GetAllActiveBots(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
 	GetConfigPropertiesInternal(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan]
 	UpdateEmailMarketing(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	GenerateDeeplink(urlPath string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -298,11 +298,6 @@ func (w UserGoWrapper) UpdateUserMetadataAfterRegistration(request UpdateUserMet
 		map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w UserGoWrapper) UpdateGuestMetadata(request UpdateGuestMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UpdateGuestMetaDataResponse] {
-	return wrappers.ExecuteRpcRequestAsync[UpdateGuestMetaDataResponse](w.baseWrapper, w.serviceApiUrl, "UpdateGuestMetadata", request,
-		map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
-}
-
 func (w UserGoWrapper) ForceResetUserWithNewGuestIdentity(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse] {
 	return wrappers.ExecuteRpcRequestAsync[ForceResetUserIdentityWithNewGuestResponse](w.baseWrapper, w.serviceApiUrl,
 		"ForceResetUserWithNewGuestIdentity", ForceResetUserIdentityWithNewGuestRequest{
@@ -336,5 +331,13 @@ func (w UserGoWrapper) UpdateEmailMarketing(userId int64, emailMarketing null.St
 			UserId:                 userId,
 			EmailMarketing:         emailMarketing,
 			EmailMarketingVerified: emailMarketingVerified,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GenerateDeeplink(urlPath string, ctx context.Context,
+	forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GenerateDeeplinkResponse](w.baseWrapper, w.serviceApiUrl,
+		"GenerateDeeplink", GenerateDeeplinkRequest{
+			UrlPath: urlPath,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

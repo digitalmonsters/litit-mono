@@ -13,6 +13,7 @@ const (
 	EmailNotificationConfirmAddress EmailNotificationType = "email.confirm.address"
 	EmailNotificationReferral       EmailNotificationType = "email.referral"
 	EmailMarketingConfirmAddress    EmailNotificationType = "email_marketing.confirm.address"
+	EmailGuestTempInfo              EmailNotificationType = "email.guest.temp_info"
 )
 
 type EmailNotificationBasePayload struct {
@@ -39,6 +40,13 @@ type EmailMarketingNotificationConfirmAddressPayload struct {
 	Username     string          `json:"username"`
 	Firstname    string          `json:"firstname"`
 	RewardPoints decimal.Decimal `json:"reward_points"`
+}
+
+type EmailNotificationTempGuestInfoPayload struct {
+	EmailNotificationBasePayload
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	DeepLink string `json:"deep_link"`
 }
 
 type EmailNotificationReferralPayload struct {

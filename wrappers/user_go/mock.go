@@ -22,12 +22,12 @@ type UserGoWrapperMock struct {
 	GetBlockListFn                        func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string][]int64]
 	GetUserBlockFn                        func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[UserBlockData]
 	UpdateUserMetadataAfterRegistrationFn func(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
-	UpdateGuestMetadataFn                 func(request UpdateGuestMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UpdateGuestMetaDataResponse]
 	ForceResetUserWithNewGuestIdentityFn  func(deviceId string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[ForceResetUserIdentityWithNewGuestResponse]
 	VerifyUserFn                          func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord]
 	GetAllActiveBotsFn                    func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetAllActiveBotsResponse]
 	GetConfigPropertiesInternalFn         func(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan]
 	UpdateEmailMarketingFn                func(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	GenerateDeeplinkFn                    func(urlPath string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse]
 }
 
 func (m *UserGoWrapperMock) GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord] {
@@ -44,10 +44,6 @@ func (m *UserGoWrapperMock) ForceResetUserWithNewGuestIdentity(deviceId string, 
 
 func (m *UserGoWrapperMock) UpdateUserMetadataAfterRegistration(request UpdateUserMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord] {
 	return m.UpdateUserMetadataAfterRegistrationFn(request, ctx, forceLog)
-}
-
-func (m *UserGoWrapperMock) UpdateGuestMetadata(request UpdateGuestMetaDataRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UpdateGuestMetaDataResponse] {
-	return m.UpdateGuestMetadataFn(request, ctx, forceLog)
 }
 
 func (m *UserGoWrapperMock) GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord] {
@@ -96,6 +92,11 @@ func (m *UserGoWrapperMock) GetConfigPropertiesInternal(properties []string, ctx
 
 func (m *UserGoWrapperMock) UpdateEmailMarketing(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
 	return m.UpdateEmailMarketingFn(userId, emailMarketing, emailMarketingVerified, ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) GenerateDeeplink(urlPath string, ctx context.Context,
+	forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse] {
+	return m.GenerateDeeplinkFn(urlPath, ctx, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors

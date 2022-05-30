@@ -255,25 +255,6 @@ type UpdateUserMetaDataRequest struct {
 	Language               translation.Language `json:"language"`
 }
 
-type UpdateGuestMetaDataRequest struct {
-	UserId                 int64                `json:"user_id"`
-	Email                  null.String          `json:"email"`
-	Firstname              null.String          `json:"firstname"`
-	Lastname               null.String          `json:"lastname"`
-	Birthdate              null.Time            `json:"birthdate"`
-	CountryCode            string               `json:"country_code"`
-	Username               null.String          `json:"username"`
-	Gender                 null.String          `json:"gender"`
-	EmailMarketing         null.String          `json:"email_marketing"`
-	EmailMarketingVerified bool                 `json:"email_marketing_verified"`
-	Language               translation.Language `json:"language"`
-	ReturnDeepLink         bool                 `json:"return_deep_link"`
-}
-
-type UpdateGuestMetaDataResponse struct {
-	DeepLink null.String `json:"deep_link"`
-}
-
 type ForceResetUserIdentityWithNewGuestRequest struct {
 	DeviceId string `json:"device_id"`
 }
@@ -307,4 +288,12 @@ type UpdateEmailMarketingRequest struct {
 	UserId                 int64       `json:"user_id"`
 	EmailMarketing         null.String `json:"email_marketing"`
 	EmailMarketingVerified bool        `json:"email_marketing_verified"`
+}
+
+type GenerateDeeplinkRequest struct {
+	UrlPath string `json:"url"`
+}
+
+type GenerateDeeplinkResponse struct {
+	Url string `json:"url"`
 }
