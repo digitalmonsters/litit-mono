@@ -42,6 +42,8 @@ type UserRecord struct {
 	NamePrivacyStatus          NamePrivacyStatus    `json:"name_privacy_status"`
 	Tags                       Tag                  `json:"tags"`
 	Language                   translation.Language `json:"language"`
+	CountryCode                null.String          `json:"country_code"`
+	Birthdate                  null.Time            `json:"birthdate"`
 }
 
 func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
