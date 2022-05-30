@@ -389,5 +389,21 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_first_email_marketing_added_template_240520221100",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) VALUES ('first_email_marketing_added', 'Congrats!', 'You received 100 LIT points to your wallet for adding your primary email', '2022-05-24 11:00:00.000000', '2022-05-24 11:00:00.000000',  'popup', 'Congrats!');",
+				)
+			},
+		},
+		{
+			ID: "update_bonus_time_template_240520221100",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set body = 'Your +{{.pointsAmount}} LIT points daily reward for video views' where id = 'bonus_time'",
+				)
+			},
+		},
 	}
 }

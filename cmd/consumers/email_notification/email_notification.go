@@ -76,6 +76,26 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		templateData["verifyMarketingSiteHost"] = emailLinks.VerifyHost
 		templateData["verify_url_path"] = emailLinks.VerifyPath
 		templateData["marketingSiteHost"] = emailLinks.MarketingSite
+	case eventsourcing.EmailMarketingConfirmAddress:
+		var payload eventsourcing.EmailMarketingNotificationConfirmAddressPayload
+
+		if err = json.Unmarshal(event.Payload, &payload); err != nil {
+			return &event.Messages, err
+		}
+
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
+
+		email = payload.Email
+
+		apm_helper.AddApmLabel(apmTransaction, "email", email)
+
+		template = "email_marketing_verify"
+		publishKey = strconv.FormatInt(payload.UserId, 10)
+		templateData["token"] = payload.Token
+		templateData["username"] = payload.Username
+		templateData["verifymarketingsitehost"] = emailLinks.VerifyHost
+		templateData["verify_url_path"] = emailLinks.VerifyEmailMarketingPath
+		templateData["reward_points"] = payload.RewardPoints.String()
 	//case eventsourcing.EmailNotificationReferral:
 	//	var payload eventsourcing.EmailNotificationReferralPayload
 	//

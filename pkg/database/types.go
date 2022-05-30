@@ -172,6 +172,8 @@ func GetNotificationType(templateId string) string {
 		return "push.user.paid_spot_views.daily_max"
 	case "first_x_paid_views_gender_push":
 		return "push.gender.first_x_paid_views"
+	case "first_email_marketing_added":
+		return "push.user.first_email_marketing_added"
 	}
 	return ""
 }
@@ -185,5 +187,6 @@ func GetMarketingNotifications() []string {
 		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
 		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
 		"push.avatar.first", "push.upload.first", "push.upload.spot.first", "push.description.first", "push.gender.first_x_paid_views",
+		"push.user.first_email_marketing_added",
 	}
 }
