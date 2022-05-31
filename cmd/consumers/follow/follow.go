@@ -48,7 +48,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	title, body, headline, _, err = notifySender.RenderTemplate(db, "follow", map[string]string{
 		"firstname": firstName,
 		"lastname":  lastName,
-	})
+	}, userData.Language)
 
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry

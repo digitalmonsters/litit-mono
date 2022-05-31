@@ -43,7 +43,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, nil
 	}
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
+	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, event.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {

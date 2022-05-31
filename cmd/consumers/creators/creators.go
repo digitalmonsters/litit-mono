@@ -10,16 +10,17 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
+	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"time"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, apmTransaction *apm.Transaction) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
 	var err error
 
-	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
-	apm_helper.AddApmLabel(apmTransaction, "creator_id", event.Id)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "creator_id", event.Id)
 
 	renderingData := map[string]string{
 		"status": fmt.Sprint(event.Status),
@@ -43,7 +44,19 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, nil
 	}
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderingData)
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
+	if resp.Error != nil {
+		return nil, resp.Error.ToError()
+	}
+
+	var userData user_go.UserRecord
+	var ok bool
+
+	if userData, ok = resp.Response[event.UserId]; !ok {
+		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	}
+
+	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderingData, userData.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {

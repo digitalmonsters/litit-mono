@@ -3,6 +3,7 @@ package renderer
 import (
 	"bytes"
 	"fmt"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
@@ -13,11 +14,12 @@ import (
 var templateCache = cache.New(30*time.Minute, 11*time.Minute)
 var TemplateRenderingError = errors.New("template rendering error")
 
-func Render(renderTemplate database.RenderTemplate, renderingData map[string]string) (title string, body string, headline string, err error) {
+func Render(renderTemplate database.RenderTemplate, renderingData map[string]string, language translation.Language) (title string, body string, headline string, err error) {
 	prefix := fmt.Sprintf("%v_%v", renderTemplate.Id, renderTemplate.UpdatedAt)
 
 	if len(renderTemplate.Title) > 0 {
-		title, err = RenderText(fmt.Sprintf("%v_title", prefix), renderTemplate.Title, renderingData)
+		translatedTitle, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, renderTemplate.Title)
+		title, err = RenderText(fmt.Sprintf("%v_title", prefix), translatedTitle.ValueOrZero(), renderingData)
 
 		if err != nil {
 			return "", "", "", err
@@ -25,7 +27,8 @@ func Render(renderTemplate database.RenderTemplate, renderingData map[string]str
 	}
 
 	if len(renderTemplate.Body) > 0 {
-		body, err = RenderText(fmt.Sprintf("%v_body", prefix), renderTemplate.Body, renderingData)
+		translatedBody, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, renderTemplate.Body)
+		body, err = RenderText(fmt.Sprintf("%v_body", prefix), translatedBody.ValueOrZero(), renderingData)
 
 		if err != nil {
 			return "", "", "", err
@@ -33,7 +36,8 @@ func Render(renderTemplate database.RenderTemplate, renderingData map[string]str
 	}
 
 	if len(renderTemplate.Headline) > 0 {
-		headline, err = RenderText(fmt.Sprintf("%v_headline", prefix), renderTemplate.Headline, renderingData)
+		translatedHeadline, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, renderTemplate.Headline)
+		headline, err = RenderText(fmt.Sprintf("%v_headline", prefix), translatedHeadline.ValueOrZero(), renderingData)
 
 		if err != nil {
 			return "", "", "", err

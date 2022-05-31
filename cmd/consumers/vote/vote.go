@@ -57,7 +57,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		templateName = "comment_vote_dislike"
 	}
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
+	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {

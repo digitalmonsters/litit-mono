@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/common"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -172,15 +173,15 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 	return resp
 }
 
-func (s *Sender) RenderTemplate(db *gorm.DB, templateName string,
-	renderingData map[string]string) (title string, body string, headline string, renderingTemplate database.RenderTemplate, err error) {
+func (s *Sender) RenderTemplate(db *gorm.DB, templateName string, renderingData map[string]string,
+	language translation.Language) (title string, body string, headline string, renderingTemplate database.RenderTemplate, err error) {
 	var renderTemplate database.RenderTemplate
 
 	if err := db.Where("id = ?", strings.ToLower(templateName)).Take(&renderTemplate).Error; err != nil {
 		return "", "", "", renderTemplate, errors.WithStack(err)
 	}
 
-	title, body, headline, err = renderer.Render(renderTemplate, renderingData)
+	title, body, headline, err = renderer.Render(renderTemplate, renderingData, language)
 
 	return title, body, headline, renderTemplate, err
 }
