@@ -299,3 +299,29 @@ type GenerateDeeplinkRequest struct {
 type GenerateDeeplinkResponse struct {
 	Url string `json:"url"`
 }
+
+type CreateExportRequest struct {
+	Name string     `json:"name"`
+	Type ExportType `json:"type"`
+}
+
+type CreateExportResponse struct {
+	Id int64 `json:"id"`
+}
+
+type ExportType int
+
+const (
+	ExportTypeUser    = ExportType(1)
+	ExportTypeContent = ExportType(2)
+)
+
+type FinalizeExportRequest struct {
+	ExportId int64       `json:"export_id"`
+	File     null.String `json:"file"`
+	Error    error       `json:"error"`
+}
+
+type FinalizeExportResponse struct {
+	Success bool `json:"success"`
+}
