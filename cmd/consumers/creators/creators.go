@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
-	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
@@ -33,11 +33,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var templateName string
 
 	switch event.Status {
-	case eventsourcing.CreatorStatusRejected:
+	case user_go.CreatorStatusRejected:
 		templateName = "creator_status_rejected"
-	case eventsourcing.CreatorStatusApproved:
+	case user_go.CreatorStatusApproved:
 		templateName = "creator_status_approved"
-	case eventsourcing.CreatorStatusPending:
+	case user_go.CreatorStatusPending:
 		templateName = "creator_status_pending"
 	default:
 		return &event.Messages, nil

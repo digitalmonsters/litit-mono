@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
 	"time"
@@ -24,7 +25,7 @@ type Notification struct {
 	CreatedAt            time.Time                    `json:"created_at"`
 	KycReason            *eventsourcing.KycReason     `json:"kyc_reason"`
 	KycStatus            *eventsourcing.KycStatusType `json:"kyc_status"`
-	ContentCreatorStatus *eventsourcing.CreatorStatus `json:"content_creator_status"`
+	ContentCreatorStatus *user_go.CreatorStatus       `json:"content_creator_status"`
 	RenderingVariables   RenderingVariables           `json:"rendering_variables"`
 	CustomData           CustomData                   `json:"custom_data"`
 }
