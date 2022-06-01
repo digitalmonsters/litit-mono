@@ -8,7 +8,9 @@ import (
 	eagerlock "github.com/RichardKnop/machinery/v1/locks/eager"
 	lockiface "github.com/RichardKnop/machinery/v1/locks/iface"
 	redislock "github.com/RichardKnop/machinery/v1/locks/redis"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"strconv"
 	"strings"
 )
 
@@ -56,8 +58,28 @@ func LockFactory(cnf *config.Config) (lockiface.Lock, error) {
 					cnf.Lock,
 				)
 			}
-			locks := strings.Split(parts[1], ",")
-			return New(cnf, locks, 0, 3), nil
+
+			if strings.Contains(parts[1], ",") {
+				return nil, errors.New(", is not allowed in locks")
+			}
+
+			dbNumber := 0
+			host := parts[1]
+
+			sp := strings.Split(host, "/")
+
+			if len(sp) == 2 {
+				host = sp[0] // thi is host
+
+				if dbNum, err := strconv.Atoi(sp[1]); err != nil {
+					return nil, errors.WithStack(err)
+				} else {
+					dbNumber = dbNum
+				}
+			}
+
+			locks := strings.Split(host, ",")
+			return New(cnf, locks, dbNumber, 3), nil
 		}
 	} else {
 		if strings.HasPrefix(cnf.Lock, "redis://") {
@@ -68,8 +90,28 @@ func LockFactory(cnf *config.Config) (lockiface.Lock, error) {
 					cnf.Lock,
 				)
 			}
-			locks := strings.Split(parts[1], ",")
-			return redislock.New(cnf, locks, 0, 3), nil
+
+			if strings.Contains(parts[1], ",") {
+				return nil, errors.New(", is not allowed in locks")
+			}
+
+			dbNumber := 0
+			host := parts[1]
+
+			sp := strings.Split(host, "/")
+
+			if len(sp) == 2 {
+				host = sp[0] // thi is host
+
+				if dbNum, err := strconv.Atoi(sp[1]); err != nil {
+					return nil, errors.WithStack(err)
+				} else {
+					dbNumber = dbNum
+				}
+			}
+
+			locks := strings.Split(host, ",")
+			return redislock.New(cnf, locks, dbNumber, 3), nil
 		}
 	}
 
