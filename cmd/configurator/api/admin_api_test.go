@@ -78,7 +78,7 @@ func TestGetConfigLogs(t *testing.T) {
 	a := apiApp{
 		apiDef: map[string]swagger.ApiDescription{},
 		service: &configs.ConfigServiceMock{
-			AdminGetConfigLogsFn: func(db *gorm.DB, req configs.GetConfigLogsRequest) (*configs.GetConfigLogsResponse, error) {
+			AdminGetConfigLogsFn: func(db *gorm.DB, req configs.GetConfigLogsRequest, ctx context.Context) (*configs.GetConfigLogsResponse, error) {
 				return &configs.GetConfigLogsResponse{
 					Items: []configs.ConfigLogModel{
 						configs.ConfigLogModel{

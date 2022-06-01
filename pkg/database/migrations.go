@@ -79,5 +79,13 @@ alter table configs add column if not exists release_version varchar(255);
 `)
 			},
 		},
+		{
+			ID: "alter_config_logs_20220504",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+alter table config_logs add column if not exists old_value varchar(255);
+`)
+			},
+		},
 	}
 }

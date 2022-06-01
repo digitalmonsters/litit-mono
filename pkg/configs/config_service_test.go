@@ -2,11 +2,14 @@ package configs
 
 import (
 	"context"
+	"fmt"
 	"github.com/digitalmonsters/configurator/configs"
 	"github.com/digitalmonsters/configurator/pkg/database"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/stretchr/testify/assert"
 	"github.com/thoas/go-funk"
 	"gopkg.in/guregu/null.v4"
@@ -18,12 +21,32 @@ import (
 
 var config configs.Settings
 var gormDb *gorm.DB
-var service ConfigService
+var service *ConfigService
 
 func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	gormDb = database.GetDb(database.DbTypeMaster)
-	service = ConfigService{}
+
+	userWrapper := &user_go.UserGoWrapperMock{
+		GetUsersFn: func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord] {
+			var ch = make(chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord], 2)
+			go func() {
+				var usersMap = make(map[int64]user_go.UserRecord)
+
+				for _, userId := range userIds {
+					usersMap[userId] = user_go.UserRecord{
+						UserId:   userId,
+						Username: fmt.Sprint(userId),
+					}
+				}
+				ch <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
+					Response: usersMap,
+				}
+			}()
+			return ch
+		},
+	}
+	service = NewConfigService(userWrapper)
 
 	os.Exit(m.Run())
 }
@@ -135,6 +158,7 @@ func checkConfigLogs(t *testing.T, old database.ConfigLog, new ConfigLogModel, k
 	assert.True(t, new.Id != 0)
 	assert.Equal(t, old.Key, new.Key)
 	assert.True(t, funk.Contains(relatedUserIds, new.RelatedUserId.Int64))
+	assert.True(t, len(new.Username) > 0)
 	assert.True(t, funk.Contains(keyValues, new.Value))
 	assert.Equal(t, old.UpdatedAt.UTC().Format(time.RFC3339), new.UpdatedAt.UTC().Format(time.RFC3339))
 	assert.Equal(t, old.CreatedAt.UTC().Format(time.RFC3339), new.CreatedAt.UTC().Format(time.RFC3339))
@@ -233,7 +257,7 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 	resp, err := service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{
 		Limit:  10,
 		Offset: 0,
-	})
+	}, context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +285,7 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 		UpdatedTo:   null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
 		Limit:       10,
 		Offset:      0,
-	})
+	}, context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}

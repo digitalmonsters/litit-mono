@@ -26,6 +26,7 @@ type ConfigLog struct {
 	Id            int64
 	Key           string
 	Value         string
+	OldValue      string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	RelatedUserId null.Int

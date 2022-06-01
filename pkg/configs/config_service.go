@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/configurator/pkg/database"
+	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/callback"
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/thoas/go-funk"
@@ -20,11 +22,16 @@ type IConfigService interface {
 	GetConfigsByIds(db *gorm.DB, ids []string) ([]database.Config, error)
 	AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error)
 	AdminUpsertConfig(db *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error)
-	AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest) (*GetConfigLogsResponse, error)
+	AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest, ctx context.Context) (*GetConfigLogsResponse, error)
 	MigrateConfigs(db *gorm.DB, newConfigs map[string]application.MigrateConfigModel, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) ([]application.ConfigModel, []callback.Callback, error)
 }
 
 type ConfigService struct {
+	userWrapper user_go.IUserGoWrapper
+}
+
+func NewConfigService(userWrapper user_go.IUserGoWrapper) *ConfigService {
+	return &ConfigService{userWrapper: userWrapper}
 }
 
 var allConfigTypes = []application.ConfigType{application.ConfigTypeDecimal, application.ConfigTypeInteger, application.ConfigTypeBool,
@@ -181,6 +188,7 @@ func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, u
 		}
 		if err := tx.Create(&database.ConfigLog{
 			Key:           req.Key,
+			OldValue:      currentConfig.Value,
 			Value:         req.Value,
 			RelatedUserId: null.IntFrom(userId),
 		}).Error; err != nil {
@@ -216,12 +224,15 @@ func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, u
 	}, callbacks, nil
 }
 
-func (c *ConfigService) AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest) (*GetConfigLogsResponse, error) {
+func (c *ConfigService) AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest, ctx context.Context) (*GetConfigLogsResponse, error) {
 	var items []database.ConfigLog
 
 	var q = db.Model(items)
 	if len(req.Keys) > 0 {
 		q = q.Where("key in ?", req.Keys)
+	}
+	if req.KeyEquals.Valid {
+		q = q.Where("key = ?", req.KeyEquals)
 	}
 	if req.KeyContains.Valid {
 		q = q.Where("key ilike ?", fmt.Sprintf("%%%s%%", req.KeyContains.ValueOrZero()))
@@ -248,16 +259,43 @@ func (c *ConfigService) AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest
 	if err := q.Order("created_at desc").Find(&items).Error; err != nil {
 		return nil, err
 	}
+
+	var userIdsMap = map[int64]bool{}
+	var userIds []int64
+	for _, item := range items {
+		if item.RelatedUserId.Valid {
+			userIdsMap[item.RelatedUserId.ValueOrZero()] = false
+		}
+	}
+	for key := range userIdsMap {
+		userIds = append(userIds, key)
+	}
+	var usersMap = make(map[int64]user_go.UserRecord)
+	if len(userIds) > 0 {
+		usersResp := <-c.userWrapper.GetUsers(userIds, ctx, false)
+		if usersResp.Error != nil {
+			apm_helper.LogError(usersResp.Error.ToError(), ctx)
+		}
+		usersMap = usersResp.Response
+	}
+
 	var respItems []ConfigLogModel
 	for _, it := range items {
-		respItems = append(respItems, ConfigLogModel{
+		respItem := ConfigLogModel{
 			Id:            it.Id,
 			Key:           it.Key,
 			Value:         it.Value,
+			OldValue:      it.OldValue,
 			CreatedAt:     it.CreatedAt,
 			UpdatedAt:     it.UpdatedAt,
 			RelatedUserId: it.RelatedUserId,
-		})
+		}
+		if usersMap != nil && it.RelatedUserId.Valid {
+			if userResp, ok := usersMap[it.RelatedUserId.ValueOrZero()]; ok {
+				respItem.Username = userResp.Username
+			}
+		}
+		respItems = append(respItems, respItem)
 	}
 	return &GetConfigLogsResponse{
 		Items:      respItems,

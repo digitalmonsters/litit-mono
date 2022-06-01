@@ -38,6 +38,7 @@ type UpsertConfigRequest struct {
 
 type GetConfigLogsRequest struct {
 	Keys           []string    `json:"keys"`
+	KeyEquals      null.String `json:"key_equals"`
 	KeyContains    null.String `json:"key_contains"`
 	RelatedUserIds []int64     `json:"related_user_ids"`
 	CreatedFrom    null.Time   `json:"created_from"`
@@ -52,9 +53,11 @@ type ConfigLogModel struct {
 	Id            int64
 	Key           string
 	Value         string
+	OldValue      string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	RelatedUserId null.Int
+	Username      string
 }
 
 type GetConfigLogsResponse struct {
