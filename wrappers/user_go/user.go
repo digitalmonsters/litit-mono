@@ -35,7 +35,7 @@ type IUserGoWrapper interface {
 	GetConfigPropertiesInternal(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan]
 	UpdateEmailMarketing(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	GenerateDeeplink(urlPath string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse]
-	CreateExport(name string, exportType ExportType, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse]
+	CreateExport(name string, exportType ExportType, filters interface{}, exportedBy int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse]
 	FinalizeExport(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse]
 }
 
@@ -344,7 +344,7 @@ func (w UserGoWrapper) GenerateDeeplink(urlPath string, ctx context.Context,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w UserGoWrapper) CreateExport(name string, exportType ExportType, ctx context.Context,
+func (w UserGoWrapper) CreateExport(name string, exportType ExportType, filters interface{}, exportedBy int64, ctx context.Context,
 	forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse] {
 	return wrappers.ExecuteRpcRequestAsync[CreateExportResponse](w.baseWrapper, w.serviceApiUrl,
 		"CreateExport", CreateExportRequest{

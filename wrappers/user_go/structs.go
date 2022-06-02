@@ -301,8 +301,10 @@ type GenerateDeeplinkResponse struct {
 }
 
 type CreateExportRequest struct {
-	Name string     `json:"name"`
-	Type ExportType `json:"type"`
+	Name       string      `json:"name"`
+	Type       ExportType  `json:"type"`
+	Filters    interface{} `json:"filters"`
+	ExportedBy int64       `json:"exported_by"`
 }
 
 type CreateExportResponse struct {
