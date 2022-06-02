@@ -59,16 +59,14 @@ func main() {
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
 		cfg.Wrappers.NotificationGateway))
 
-	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender).ListenAsync()
-	sendingQueueCustomListener := sending_queue.InitListener(ctx, cfg.SendingQueueCustomListener, notificationSender).ListenAsync()
-
-	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
-
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
 	commentWrapper := comment.NewCommentWrapper(cfg.Wrappers.Comment)
 
+	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender, userGoWrapper).ListenAsync()
+	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender, userGoWrapper).ListenAsync()
+	sendingQueueCustomListener := sending_queue.InitListener(ctx, cfg.SendingQueueCustomListener, notificationSender, userGoWrapper).ListenAsync()
 	commentListener := commentConsumer.InitListener(ctx, cfg.CommentListener, notificationSender, userGoWrapper,
 		contentWrapper, commentWrapper).ListenAsync()
 	voteListener := vote.InitListener(ctx, cfg.VoteListener, notificationSender, userGoWrapper).ListenAsync()
