@@ -28,7 +28,7 @@ type UserGoWrapperMock struct {
 	GetConfigPropertiesInternalFn         func(properties []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetConfigPropertiesResponseChan]
 	UpdateEmailMarketingFn                func(userId int64, emailMarketing null.String, emailMarketingVerified bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	GenerateDeeplinkFn                    func(urlPath string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse]
-	CreateExportFn                        func(name string, exportType ExportType, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse]
+	CreateExportFn                        func(name string, exportType ExportType, filters interface{}, exportedBy int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse]
 	FinalizeExportFn                      func(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse]
 }
 
@@ -101,8 +101,8 @@ func (m *UserGoWrapperMock) GenerateDeeplink(urlPath string, ctx context.Context
 	return m.GenerateDeeplinkFn(urlPath, ctx, forceLog)
 }
 
-func (m *UserGoWrapperMock) CreateExport(name string, exportType ExportType, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse] {
-	return m.CreateExportFn(name, exportType, ctx, forceLog)
+func (m *UserGoWrapperMock) CreateExport(name string, exportType ExportType, filters interface{}, exportedBy int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse] {
+	return m.CreateExportFn(name, exportType, filters, exportedBy, ctx, forceLog)
 }
 
 func (m *UserGoWrapperMock) FinalizeExport(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse] {
