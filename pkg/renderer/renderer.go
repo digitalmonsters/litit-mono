@@ -18,7 +18,7 @@ func Render(renderTemplate database.RenderTemplate, renderingData map[string]str
 	prefix := fmt.Sprintf("%v_%v", renderTemplate.Id, renderTemplate.UpdatedAt)
 
 	if len(renderTemplate.Title) > 0 {
-		translatedTitle, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, renderTemplate.Title)
+		translatedTitle, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, fmt.Sprintf("%v_title", renderTemplate.Id))
 		title, err = RenderText(fmt.Sprintf("%v_title", prefix), translatedTitle.ValueOrZero(), renderingData)
 
 		if err != nil {
@@ -27,7 +27,7 @@ func Render(renderTemplate database.RenderTemplate, renderingData map[string]str
 	}
 
 	if len(renderTemplate.Body) > 0 {
-		translatedBody, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, renderTemplate.Body)
+		translatedBody, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, fmt.Sprintf("%v_body", renderTemplate.Id))
 		body, err = RenderText(fmt.Sprintf("%v_body", prefix), translatedBody.ValueOrZero(), renderingData)
 
 		if err != nil {
@@ -36,7 +36,7 @@ func Render(renderTemplate database.RenderTemplate, renderingData map[string]str
 	}
 
 	if len(renderTemplate.Headline) > 0 {
-		translatedHeadline, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, renderTemplate.Headline)
+		translatedHeadline, _ := translation.GetTranslation(translation.DefaultUserLanguage, language, translation.PlaceNotifications, fmt.Sprintf("%v_headline", renderTemplate.Id))
 		headline, err = RenderText(fmt.Sprintf("%v_headline", prefix), translatedHeadline.ValueOrZero(), renderingData)
 
 		if err != nil {
