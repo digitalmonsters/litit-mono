@@ -96,6 +96,23 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		templateData["verifymarketingsitehost"] = emailLinks.VerifyHost
 		templateData["verify_url_path"] = emailLinks.VerifyEmailMarketingPath
 		templateData["reward_points"] = payload.RewardPoints.String()
+	case eventsourcing.EmailGuestTempInfo:
+		var payload eventsourcing.EmailNotificationTempGuestInfoPayload
+
+		if err = json.Unmarshal(event.Payload, &payload); err != nil {
+			return &event.Messages, err
+		}
+
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
+
+		email = payload.Email
+
+		apm_helper.AddApmLabel(apmTransaction, "email", email)
+
+		template = "email_temp_guest_info"
+		publishKey = strconv.FormatInt(payload.UserId, 10)
+		templateData["username"] = payload.Username
+		templateData["deeplink"] = payload.DeepLink
 	//case eventsourcing.EmailNotificationReferral:
 	//	var payload eventsourcing.EmailNotificationReferralPayload
 	//

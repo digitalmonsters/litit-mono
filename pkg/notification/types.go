@@ -40,7 +40,7 @@ type NotificationsResponseItem struct {
 	Content              *NotificationsResponseContent `json:"content"`
 	QuestionId           null.Int                      `json:"question_id"`
 	KycStatus            *eventsourcing.KycStatusType  `json:"kyc_status"`
-	ContentCreatorStatus *eventsourcing.CreatorStatus  `json:"content_creator_status"`
+	ContentCreatorStatus *user_go.CreatorStatus        `json:"content_creator_status"`
 	KycReason            *eventsourcing.KycReason      `json:"kyc_reason,omitempty"`
 	CreatedAt            time.Time                     `json:"created_at"`
 }

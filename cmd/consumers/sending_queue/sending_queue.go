@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
@@ -16,15 +17,28 @@ import (
 	"time"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, apmTransaction *apm.Transaction) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
 	db := database.GetDbWithContext(database.DbTypeMaster, ctx)
 	tx := db.Begin()
 	defer tx.Rollback()
-	title, body, headline, renderingTemplate, err := notifySender.RenderTemplate(tx,
-		event.TemplateName, event.RenderingVariables)
 
-	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
-	apm_helper.AddApmLabel(apmTransaction, "template_name", event.TemplateName)
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
+	if resp.Error != nil {
+		return nil, resp.Error.ToError()
+	}
+
+	var userData user_go.UserRecord
+	var ok bool
+
+	if userData, ok = resp.Response[event.UserId]; !ok {
+		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	}
+
+	title, body, headline, renderingTemplate, err := notifySender.RenderTemplate(tx,
+		event.TemplateName, event.RenderingVariables, userData.Language)
+
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "template_name", event.TemplateName)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -65,7 +79,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	apm_helper.AddApmLabel(apmTransaction, "notification_id", nf.Id.String())
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", nf.Id.String())
 
 	if err := notificationPkg.IncrementUnreadNotificationsCounter(tx, event.UserId); err != nil {
 		return nil, err

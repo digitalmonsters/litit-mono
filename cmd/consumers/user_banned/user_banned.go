@@ -37,7 +37,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var template = "user_banned"
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{})
+	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{}, event.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {

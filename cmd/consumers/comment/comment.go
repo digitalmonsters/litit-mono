@@ -101,7 +101,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	if parentAuthorId.Valid && parentAuthorId.Int64 != event.AuthorId {
 		var templateName = "comment_reply"
-		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
+		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
@@ -156,7 +156,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		var templateName = "comment_content_resource_create"
 
-		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
+		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
@@ -200,7 +200,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		var templateName = "comment_profile_resource_create"
 
-		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData)
+		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {

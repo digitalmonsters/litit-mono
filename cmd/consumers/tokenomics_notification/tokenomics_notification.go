@@ -33,16 +33,16 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		rendererData["pointsAmount"] = event.Payload.PointsAmount.Decimal.String()
 	}
 
+	var userData user_go.UserRecord
+	var ok bool
+
 	switch event.Type {
 	case eventsourcing.TokenomicsNotificationTip:
-		var userData user_go.UserRecord
-
 		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.RelatedUserId.ValueOrZero()}, ctx, false)
 		if resp.Error != nil {
 			return nil, resp.Error.ToError()
 		}
 
-		var ok bool
 		if userData, ok = resp.Response[event.Payload.RelatedUserId.ValueOrZero()]; !ok {
 			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
@@ -57,9 +57,27 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		contentId = null.IntFrom(0)
 	case eventsourcing.TokenomicsNotificationDailyBonusTime:
+		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.UserId}, ctx, false)
+		if resp.Error != nil {
+			return nil, resp.Error.ToError()
+		}
+
+		if userData, ok = resp.Response[event.Payload.UserId]; !ok {
+			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+		}
+
 		templateName = "bonus_time"
 		templateType = "push.bonus.daily"
 	case eventsourcing.TokenomicsNotificationDailyBonusFollowers:
+		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.UserId}, ctx, false)
+		if resp.Error != nil {
+			return nil, resp.Error.ToError()
+		}
+
+		if userData, ok = resp.Response[event.Payload.UserId]; !ok {
+			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+		}
+
 		templateName = "bonus_followers"
 		templateType = "push.bonus.followers"
 	default:
@@ -72,7 +90,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var body string
 	var headline string
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, rendererData)
+	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, rendererData, userData.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {

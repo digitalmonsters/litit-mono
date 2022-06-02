@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
@@ -70,6 +71,19 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		VideoId: event.VideoId,
 	}
 
+	var authorLanguage translation.Language
+
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
+	if resp.Error != nil {
+		return nil, resp.Error.ToError()
+	}
+
+	if userData, ok := resp.Response[event.UserId]; !ok {
+		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	} else {
+		authorLanguage = userData.Language
+	}
+
 	if event.CrudOperation == eventsourcing.ChangeEventTypeCreated && !event.Unlisted && !event.Draft && !event.Deleted {
 		if event.ContentType == eventsourcing.ContentTypeVideo {
 			templateName = "content_upload"
@@ -113,7 +127,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData)
+	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData, authorLanguage)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
@@ -189,7 +203,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var userData user_go.UserRecord
 
-	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
+	resp = <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
 	if resp.Error != nil {
 		return nil, resp.Error.ToError()
 	}
@@ -214,7 +228,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	//nolint
-	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData)
+	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData, userData.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
