@@ -8,7 +8,7 @@ import (
 
 type SimpleContent struct {
 	Id            int64                     `json:"id"`
-	ContentType   eventsourcing.ContentType `json:"content_type"`
+	ContentType   eventsourcing.ContentType `json:"type"`
 	Duration      int                       `json:"duration"`
 	AgeRestricted bool                      `json:"age_restricted"`
 	AuthorId      int64                     `json:"author_id"`
