@@ -26,8 +26,29 @@ type GetInternalLikedByUserResponseChan struct {
 	Data  map[int64]bool `json:"data"`
 }
 
+type GetInternalDislikedByUserResponseChan struct {
+	Error *rpc.RpcError  `json:"error"`
+	Data  map[int64]bool `json:"data"`
+}
+
+type SpotReaction struct {
+	Like    bool
+	Dislike bool
+	Love    bool
+}
+type GetInternalSpotReactionsByUserResponseChan struct {
+	Error *rpc.RpcError          `json:"error"`
+	Data  map[int64]SpotReaction `json:"data"`
+}
+
 //goland:noinspection GoNameStartsWithPackageName
 type GetInternalLikedByUserRequest struct {
+	UserId     int64   `json:"user_id"`
+	ContentIds []int64 `json:"content_ids"`
+}
+
+//goland:noinspection GoNameStartsWithPackageName
+type GetInternalSpotReactionsByUserRequest struct {
 	UserId     int64   `json:"user_id"`
 	ContentIds []int64 `json:"content_ids"`
 }
