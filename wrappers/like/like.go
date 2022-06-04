@@ -16,9 +16,11 @@ import (
 )
 
 type ILikeWrapper interface {
-	GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponseChan
 	GetInternalLikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalLikedByUserResponseChan
-	GetInternalDislikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]bool]
+	GetInternalDislikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalDislikedByUserResponseChan
+	GetInternalSpotReactionsByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalSpotReactionsByUserResponseChan
+
+	GetLastLikesByUsers(userIds []int64, limitPerUser int, apmTransaction *apm.Transaction, forceLog bool) chan LastLikedByUserResponseChan
 	GetInternalUserLikes(userId int64, size int, pageState string, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan
 	AddLikesInternal(likeEvents []eventsourcing.LikeEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddLikesResponse]
 }
@@ -135,6 +137,88 @@ func (w *LikeWrapper) GetInternalLikedByUser(contentIds []int64, userId int64, a
 	return respCh
 }
 
+func (w *LikeWrapper) GetInternalDislikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalDislikedByUserResponseChan {
+	respCh := make(chan GetInternalDislikedByUserResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalDislikedByUserBulk", GetInternalDislikedByUserRequest{
+		UserId:     userId,
+		ContentIds: contentIds,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetInternalDislikedByUserResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := map[int64]bool{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Data = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
+}
+
+func (w *LikeWrapper) GetInternalSpotReactionsByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalSpotReactionsByUserResponseChan {
+	respCh := make(chan GetInternalSpotReactionsByUserResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.apiUrl, "GetInternalSpotReactionsByUserBulk", GetInternalSpotReactionsByUserRequest{
+		UserId:     userId,
+		ContentIds: contentIds,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := GetInternalSpotReactionsByUserResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			data := map[int64]SpotReaction{}
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Data = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
+}
+
 func (w *LikeWrapper) GetInternalUserLikes(userId int64, size int, pageState string, apmTransaction *apm.Transaction, forceLog bool) chan GetInternalUserLikesResponseChan {
 	respCh := make(chan GetInternalUserLikesResponseChan, 2)
 
@@ -175,13 +259,6 @@ func (w *LikeWrapper) GetInternalUserLikes(userId int64, size int, pageState str
 	}()
 
 	return respCh
-}
-
-func (w *LikeWrapper) GetInternalDislikedByUser(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]bool] {
-	return wrappers.ExecuteRpcRequestAsync[map[int64]bool](w.baseWrapper, w.apiUrl, "GetInternalDislikedByUserBulk", GetInternalDislikedByUserRequest{
-		UserId:     userId,
-		ContentIds: contentIds,
-	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }
 
 func (w LikeWrapper) AddLikesInternal(likeEvents []eventsourcing.LikeEvent, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[AddLikesResponse] {
