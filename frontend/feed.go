@@ -79,8 +79,8 @@ type ContentModel struct {
 	LovesCount    int64 `json:"loves_count"`
 	DislikesCount int64 `json:"dislikes_count"`
 
-	LocationCountryCode string `json:"location_country_code"`
-	LocationCity        string `json:"location_city"`
+	City        string `json:"city"`
+	CountryCode string `json:"country_code"`
 }
 
 type ContentWithPointsCount struct {
