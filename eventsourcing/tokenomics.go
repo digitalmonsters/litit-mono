@@ -19,6 +19,8 @@ type UserBalanceChangeEvent struct {
 
 	VaultPoints        decimal.Decimal `json:"vault_points"`
 	AllTimeVaultPoints decimal.Decimal `json:"all_time_vault_points"`
+
+	WithdrawnTokens decimal.Decimal `json:"withdrawn_tokens"`
 }
 
 func (u UserBalanceChangeEvent) GetPublishKey() string {
