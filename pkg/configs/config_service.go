@@ -171,6 +171,7 @@ func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, u
 		return nil, nil, err
 	}
 	if len(currentConfig.Key) > 0 {
+		var oldValue = currentConfig.Value
 		if len(currentConfig.Type) == 0 {
 			currentConfig.Type = req.Type
 		}
@@ -188,7 +189,7 @@ func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, u
 		}
 		if err := tx.Create(&database.ConfigLog{
 			Key:           req.Key,
-			OldValue:      currentConfig.Value,
+			OldValue:      oldValue,
 			Value:         req.Value,
 			RelatedUserId: null.IntFrom(userId),
 		}).Error; err != nil {
@@ -293,6 +294,7 @@ func (c *ConfigService) AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest
 		if usersMap != nil && it.RelatedUserId.Valid {
 			if userResp, ok := usersMap[it.RelatedUserId.ValueOrZero()]; ok {
 				respItem.Username = userResp.Username
+				respItem.Email = userResp.Email
 			}
 		}
 		respItems = append(respItems, respItem)

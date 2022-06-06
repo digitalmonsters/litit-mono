@@ -37,6 +37,7 @@ func TestMain(m *testing.M) {
 					usersMap[userId] = user_go.UserRecord{
 						UserId:   userId,
 						Username: fmt.Sprint(userId),
+						Email:    fmt.Sprintf("test_email_%v", userId),
 					}
 				}
 				ch <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
@@ -303,6 +304,64 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 	}
 	assert.Equal(t, 3, len(foundCounterMap))
 }
+
+func TestConfigService_ConfigLogs(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, []string{"public.config"}, t); err != nil {
+		t.Fatal(err)
+	}
+	var configs = []database.Config{
+		{
+			Key:            "test_key1",
+			Value:          "50",
+			Type:           application.ConfigTypeInteger,
+			Description:    "test",
+			AdminOnly:      false,
+			CreatedAt:      time.Now().UTC(),
+			UpdatedAt:      time.Now().UTC(),
+			Category:       application.ConfigCategoryTokens,
+			ReleaseVersion: "1.2.1",
+		},
+	}
+	if err := gormDb.Create(&configs).Error; err != nil {
+		t.Fatal(err)
+	}
+	_, callbacks, err := service.AdminUpsertConfig(gormDb, UpsertConfigRequest{
+		Key:            "test_key1",
+		Value:          "123",
+		Type:           application.ConfigTypeInteger,
+		Description:    "test",
+		Category:       application.ConfigCategoryTokens,
+		ReleaseVersion: "1.2.1",
+	}, 12, nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 1, len(callbacks))
+
+	var logs []database.ConfigLog
+	if err := gormDb.Find(&logs).Error; err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 1, len(logs))
+	assert.Equal(t, configs[0].Key, logs[0].Key)
+	assert.Equal(t, "123", logs[0].Value)
+	assert.Equal(t, configs[0].Value, logs[0].OldValue)
+	assert.Equal(t, int64(12), logs[0].RelatedUserId.Int64)
+
+	resp, err := service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{}, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 1, len(resp.Items))
+	assert.Equal(t, configs[0].Key, resp.Items[0].Key)
+	assert.Equal(t, "123", resp.Items[0].Value)
+	assert.Equal(t, configs[0].Value, resp.Items[0].OldValue)
+	assert.Equal(t, int64(12), resp.Items[0].RelatedUserId.Int64)
+	assert.Equal(t, fmt.Sprint(12), resp.Items[0].Username)
+	assert.Equal(t, "test_email_12", resp.Items[0].Email)
+}
+
 func TestConfigService_AdminUpsertConfig(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, []string{"public.config"}, t); err != nil {
 		t.Fatal(err)

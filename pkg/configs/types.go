@@ -58,6 +58,7 @@ type ConfigLogModel struct {
 	UpdatedAt     time.Time
 	RelatedUserId null.Int
 	Username      string
+	Email         string
 }
 
 type GetConfigLogsResponse struct {
