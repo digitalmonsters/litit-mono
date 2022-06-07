@@ -348,8 +348,10 @@ func (w UserGoWrapper) CreateExport(name string, exportType ExportType, filters 
 	forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse] {
 	return wrappers.ExecuteRpcRequestAsync[CreateExportResponse](w.baseWrapper, w.serviceApiUrl,
 		"CreateExport", CreateExportRequest{
-			Name: name,
-			Type: exportType,
+			Name:       name,
+			Type:       exportType,
+			Filters:    filters,
+			ExportedBy: exportedBy,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
