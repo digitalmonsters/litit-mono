@@ -18,6 +18,10 @@ func init() {
 	boilerplate.SetupZeroLog()
 }
 
+const (
+	DiscardMsg = "discard"
+)
+
 func StartNewApmTransaction(methodName string, transactionType string, request interface{}, parentTx *apm.Transaction) *apm.Transaction {
 	traceContext := apm.TraceContext{}
 
@@ -50,6 +54,24 @@ func StartNewApmTransactionWithTraceData(methodName string, transactionType stri
 	}
 
 	return transaction
+}
+
+func DiscardTransactionWithContext(ctx context.Context) {
+	tx := apm.TransactionFromContext(ctx)
+
+	if tx == nil {
+		return
+	}
+
+	DiscardTransaction(tx)
+}
+
+func DiscardTransaction(apmTransaction *apm.Transaction) {
+	if apmTransaction == nil {
+		return
+	}
+
+	apmTransaction.Outcome = DiscardMsg
 }
 
 func AppendRequestBody(request interface{}, transaction *apm.Transaction) {

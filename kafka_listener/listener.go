@@ -438,6 +438,8 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		//Key:   apmhttp.W3CTraceparentHeader,
 		//	Value: []byte(apmhttp.FormatTraceparentHeader(apmTransaction.TraceContext())),
 
+		childTransactionDiscarded := false
+
 		requestProcessingErrors := backoff.Retry(func() error {
 			retryCount += 1
 
@@ -462,9 +464,13 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 			defer func() {
 				if processingSpan != nil {
-					processingSpan.End()
+					if processingSpan.Outcome == apm_helper.DiscardMsg {
+						processingSpan.Discard()
+						childTransactionDiscarded = true
+					} else {
+						processingSpan.End()
+					}
 				}
-
 			}()
 
 			innerContext := boilerplate.CreateCustomContext(rootCtx, processingSpan, log.Logger)
@@ -517,7 +523,12 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 		}
 
 		k.hasRunningRequest = false
-		apmTransaction.End()
+
+		if childTransactionDiscarded {
+			apmTransaction.Discard()
+		} else {
+			apmTransaction.End()
+		}
 	}
 
 	k.hasRunningRequest = false
