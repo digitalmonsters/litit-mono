@@ -3,7 +3,6 @@ package configs
 import (
 	_ "embed"
 	"fmt"
-
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
@@ -36,6 +35,7 @@ type Settings struct {
 	UserDeleteListener             boilerplate.KafkaListenerConfiguration `json:"UserDeleteListener"`
 	UserBannedListener             boilerplate.KafkaListenerConfiguration `json:"UserBannedListener"`
 	EmailLinks                     EmailLinks                             `json:"EmailLinks"`
+	Scylla                         boilerplate.ScyllaConfiguration        `json:"Scylla"`
 }
 
 type EmailLinks struct {
@@ -68,4 +68,8 @@ func init() {
 
 func GetConfig() Settings {
 	return settings
+}
+
+func UpdateScyllaKeyspaceForCiConfig(keyspace string) {
+	settings.Scylla.Keyspace = keyspace
 }

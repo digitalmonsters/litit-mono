@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
@@ -21,7 +22,9 @@ import (
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_banned"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_delete"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/vote"
+	"github.com/digitalmonsters/notification-handler/cmd/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
+	settingsPkg "github.com/digitalmonsters/notification-handler/pkg/settings"
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,6 +46,8 @@ func main() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
 
+	var rootApplication application.RootApplication
+
 	cfg := configs.GetConfig()
 	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
@@ -56,8 +61,10 @@ func main() {
 
 	ctx := context.Background()
 
+	settingsService := settingsPkg.NewService()
+
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
-		cfg.Wrappers.NotificationGateway))
+		cfg.Wrappers.NotificationGateway), settingsService)
 
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
@@ -101,6 +108,10 @@ func main() {
 	if err := api.InitTokenApi(httpRouter, apiDef); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init token api")
 	}
+
+	rootApplication.
+		AddApplication(notification.Application(httpRouter, apiDef, settingsService)).
+		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)
