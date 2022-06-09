@@ -56,7 +56,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, "default", "user_follow",
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, "follow", "user_follow",
 		title, body, headline, map[string]interface{}{
 			"user_id": event.UserId,
 		}, ctx); err != nil {
