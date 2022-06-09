@@ -15,7 +15,7 @@ type ISender interface {
 		customData map[string]interface{}, ctx context.Context) (interface{}, error)
 
 	SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
-		title, body, headline string, customData map[string]interface{}, ctx context.Context) (interface{}, error)
+		title, body, headline string, customData database.CustomData, ctx context.Context) (interface{}, error)
 	RenderTemplate(db *gorm.DB, templateName string, renderingData map[string]string,
 		language translation.Language) (title string, body string, headline string, renderingTemplate database.RenderTemplate, err error)
 	SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error
