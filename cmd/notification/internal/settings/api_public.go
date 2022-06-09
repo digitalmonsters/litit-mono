@@ -25,7 +25,7 @@ func (a settingsApp) initPublicApi(httpRouter *router.HttpRouter) error {
 }
 
 func (a settingsApp) getPushSettings() *router.RestCommand {
-	path := "/push_settings"
+	path := "/mobile/v1/push_settings"
 
 	a.apiDef[path] = swagger.ApiDescription{
 		Response:          map[string]bool{},
@@ -45,7 +45,7 @@ func (a settingsApp) getPushSettings() *router.RestCommand {
 }
 
 func (a settingsApp) changePushSettings() *router.RestCommand {
-	path := "/change_push_settings"
+	path := "/mobile/v1/change_push_settings"
 
 	a.apiDef[path] = swagger.ApiDescription{
 		Request:           map[string]bool{},
