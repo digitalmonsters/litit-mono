@@ -168,14 +168,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return nil, err
 		}
 
+		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
 		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, contentAuthorId.Int64, templateName, "default",
-			title, body, headline, nil, ctx); err != nil {
+			title, body, headline, customData, ctx); err != nil {
 			return nil, err
 		}
 
 		notificationComment.Type = database.NotificationCommentTypeContent
-
-		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
 
 		nt := &database.Notification{
 			UserId:             contentAuthorId.Int64,
@@ -216,14 +215,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return nil, err
 		}
 
+		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
+
 		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ProfileId.Int64,
-			templateName, "default", title, body, headline, nil, ctx); err != nil {
+			templateName, "default", title, body, headline, customData, ctx); err != nil {
 			return nil, err
 		}
 
 		notificationComment.Type = database.NotificationCommentTypeProfile
-
-		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
 
 		nt := &database.Notification{
 			UserId:             event.ProfileId.Int64,

@@ -19,6 +19,8 @@ require (
 	gorm.io/gorm v1.23.4
 )
 
+replace github.com/digitalmonsters/go-common v1.30.25 => ../go-common
+
 require (
 	cloud.google.com/go v0.101.0 // indirect
 	cloud.google.com/go/compute v1.6.1 // indirect

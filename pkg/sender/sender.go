@@ -32,7 +32,7 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper, setting
 
 func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationChannel,
 	title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
-	customData map[string]interface{}, ctx context.Context) (interface{}, error) {
+	customData database.CustomData, ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
 	return s.sendPushTemplateMessageToUser(title, body, headline, renderingTemplate, userId, renderingData, customData, db, ctx)

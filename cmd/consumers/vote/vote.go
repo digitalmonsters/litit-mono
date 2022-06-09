@@ -57,15 +57,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		templateName = "comment_vote_dislike"
 	}
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
+	var template database.RenderTemplate
+	title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
 		return nil, err
 	}
 
+	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
 	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.CommentAuthorId, templateName, "default",
-		title, body, headline, nil, ctx); err != nil {
+		title, body, headline, customData, ctx); err != nil {
 		return nil, err
 	}
 
@@ -95,6 +97,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		CommentId:     null.IntFrom(event.CommentId),
 		Comment:       &notificationContent,
 		RelatedUserId: null.IntFrom(event.UserId),
+		CustomData:    customData,
 	}).Error; err != nil {
 		return nil, err
 	}
