@@ -2,6 +2,7 @@ package follow
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -9,6 +10,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
+	"github.com/gocql/gocql"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
@@ -45,10 +47,16 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, "follow", map[string]string{
+	var template database.RenderTemplate
+	renderingVariables := map[string]string{
 		"firstname": firstName,
 		"lastname":  lastName,
-	}, userData.Language)
+	}
+	renderingVariablesMarshalled, err := json.Marshal(renderingVariables)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	title, body, headline, template, err = notifySender.RenderTemplate(db, "follow", renderingVariables, userData.Language)
 
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
@@ -56,10 +64,16 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, "default", "user_follow",
-		title, body, headline, map[string]interface{}{
-			"user_id": event.UserId,
-		}, ctx); err != nil {
+	customData := map[string]interface{}{
+		"user_id": event.UserId,
+	}
+	customDataMarshalled, err := json.Marshal(customData)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, template.Id, "user_follow",
+		title, body, headline, customData, template.IsGrouped, ctx); err != nil {
 		return nil, err
 	}
 
@@ -77,10 +91,57 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
-
 	if err = notification.IncrementUnreadNotificationsCounter(db, event.UserId); err != nil {
 		return nil, err
+	}
+
+	session := database.GetScyllaSession()
+
+	batch := session.NewBatch(gocql.UnloggedBatch)
+
+	notificationsCount := int64(1)
+
+	if template.IsGrouped {
+		notificationRelationIter := session.Query("select user_id from notification_relation where user_id = ? and event_type = ?",
+			event.ToUserId, template.Id).WithContext(ctx).Iter()
+
+		var userId int64
+		for notificationRelationIter.Scan(&userId) {
+			notificationsCount++
+		}
+
+		batch.Query("update notification_relation set event_applied = true where user_id = ? and event_type = ? "+
+			"and entity_id = ? and related_entity_id = 0", event.ToUserId, template.Id, event.UserId)
+
+		notificationIter := session.Query("select * from notification where user_id = ? and event_type = ? and created_at >= ? limit 1",
+			event.ToUserId, template.Id, time.Now().UTC().Add(-3*24*30*time.Hour)).WithContext(ctx).Iter()
+
+		userId = 0
+		var eventType string
+		var entityId int64
+		var relatedEntityId int64
+		var createdAt time.Time
+		var notificationsCountFromSelect int64
+
+		notificationIter.Scan(&userId, &eventType, &entityId, &relatedEntityId, &createdAt, &notificationsCountFromSelect)
+
+		if err = notificationIter.Close(); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		if notificationsCountFromSelect > notificationsCount {
+			notificationsCount = notificationsCountFromSelect + 1
+		}
+	}
+
+	batch.Query("update notification set notifications_count = ?, title = ?, body = ?, headline = ?, rendering_variables = ?, "+
+		"custom_data = ?, image_url = ?, route = ? where user_id = ? and event_type = ? "+
+		"and created_at = ? and entity_id = ? and related_entity_id = 0", notificationsCount, title, body, headline,
+		string(renderingVariablesMarshalled), string(customDataMarshalled), template.ImageUrl, template.Route,
+		event.ToUserId, template.Id, time.Now().UTC(), event.UserId)
+
+	if err := session.ExecuteBatch(batch); err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	return &event.Messages, nil

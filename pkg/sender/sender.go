@@ -39,10 +39,10 @@ func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationCha
 }
 
 func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
-	title, body, headline string, customData map[string]interface{}, ctx context.Context) (interface{}, error) {
+	title, body, headline string, customData map[string]interface{}, isGrouped bool, ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
-	return s.sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline, userId, customData, db, ctx)
+	return s.sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline, userId, customData, isGrouped, db, ctx)
 }
 
 func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error {
@@ -78,7 +78,7 @@ func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
 }
 
 func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline string, userId int64, customData map[string]interface{},
-	db *gorm.DB, ctx context.Context) (interface{}, error) {
+	isGrouped bool, db *gorm.DB, ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(db, userId)
 
 	if err != nil {

@@ -9,6 +9,11 @@ import (
 var CDN_BASE string
 
 const (
+	PushNotificationDeadlineKeyMinutes = 30
+	PushNotificationDeadlineMinutes    = 5
+)
+
+const (
 	PREFIX_CONTENT = "content"
 )
 
