@@ -10,6 +10,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
+	"github.com/digitalmonsters/notification-handler/pkg/settings"
 	"github.com/digitalmonsters/notification-handler/pkg/token"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -18,12 +19,14 @@ import (
 )
 
 type Sender struct {
-	gateway notification_gateway.INotificationGatewayWrapper
+	gateway         notification_gateway.INotificationGatewayWrapper
+	settingsService settings.IService
 }
 
-func NewSender(gateway notification_gateway.INotificationGatewayWrapper) *Sender {
+func NewSender(gateway notification_gateway.INotificationGatewayWrapper, settingsService settings.IService) *Sender {
 	return &Sender{
-		gateway: gateway,
+		gateway:         gateway,
+		settingsService: settingsService,
 	}
 }
 
@@ -58,6 +61,16 @@ func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
 	if len(userTokens) == 0 {
 		return nil, nil
 	}
+
+	isMuted, err := s.settingsService.IsPushNotificationMuted(userId, renderingTemplate.Id, ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if isMuted {
+		return nil, nil
+	}
+
 	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body,
 		headline, renderingTemplate, fmt.Sprint(userId), renderingData, customData), ctx)
 
@@ -73,6 +86,15 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	}
 
 	if len(userTokens) == 0 {
+		return nil, nil
+	}
+
+	isMuted, err := s.settingsService.IsPushNotificationMuted(userId, pushType, ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if isMuted {
 		return nil, nil
 	}
 
