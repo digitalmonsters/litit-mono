@@ -15,6 +15,16 @@
     "User": "postgres",
     "Password": "qwerty"
   },
+  "Scylla": {
+    "Hosts": "127.0.0.1:9042",
+    "UserName": "",
+    "Password": "",
+    "Keyspace": "local_notification",
+    "PageSize": 0,
+    "NumConns": 12,
+    "MaxRoutingKeyInfo": 3000,
+    "MaxPreparedStmts": 3000
+  },
   "KafkaWriter": {
     "Hosts": "127.0.0.1",
     "Tls": true

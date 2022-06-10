@@ -191,3 +191,14 @@ func GetMarketingNotifications() []string {
 		"push.user.first_email_marketing_added",
 	}
 }
+
+type UserNotificationsSettings struct {
+	ClusterKey int64
+	UserId     int64
+	TemplateId int64
+	Enabled    bool
+}
+
+func GetUserNotificationsSettingsClusterKey(userId int64) int64 {
+	return userId / 30000
+}

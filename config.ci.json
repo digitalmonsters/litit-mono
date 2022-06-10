@@ -4,5 +4,9 @@
   },
   "ReadonlyDb": {
     "Host": "127.0.0.1"
+  },
+  "Scylla": {
+    "Hosts": "scylla",
+    "TimeoutSeconds": 30
   }
 }

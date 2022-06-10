@@ -44,7 +44,7 @@ func CreateToken(db *gorm.DB, userId int64, req TokenCreateRequest) (*TokenCreat
 }
 
 func DeleteToken(db *gorm.DB, userId int64, deviceId string) error {
-	if err := db.Where("delete from \"Devices\" where \"deviceId\" = ? and \"userId\" = ?", deviceId, userId).Error; err != nil {
+	if err := db.Where("delete from \"devices\" where \"deviceId\" = ? and \"userId\" = ?", deviceId, userId).Error; err != nil {
 		return err
 	}
 
