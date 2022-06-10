@@ -3,7 +3,7 @@ module github.com/digitalmonsters/notification-handler
 go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.30.25
+	github.com/digitalmonsters/go-common v1.30.34
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.3.0
@@ -20,8 +20,6 @@ require (
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.23.4
 )
-
-replace github.com/digitalmonsters/go-common v1.30.25 => ../go-common
 
 require (
 	cloud.google.com/go v0.101.0 // indirect
