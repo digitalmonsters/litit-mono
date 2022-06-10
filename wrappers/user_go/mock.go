@@ -30,6 +30,7 @@ type UserGoWrapperMock struct {
 	GenerateDeeplinkFn                    func(urlPath string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse]
 	CreateExportFn                        func(name string, exportType ExportType, filters interface{}, exportedBy int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse]
 	FinalizeExportFn                      func(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse]
+	GetGrandReferrerIdsFn                 func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64]
 }
 
 func (m *UserGoWrapperMock) GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord] {
@@ -107,6 +108,10 @@ func (m *UserGoWrapperMock) CreateExport(name string, exportType ExportType, fil
 
 func (m *UserGoWrapperMock) FinalizeExport(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse] {
 	return m.FinalizeExportFn(exportId, file, err, ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) GetGrandReferrerIds(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64] {
+	return m.GetGrandReferrerIdsFn(ctx, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors

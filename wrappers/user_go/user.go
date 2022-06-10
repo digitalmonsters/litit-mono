@@ -37,6 +37,7 @@ type IUserGoWrapper interface {
 	GenerateDeeplink(urlPath string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenerateDeeplinkResponse]
 	CreateExport(name string, exportType ExportType, filters interface{}, exportedBy int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse]
 	FinalizeExport(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse]
+	GetGrandReferrerIds(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -363,4 +364,9 @@ func (w UserGoWrapper) FinalizeExport(exportId int64, file null.String, err erro
 			File:     file,
 			Error:    err,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GetGrandReferrerIds(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64] {
+	return wrappers.ExecuteRpcRequestAsync[[]int64](w.baseWrapper, w.serviceApiUrl,
+		"GetGrandReferrerIds", nil, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
