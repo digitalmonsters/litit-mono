@@ -87,6 +87,22 @@ func (s service) ListTemplates(req ListTemplatesRequest, db *gorm.DB) (*ListTemp
 		query = query.Where("render_templates.image_url ilike ?", search)
 	}
 
+	if req.CreatedAtFrom.Valid {
+		query = query.Where("render_templates.created_at >= ?", req.CreatedAtFrom.ValueOrZero())
+	}
+
+	if req.CreatedAtTo.Valid {
+		query = query.Where("render_templates.created_at <= ?", req.CreatedAtTo.ValueOrZero())
+	}
+
+	if req.UpdatedAtFrom.Valid {
+		query = query.Where("render_templates.updated_at >= ?", req.UpdatedAtFrom.ValueOrZero())
+	}
+
+	if req.UpdatedAtTo.Valid {
+		query = query.Where("render_templates.updated_at <= ?", req.UpdatedAtTo.ValueOrZero())
+	}
+
 	if sortingArr := req.Sorting; len(sortingArr) > 0 {
 		for _, sorting := range sortingArr {
 			sortOrder := " asc"

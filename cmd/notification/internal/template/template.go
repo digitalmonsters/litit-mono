@@ -31,6 +31,10 @@ func (a templateApp) Init(subAppLogger zerolog.Logger) error {
 		return err
 	}
 
+	if err := a.initUploaderApi(a.httpRouter); err != nil {
+		return err
+	}
+
 	return nil
 }
 

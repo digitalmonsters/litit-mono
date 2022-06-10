@@ -20,16 +20,20 @@ type Sorting struct {
 }
 
 type ListTemplatesRequest struct {
-	Id       string    `json:"id"`
-	Title    string    `json:"title"`
-	Body     string    `json:"body"`
-	Headline string    `json:"headline"`
-	Kind     string    `json:"kind"`
-	Route    string    `json:"route"`
-	ImageUrl string    `json:"image_url"`
-	Sorting  []Sorting `json:"sorting"`
-	Limit    int       `json:"limit"`
-	Offset   int       `json:"offset"`
+	Id            string    `json:"id"`
+	Title         string    `json:"title"`
+	Body          string    `json:"body"`
+	Headline      string    `json:"headline"`
+	Kind          string    `json:"kind"`
+	Route         string    `json:"route"`
+	ImageUrl      string    `json:"image_url"`
+	CreatedAtFrom null.Time `json:"created_at_from"`
+	CreatedAtTo   null.Time `json:"created_at_to"`
+	UpdatedAtFrom null.Time `json:"updated_at_from"`
+	UpdatedAtTo   null.Time `json:"updated_at_to"`
+	Sorting       []Sorting `json:"sorting"`
+	Limit         int       `json:"limit"`
+	Offset        int       `json:"offset"`
 }
 
 type ListTemplatesResponse struct {
