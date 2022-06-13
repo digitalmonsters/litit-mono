@@ -35,26 +35,29 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var body string
 	var headline string
 
-	var template = "user_banned"
+	var templateName = "user_banned"
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{}, event.Language)
+	var template database.RenderTemplate
+	title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, map[string]string{}, event.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, template, "popup",
-		title, body, headline, nil, ctx); err != nil {
+	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, templateName, "popup",
+		title, body, headline, customData, ctx); err != nil {
 		return nil, err
 	}
 
 	notification := database.Notification{
-		UserId:    event.UserId,
-		Type:      "popup",
-		Title:     title,
-		Message:   body,
-		CreatedAt: time.Now().UTC(),
+		UserId:     event.UserId,
+		Type:       "popup",
+		Title:      title,
+		Message:    body,
+		CreatedAt:  time.Now().UTC(),
+		CustomData: customData,
 	}
 
 	if err = db.Create(&notification).Error; err != nil {

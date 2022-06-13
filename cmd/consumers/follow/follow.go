@@ -47,15 +47,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	var template database.RenderTemplate
 	renderingVariables := map[string]string{
 		"firstname": firstName,
 		"lastname":  lastName,
 	}
+
 	renderingVariablesMarshalled, err := json.Marshal(renderingVariables)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	var template database.RenderTemplate
 	title, body, headline, template, err = notifySender.RenderTemplate(db, "follow", renderingVariables, userData.Language)
 
 	if err == renderer.TemplateRenderingError {
@@ -64,16 +66,9 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	customData := map[string]interface{}{
-		"user_id": event.UserId,
-	}
-	customDataMarshalled, err := json.Marshal(customData)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, template.Id, "user_follow",
-		title, body, headline, customData, template.IsGrouped, ctx); err != nil {
+	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route, "user_id": event.UserId}
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, "follow", "user_follow",
+		title, body, headline, customData, ctx); err != nil {
 		return nil, err
 	}
 
@@ -85,11 +80,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		RelatedUserId: null.IntFrom(event.UserId),
 		CreatedAt:     time.Now().UTC(),
 		ContentId:     null.IntFrom(0),
+		CustomData:    customData,
 	}
 
 	if err = db.Create(nt).Error; err != nil {
 		return nil, err
 	}
+
+	apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
 
 	if err = notification.IncrementUnreadNotificationsCounter(db, event.UserId); err != nil {
 		return nil, err

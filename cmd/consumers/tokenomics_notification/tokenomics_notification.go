@@ -90,15 +90,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var body string
 	var headline string
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, rendererData, userData.Language)
+	var template database.RenderTemplate
+	title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, rendererData, userData.Language)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.Payload.UserId, templateName, "default",
-		title, body, headline, nil, ctx); err != nil {
+	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.Payload.UserId, template.Id, "default",
+		title, body, headline, customData, ctx); err != nil {
 		return nil, err
 	}
 
@@ -111,6 +113,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		ContentId:          contentId,
 		RelatedUserId:      event.Payload.RelatedUserId,
 		RenderingVariables: rendererData,
+		CustomData:         customData,
 	}
 
 	if err = db.Create(&notification).Error; err != nil {

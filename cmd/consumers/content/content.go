@@ -127,15 +127,18 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData, authorLanguage)
+	var template database.RenderTemplate
+	title, body, headline, template, err = notifySender.RenderTemplate(tx, templateName, renderData, authorLanguage)
 	if err == renderer.TemplateRenderingError {
 		return &event.Messages, err // we should continue, no need to retry
 	} else if err != nil {
 		return nil, err
 	}
 
+	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
+
 	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId,
-		templateName, "default", title, body, headline, nil, ctx); err != nil {
+		templateName, "default", title, body, headline, customData, ctx); err != nil {
 		return nil, err
 	}
 
@@ -148,6 +151,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Content:            notificationContent,
 		CreatedAt:          time.Now().UTC(),
 		RenderingVariables: renderData,
+		CustomData:         customData,
 	}
 
 	if err = tx.Create(nt).Error; err != nil {

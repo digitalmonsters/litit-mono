@@ -14,7 +14,8 @@ const (
 )
 
 const (
-	PREFIX_CONTENT = "content"
+	PREFIX_CONTENT            = "content"
+	PREFIX_NOTIFICATION_IMAGE = "notification_image"
 )
 
 type Settings struct {
@@ -41,6 +42,7 @@ type Settings struct {
 	UserBannedListener             boilerplate.KafkaListenerConfiguration `json:"UserBannedListener"`
 	EmailLinks                     EmailLinks                             `json:"EmailLinks"`
 	Scylla                         boilerplate.ScyllaConfiguration        `json:"Scylla"`
+	S3                             boilerplate.S3Config                   `json:"S3"`
 }
 
 type EmailLinks struct {
