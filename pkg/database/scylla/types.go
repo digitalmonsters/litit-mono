@@ -17,8 +17,7 @@ type Notification struct {
 	Headline           string `json:"headline"`
 	RenderingVariables string `json:"rendering_variables"`
 	CustomData         string `json:"custom_data"`
-	ImageUrl           string `json:"image_url"`
-	Route              string `json:"route"`
+	NotificationInfo   string `json:"notification_info"`
 }
 
 type NotificationRelation struct {

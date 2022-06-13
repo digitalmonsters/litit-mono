@@ -14,7 +14,7 @@ import (
 )
 
 func mapNotificationsToResponseItems(notifications []database.Notification, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) []NotificationsResponseItem {
+	followWrapper follow.IFollowWrapper, ctx context.Context) []NotificationsResponseItem {
 	mapped := make(map[uuid.UUID]*NotificationsResponseItem, len(notifications))
 	relatedUsersIdsMap := map[int64]bool{}
 
@@ -62,8 +62,8 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 
 	routines := []chan error{
 		fillUsers(mapped, userGoWrapper, ctx),
-		fillUserBlock(mapped, userGoWrapper, apmTransaction),
-		fillFollowData(mapped, followWrapper, apmTransaction),
+		fillUserBlock(mapped, userGoWrapper, apm.TransactionFromContext(ctx)),
+		fillFollowData(mapped, followWrapper, apm.TransactionFromContext(ctx)),
 	}
 
 	for _, c := range routines {

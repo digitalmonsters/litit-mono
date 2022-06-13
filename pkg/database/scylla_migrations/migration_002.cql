@@ -12,8 +12,7 @@ create table if not exists notification
     headline            text,
     rendering_variables text,
     custom_data         text,
-    image_url           text,
-    route               text,
+    notification_info   text,
     primary key ((user_id, event_type), created_at, entity_id, related_entity_id)
 ) with clustering order by (created_at desc) and default_time_to_live = 7776000; -- 90 days
 

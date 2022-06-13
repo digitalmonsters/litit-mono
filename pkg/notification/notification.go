@@ -2,66 +2,96 @@ package notification
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/google/uuid"
-	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
-	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"strings"
 )
 
 func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) (*NotificationsResponse, error) {
+	followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+	var pageState []byte
+
+	if len(page) > 0 {
+		if strings.Contains(page, "empty") {
+			page = ""
+		} else {
+			var err error
+			pageState, err = base64.StdEncoding.DecodeString(page)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+		}
+	}
+
+	templates := make([]string, 0)
+	for _, notificationType := range getNotificationsTypesByTypeGroup(typeGroup) {
+		templates = append(templates, database.GetNotificationTemplates(notificationType)...)
+	}
+
+	session := database.GetScyllaSession()
+	iter := session.Query(fmt.Sprintf("select notification_info from notification where user_id = ? "+
+		"and event_type in (%v)", strings.Join(templates, ","),
+	), userId).WithContext(ctx).PageSize(10).PageState(pageState).Iter()
+
+	nextPageState := iter.PageState()
+	scanner := iter.Scanner()
+
 	notifications := make([]database.Notification, 0)
 
-	p := paginator.New(
-		&paginator.Config{
-			Rules: []paginator.Rule{{
-				Key:   "CreatedAt",
-				Order: paginator.DESC,
-			}},
-			Limit: 10,
-			After: page,
-		},
-	)
+	for scanner.Next() {
+		var notificationInfo string
+		if err := scanner.Scan(&notificationInfo); err != nil {
+			return nil, errors.WithStack(err)
+		}
 
-	query := db.Model(notifications).
-		Where("user_id = ? and type in ?", userId, getNotificationsTypesByTypeGroup(typeGroup))
-	result, cursor, err := p.Paginate(query, &notifications)
-	if err != nil {
+		var notification database.Notification
+		if err := json.Unmarshal([]byte(notificationInfo), &notification); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		notifications = append(notifications, notification)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if err := iter.Close(); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	if result.Error != nil {
-		return nil, errors.WithStack(result.Error)
-	}
+	nextPage := base64.StdEncoding.EncodeToString(nextPageState)
+
+	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, ctx)
 
 	var userNotification database.UserNotification
 
-	if err = db.Where("user_id = ?", userId).Find(&userNotification).Error; err != nil {
-		return nil, err
+	if err := db.Where("user_id = ?", userId).Find(&userNotification).Error; err != nil {
+		return nil, errors.WithStack(err)
 	}
-
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction, ctx)
 
 	resp := NotificationsResponse{
 		Data:        notificationsResp,
 		UnreadCount: userNotification.UnreadCount,
 	}
 
-	if cursor.After != nil {
-		resp.Next = *cursor.After
+	if len(nextPage) > 0 {
+		resp.Next = nextPage
 	} else {
-		resp.Next = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+		resp.Next = "empty"
 	}
 
-	if cursor.Before != nil {
-		resp.Prev = *cursor.Before
+	if len(page) > 0 {
+		resp.Prev = page
 	} else {
-		resp.Prev = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+		resp.Prev = "empty"
 	}
 
 	return &resp, nil
@@ -149,7 +179,7 @@ func IncrementUnreadNotificationsCounter(db *gorm.DB, userId int64) error {
 }
 
 func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) (*ListNotificationsByAdminResponse, error) {
+	followWrapper follow.IFollowWrapper, ctx context.Context) (*ListNotificationsByAdminResponse, error) {
 	notifications := make([]database.Notification, 0)
 	query := db.Model(notifications)
 
@@ -176,7 +206,7 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 		return nil, err
 	}
 
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction, ctx)
+	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, ctx)
 
 	return &ListNotificationsByAdminResponse{
 		Items:      notificationsResp,
