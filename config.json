@@ -150,5 +150,11 @@
     "VerifyHost": "",
     "VerifyPath": "",
     "MarketingSite": ""
+  },
+  "S3": {
+    "CdnUrl": "",
+    "CdnDirectory": "",
+    "Bucket": "",
+    "Region": ""
   }
 }

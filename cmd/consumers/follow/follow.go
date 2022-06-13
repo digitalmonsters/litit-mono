@@ -45,7 +45,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, "follow", map[string]string{
+	var template database.RenderTemplate
+	title, body, headline, template, err = notifySender.RenderTemplate(db, "follow", map[string]string{
 		"firstname": firstName,
 		"lastname":  lastName,
 	}, userData.Language)
@@ -56,10 +57,9 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
+	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route, "user_id": event.UserId}
 	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ToUserId, "follow", "user_follow",
-		title, body, headline, map[string]interface{}{
-			"user_id": event.UserId,
-		}, ctx); err != nil {
+		title, body, headline, customData, ctx); err != nil {
 		return nil, err
 	}
 
@@ -71,6 +71,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		RelatedUserId: null.IntFrom(event.UserId),
 		CreatedAt:     time.Now().UTC(),
 		ContentId:     null.IntFrom(0),
+		CustomData:    customData,
 	}
 
 	if err = db.Create(nt).Error; err != nil {

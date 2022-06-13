@@ -8,6 +8,8 @@ type RenderTemplate struct {
 	Body     string
 	Headline string
 	Kind     string
+	Route    string
+	ImageUrl string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

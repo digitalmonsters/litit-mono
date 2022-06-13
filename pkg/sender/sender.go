@@ -32,14 +32,14 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper, setting
 
 func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationChannel,
 	title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
-	customData map[string]interface{}, ctx context.Context) (interface{}, error) {
+	customData database.CustomData, ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
 	return s.sendPushTemplateMessageToUser(title, body, headline, renderingTemplate, userId, renderingData, customData, db, ctx)
 }
 
 func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
-	title, body, headline string, customData map[string]interface{}, ctx context.Context) (interface{}, error) {
+	title, body, headline string, customData database.CustomData, ctx context.Context) (interface{}, error) {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 
 	return s.sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline, userId, customData, db, ctx)
@@ -77,8 +77,8 @@ func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
 	return nil, sendResult
 }
 
-func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline string, userId int64, customData map[string]interface{},
-	db *gorm.DB, ctx context.Context) (interface{}, error) {
+func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline string, userId int64,
+	customData database.CustomData, db *gorm.DB, ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(db, userId)
 
 	if err != nil {
@@ -104,7 +104,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 }
 
 func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, headline string, template database.RenderTemplate,
-	key string, renderingData map[string]string, customData map[string]interface{}) []notification_gateway.SendPushRequest {
+	key string, renderingData map[string]string, customData database.CustomData) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
 
 	extraData := map[string]string{
@@ -153,7 +153,7 @@ func (s *Sender) preparePushEvents(tokens []database.Device, title string, body 
 }
 
 func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kind, title string, body string, headline string,
-	key string, customData map[string]interface{}) []notification_gateway.SendPushRequest {
+	key string, customData database.CustomData) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
 
 	var extraData = map[string]string{

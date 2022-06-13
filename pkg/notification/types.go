@@ -33,7 +33,8 @@ type NotificationsResponseItem struct {
 	Message              string                        `json:"message"`
 	RelatedUserId        null.Int                      `json:"related_user_id"`
 	RelatedUser          *NotificationsResponseUser    `json:"related_user"`
-	RenderingVariables   map[string]string             `json:"rendering_variables"`
+	RenderingVariables   database.RenderingVariables   `json:"rendering_variables"`
+	CustomData           database.CustomData           `json:"custom_data"`
 	CommentId            null.Int                      `json:"comment_id"`
 	Comment              *database.NotificationComment `json:"comment"`
 	ContentId            null.Int                      `json:"content_id"`

@@ -415,5 +415,21 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_route_render_templates_080620221800",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"alter table render_templates add column if not exists route text;",
+				)
+			},
+		},
+		{
+			ID: "add_image_url_render_templates_080620221800",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"alter table render_templates add column if not exists image_url text;",
+				)
+			},
+		},
 	}
 }

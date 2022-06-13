@@ -25,6 +25,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/cmd/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	settingsPkg "github.com/digitalmonsters/notification-handler/pkg/settings"
+	templatePkg "github.com/digitalmonsters/notification-handler/pkg/template"
 	"os"
 	"os/signal"
 	"syscall"
@@ -109,8 +110,10 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init token api")
 	}
 
+	templateService := templatePkg.NewService()
+
 	rootApplication.
-		AddApplication(notification.Application(httpRouter, apiDef, settingsService)).
+		AddApplication(notification.Application(httpRouter, apiDef, settingsService, templateService)).
 		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {

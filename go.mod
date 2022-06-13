@@ -3,7 +3,7 @@ module github.com/digitalmonsters/notification-handler
 go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.30.25
+	github.com/digitalmonsters/go-common v1.30.34
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.3.0
@@ -14,6 +14,8 @@ require (
 	github.com/scylladb/gocqlx/v2 v2.7.0
 	github.com/segmentio/kafka-go v0.4.31
 	github.com/stretchr/testify v1.7.1
+	github.com/thoas/go-funk v0.9.2
+	github.com/valyala/fasthttp v1.35.0
 	go.elastic.co/apm v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.23.4
@@ -97,9 +99,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/thoas/go-funk v0.9.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.35.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect

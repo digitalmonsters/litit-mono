@@ -21,17 +21,18 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
 	_, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.UserId, "admin_bulk", "default",
-		event.Title, event.Message, "", nil, ctx)
+		event.Title, event.Message, "", event.CustomData, ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	nt := &database.Notification{
-		UserId:    event.UserId,
-		Type:      "push.admin.bulk",
-		Title:     event.Title,
-		Message:   event.Message,
-		CreatedAt: time.Now().UTC(),
+		UserId:     event.UserId,
+		Type:       "push.admin.bulk",
+		Title:      event.Title,
+		Message:    event.Message,
+		CreatedAt:  time.Now().UTC(),
+		CustomData: event.CustomData,
 	}
 
 	if err = db.Create(nt).Error; err != nil {

@@ -46,10 +46,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
-	var template = "content_like"
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{
+	var template database.RenderTemplate
+	title, body, headline, template, err = notifySender.RenderTemplate(db, "content_like", map[string]string{
 		"firstname": firstName,
 		"lastname":  lastName,
 	}, userData.Language)
@@ -59,8 +59,9 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, err
 	}
 
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ContentAuthorId, template, "default",
-		title, body, headline, nil, ctx); err != nil {
+	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
+	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ContentAuthorId, template.Id, "default",
+		title, body, headline, customData, ctx); err != nil {
 		return nil, err
 	}
 
@@ -77,6 +78,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		CreatedAt:     time.Now().UTC(),
 		ContentId:     null.IntFrom(event.ContentId),
 		RelatedUserId: null.IntFrom(event.UserId),
+		CustomData:    customData,
 	}
 
 	var contentData content.SimpleContent

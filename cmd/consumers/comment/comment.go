@@ -101,15 +101,18 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	if parentAuthorId.Valid && parentAuthorId.Int64 != event.AuthorId {
 		var templateName = "comment_reply"
-		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
+		var template database.RenderTemplate
+		title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
 			return nil, err
 		}
 
+		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
+
 		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, parentAuthorId.Int64,
-			templateName, "default", title, body, headline, nil, ctx); err != nil {
+			templateName, "default", title, body, headline, customData, ctx); err != nil {
 			return nil, err
 		}
 
@@ -131,6 +134,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			Content:            notificationContent,
 			CreatedAt:          time.Now().UTC(),
 			RenderingVariables: renderData,
+			CustomData:         customData,
 		}
 
 		if err = db.Create(nt).Error; err != nil {
@@ -155,16 +159,18 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		var templateName = "comment_content_resource_create"
+		var template database.RenderTemplate
 
-		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
+		title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
 			return nil, err
 		}
 
+		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
 		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, contentAuthorId.Int64, templateName, "default",
-			title, body, headline, nil, ctx); err != nil {
+			title, body, headline, customData, ctx); err != nil {
 			return nil, err
 		}
 
@@ -182,6 +188,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			Content:            notificationContent,
 			CreatedAt:          time.Now().UTC(),
 			RenderingVariables: renderData,
+			CustomData:         customData,
 		}
 
 		if err = db.Create(nt).Error; err != nil {
@@ -199,16 +206,19 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		var templateName = "comment_profile_resource_create"
+		var template database.RenderTemplate
 
-		title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
+		title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
 		if err == renderer.TemplateRenderingError {
 			return &event.Messages, err // we should continue, no need to retry
 		} else if err != nil {
 			return nil, err
 		}
 
+		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
+
 		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ProfileId.Int64,
-			templateName, "default", title, body, headline, nil, ctx); err != nil {
+			templateName, "default", title, body, headline, customData, ctx); err != nil {
 			return nil, err
 		}
 
@@ -226,6 +236,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			Content:            notificationContent,
 			CreatedAt:          time.Now().UTC(),
 			RenderingVariables: renderData,
+			CustomData:         customData,
 		}
 
 		if err = db.Create(nt).Error; err != nil {

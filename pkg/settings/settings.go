@@ -16,17 +16,17 @@ type IService interface {
 	IsPushNotificationMuted(userId int64, templateId string, ctx context.Context) (bool, error)
 }
 
-type Service struct {
+type service struct {
 	templatesCache *cache.Cache
 }
 
 func NewService() IService {
-	return &Service{
+	return &service{
 		templatesCache: cache.New(10*time.Minute, 10*time.Minute),
 	}
 }
 
-func (s Service) GetPushSettings(userId int64, ctx context.Context, db *gorm.DB) (map[string]bool, error) {
+func (s service) GetPushSettings(userId int64, ctx context.Context, db *gorm.DB) (map[string]bool, error) {
 	session := database.GetScyllaSession()
 
 	iter := session.Query("select template_id, muted from user_notifications_settings where "+
@@ -73,7 +73,7 @@ func (s Service) GetPushSettings(userId int64, ctx context.Context, db *gorm.DB)
 	return settingsMap, nil
 }
 
-func (s Service) ChangePushSettings(settings map[string]bool, userId int64, ctx context.Context) error {
+func (s service) ChangePushSettings(settings map[string]bool, userId int64, ctx context.Context) error {
 	session := database.GetScyllaSession()
 
 	var currentBatch = session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
@@ -103,7 +103,7 @@ func (s Service) ChangePushSettings(settings map[string]bool, userId int64, ctx 
 	return nil
 }
 
-func (s Service) IsPushNotificationMuted(userId int64, templateId string, ctx context.Context) (bool, error) {
+func (s service) IsPushNotificationMuted(userId int64, templateId string, ctx context.Context) (bool, error) {
 	session := database.GetScyllaSession()
 
 	iter := session.Query("select muted from user_notifications_settings where "+
