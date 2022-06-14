@@ -57,6 +57,7 @@ func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, c
 	return <-s.gateway.EnqueueEmail(msg, ctx)
 }
 
+// TODO: mb repeat logic from sendCustomPushTemplateMessageToUser? or unite methods
 func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
 	renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
 	customData map[string]interface{}, db *gorm.DB, ctx context.Context) (interface{}, error) {
