@@ -8,10 +8,11 @@ import (
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/wrappers"
-	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/stretchr/testify/assert"
 	"github.com/thoas/go-funk"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
@@ -27,27 +28,26 @@ func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	gormDb = database.GetDb(database.DbTypeMaster)
 
-	userWrapper := &user_go.UserGoWrapperMock{
-		GetUsersFn: func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord] {
-			var ch = make(chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord], 2)
+	authWrapper := &auth_go.AuthGoWrapperMock{
+		GetAdminsInfoByIdFn: func(userIds []int64, apmTx *apm.Transaction, forceLog bool) chan auth_go.GetAdminsInfoByIdResponseChan {
+			var ch = make(chan auth_go.GetAdminsInfoByIdResponseChan, 2)
 			go func() {
-				var usersMap = make(map[int64]user_go.UserRecord)
+				var usersMap = make(map[int64]auth_go.AdminGeneralInfo)
 
 				for _, userId := range userIds {
-					usersMap[userId] = user_go.UserRecord{
-						UserId:   userId,
-						Username: fmt.Sprint(userId),
-						Email:    fmt.Sprintf("test_email_%v", userId),
+					usersMap[userId] = auth_go.AdminGeneralInfo{
+						Name:  fmt.Sprint(userId),
+						Email: fmt.Sprintf("test_email_%v", userId),
 					}
 				}
-				ch <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
-					Response: usersMap,
+				ch <- auth_go.GetAdminsInfoByIdResponseChan{
+					Items: usersMap,
 				}
 			}()
 			return ch
 		},
 	}
-	service = NewConfigService(userWrapper)
+	service = NewConfigService(authWrapper)
 
 	os.Exit(m.Run())
 }
@@ -258,7 +258,7 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 	resp, err := service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{
 		Limit:  10,
 		Offset: 0,
-	}, context.TODO())
+	}, router.MethodExecutionData{Context: context.TODO()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -286,7 +286,7 @@ func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 		UpdatedTo:   null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
 		Limit:       10,
 		Offset:      0,
-	}, context.TODO())
+	}, router.MethodExecutionData{Context: context.TODO()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -349,7 +349,9 @@ func TestConfigService_ConfigLogs(t *testing.T) {
 	assert.Equal(t, configs[0].Value, logs[0].OldValue)
 	assert.Equal(t, int64(12), logs[0].RelatedUserId.Int64)
 
-	resp, err := service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{}, context.TODO())
+	resp, err := service.AdminGetConfigLogs(gormDb, GetConfigLogsRequest{}, router.MethodExecutionData{
+		Context: context.TODO(),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

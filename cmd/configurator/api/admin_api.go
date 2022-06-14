@@ -69,7 +69,7 @@ func (a *apiApp) getConfigLogs() router.ICommand {
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
-		resp, err := a.service.AdminGetConfigLogs(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), req, executionData.Context)
+		resp, err := a.service.AdminGetConfigLogs(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), req, executionData)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

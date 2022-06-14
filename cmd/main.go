@@ -14,7 +14,6 @@ import (
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
-	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
@@ -39,8 +38,7 @@ func main() {
 
 	var configPublisher = eventsourcing.NewKafkaBatchPublisher[eventsourcing.ConfigEvent]("config_upsert", config.ConfigNotifier, context.Background())
 
-	var userWrapper = user_go.NewUserGoWrapper(config.Wrappers.UserGo)
-	configService := configsPkg.NewConfigService(userWrapper)
+	configService := configsPkg.NewConfigService(authGoWrapper)
 	rootApplication.
 		AddApplication(configurator.Application(fastHttpRouter, apiDescription, configService, configPublisher)).
 		MustInit()
