@@ -15,6 +15,7 @@ type Notification struct {
 	Title              string `json:"title"`
 	Body               string `json:"body"`
 	Headline           string `json:"headline"`
+	Kind               string `json:"kind"`
 	RenderingVariables string `json:"rendering_variables"`
 	CustomData         string `json:"custom_data"`
 	NotificationInfo   string `json:"notification_info"`
