@@ -28,22 +28,23 @@ const (
 
 //goland:noinspection GoNameStartsWithPackageName
 type UserRecord struct {
-	UserId                     int64                `json:"user_id"`
-	Avatar                     null.String          `json:"avatar"`
-	Username                   string               `json:"username"`
-	Firstname                  string               `json:"firstname"`
-	Lastname                   string               `json:"lastname"`
-	Email                      string               `json:"email"`
-	Verified                   bool                 `json:"verified"`
-	Guest                      bool                 `json:"guest"`
-	BannedTill                 null.Time            `json:"banned_till"`
-	EnableAgeRestrictedContent bool                 `json:"enable_age_restricted_content"`
-	IsTipEnabled               bool                 `json:"is_tip_enabled"`
-	NamePrivacyStatus          NamePrivacyStatus    `json:"name_privacy_status"`
-	Tags                       Tag                  `json:"tags"`
-	Language                   translation.Language `json:"language"`
-	CountryCode                null.String          `json:"country_code"`
-	Birthdate                  null.Time            `json:"birthdate"`
+	UserId                       int64                `json:"user_id"`
+	Avatar                       null.String          `json:"avatar"`
+	Username                     string               `json:"username"`
+	Firstname                    string               `json:"firstname"`
+	Lastname                     string               `json:"lastname"`
+	Email                        string               `json:"email"`
+	Verified                     bool                 `json:"verified"`
+	Guest                        bool                 `json:"guest"`
+	BannedTill                   null.Time            `json:"banned_till"`
+	EnableAgeRestrictedContent   bool                 `json:"enable_age_restricted_content"`
+	EnableSpotLocationVisibility bool                 `json:"enable_spot_location_visibility"`
+	IsTipEnabled                 bool                 `json:"is_tip_enabled"`
+	NamePrivacyStatus            NamePrivacyStatus    `json:"name_privacy_status"`
+	Tags                         Tag                  `json:"tags"`
+	Language                     translation.Language `json:"language"`
+	CountryCode                  null.String          `json:"country_code"`
+	Birthdate                    null.Time            `json:"birthdate"`
 }
 
 func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
@@ -81,7 +82,7 @@ type UserDetailRecord struct {
 	Following           int                  `json:"following"`
 	Followers           int                  `json:"followers"`
 	VideosCount         int                  `json:"videos_count"`
-	Privacy             UerPrivacy           `json:"privacy"`
+	Privacy             UserPrivacy          `json:"privacy"`
 	Profile             UserProfile          `json:"profile"`
 	CountryName         string               `json:"country_name"`
 	Avatar              null.String          `json:"avatar"`
@@ -115,13 +116,14 @@ type UserProfileDetailRecord struct {
 	IsFollower  bool `json:"is_follower"`
 }
 
-type UerPrivacy struct {
+type UserPrivacy struct {
 	EnablePublicMemberRating           bool `json:"enable_public_member_rating"`
 	EnableProfileComments              bool `json:"enable_profile_comments"`
 	RestrictProfileCommentsToFollowers bool `json:"restrict_profile_comments_to_followers"`
 	EnableContentComments              bool `json:"enable_content_comments"`
 	EnableAgeRestrictedProfile         bool `json:"enable_age_restricted_profile"`
 	EnablePublicContentLiked           bool `json:"enable_public_content_liked"`
+	EnableSpotLocationVisibility       bool `json:"enable_spot_location_visibility"`
 }
 
 type UserProfile struct {
