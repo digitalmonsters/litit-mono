@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/notification-handler/pkg/template/uploader"
 	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/valyala/fasthttp"
@@ -11,6 +12,13 @@ import (
 
 func (a templateApp) initUploaderApi(httpRouter *router.HttpRouter) error {
 	path := "/upload_notification_image"
+
+	a.apiDef[path] = swagger.ApiDescription{
+		Response:          "image_url",
+		MethodDescription: "Upload image. Multipart, key: File",
+		Tags:              []string{"notification"},
+	}
+
 	httpRouter.Router().OPTIONS(path, func(ctx *fasthttp.RequestCtx) {
 		utils.SetCors(ctx)
 	})
