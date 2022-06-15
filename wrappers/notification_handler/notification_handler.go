@@ -146,8 +146,8 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithCustomTemplate(title
 	return ch
 }
 
-func (h *NotificationHandlerWrapper) GetNotificationsReadCount(notificationIds []int64, transaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64] {
+func (h *NotificationHandlerWrapper) GetNotificationsReadCount(notificationIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64] {
 	return wrappers.ExecuteRpcRequestAsync[map[int64]int64](h.baseWrapper, h.apiUrl,
 		"GetNotificationsReadCount", GetNotificationsReadCountRequest{NotificationIds: notificationIds},
-		map[string]string{}, h.defaultTimeout, transaction, h.serviceName, forceLog)
+		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
 }
