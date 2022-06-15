@@ -32,9 +32,9 @@ func (s service) EditTemplate(req EditTemplateRequest, tx *gorm.DB) error {
 		return errors.WithStack(errors.New("template not found"))
 	}
 
-	template.Title = req.Title
-	template.Body = req.Body
-	template.Headline = req.Headline
+	//template.Title = req.Title
+	//template.Body = req.Body
+	//template.Headline = req.Headline
 	template.Kind = req.Kind
 	template.Route = req.Route
 	template.ImageUrl = req.ImageUrl
@@ -131,10 +131,10 @@ func (s service) ListTemplates(req ListTemplatesRequest, db *gorm.DB) (*ListTemp
 	respItems := make([]*ListTemplateItem, len(templates))
 	for i, template := range templates {
 		respItems[i] = &ListTemplateItem{
-			Id:       template.Id,
-			Title:    template.Title,
-			Body:     template.Body,
-			Headline: template.Headline,
+			Id: template.Id,
+			//Title:    template.Title,
+			//Body:     template.Body,
+			//Headline: template.Headline,
 			Kind:     template.Kind,
 			Route:    template.Route,
 			ImageUrl: template.ImageUrl,

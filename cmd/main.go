@@ -104,7 +104,6 @@ func main() {
 
 	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender, userGoWrapper).ListenAsync()
 	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender, userGoWrapper).ListenAsync()
-	sendingQueueCustomListener := sending_queue.InitListener(ctx, cfg.SendingQueueCustomListener, notificationSender, userGoWrapper).ListenAsync()
 	commentListener := commentConsumer.InitListener(ctx, cfg.CommentListener, notificationSender, userGoWrapper,
 		contentWrapper, commentWrapper).ListenAsync()
 	voteListener := vote.InitListener(ctx, cfg.VoteListener, notificationSender, userGoWrapper).ListenAsync()
@@ -162,9 +161,6 @@ func main() {
 		},
 		func() error {
 			return sendingQueueListener.Close()
-		},
-		func() error {
-			return sendingQueueCustomListener.Close()
 		},
 		func() error {
 			return creatorsListener.Close()
