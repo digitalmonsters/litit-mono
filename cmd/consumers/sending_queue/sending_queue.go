@@ -52,6 +52,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		relatedUserId = GetRelatedUserIdFromRenderData(event.RenderingVariables, "referrer_id", ctx)
 	}
 
+	if event.CustomData == nil {
+		event.CustomData = database.CustomData{}
+	}
+
 	customData := event.CustomData
 
 	if isCustomTemplate && relatedUserId.Valid {
