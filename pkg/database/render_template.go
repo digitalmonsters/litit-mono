@@ -4,9 +4,6 @@ import "time"
 
 type RenderTemplate struct {
 	Id        string
-	Title     string
-	Body      string
-	Headline  string
 	Kind      string
 	IsGrouped bool
 	Route     string

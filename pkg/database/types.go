@@ -28,7 +28,6 @@ type Notification struct {
 	ContentCreatorStatus *user_go.CreatorStatus       `json:"content_creator_status"`
 	RenderingVariables   RenderingVariables           `json:"rendering_variables"`
 	CustomData           CustomData                   `json:"custom_data"`
-	NotificationsCount   int64                        `json:"notifications_count"`
 }
 
 type RenderingVariables map[string]string

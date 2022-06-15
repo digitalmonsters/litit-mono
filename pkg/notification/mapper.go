@@ -13,7 +13,7 @@ import (
 	"sort"
 )
 
-func mapNotificationsToResponseItems(notifications []database.Notification, userGoWrapper user_go.IUserGoWrapper,
+func mapNotificationsToResponseItems(notifications []database.Notification, notificationsCounts map[uuid.UUID]int64, userGoWrapper user_go.IUserGoWrapper,
 	followWrapper follow.IFollowWrapper, ctx context.Context) []NotificationsResponseItem {
 	mapped := make(map[uuid.UUID]*NotificationsResponseItem, len(notifications))
 	relatedUsersIdsMap := map[int64]bool{}
@@ -35,6 +35,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 			KycReason:            notification.KycReason,
 			CreatedAt:            notification.CreatedAt,
 			RenderingVariables:   notification.RenderingVariables,
+			NotificationsCount:   1,
 		}
 
 		if mappedItem.RelatedUserId.Valid {
@@ -47,6 +48,13 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 			mappedItem.Content = &NotificationsResponseContent{
 				NotificationContent: *notification.Content,
 				ThumbUrl:            utils.GetThumbnailUrl(notification.Content.VideoId),
+			}
+		}
+
+		if notificationsCounts != nil {
+			notificationsCount, ok := notificationsCounts[notification.Id]
+			if ok {
+				mappedItem.NotificationsCount = notificationsCount
 			}
 		}
 

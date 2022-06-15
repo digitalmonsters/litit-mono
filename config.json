@@ -156,5 +156,14 @@
     "CdnDirectory": "",
     "Bucket": "",
     "Region": ""
+  },
+  "Jobber": {
+    "DefaultQueue": "local_machinery_tasks",
+    "ResultExpire": 3600,
+    "Broker": "",
+    "ResultBackend": "",
+    "Lock": "",
+    "Concurrency": 40,
+    "Tls": true
   }
 }

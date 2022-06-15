@@ -37,7 +37,7 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	}
 
 	session := database.GetScyllaSession()
-	iter := session.Query(fmt.Sprintf("select notification_info from notification where user_id = ? "+
+	iter := session.Query(fmt.Sprintf("select title, body, notifications_count, notification_info from notification where user_id = ? "+
 		"and event_type in (%v)", strings.Join(templates, ","),
 	), userId).WithContext(ctx).PageSize(10).PageState(pageState).Iter()
 
@@ -45,10 +45,15 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	scanner := iter.Scanner()
 
 	notifications := make([]database.Notification, 0)
+	notificationsCounts := make(map[uuid.UUID]int64)
 
 	for scanner.Next() {
+		var title string
+		var body string
+		var notificationsCount int64
 		var notificationInfo string
-		if err := scanner.Scan(&notificationInfo); err != nil {
+
+		if err := scanner.Scan(&title, &body, &notificationsCount, &notificationInfo); err != nil {
 			return nil, errors.WithStack(err)
 		}
 
@@ -56,6 +61,10 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 		if err := json.Unmarshal([]byte(notificationInfo), &notification); err != nil {
 			return nil, errors.WithStack(err)
 		}
+
+		notification.Title = title
+		notification.Message = body
+		notificationsCounts[notification.Id] = notificationsCount
 
 		notifications = append(notifications, notification)
 	}
@@ -69,7 +78,7 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 
 	nextPage := base64.StdEncoding.EncodeToString(nextPageState)
 
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, ctx)
+	notificationsResp := mapNotificationsToResponseItems(notifications, notificationsCounts, userGoWrapper, followWrapper, ctx)
 
 	var userNotification database.UserNotification
 
@@ -206,7 +215,7 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 		return nil, err
 	}
 
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, ctx)
+	notificationsResp := mapNotificationsToResponseItems(notifications, nil, userGoWrapper, followWrapper, ctx)
 
 	return &ListNotificationsByAdminResponse{
 		Items:      notificationsResp,

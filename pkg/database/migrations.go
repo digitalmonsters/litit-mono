@@ -440,5 +440,14 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "drop_title_body_render_templates_150620221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+					alter table render_templates drop column title;
+					alter table render_templates drop column body;
+				`)
+			},
+		},
 	}
 }
