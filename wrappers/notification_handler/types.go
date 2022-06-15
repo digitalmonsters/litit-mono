@@ -12,6 +12,7 @@ type INotificationHandlerWrapper interface {
 	EnqueueNotificationWithTemplate(templateName string, userId int64,
 		renderingVars map[string]string, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult
 	EnqueueNotificationWithCustomTemplate(title, body, headline string, userId int64, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult
+	GetNotificationsReadCount(notificationIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
