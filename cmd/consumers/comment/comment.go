@@ -6,31 +6,27 @@ import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	"github.com/digitalmonsters/notification-handler/pkg/notification"
-	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"strconv"
-	"time"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
-	contentWrapper content.IContentWrapper, commentWrapper comment.ICommentWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
+	contentWrapper content.IContentWrapper, commentWrapper comment.ICommentWrapper) (*kafka.Message, error) {
 	if event.CrudOperation != eventsourcing.ChangeEventTypeCreated {
 		return &event.Messages, nil
 	}
 
-	apm_helper.AddApmLabel(apmTransaction, "crud_operation_reason", event.BaseChangeEvent.CrudOperationReason)
-	apm_helper.AddApmLabel(apmTransaction, "crud_operation", event.BaseChangeEvent.CrudOperation)
-	apm_helper.AddApmLabel(apmTransaction, "user_id", event.AuthorId)
-	apm_helper.AddApmLabel(apmTransaction, "profile_id", event.ProfileId.ValueOrZero())
-	apm_helper.AddApmLabel(apmTransaction, "content_id", event.ContentId.ValueOrZero())
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "crud_operation_reason", event.BaseChangeEvent.CrudOperationReason)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "crud_operation", event.BaseChangeEvent.CrudOperation)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.AuthorId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "profile_id", event.ProfileId.ValueOrZero())
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_id", event.ContentId.ValueOrZero())
 
 	var userData user_go.UserRecord
 	var err error
@@ -47,17 +43,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	renderData := map[string]string{
+	renderData := database.RenderingVariables{
 		"firstname": firstName,
 		"lastname":  lastName,
 		"comment":   event.Comment.Comment,
 	}
-
-	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
-
-	var title string
-	var body string
-	var headline string
 
 	notificationComment := &database.NotificationComment{
 		Id:        event.Id,
@@ -70,7 +60,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var contentAuthorId null.Int
 	if event.ContentId.Valid {
-		contentResp := <-contentWrapper.GetInternal([]int64{event.ContentId.Int64}, false, apmTransaction, false)
+		contentResp := <-contentWrapper.GetInternal([]int64{event.ContentId.Int64}, false, apm.TransactionFromContext(ctx), false)
 		if contentResp.Error != nil {
 			return nil, err
 		}
@@ -85,7 +75,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 	}
 
-	commentResp := <-commentWrapper.GetCommentsInfoById([]int64{event.Id}, apmTransaction, false)
+	commentResp := <-commentWrapper.GetCommentsInfoById([]int64{event.Id}, apm.TransactionFromContext(ctx), false)
 	if commentResp.Error != nil {
 		return nil, err
 	}
@@ -101,20 +91,6 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	if parentAuthorId.Valid && parentAuthorId.Int64 != event.AuthorId {
 		var templateName = "comment_reply"
-		var template database.RenderTemplate
-		title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
-		if err == renderer.TemplateRenderingError {
-			return &event.Messages, err // we should continue, no need to retry
-		} else if err != nil {
-			return nil, err
-		}
-
-		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
-
-		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, parentAuthorId.Int64,
-			templateName, "default", title, body, headline, customData, ctx); err != nil {
-			return nil, err
-		}
 
 		if commentChangeReason == eventsourcing.CommentChangeReasonContent {
 			notificationComment.Type = database.NotificationCommentTypeContent
@@ -122,29 +98,22 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			notificationComment.Type = database.NotificationCommentTypeProfile
 		}
 
-		nt := &database.Notification{
+		shouldRetry, err := notifySender.PushNotification(database.Notification{
 			UserId:             parentAuthorId.Int64,
 			Type:               "push.comment.reply",
-			Title:              title,
-			Message:            body,
 			RelatedUserId:      null.IntFrom(event.AuthorId),
 			CommentId:          null.IntFrom(event.Id),
 			Comment:            notificationComment,
 			ContentId:          event.ContentId,
 			Content:            notificationContent,
-			CreatedAt:          time.Now().UTC(),
 			RenderingVariables: renderData,
-			CustomData:         customData,
-		}
+		}, notificationComment.ParentId.ValueOrZero(), event.AuthorId, templateName, userData.Language, "default", ctx)
+		if err != nil {
+			if shouldRetry {
+				return nil, errors.WithStack(err)
+			}
 
-		if err = db.Create(nt).Error; err != nil {
-			return nil, err
-		}
-
-		apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
-
-		if err = notification.IncrementUnreadNotificationsCounter(db, parentAuthorId.Int64); err != nil {
-			return nil, err
+			return &event.Messages, err
 		}
 
 		if (contentAuthorId.Valid && parentAuthorId.Int64 == contentAuthorId.Int64) || (event.ProfileId.Valid && parentAuthorId.Int64 == event.ProfileId.Int64) {
@@ -159,46 +128,25 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		var templateName = "comment_content_resource_create"
-		var template database.RenderTemplate
-
-		title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
-		if err == renderer.TemplateRenderingError {
-			return &event.Messages, err // we should continue, no need to retry
-		} else if err != nil {
-			return nil, err
-		}
-
-		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
-		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, contentAuthorId.Int64, templateName, "default",
-			title, body, headline, customData, ctx); err != nil {
-			return nil, err
-		}
 
 		notificationComment.Type = database.NotificationCommentTypeContent
 
-		nt := &database.Notification{
+		shouldRetry, err := notifySender.PushNotification(database.Notification{
 			UserId:             contentAuthorId.Int64,
 			Type:               "push.content.comment",
-			Title:              title,
-			Message:            body,
 			RelatedUserId:      null.IntFrom(event.AuthorId),
 			CommentId:          null.IntFrom(event.Id),
 			Comment:            notificationComment,
 			ContentId:          event.ContentId,
 			Content:            notificationContent,
-			CreatedAt:          time.Now().UTC(),
 			RenderingVariables: renderData,
-			CustomData:         customData,
-		}
+		}, event.ContentId.ValueOrZero(), event.AuthorId, templateName, userData.Language, "default", ctx)
+		if err != nil {
+			if shouldRetry {
+				return nil, errors.WithStack(err)
+			}
 
-		if err = db.Create(nt).Error; err != nil {
-			return nil, err
-		}
-
-		apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
-
-		if err = notification.IncrementUnreadNotificationsCounter(db, contentAuthorId.Int64); err != nil {
-			return nil, err
+			return &event.Messages, err
 		}
 	case eventsourcing.CommentChangeReasonProfile:
 		if event.ProfileId.Int64 == event.AuthorId {
@@ -206,47 +154,25 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		var templateName = "comment_profile_resource_create"
-		var template database.RenderTemplate
-
-		title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
-		if err == renderer.TemplateRenderingError {
-			return &event.Messages, err // we should continue, no need to retry
-		} else if err != nil {
-			return nil, err
-		}
-
-		customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
-
-		if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ProfileId.Int64,
-			templateName, "default", title, body, headline, customData, ctx); err != nil {
-			return nil, err
-		}
 
 		notificationComment.Type = database.NotificationCommentTypeProfile
 
-		nt := &database.Notification{
+		shouldRetry, err := notifySender.PushNotification(database.Notification{
 			UserId:             event.ProfileId.Int64,
 			Type:               "push.profile.comment",
-			Title:              title,
-			Message:            body,
 			RelatedUserId:      null.IntFrom(event.AuthorId),
 			CommentId:          null.IntFrom(event.Id),
 			Comment:            notificationComment,
 			ContentId:          event.ContentId,
 			Content:            notificationContent,
-			CreatedAt:          time.Now().UTC(),
 			RenderingVariables: renderData,
-			CustomData:         customData,
-		}
+		}, event.AuthorId, 0, templateName, userData.Language, "default", ctx)
+		if err != nil {
+			if shouldRetry {
+				return nil, errors.WithStack(err)
+			}
 
-		if err = db.Create(nt).Error; err != nil {
-			return nil, err
-		}
-
-		apm_helper.AddApmLabel(apmTransaction, "notification_id", nt.Id.String())
-
-		if err = notification.IncrementUnreadNotificationsCounter(db, event.ProfileId.Int64); err != nil {
-			return nil, err
+			return &event.Messages, err
 		}
 	}
 
