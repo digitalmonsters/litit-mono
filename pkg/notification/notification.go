@@ -172,7 +172,7 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 		}
 	}
 
-	if err := db.Offset(req.Offset).Limit(req.Limit).Find(&notifications).Error; err != nil {
+	if err := query.Offset(req.Offset).Limit(req.Limit).Find(&notifications).Error; err != nil {
 		return nil, err
 	}
 

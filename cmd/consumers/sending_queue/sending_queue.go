@@ -67,6 +67,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	customData := event.CustomData
+
+	if event.CustomData == nil {
+		event.CustomData = database.CustomData{}
+	}
+
 	customData["image_url"] = renderingTemplate.ImageUrl
 	customData["route"] = renderingTemplate.Route
 
