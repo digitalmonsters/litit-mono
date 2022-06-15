@@ -249,55 +249,6 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	return nil, nil
 }
 
-func (s *Sender) preparePushEvents(tokens []database.Device, title string, body string, headline string, template database.RenderTemplate,
-	key string, renderingData map[string]string, customData database.CustomData) []notification_gateway.SendPushRequest {
-	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
-
-	extraData := map[string]string{
-		"type":     template.Id,
-		"kind":     template.Kind,
-		"headline": headline,
-	}
-	if customData != nil {
-		js, err := json.Marshal(&customData)
-		if err != nil {
-			log.Error().Str("push_type", template.Id).Str("push_kind", template.Kind).Err(err).Send()
-		}
-		extraData["custom_data"] = string(js)
-	}
-
-	for k, v := range renderingData {
-		if _, ok := extraData[k]; !ok {
-			extraData[k] = v
-		}
-	}
-
-	for _, t := range tokens {
-		if _, ok := mm[t.Platform]; !ok {
-			req := notification_gateway.SendPushRequest{
-				Tokens:     nil,
-				DeviceType: t.Platform,
-				Title:      title,
-				Body:       body,
-				ExtraData:  extraData,
-				PublishKey: key,
-			}
-
-			mm[t.Platform] = &req
-		}
-
-		mm[t.Platform].Tokens = append(mm[t.Platform].Tokens, t.PushToken)
-	}
-
-	var resp []notification_gateway.SendPushRequest
-
-	for _, v := range mm {
-		resp = append(resp, *v)
-	}
-
-	return resp
-}
-
 func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kind, title string, body string, headline string,
 	key string, customData database.CustomData) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
