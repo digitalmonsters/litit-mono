@@ -3,11 +3,21 @@ package translation
 type Language string
 
 const (
-	LanguageEn = Language("en")
+	LanguageEn   = Language("en")
+	LanguageDe   = Language("de")
+	LanguageEs   = Language("es")
+	LanguageFrFr = Language("fr-FR")
+	LanguageIt   = Language("it")
+	LanguagePt   = Language("pt")
 )
 
 var SupportedLanguages = map[Language]bool{
-	LanguageEn: true,
+	LanguageEn:   true,
+	LanguageDe:   true,
+	LanguageEs:   true,
+	LanguageFrFr: true,
+	LanguageIt:   true,
+	LanguagePt:   true,
 }
 
 const DefaultUserLanguage = LanguageEn
