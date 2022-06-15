@@ -71,7 +71,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Comment:            &notificationContent,
 		RelatedUserId:      null.IntFrom(event.UserId),
 		RenderingVariables: renderData,
-	}, event.UserId, 0, templateName, userData.Language, "default", ctx)
+	}, event.CommentId, event.UserId, templateName, userData.Language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)
