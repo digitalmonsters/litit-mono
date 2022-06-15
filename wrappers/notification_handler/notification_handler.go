@@ -2,13 +2,10 @@ package notification_handler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
-	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -149,42 +146,8 @@ func (h *NotificationHandlerWrapper) EnqueueNotificationWithCustomTemplate(title
 	return ch
 }
 
-func (h *NotificationHandlerWrapper) GetNotificationsReadCount(notificationIds []int64, transaction *apm.Transaction, forceLog bool) chan GetNotificationsReadCountResponseChan {
-	respCh := make(chan GetNotificationsReadCountResponseChan, 2)
-
-	respChan := h.baseWrapper.SendRpcRequest(h.apiUrl, "GetNotificationsReadCount", GetNotificationsReadCountRequest{
-		NotificationIds: notificationIds,
-	}, map[string]string{}, h.defaultTimeout, transaction, h.serviceName, forceLog)
-
-	go func() {
-		defer func() {
-			close(respCh)
-		}()
-
-		resp := <-respChan
-
-		result := GetNotificationsReadCountResponseChan{
-			Error: resp.Error,
-		}
-
-		if len(resp.Result) > 0 {
-			data := map[int64]int64{}
-
-			if err := json.Unmarshal(resp.Result, &data); err != nil {
-				result.Error = &rpc.RpcError{
-					Code:        error_codes.GenericMappingError,
-					Message:     err.Error(),
-					Data:        nil,
-					Hostname:    h.baseWrapper.GetHostName(),
-					ServiceName: h.serviceName,
-				}
-			} else {
-				result.Data = data
-			}
-		}
-
-		respCh <- result
-	}()
-
-	return respCh
+func (h *NotificationHandlerWrapper) GetNotificationsReadCount(notificationIds []int64, transaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]int64](h.baseWrapper, h.apiUrl,
+		"GetNotificationsReadCount", GetNotificationsReadCountRequest{NotificationIds: notificationIds},
+		map[string]string{}, h.defaultTimeout, transaction, h.serviceName, forceLog)
 }

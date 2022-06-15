@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"time"
 )
@@ -63,12 +62,4 @@ const (
 
 type GetNotificationsReadCountRequest struct {
 	NotificationIds []int64 `json:"notification_ids"`
-}
-
-type GetNotificationsReadCountResponse struct {
-	Data map[int64]int64 `json:"data"` // map[notification_id]notification_read_count
-}
-type GetNotificationsReadCountResponseChan struct {
-	GetNotificationsReadCountResponse
-	Error *rpc.RpcError `json:"error"`
 }
