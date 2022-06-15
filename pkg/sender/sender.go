@@ -43,14 +43,6 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper, setting
 	}
 }
 
-func (s *Sender) SendTemplateToUser(channel notification_handler.NotificationChannel,
-	title, body, headline string, renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
-	customData database.CustomData, isGrouped bool, ctx context.Context) (interface{}, error) {
-	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
-
-	return s.sendPushTemplateMessageToUser(title, body, headline, renderingTemplate, userId, renderingData, customData, db, ctx)
-}
-
 func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
 	title, body, headline string, customData database.CustomData, isGrouped bool, entityId int64, createdAt time.Time,
 	ctx context.Context) (interface{}, error) {
@@ -60,35 +52,6 @@ func (s *Sender) SendCustomTemplateToUser(channel notification_handler.Notificat
 
 func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error {
 	return <-s.gateway.EnqueueEmail(msg, ctx)
-}
-
-// TODO: mb repeat logic from sendCustomPushTemplateMessageToUser? or unite methods
-func (s *Sender) sendPushTemplateMessageToUser(title, body, headline string,
-	renderingTemplate database.RenderTemplate, userId int64, renderingData map[string]string,
-	customData map[string]interface{}, db *gorm.DB, ctx context.Context) (interface{}, error) {
-	userTokens, err := token.GetUserTokens(db, userId)
-
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	if len(userTokens) == 0 {
-		return nil, nil
-	}
-
-	isMuted, err := s.settingsService.IsPushNotificationMuted(userId, renderingTemplate.Id, ctx)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	if isMuted {
-		return nil, nil
-	}
-
-	sendResult := <-s.gateway.EnqueuePushForUser(s.preparePushEvents(userTokens, title, body,
-		headline, renderingTemplate, fmt.Sprint(userId), renderingData, customData), ctx)
-
-	return nil, sendResult
 }
 
 func FloorToNearest(x, floorTo int) int {
@@ -402,8 +365,13 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	var headlineMultiple string
 	var err error
 
-	title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, template, err = s.RenderTemplate(database.GetDb(database.DbTypeMaster).WithContext(ctx),
-		templateName, notification.RenderingVariables, language)
+	if len(templateName) > 0 {
+		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, template, err = s.RenderTemplate(database.GetDb(database.DbTypeMaster).WithContext(ctx),
+			templateName, notification.RenderingVariables, language)
+	} else {
+		title = notification.Title
+		body = notification.Message
+	}
 
 	if err == renderer.TemplateRenderingError {
 		return false, errors.WithStack(err) // we should continue, no need to retry
@@ -413,8 +381,17 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	notification.CreatedAt = time.Now().UTC()
 
-	notification.CustomData["image_url"] = template.ImageUrl
-	notification.CustomData["route"] = template.Route
+	if notification.CustomData == nil {
+		notification.CustomData = make(database.CustomData)
+	}
+
+	if len(template.ImageUrl) > 0 {
+		notification.CustomData["image_url"] = template.ImageUrl
+	}
+
+	if len(template.Route) > 0 {
+		notification.CustomData["route"] = template.Route
+	}
 
 	customDataMarshalled, err := json.Marshal(notification.CustomData)
 	if err != nil {
