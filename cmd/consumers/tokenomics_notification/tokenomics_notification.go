@@ -4,30 +4,25 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
-	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
-	apmTransaction *apm.Transaction) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
 	var err error
 	rendererData := map[string]string{}
 	var templateName string
 	var templateType string
 	contentId := null.Int{}
 
-	apm_helper.AddApmLabel(apmTransaction, "event_type", string(event.Type))
-	apm_helper.AddApmLabel(apmTransaction, "user_id", event.Payload.UserId)
-	apm_helper.AddApmLabel(apmTransaction, "related_user_id", event.Payload.RelatedUserId.ValueOrZero())
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "event_type", string(event.Type))
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.Payload.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "related_user_id", event.Payload.RelatedUserId.ValueOrZero())
 
 	if event.Payload.PointsAmount.Valid {
 		rendererData["pointsAmount"] = event.Payload.PointsAmount.Decimal.String()
@@ -84,46 +79,19 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, nil
 	}
 
-	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
-
-	var title string
-	var body string
-	var headline string
-
-	var template database.RenderTemplate
-	title, body, headline, template, err = notifySender.RenderTemplate(db, templateName, rendererData, userData.Language)
-	if err == renderer.TemplateRenderingError {
-		return &event.Messages, err // we should continue, no need to retry
-	} else if err != nil {
-		return nil, err
-	}
-
-	customData := database.CustomData{"image_url": template.ImageUrl, "route": template.Route}
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.Payload.UserId, template.Id, "default",
-		title, body, headline, customData, ctx); err != nil {
-		return nil, err
-	}
-
-	notification := database.Notification{
+	shouldRetry, err := notifySender.PushNotification(database.Notification{
 		UserId:             event.Payload.UserId,
 		Type:               templateType,
-		Title:              title,
-		Message:            body,
-		CreatedAt:          time.Now().UTC(),
 		ContentId:          contentId,
 		RelatedUserId:      event.Payload.RelatedUserId,
 		RenderingVariables: rendererData,
-		CustomData:         customData,
-	}
+	}, event.Payload.RelatedUserId.ValueOrZero(), 0, templateName, userData.Language, "default", ctx)
+	if err != nil {
+		if shouldRetry {
+			return nil, errors.WithStack(err)
+		}
 
-	if err = db.Create(&notification).Error; err != nil {
-		return nil, err
-	}
-
-	apm_helper.AddApmLabel(apmTransaction, "notification_id", notification.Id.String())
-
-	if err = notificationPkg.IncrementUnreadNotificationsCounter(db, event.Payload.UserId); err != nil {
-		return nil, err
+		return &event.Messages, err
 	}
 
 	return &event.Messages, nil

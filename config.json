@@ -45,14 +45,6 @@
     "GroupId": "local_notification_handler_sending_queue_listener",
     "Topic": "local.handler_sending_queue"
   },
-  "SendingQueueCustomListener": {
-    "Hosts": "127.0.0.1",
-    "MinBytes": 100,
-    "MaxBytes": 10000000,
-    "Tls": true,
-    "GroupId": "local_notification_handler_sending_queue_custom_listener",
-    "Topic": "local.handler_sending_queue_custom"
-  },
   "CommentListener": {
     "Hosts": "127.0.0.1",
     "MinBytes": 100,

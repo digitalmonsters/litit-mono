@@ -49,7 +49,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		KycStatus:          &event.KycStatus,
 		KycReason:          dbReason,
 		RenderingVariables: renderData,
-	}, event.UserId, 0, templateName, event.Language, "user_follow", ctx)
+	}, event.UserId, 0, templateName, event.Language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

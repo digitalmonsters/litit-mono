@@ -30,7 +30,6 @@ type Settings struct {
 	ReadonlyDb                     boilerplate.DbConfig                   `json:"ReadonlyDb"`
 	KafkaWriter                    boilerplate.KafkaWriterConfiguration   `json:"KafkaWriter"`
 	SendingQueueListener           boilerplate.KafkaListenerConfiguration `json:"SendingQueueListener"`
-	SendingQueueCustomListener     boilerplate.KafkaListenerConfiguration `json:"SendingQueueCustomListener"`
 	CreatorsListener               boilerplate.KafkaListenerConfiguration `json:"CreatorsListener"`
 	CommentListener                boilerplate.KafkaListenerConfiguration `json:"CommentListener"`
 	VoteListener                   boilerplate.KafkaListenerConfiguration `json:"VoteListener"`
