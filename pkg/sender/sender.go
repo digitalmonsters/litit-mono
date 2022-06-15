@@ -26,6 +26,7 @@ import (
 	"go.elastic.co/apm/module/apmhttp"
 	"gorm.io/gorm"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -464,6 +465,12 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		title = titleMultiple
 		body = bodyMultiple
 		headline = headlineMultiple
+
+		if notification.RenderingVariables == nil {
+			notification.RenderingVariables = database.RenderingVariables{}
+		}
+
+		notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount, 10)
 	}
 
 	batch.Query("update notification set notifications_count = ?, title = ?, body = ?, headline = ?, kind = ?, rendering_variables = ?, "+
