@@ -59,3 +59,7 @@ const (
 	NotificationChannelPush  = NotificationChannel(1)
 	NotificationChannelEmail = NotificationChannel(2)
 )
+
+type GetNotificationsReadCountRequest struct {
+	NotificationIds []int64 `json:"notification_ids"`
+}
