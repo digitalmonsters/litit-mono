@@ -23,7 +23,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		page := extract.String(executionData.GetUserValue, "page", "")
-		typeGroup := notificationPkg.TypeGroup(extract.String(executionData.GetUserValue, "notification_type", notificationPkg.TypeGroupAll))
+		typeGroup := notificationPkg.TypeGroup(extract.String(executionData.GetUserValue, "notification_type", string(notificationPkg.TypeGroupAll)))
 
 		userId := executionData.UserId
 
@@ -32,7 +32,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		}
 
 		resp, err := notificationPkg.GetNotifications(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context),
-			executionData.UserId, page, typeGroup, userGoWrapper, followWrapper, executionData.ApmTransaction, executionData.Context)
+			executionData.UserId, page, typeGroup, userGoWrapper, followWrapper, executionData.Context)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

@@ -431,5 +431,23 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_is_grouped_render_templates_080620221800",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"alter table render_templates add column if not exists is_grouped bool default false not null;",
+					"update render_templates set is_grouped = true where id in ('follow', 'content_like', 'content_posted', 'comment_vote_like')",
+				)
+			},
+		},
+		{
+			ID: "drop_title_body_render_templates_150620221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+					alter table render_templates drop column title;
+					alter table render_templates drop column body;
+				`)
+			},
+		},
 	}
 }

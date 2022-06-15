@@ -13,8 +13,8 @@ import (
 	"sort"
 )
 
-func mapNotificationsToResponseItems(notifications []database.Notification, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) []NotificationsResponseItem {
+func mapNotificationsToResponseItems(notifications []database.Notification, notificationsCounts map[uuid.UUID]int64, userGoWrapper user_go.IUserGoWrapper,
+	followWrapper follow.IFollowWrapper, ctx context.Context) []NotificationsResponseItem {
 	mapped := make(map[uuid.UUID]*NotificationsResponseItem, len(notifications))
 	relatedUsersIdsMap := map[int64]bool{}
 
@@ -35,6 +35,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 			KycReason:            notification.KycReason,
 			CreatedAt:            notification.CreatedAt,
 			RenderingVariables:   notification.RenderingVariables,
+			NotificationsCount:   1,
 		}
 
 		if mappedItem.RelatedUserId.Valid {
@@ -50,6 +51,13 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 			}
 		}
 
+		if notificationsCounts != nil {
+			notificationsCount, ok := notificationsCounts[notification.Id]
+			if ok {
+				mappedItem.NotificationsCount = notificationsCount
+			}
+		}
+
 		mapped[notification.Id] = mappedItem
 	}
 
@@ -62,8 +70,8 @@ func mapNotificationsToResponseItems(notifications []database.Notification, user
 
 	routines := []chan error{
 		fillUsers(mapped, userGoWrapper, ctx),
-		fillUserBlock(mapped, userGoWrapper, apmTransaction),
-		fillFollowData(mapped, followWrapper, apmTransaction),
+		fillUserBlock(mapped, userGoWrapper, apm.TransactionFromContext(ctx)),
+		fillFollowData(mapped, followWrapper, apm.TransactionFromContext(ctx)),
 	}
 
 	for _, c := range routines {

@@ -26,7 +26,7 @@ func InitAdminNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]s
 
 			resp, err := notification.ListNotificationsByAdmin(
 				database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), req, userGoWrapper,
-				followWrapper, executionData.ApmTransaction, executionData.Context)
+				followWrapper, executionData.Context)
 			if err != nil {
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}

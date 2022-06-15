@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/RichardKnop/machinery/v1"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
@@ -64,8 +65,37 @@ func main() {
 
 	settingsService := settingsPkg.NewService()
 
+	log.Info().Msg("getting jobber")
+
+	jobber, err := configs.GetJobber(&cfg.Jobber)
+
+	if err != nil {
+		log.Err(err).Msgf("[Jobber] Could not create jobber")
+	}
+
+	_ = jobber.RegisterTask("", func() error {
+		return nil
+	})
+
+	var machineryWorker *machinery.Worker
+
+	go func() {
+		defer func() {
+			_ = recover() // https://github.com/RichardKnop/machinery/issues/437
+		}()
+
+		machineryWorker = jobber.NewCustomQueueWorker(boilerplate.GetGenerator().Generate().String(),
+			cfg.Jobber.Concurrency, cfg.Jobber.DefaultQueue)
+
+		if err = machineryWorker.Launch(); err != nil {
+			if err != machinery.ErrWorkerQuitGracefully {
+				log.Logger.Err(err).Send()
+			}
+		}
+	}()
+
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
-		cfg.Wrappers.NotificationGateway), settingsService)
+		cfg.Wrappers.NotificationGateway), settingsService, jobber)
 
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
@@ -74,7 +104,6 @@ func main() {
 
 	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender, userGoWrapper).ListenAsync()
 	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender, userGoWrapper).ListenAsync()
-	sendingQueueCustomListener := sending_queue.InitListener(ctx, cfg.SendingQueueCustomListener, notificationSender, userGoWrapper).ListenAsync()
 	commentListener := commentConsumer.InitListener(ctx, cfg.CommentListener, notificationSender, userGoWrapper,
 		contentWrapper, commentWrapper).ListenAsync()
 	voteListener := vote.InitListener(ctx, cfg.VoteListener, notificationSender, userGoWrapper).ListenAsync()
@@ -132,9 +161,6 @@ func main() {
 		},
 		func() error {
 			return sendingQueueListener.Close()
-		},
-		func() error {
-			return sendingQueueCustomListener.Close()
 		},
 		func() error {
 			return creatorsListener.Close()

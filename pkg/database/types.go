@@ -179,6 +179,69 @@ func GetNotificationType(templateId string) string {
 	return ""
 }
 
+func GetNotificationTemplates(notificationType string) []string {
+	switch notificationType {
+	case "push.bonus.daily_followers.first":
+		return []string{"first_daily_followers_bonus"}
+	case "push.bonus.daily_time.first":
+		return []string{"first_daily_time_bonus"}
+	case "push.earned_points.first":
+		return []string{"first_guest_x_earned_points"}
+	case "push.paid_views.first":
+		return []string{"first_guest_x_paid_views", "first_x_paid_views"}
+	case "push.referral.first":
+		return []string{"first_referral_joined"}
+	case "push.share.first":
+		return []string{"first_video_shared"}
+	case "push.bonus.weekly_followers.first":
+		return []string{"first_weekly_followers_bonus"}
+	case "push.bonus.weekly_time.first":
+		return []string{"first_weekly_time_bonus"}
+	case "push.avatar.first":
+		return []string{"first_time_avatar_added"}
+	case "push.description.first":
+		return []string{"add_description_bonus"}
+	case "push.upload.first":
+		return []string{"first_video_uploaded"}
+	case "push.upload.spot.first":
+		return []string{"first_spot_uploaded"}
+	case "push.user.need.upload":
+		return []string{"user_need_to_first_upload"}
+	case "push.user.need.avatar":
+		return []string{"user_need_to_upload_avatar"}
+	case "push.content_owner.paid_views.first":
+		return []string{"first_x_paid_views_as_content_owner"}
+	case "push.earned_points.max":
+		return []string{"guest_max_earned_points_for_views"}
+	case "push.referral.reward_increase.stage1":
+		return []string{"increase_reward_stage_1"}
+	case "push.referral.reward_increase.stage2":
+		return []string{"increase_reward_stage_2"}
+	case "push.bonus.registration.verify":
+		return []string{"registration_verify_bonus"}
+	case "push.referral.other":
+		return []string{"other_referrals_joined"}
+	case "push.referral.reward_increase":
+		return []string{"custom_reward_increase"}
+	case "push.referral.megabonus":
+		return []string{"megabonus"}
+	case "push.guest.after_install":
+		return []string{"guest_after_install_first_push", "guest_after_install_second_push", "guest_after_install_third_push"}
+	case "push.user.after_signup":
+		return []string{"user_after_signup_first_push", "user_after_signup_second_push", "user_after_signup_third_push",
+			"user_after_signup_fourth_push", "user_after_signup_fifth_push"}
+	case "push.user.paid_views.daily_max":
+		return []string{"daily_max_amount_of_paid_views_reached"}
+	case "push.user.paid_spot_views.daily_max":
+		return []string{"daily_max_amount_of_paid_spot_views_reached"}
+	case "push.gender.first_x_paid_views":
+		return []string{"first_x_paid_views_gender_push"}
+	case "push.user.first_email_marketing_added":
+		return []string{"first_email_marketing_added"}
+	}
+	return []string{}
+}
+
 //without push.user.after_signup, push.guest.after_install
 func GetMarketingNotifications() []string {
 	return []string{
