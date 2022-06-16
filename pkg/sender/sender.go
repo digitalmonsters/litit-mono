@@ -153,7 +153,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	}
 
 	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
-	deadlineKeys := make([]string, deadlineKeysLen)
+	deadlineKeys := make([]time.Time, deadlineKeysLen)
 	newTime := createdAt
 	newCurrentMinute := 0
 
@@ -163,23 +163,19 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
-		deadlineKeys[i] = newTime.String()
-
-		if i != deadlineKeysLen-1 {
-			newTime = newTime.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
-		}
+		deadlineKeys[i] = newTime
 	}
 
 	deadline := createdAt
 	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), 5)
 	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
-	deadlines := []string{deadline.String(), deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute).String(),
-		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute).String()}
+	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
+		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
 
 	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
 		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ? and entity_id = ?",
-		utils.JoinStringsForInStatement(deadlineKeys), utils.JoinStringsForInStatement(deadlines)), userId, pushType, entityId).WithContext(ctx).Iter()
+		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines)), userId, pushType, entityId).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
@@ -211,7 +207,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
 		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
-			createdAt, 1, flooredCreatedAt, deadline, userId, pushType, entityId)
+			utils.FormatToScyllaDateTime(createdAt), 1, utils.FormatToScyllaDateTime(flooredCreatedAt), utils.FormatToScyllaDateTime(deadline), userId, pushType, entityId)
 
 		if err = session.ExecuteBatch(batch); err != nil {
 			return nil, errors.WithStack(err)
@@ -237,9 +233,9 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
-		pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueue.NotificationCount+1,
-		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline, pushNotificationGroupQueue.UserId,
-		pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
+		utils.FormatToScyllaDateTime(pushNotificationGroupQueue.CreatedAt), pushNotificationGroupQueue.NotificationCount+1,
+		utils.FormatToScyllaDateTime(pushNotificationGroupQueue.DeadlineKey), utils.FormatToScyllaDateTime(pushNotificationGroupQueue.Deadline),
+		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
 
 	if err = session.ExecuteBatch(batch); err != nil {
 		return nil, errors.WithStack(err)
@@ -371,7 +367,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 		notificationIter := session.Query("select user_id, event_type, entity_id, related_entity_id, created_at, "+
 			"notifications_count from notification where user_id = ? and event_type = ? and created_at >= ? limit 1",
-			notification.UserId, template.Id, notification.CreatedAt.Add(-3*24*30*time.Hour)).WithContext(ctx).Iter()
+			notification.UserId, template.Id, utils.FormatToScyllaDateTime(notification.CreatedAt.Add(-3*24*30*time.Hour))).WithContext(ctx).Iter()
 
 		userIdSelected = 0
 		var eventType string
@@ -424,7 +420,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		"custom_data = ?, notification_info = ? where user_id = ? and event_type = ? "+
 		"and created_at = ? and entity_id = ? and related_entity_id = ?", notificationsCount, title, body, headline,
 		kind, string(renderingVariablesMarshalled), string(customDataMarshalled), string(notificationInfoMarshalled),
-		notification.UserId, template.Id, notification.CreatedAt, entityId, relatedEntityId)
+		notification.UserId, template.Id, utils.FormatToScyllaDateTime(notification.CreatedAt), entityId, relatedEntityId)
 
 	if err = session.ExecuteBatch(batch); err != nil {
 		return true, errors.WithStack(err)
@@ -461,7 +457,7 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 
 	currentDate := time.Now().UTC()
 	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
-	deadlineKeys := make([]string, deadlineKeysLen)
+	deadlineKeys := make([]time.Time, deadlineKeysLen)
 	newTime := currentDate
 	newCurrentMinute := 0
 
@@ -471,23 +467,19 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 
 	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
-		deadlineKeys[i] = newTime.String()
-
-		if i != deadlineKeysLen-1 {
-			newTime = newTime.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
-		}
+		deadlineKeys[i] = newTime
 	}
 
 	deadline := currentDate
 	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), 5)
 	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
-	deadlines := []string{deadline.String(), deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute).String(),
-		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute).String()}
+	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
+		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
 
 	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
 		"where deadline_key in (%v) and deadline in (%v)",
-		utils.JoinStringsForInStatement(deadlineKeys), utils.JoinStringsForInStatement(deadlines))).WithContext(ctx).Iter()
+		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines))).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
@@ -537,7 +529,7 @@ func (s *Sender) getNotificationForGroupSend(userId int64, eventType string, cre
 
 	notificationIter := session.Query("select user_id, related_entity_id, title, body, headline, kind, rendering_variables, custom_data "+
 		"from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? limit 1",
-		userId, eventType, createdAt, entityId).WithContext(ctx).Iter()
+		userId, eventType, utils.FormatToScyllaDateTime(createdAt), entityId).WithContext(ctx).Iter()
 
 	notification := scylla.Notification{
 		UserId:    userId,
@@ -567,7 +559,7 @@ func (s *Sender) deleteNotificationFromQueue(deadlineKey time.Time, deadline tim
 	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 
 	batch.Query("delete from push_notification_group_queue where deadline_key = ? and deadline = ? "+
-		"and user_id = ? and event_type = ? and entity_id = ?", deadlineKey, deadline, userId,
+		"and user_id = ? and event_type = ? and entity_id = ?", utils.FormatToScyllaDateTime(deadlineKey), utils.FormatToScyllaDateTime(deadline), userId,
 		eventType, entityId)
 
 	if err := session.ExecuteBatch(batch); err != nil {
