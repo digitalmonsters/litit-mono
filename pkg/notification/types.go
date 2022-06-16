@@ -81,3 +81,11 @@ type ListNotificationsByAdminResponse struct {
 	Items      []NotificationsResponseItem `json:"items"`
 	TotalCount null.Int                    `json:"total_count"`
 }
+
+type ReadNotificationRequest struct {
+	NotificationId int64 `json:"notification_id"`
+}
+
+type GetNotificationsReadCountRequest struct {
+	NotificationIds []int64 `json:"notification_ids"`
+}

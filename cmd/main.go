@@ -134,6 +134,10 @@ func main() {
 	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
+	
+	if err := api.InitInternalNotificationApi(httpRouter, apiDef); err != nil {
+		log.Fatal().Err(err).Msgf("[HTTP] Could not init internal notification api")
+	}
 
 	if err := api.InitTokenApi(httpRouter, apiDef); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init token api")
