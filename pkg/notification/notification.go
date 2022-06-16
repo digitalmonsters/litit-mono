@@ -19,21 +19,28 @@ import (
 
 func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, limit int, userGoWrapper user_go.IUserGoWrapper,
 	followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+	if strings.Contains(page, "empty") {
+		return &NotificationsResponse{
+			Data:        make([]NotificationsResponseItem, 0),
+			Next:        "empty",
+			Prev:        page,
+			UnreadCount: 0,
+		}, nil
+	}
+
 	var pageState []byte
 
 	if len(page) > 0 {
-		if strings.Contains(page, "empty") {
-			page = ""
-		} else {
-			var err error
-			pageState, err = base32.StdEncoding.DecodeString(page)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-			pageState, err = snappy.Decode(pageState)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
+		var err error
+
+		pageState, err = base32.StdEncoding.DecodeString(page)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		pageState, err = snappy.Decode(pageState)
+		if err != nil {
+			return nil, errors.WithStack(err)
 		}
 	}
 
