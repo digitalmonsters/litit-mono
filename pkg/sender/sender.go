@@ -211,7 +211,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
 		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
-			utils.FormatToScyllaDateTime(createdAt), 1, utils.FormatToScyllaDateTime(flooredCreatedAt), utils.FormatToScyllaDateTime(deadline), userId, pushType, entityId)
+			createdAt, 1, flooredCreatedAt, deadline, userId, pushType, entityId)
 
 		if err = session.ExecuteBatch(batch); err != nil {
 			return nil, errors.WithStack(err)
@@ -237,8 +237,8 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
-		utils.FormatToScyllaDateTime(pushNotificationGroupQueue.CreatedAt), pushNotificationGroupQueue.NotificationCount+1,
-		utils.FormatToScyllaDateTime(pushNotificationGroupQueue.DeadlineKey), utils.FormatToScyllaDateTime(pushNotificationGroupQueue.Deadline),
+		pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueue.NotificationCount+1,
+		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
 		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
 
 	if err = session.ExecuteBatch(batch); err != nil {
@@ -371,7 +371,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 		notificationIter := session.Query("select user_id, event_type, entity_id, related_entity_id, created_at, "+
 			"notifications_count from notification where user_id = ? and event_type = ? and created_at >= ? limit 1",
-			notification.UserId, template.Id, utils.FormatToScyllaDateTime(notification.CreatedAt.Add(-3*24*30*time.Hour))).WithContext(ctx).Iter()
+			notification.UserId, template.Id, notification.CreatedAt.Add(-3*24*30*time.Hour)).WithContext(ctx).Iter()
 
 		userIdSelected = 0
 		var eventType string
@@ -424,7 +424,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		"custom_data = ?, notification_info = ? where user_id = ? and event_type = ? "+
 		"and created_at = ? and entity_id = ? and related_entity_id = ?", notificationsCount, title, body, headline,
 		kind, string(renderingVariablesMarshalled), string(customDataMarshalled), string(notificationInfoMarshalled),
-		notification.UserId, template.Id, utils.FormatToScyllaDateTime(notification.CreatedAt), entityId, relatedEntityId)
+		notification.UserId, template.Id, notification.CreatedAt, entityId, relatedEntityId)
 
 	if err = session.ExecuteBatch(batch); err != nil {
 		return true, errors.WithStack(err)
@@ -537,7 +537,7 @@ func (s *Sender) getNotificationForGroupSend(userId int64, eventType string, cre
 
 	notificationIter := session.Query("select user_id, related_entity_id, title, body, headline, kind, rendering_variables, custom_data "+
 		"from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? limit 1",
-		userId, eventType, utils.FormatToScyllaDateTime(createdAt), entityId).WithContext(ctx).Iter()
+		userId, eventType, createdAt, entityId).WithContext(ctx).Iter()
 
 	notification := scylla.Notification{
 		UserId:    userId,
@@ -567,7 +567,7 @@ func (s *Sender) deleteNotificationFromQueue(deadlineKey time.Time, deadline tim
 	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 
 	batch.Query("delete from push_notification_group_queue where deadline_key = ? and deadline = ? "+
-		"and user_id = ? and event_type = ? and entity_id = ?", utils.FormatToScyllaDateTime(deadlineKey), utils.FormatToScyllaDateTime(deadline), userId,
+		"and user_id = ? and event_type = ? and entity_id = ?", deadlineKey, deadline, userId,
 		eventType, entityId)
 
 	if err := session.ExecuteBatch(batch); err != nil {
