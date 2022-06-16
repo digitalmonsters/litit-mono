@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-func GetScyllaTestCluster(config *boilerplate.ScyllaConfiguration) (*gocql.ClusterConfig, *gocql.Session, error) {
+func GetScyllaTestCluster(config *boilerplate.ScyllaConfiguration) (*gocql.ClusterConfig, error) {
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
 		config.Keyspace = GetScyllaCiKeyspaceName()
 	}
@@ -22,11 +22,11 @@ func GetScyllaTestCluster(config *boilerplate.ScyllaConfiguration) (*gocql.Clust
 
 	if oldKeyspace != "system" {
 		if err := boilerplate.EnsureKeyspaceExists(*config, oldKeyspace); err != nil {
-			return nil, nil, errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 	}
 
-	return boilerplate.GetScyllaClusterInternal(*config)
+	return boilerplate.GetScyllaClusterInternal(*config), nil
 }
 
 func GetScyllaCiKeyspaceName() string {

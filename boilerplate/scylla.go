@@ -17,10 +17,7 @@ func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
 		}
 	}
 
-	cluster, _, err := GetScyllaClusterInternal(config)
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
+	cluster := GetScyllaClusterInternal(config)
 
 	observer := apmgocql.NewObserver()
 	cluster.QueryObserver = observer
@@ -32,8 +29,9 @@ func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
 func EnsureKeyspaceExists(config ScyllaConfiguration, targetKeyspace string) error {
 	config.Keyspace = "system"
 
-	_, ses, err := GetScyllaClusterInternal(config)
+	cluster := GetScyllaClusterInternal(config)
 
+	ses, err := cluster.CreateSession()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -66,7 +64,7 @@ func EnsureKeyspaceExists(config ScyllaConfiguration, targetKeyspace string) err
 	return err
 }
 
-func GetScyllaClusterInternal(config ScyllaConfiguration) (*gocql.ClusterConfig, *gocql.Session, error) {
+func GetScyllaClusterInternal(config ScyllaConfiguration) *gocql.ClusterConfig {
 	newCluster := gocql.NewCluster(SplitHostsToSlice(config.Hosts)...)
 
 	timeout := 20 * time.Second
@@ -88,7 +86,5 @@ func GetScyllaClusterInternal(config ScyllaConfiguration) (*gocql.ClusterConfig,
 	newCluster.PageSize = config.PageSize
 	newCluster.Keyspace = config.Keyspace
 
-	newSession, err := newCluster.CreateSession()
-
-	return newCluster, newSession, err
+	return newCluster
 }
