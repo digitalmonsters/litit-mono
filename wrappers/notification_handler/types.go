@@ -54,7 +54,7 @@ func (s SendNotificationWithCustomTemplate) GetPublishKey() string {
 	return fmt.Sprint(s.UserId)
 }
 
-type NotificationChannel byte
+type NotificationChannel int
 
 const (
 	NotificationChannelPush  = NotificationChannel(1)
