@@ -25,10 +25,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"gorm.io/gorm"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -155,7 +153,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	}
 
 	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
-	deadlineKeys := make([]string, deadlineKeysLen)
+	deadlineKeys := make([]time.Time, deadlineKeysLen)
 	newTime := createdAt
 	newCurrentMinute := 0
 
@@ -165,7 +163,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
-		deadlineKeys[i] = newTime.String()
+		deadlineKeys[i] = newTime
 
 		if i != deadlineKeysLen-1 {
 			newTime = newTime.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
@@ -175,13 +173,13 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	deadline := createdAt
 	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), 5)
 	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
-	deadlines := []string{deadline.String(), deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute).String(),
-		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute).String()}
+	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
+		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
 
 	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
 		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ? and entity_id = ?",
-		utils.JoinStringsForInStatement(deadlineKeys), utils.JoinStringsForInStatement(deadlines)), userId, pushType, entityId).WithContext(ctx).Iter()
+		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines)), userId, pushType, entityId).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
@@ -240,8 +238,8 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
 		pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueue.NotificationCount+1,
-		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline, pushNotificationGroupQueue.UserId,
-		pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
+		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
+		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
 
 	if err = session.ExecuteBatch(batch); err != nil {
 		return nil, errors.WithStack(err)
@@ -293,43 +291,26 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 	return resp
 }
 
-func (s *Sender) RenderTemplate(db *gorm.DB, templateName string, renderingData map[string]string,
-	language translation.Language) (title string, body string, headline string, titleMultiple string, bodyMultiple string,
-	headlineMultiple string, renderingTemplate database.RenderTemplate, err error) {
-	var renderTemplate database.RenderTemplate
-
-	if err := db.Where("id = ?", strings.ToLower(templateName)).Take(&renderTemplate).Error; err != nil {
-		return "", "", "", "", "", "", renderTemplate, errors.WithStack(err)
-	}
-
-	title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(renderTemplate, renderingData, language)
-
-	return title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, renderTemplate, err
-}
-
 func (s *Sender) PushNotification(notification database.Notification, entityId int64, relatedEntityId int64,
 	templateName string, language translation.Language, customKind string, ctx context.Context) (shouldRetry bool, innerErr error) {
 	var template database.RenderTemplate
 	var title string
 	var body string
-	var headline string
-	var titleMultiple string
-	var bodyMultiple string
-	var headlineMultiple string
 	var err error
 
 	if len(templateName) > 0 {
-		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, template, err = s.RenderTemplate(database.GetDb(database.DbTypeMaster).WithContext(ctx),
-			templateName, notification.RenderingVariables, language)
+		db := database.GetDbWithContext(database.DbTypeMaster, ctx)
+
+		if err = db.Where("id = ?", templateName).Find(&template).Error; err != nil {
+			return true, errors.WithStack(err)
+		}
+
+		if template.Id != templateName {
+			return false, errors.WithStack(errors.New("template not found"))
+		}
 	} else {
 		title = notification.Title
 		body = notification.Message
-	}
-
-	if err == renderer.TemplateRenderingError {
-		return false, errors.WithStack(err) // we should continue, no need to retry
-	} else if err != nil {
-		return true, errors.WithStack(err)
 	}
 
 	notification.CreatedAt = time.Now().UTC()
@@ -410,6 +391,26 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 	}
 
+	var headline string
+	var titleMultiple string
+	var bodyMultiple string
+	var headlineMultiple string
+
+	if notification.RenderingVariables == nil {
+		notification.RenderingVariables = database.RenderingVariables{}
+	}
+
+	notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount, 10)
+
+	if len(templateName) > 0 {
+		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, notification.RenderingVariables, language)
+		if err == renderer.TemplateRenderingError {
+			return false, errors.WithStack(err) // we should continue, no need to retry
+		} else if err != nil {
+			return true, errors.WithStack(err)
+		}
+	}
+
 	notification.Title = title
 	notification.Message = body
 
@@ -417,12 +418,6 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		title = titleMultiple
 		body = bodyMultiple
 		headline = headlineMultiple
-
-		if notification.RenderingVariables == nil {
-			notification.RenderingVariables = database.RenderingVariables{}
-		}
-
-		notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount, 10)
 	}
 
 	batch.Query("update notification set notifications_count = ?, title = ?, body = ?, headline = ?, kind = ?, rendering_variables = ?, "+
@@ -466,7 +461,7 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 
 	currentDate := time.Now().UTC()
 	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
-	deadlineKeys := make([]string, deadlineKeysLen)
+	deadlineKeys := make([]time.Time, deadlineKeysLen)
 	newTime := currentDate
 	newCurrentMinute := 0
 
@@ -476,7 +471,7 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 
 	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
-		deadlineKeys[i] = newTime.String()
+		deadlineKeys[i] = newTime
 
 		if i != deadlineKeysLen-1 {
 			newTime = newTime.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
@@ -486,13 +481,13 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	deadline := currentDate
 	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), 5)
 	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
-	deadlines := []string{deadline.String(), deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute).String(),
-		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute).String()}
+	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
+		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
 
 	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
 		"where deadline_key in (%v) and deadline in (%v)",
-		utils.JoinStringsForInStatement(deadlineKeys), utils.JoinStringsForInStatement(deadlines))).WithContext(ctx).Iter()
+		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines))).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
