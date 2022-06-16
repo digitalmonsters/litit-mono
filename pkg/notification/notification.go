@@ -67,30 +67,6 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	return &resp, nil
 }
 
-//func getFrontendSupportedNotificationTypes() []string { // temp fix https://tracki-workspace.slack.com/archives/C02LP6X90PL/p1648825668159999?thread_ts=1648825150.159869&cid=C02LP6X90PL
-//	return []string{
-//		"push.content.comment",
-//		"push.profile.comment",
-//		"push.comment.reply",
-//		"push.profile.following",
-//		"system",
-//		"push.admin.bulk",
-//		"push.comment.vote",
-//		"push.content.like",
-//		"push.bonus.daily",
-//		"push.bonus.followers",
-//		"push.content.successful-upload",
-//		"push.content.new-posted",
-//		"push.tip",
-//		"push.content.rejected",
-//		"push.kyc.status",
-//		"push.content-creator.status",
-//		"push.referral.other",
-//		"push.referral.first",
-//		"push.referral.megabonus",
-//	}
-//}
-
 func getNotificationsTypesByTypeGroup(typeGroup TypeGroup) []string {
 	switch typeGroup {
 	case TypeGroupAll:
@@ -182,4 +158,58 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 		Items:      notificationsResp,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func ReadNotification(req ReadNotificationRequest, userId int64, ctx context.Context) error {
+	session := database.GetScyllaSession()
+
+	iter := session.Query("select notification_id from user_notifications_read where cluster_key = ? and notification_id = ? and user_id = ? limit 1;",
+		GetUserNotificationsReadClusterKey(userId), req.NotificationId, userId).
+		WithContext(ctx).Iter()
+
+	isNotificationAlreadyRead := iter.NumRows() > 0
+
+	if err := iter.Close(); err != nil {
+		return err
+	}
+
+	if !isNotificationAlreadyRead {
+		if err := session.Query(
+			"insert into user_notifications_read (cluster_key, notification_id, user_id) values (?, ?, ?)",
+			GetUserNotificationsReadClusterKey(userId), req.NotificationId, userId,
+		).Exec(); err != nil {
+			return err
+		}
+
+		if err := session.Query(
+			"update user_notifications_read_counter set read_count = read_count + ? where notification_id = ?",
+			1, req.NotificationId,
+		).Exec(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetNotificationsReadCount(req GetNotificationsReadCountRequest, ctx context.Context) (map[int64]int64, error) {
+	notificationsReadCountMap := make(map[int64]int64)
+	session := database.GetScyllaSession()
+
+	iter := session.Query("select notification_id, read_count from user_notifications_read_counter where notification_id in ?;",
+		req.NotificationIds).
+		WithContext(ctx).Iter()
+
+	var notificationId int64
+	var readCount int64
+
+	for iter.Scan(&notificationId, &readCount) {
+		notificationsReadCountMap[notificationId] = readCount
+	}
+
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+
+	return notificationsReadCountMap, nil
 }
