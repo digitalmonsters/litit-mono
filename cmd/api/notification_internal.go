@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
@@ -12,7 +11,7 @@ import (
 func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
 	getNotificationsReadCount := "GetNotificationsReadCount"
 
-	if err := httpRouter.GetRpcAdminEndpoint().RegisterRpcCommand(router.NewAdminCommand(getNotificationsReadCount,
+	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(getNotificationsReadCount,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 			var req notification.GetNotificationsReadCountRequest
 
@@ -26,7 +25,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 			}
 
 			return resp, nil
-		}, common.AccessLevelPublic, "notifications:read_count:view")); err != nil {
+		}, false)); err != nil {
 		return err
 	}
 
