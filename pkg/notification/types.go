@@ -12,10 +12,10 @@ import (
 type TypeGroup string
 
 const (
-	TypeGroupAll       = "all"
-	TypeGroupComment   = "comment"
-	TypeGroupSystem    = "system"
-	TypeGroupFollowing = "following"
+	TypeGroupAll       = TypeGroup("all")
+	TypeGroupComment   = TypeGroup("comment")
+	TypeGroupSystem    = TypeGroup("system")
+	TypeGroupFollowing = TypeGroup("following")
 )
 
 type NotificationsResponse struct {
@@ -44,6 +44,7 @@ type NotificationsResponseItem struct {
 	ContentCreatorStatus *user_go.CreatorStatus        `json:"content_creator_status"`
 	KycReason            *eventsourcing.KycReason      `json:"kyc_reason,omitempty"`
 	CreatedAt            time.Time                     `json:"created_at"`
+	NotificationsCount   int64                         `json:"notifications_count"`
 }
 
 type NotificationsResponseContent struct {

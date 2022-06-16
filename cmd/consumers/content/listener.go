@@ -28,7 +28,7 @@ func InitListener(appCtx context.Context, configuration boilerplate.KafkaListene
 			}
 
 			result, err := process(*mapped, executionData.Context, notificationSender, followWrapper, userGoWrapper,
-				contentWrapper, executionData.ApmTransaction)
+				contentWrapper)
 
 			if err != nil {
 				apm_helper.LogError(err, executionData.Context)
