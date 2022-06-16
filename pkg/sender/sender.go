@@ -164,6 +164,10 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
 		deadlineKeys[i] = newTime
+
+		if i != deadlineKeysLen-1 {
+			newTime = newTime.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
+		}
 	}
 
 	deadline := createdAt
@@ -468,6 +472,10 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
 		deadlineKeys[i] = newTime
+
+		if i != deadlineKeysLen-1 {
+			newTime = newTime.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
+		}
 	}
 
 	deadline := currentDate
