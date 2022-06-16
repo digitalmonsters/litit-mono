@@ -27,7 +27,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Title:      event.Title,
 		Message:    event.Message,
 		CustomData: event.CustomData,
-	}, event.UserId, 0, "", translation.DefaultUserLanguage, "default", ctx)
+	}, event.UserId, 0, "push_admin", translation.DefaultUserLanguage, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

@@ -34,7 +34,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		}
 
 		resp, err := notificationPkg.GetNotifications(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context),
-			executionData.UserId, page, typeGroup, userGoWrapper, followWrapper, executionData.Context)
+			executionData.UserId, page, typeGroup, 10, userGoWrapper, followWrapper, executionData.Context)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
