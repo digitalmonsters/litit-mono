@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gocql/gocql"
 	"github.com/pkg/errors"
+	"go.elastic.co/apm/module/apmgocql/v2"
 	"time"
 )
 
@@ -20,6 +21,10 @@ func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
+
+	observer := apmgocql.NewObserver()
+	cluster.QueryObserver = observer
+	cluster.BatchObserver = observer
 
 	return cluster
 }

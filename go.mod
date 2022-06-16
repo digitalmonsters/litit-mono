@@ -32,6 +32,7 @@ require (
 	github.com/thoas/go-funk v0.9.2
 	github.com/valyala/fasthttp v1.35.0
 	go.elastic.co/apm v1.15.0
+	go.elastic.co/apm/module/apmgocql/v2 v2.1.0
 	go.elastic.co/apm/module/apmgormv2 v1.15.0
 	go.elastic.co/apm/module/apmhttp v1.15.0
 	go.elastic.co/apm/module/apmzerolog v1.15.0
@@ -115,6 +116,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
+	go.elastic.co/apm/v2 v2.1.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
