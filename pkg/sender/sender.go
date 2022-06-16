@@ -11,7 +11,6 @@ import (
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
-	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
@@ -43,13 +42,6 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper, setting
 		gateway:         gateway,
 		settingsService: settingsService,
 	}
-}
-
-func (s *Sender) SendCustomTemplateToUser(channel notification_handler.NotificationChannel, userId int64, pushType, kind,
-	title, body, headline string, customData database.CustomData, isGrouped bool, entityId int64, createdAt time.Time,
-	ctx context.Context) (interface{}, error) {
-	return s.sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline, userId, customData, isGrouped,
-		entityId, createdAt, ctx)
 }
 
 func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error {
@@ -453,9 +445,8 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		return true, errors.WithStack(err)
 	}
 
-	if _, err = s.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, notification.UserId,
-		template.Id, kind, title, body, headline, notification.CustomData, template.IsGrouped, entityId,
-		notification.CreatedAt, ctx); err != nil {
+	if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, headline, notification.UserId, notification.CustomData, template.IsGrouped,
+		entityId, notification.CreatedAt, ctx); err != nil {
 		return true, errors.WithStack(err)
 	}
 

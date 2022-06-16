@@ -2,7 +2,7 @@ package notification
 
 import (
 	"context"
-	"encoding/base64"
+	"encoding/base32"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"strings"
@@ -25,7 +26,11 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 			page = ""
 		} else {
 			var err error
-			pageState, err = base64.StdEncoding.DecodeString(page)
+			pageState, err = base32.StdEncoding.DecodeString(page)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			pageState, err = snappy.Decode(pageState)
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
@@ -83,7 +88,7 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 		return nil, errors.WithStack(err)
 	}
 
-	nextPage := base64.StdEncoding.EncodeToString(nextPageState)
+	nextPage := base32.StdEncoding.EncodeToString(snappy.Encode(nextPageState))
 
 	notificationsResp := mapNotificationsToResponseItems(notifications, notificationsCounts, userGoWrapper, followWrapper, ctx)
 
