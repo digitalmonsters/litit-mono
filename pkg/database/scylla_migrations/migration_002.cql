@@ -37,11 +37,3 @@ create table if not exists push_notification_group_queue
     notification_count bigint,
     primary key ((deadline_key, deadline), user_id, event_type, entity_id)
 ) with default_time_to_live = 86400;
-
-create table user_notifications_read
-(
-    cluster_key         bigint,
-    notification_id     bigint,
-    user_id             bigint,
-    primary key (cluster_key, notification_id, user_id)
-);
