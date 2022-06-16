@@ -21,6 +21,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/token"
 	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/gocql/gocql"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
@@ -315,18 +316,23 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		body = notification.Message
 	}
 
+	template.Id = templateName
+
+	notification.Id = uuid.New()
 	notification.CreatedAt = time.Now().UTC()
 
 	if notification.CustomData == nil {
 		notification.CustomData = make(database.CustomData)
 	}
 
-	if len(template.ImageUrl) > 0 {
-		notification.CustomData["image_url"] = template.ImageUrl
-	}
+	if !isCustomPush {
+		if len(template.ImageUrl) > 0 {
+			notification.CustomData["image_url"] = template.ImageUrl
+		}
 
-	if len(template.Route) > 0 {
-		notification.CustomData["route"] = template.Route
+		if len(template.Route) > 0 {
+			notification.CustomData["route"] = template.Route
+		}
 	}
 
 	customDataMarshalled, err := json.Marshal(notification.CustomData)
