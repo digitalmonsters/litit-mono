@@ -147,5 +147,11 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		Tags:              []string{"notification"},
 	}
 
+	apiDef[readNotificationPath] = swagger.ApiDescription{
+		Request:           notificationPkg.ReadNotificationRequest{},
+		MethodDescription: "read notification",
+		Tags:              []string{"notification"},
+	}
+
 	return nil
 }
