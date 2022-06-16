@@ -19,6 +19,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/settings"
 	"github.com/digitalmonsters/notification-handler/pkg/token"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/gocql/gocql"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -180,7 +181,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
 		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ? and entity_id = ?",
-		strings.Join(deadlineKeys, ","), strings.Join(deadlines, ",")), userId, pushType, entityId).WithContext(ctx).Iter()
+		utils.JoinStringsForInStatement(deadlineKeys), utils.JoinStringsForInStatement(deadlines)), userId, pushType, entityId).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
@@ -491,7 +492,7 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
 		"where deadline_key in (%v) and deadline in (%v)",
-		strings.Join(deadlineKeys, ","), strings.Join(deadlines, ","))).WithContext(ctx).Iter()
+		utils.JoinStringsForInStatement(deadlineKeys), utils.JoinStringsForInStatement(deadlines))).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue

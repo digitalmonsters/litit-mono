@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v4"
@@ -36,10 +37,16 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 		templates = append(templates, database.GetNotificationTemplates(notificationType)...)
 	}
 
+	templatesIn := utils.JoinStringsForInStatement(templates)
 	session := database.GetScyllaSession()
-	iter := session.Query(fmt.Sprintf("select title, body, notifications_count, notification_info from notification where user_id = ? "+
-		"and event_type in (%v)", strings.Join(templates, ","),
-	), userId).WithContext(ctx).PageSize(10).PageState(pageState).Iter()
+
+	query := "select title, body, notifications_count, notification_info from notification where user_id = ?"
+
+	if len(templatesIn) > 0 {
+		query = fmt.Sprintf("%v and event_type in (%v)", query, templatesIn)
+	}
+
+	iter := session.Query(query, userId).WithContext(ctx).PageSize(10).PageState(pageState).Iter()
 
 	nextPageState := iter.PageState()
 	scanner := iter.Scanner()
