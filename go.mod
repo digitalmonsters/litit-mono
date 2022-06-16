@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/RichardKnop/machinery v1.10.6
-	github.com/digitalmonsters/go-common v1.30.42
+	github.com/digitalmonsters/go-common v1.30.43
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.3.0
@@ -106,9 +106,11 @@ require (
 	github.com/xdg/scram v1.0.5 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	go.elastic.co/apm/module/apmgocql/v2 v2.1.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/apm/module/apmzerolog v1.15.0 // indirect
+	go.elastic.co/apm/v2 v2.1.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect

@@ -148,14 +148,9 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
 	deadlineKeys := make([]time.Time, deadlineKeysLen)
-	newTime := createdAt
-	newCurrentMinute := 0
+	newTime := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
+		FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, createdAt.Location())
 
-	if newTime.Minute() > configs.PushNotificationDeadlineKeyMinutes {
-		newCurrentMinute = configs.PushNotificationDeadlineKeyMinutes
-	}
-
-	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
 		deadlineKeys[i] = newTime
 
@@ -165,7 +160,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	}
 
 	deadline := createdAt
-	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), 5)
+	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), configs.PushNotificationDeadlineMinutes)
 	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
 	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
@@ -369,21 +364,25 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		batch.Query("update notification_relation set event_applied = true where user_id = ? and event_type = ? "+
 			"and entity_id = ? and related_entity_id = ?", notification.UserId, template.Id, entityId, relatedEntityId)
 
-		notificationIter := session.Query("select user_id, event_type, entity_id, related_entity_id, created_at, "+
+		notificationIter := session.Query("select user_id, entity_id, related_entity_id, created_at, "+
 			"notifications_count from notification where user_id = ? and event_type = ? and created_at >= ? limit 1",
 			notification.UserId, template.Id, notification.CreatedAt.Add(-3*24*30*time.Hour)).WithContext(ctx).Iter()
 
 		userIdSelected = 0
-		var eventType string
 		var entityIdSelected int64
 		var relatedEntityIdSelected int64
 		var createdAt time.Time
 		var notificationsCountSelected int64
 
-		notificationIter.Scan(&userIdSelected, &eventType, &entityIdSelected, &relatedEntityIdSelected, &createdAt, &notificationsCountSelected)
+		notificationIter.Scan(&userIdSelected, &entityIdSelected, &relatedEntityIdSelected, &createdAt, &notificationsCountSelected)
 
 		if err = notificationIter.Close(); err != nil {
 			return true, errors.WithStack(err)
+		}
+
+		if userIdSelected != 0 {
+			batch.Query("delete from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
+				notification.UserId, template.Id, createdAt, entityIdSelected, relatedEntityIdSelected)
 		}
 
 		if notificationsCountSelected > notificationsCount {
