@@ -25,10 +25,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"gorm.io/gorm"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -293,43 +291,26 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 	return resp
 }
 
-func (s *Sender) RenderTemplate(db *gorm.DB, templateName string, renderingData map[string]string,
-	language translation.Language) (title string, body string, headline string, titleMultiple string, bodyMultiple string,
-	headlineMultiple string, renderingTemplate database.RenderTemplate, err error) {
-	var renderTemplate database.RenderTemplate
-
-	if err := db.Where("id = ?", strings.ToLower(templateName)).Take(&renderTemplate).Error; err != nil {
-		return "", "", "", "", "", "", renderTemplate, errors.WithStack(err)
-	}
-
-	title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(renderTemplate, renderingData, language)
-
-	return title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, renderTemplate, err
-}
-
 func (s *Sender) PushNotification(notification database.Notification, entityId int64, relatedEntityId int64,
 	templateName string, language translation.Language, customKind string, ctx context.Context) (shouldRetry bool, innerErr error) {
 	var template database.RenderTemplate
 	var title string
 	var body string
-	var headline string
-	var titleMultiple string
-	var bodyMultiple string
-	var headlineMultiple string
 	var err error
 
 	if len(templateName) > 0 {
-		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, template, err = s.RenderTemplate(database.GetDb(database.DbTypeMaster).WithContext(ctx),
-			templateName, notification.RenderingVariables, language)
+		db := database.GetDbWithContext(database.DbTypeMaster, ctx)
+
+		if err = db.Where("id = ?", templateName).Find(&template).Error; err != nil {
+			return true, errors.WithStack(err)
+		}
+
+		if template.Id != templateName {
+			return false, errors.WithStack(errors.New("template not found"))
+		}
 	} else {
 		title = notification.Title
 		body = notification.Message
-	}
-
-	if err == renderer.TemplateRenderingError {
-		return false, errors.WithStack(err) // we should continue, no need to retry
-	} else if err != nil {
-		return true, errors.WithStack(err)
 	}
 
 	notification.CreatedAt = time.Now().UTC()
@@ -410,6 +391,26 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 	}
 
+	var headline string
+	var titleMultiple string
+	var bodyMultiple string
+	var headlineMultiple string
+
+	if notification.RenderingVariables == nil {
+		notification.RenderingVariables = database.RenderingVariables{}
+	}
+
+	notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount, 10)
+
+	if len(templateName) > 0 {
+		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, notification.RenderingVariables, language)
+		if err == renderer.TemplateRenderingError {
+			return false, errors.WithStack(err) // we should continue, no need to retry
+		} else if err != nil {
+			return true, errors.WithStack(err)
+		}
+	}
+
 	notification.Title = title
 	notification.Message = body
 
@@ -417,12 +418,6 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		title = titleMultiple
 		body = bodyMultiple
 		headline = headlineMultiple
-
-		if notification.RenderingVariables == nil {
-			notification.RenderingVariables = database.RenderingVariables{}
-		}
-
-		notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount, 10)
 	}
 
 	batch.Query("update notification set notifications_count = ?, title = ?, body = ?, headline = ?, kind = ?, rendering_variables = ?, "+
