@@ -12,8 +12,9 @@ import (
 
 func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper) error {
 	getAdsMessagePath := "/ads/message/me"
+	messagePath := "/message/me"
 
-	getAdsMessageRoute := router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		messageType := database.MessageType(int(utils.ExtractInt64(executionData.GetUserValue, "type", 1, 50)))
 		if messageType < database.MessageTypeMobile || messageType > database.MessageTypeWeb {
 			messageType = database.MessageTypeMobile
@@ -25,9 +26,23 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, getAdsMessagePath, router.MethodGet, true, false)
+	}, getAdsMessagePath, router.MethodGet, true, false)); err != nil {
+		return err
+	}
 
-	if err := httpRouter.RegisterRestCmd(getAdsMessageRoute); err != nil {
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		messageType := database.MessageType(int(utils.ExtractInt64(executionData.GetUserValue, "type", 1, 50)))
+		if messageType < database.MessageTypeMobile || messageType > database.MessageTypeWeb {
+			messageType = database.MessageTypeMobile
+		}
+
+		resp, err := message.GetMessageForUser(executionData.UserId, messageType, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), userGoWrapper, executionData)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, messagePath, router.MethodGet, true, false)); err != nil {
 		return err
 	}
 
@@ -43,6 +58,20 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		},
 		Response: message.NotificationMessage{},
 		Tags:     []string{"ads", "message"},
+	}
+
+	apiDef[messagePath] = swagger.ApiDescription{
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "type",
+				In:          swagger.ParameterInPath,
+				Description: "message type",
+				Required:    true,
+				Type:        "integer",
+			},
+		},
+		Response: message.NotificationMessage{},
+		Tags:     []string{"message"},
 	}
 
 	return nil
