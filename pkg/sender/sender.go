@@ -27,6 +27,7 @@ import (
 	"go.elastic.co/apm/module/apmhttp"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -297,8 +298,9 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	var title string
 	var body string
 	var err error
+	isCustomPush := strings.Contains(templateName, "push_admin")
 
-	if len(templateName) > 0 {
+	if !isCustomPush {
 		db := database.GetDbWithContext(database.DbTypeMaster, ctx)
 
 		if err = db.Where("id = ?", templateName).Find(&template).Error; err != nil {
@@ -402,7 +404,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount, 10)
 
-	if len(templateName) > 0 {
+	if !isCustomPush {
 		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, notification.RenderingVariables, language)
 		if err == renderer.TemplateRenderingError {
 			return false, errors.WithStack(err) // we should continue, no need to retry

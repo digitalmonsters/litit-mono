@@ -238,6 +238,36 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"first_x_paid_views_gender_push"}
 	case "push.user.first_email_marketing_added":
 		return []string{"first_email_marketing_added"}
+	case "push.profile.following":
+		return []string{"follow"}
+	case "push.comment.reply":
+		return []string{"comment_reply"}
+	case "push.comment.vote":
+		return []string{"comment_vote_like", "comment_vote_dislike"}
+	case "push.profile.comment":
+		return []string{"comment_profile_resource_create"}
+	case "push.content.comment":
+		return []string{"comment_content_resource_create"}
+	case "push.admin.bulk":
+		return []string{"push_admin"}
+	case "push.content.new-posted":
+		return []string{"content_posted"}
+	case "push.tip":
+		return []string{"tip"}
+	case "push.content.like":
+		return []string{"content_like"}
+	case "push.bonus.followers":
+		return []string{"bonus_followers"}
+	case "push.bonus.daily":
+		return []string{"bonus_time"}
+	case "push.content.successful-upload":
+		return []string{"content_upload"}
+	case "push.spot.successful-upload":
+		return []string{"spot_upload"}
+	case "push.content.rejected":
+		return []string{"content_reject"}
+	case "push.kyc.status":
+		return []string{"kyc_status_verified", "kyc_status_rejected"}
 	}
 	return []string{}
 }

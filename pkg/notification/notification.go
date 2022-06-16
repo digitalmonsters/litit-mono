@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, userGoWrapper user_go.IUserGoWrapper,
+func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, limit int, userGoWrapper user_go.IUserGoWrapper,
 	followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
 	var pageState []byte
 
@@ -46,7 +46,7 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 		query = fmt.Sprintf("%v and event_type in (%v)", query, templatesIn)
 	}
 
-	iter := session.Query(query, userId).WithContext(ctx).PageSize(10).PageState(pageState).Iter()
+	iter := session.Query(query, userId).WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
 
 	nextPageState := iter.PageState()
 	scanner := iter.Scanner()
