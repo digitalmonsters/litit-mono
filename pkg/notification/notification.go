@@ -88,7 +88,11 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 		return nil, errors.WithStack(err)
 	}
 
-	nextPage := base32.StdEncoding.EncodeToString(snappy.Encode(nextPageState))
+	nextPage := ""
+
+	if len(nextPageState) > 0 {
+		nextPage = base32.StdEncoding.EncodeToString(snappy.Encode(nextPageState))
+	}
 
 	notificationsResp := mapNotificationsToResponseItems(notifications, notificationsCounts, userGoWrapper, followWrapper, ctx)
 

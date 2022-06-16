@@ -190,6 +190,14 @@ func TestService_GetNotifications(t *testing.T) {
 	a.Len(resp.Data, 1)
 	a.Equal(dbNotification1.Id, resp.Data[0].Id)
 
+	resp, err = GetNotifications(gormDb, dbNotification2.UserId, resp.Next, TypeGroupAll, 10, userWrapperMock, followWrapper, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.NotNil(resp)
+	a.Len(resp.Data, 0)
+
 	dbNotification3 := database.Notification{
 		UserId:    1,
 		Type:      "push.admin.bulk",
