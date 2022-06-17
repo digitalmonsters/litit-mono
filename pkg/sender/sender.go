@@ -201,8 +201,11 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	if pushNotificationGroupQueue.UserId == 0 { // empty
 		deadline = time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
 			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes)+configs.PushNotificationDeadlineMinutes, 0, 0, createdAt.Location())
-		deadlineKey := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-			CeilToNearest(createdAt.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, createdAt.Location())
+
+		deadlineKey := createdAt.Add(configs.PushNotificationDeadlineKeyMinutes * time.Minute)
+		deadlineKey = time.Date(deadlineKey.Year(), deadlineKey.Month(), deadlineKey.Day(), deadlineKey.Hour(),
+			CeilToNearest(deadlineKey.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
+
 		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
 			createdAt, 1, deadlineKey, deadline, userId, pushType, entityId)
@@ -625,8 +628,8 @@ func (s *Sender) SendDeadlinedNotification(currentDate time.Time, item scylla.Pu
 	flooredCreatedAt := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
 		FloorToNearest(currentDate.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, currentDate.Location())
 
-	if flooredCreatedAt.After(item.CreatedAt.Add(time.Duration(configs.PushNotificationDeadlineKeyMinutes)*time.Minute)) &&
-		item.CreatedAt.Add(time.Duration(configs.PushNotificationDeadlineKeyMinutes+configs.PushNotificationDeadlineMinutes)*time.Minute).After(flooredCreatedAt) {
+	if !flooredCreatedAt.Before(item.DeadlineKey) && // >=
+		flooredCreatedAt.Before(item.DeadlineKey.Add(configs.PushNotificationDeadlineMinutes*time.Minute)) {
 		if err := s.updateNotificationQueueAndSendPush(item.DeadlineKey, item.Deadline, item.UserId, item.EventType,
 			item.CreatedAt, item.EntityId, ctx); err != nil {
 			return true, errors.WithStack(err)
