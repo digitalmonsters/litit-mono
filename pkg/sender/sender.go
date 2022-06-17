@@ -621,10 +621,10 @@ func (s *Sender) SendDeadlinedNotification(currentDate time.Time, item scylla.Pu
 
 	ceilDeadline := time.Date(item.Deadline.Year(), item.Deadline.Month(),
 		item.Deadline.Day(), item.Deadline.Hour(),
-		CeilToNearest(item.Deadline.Minute(), configs.PushNotificationDeadlineKeyMinutes),
+		CeilToNearest(item.Deadline.Minute(), configs.PushNotificationDeadlineMinutes),
 		0, 0, item.Deadline.Location())
 	ceilCurrent := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		CeilToNearest(currentDate.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, currentDate.Location())
+		CeilToNearest(currentDate.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, currentDate.Location())
 
 	if !ceilCurrent.After(ceilDeadline) || ceilCurrent.Unix()-ceilDeadline.Unix() > configs.PushNotificationDeadlineMinutes*60 {
 		return false, nil
@@ -715,7 +715,7 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 		return err
 	}
 
-	if err := s.jobber.RegisterPeriodicTask(fmt.Sprintf("*/%v * * * *", configs.PushNotificationDeadlineMinutes+1),
+	if err := s.jobber.RegisterPeriodicTask(fmt.Sprintf("*/%v * * * *", configs.PushNotificationDeadlineMinutes),
 		string(configs.PeriodicPushNotificationTask), &tasks.Signature{
 			Name: string(configs.GeneralPushNotificationTask),
 		}); err != nil {
