@@ -205,10 +205,10 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 
-	hasPreviousPushNotificationGroupQueueItem := pushNotificationGroupQueue.UserId == 0
+	hasPreviousPushNotificationGroupQueueItem := pushNotificationGroupQueue.UserId != 0
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "has_previous_push_notification_group_queue_item", hasPreviousPushNotificationGroupQueueItem)
 
-	if !hasPreviousPushNotificationGroupQueueItem { // empty
+	if !hasPreviousPushNotificationGroupQueueItem {
 		deadline = time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
 			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes)+configs.PushNotificationDeadlineMinutes, 0, 0, createdAt.Location())
 
