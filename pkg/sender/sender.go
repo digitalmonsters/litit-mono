@@ -673,7 +673,7 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 			}
 
 			var itemUnmarshalled scylla.PushNotificationGroupQueue
-			if err = json.Unmarshal([]byte(item), &item); err != nil {
+			if err = json.Unmarshal([]byte(item), &itemUnmarshalled); err != nil {
 				apm_helper.LogError(errors.WithStack(err), ctx)
 				return errors.WithStack(err)
 			}
