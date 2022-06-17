@@ -358,12 +358,20 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	notificationsCount := int64(1)
 
 	if template.IsGrouped {
-		notificationRelationIter := session.Query("select user_id from notification_relation where user_id = ? and event_type = ?",
-			notification.UserId, template.Id).WithContext(ctx).Iter()
+		notificationRelationIter := session.Query("select user_id from notification_relation where user_id = ? and "+
+			"event_type = ? and entity_id = ? and related_entity_id = ?",
+			notification.UserId, template.Id, entityId, relatedEntityId).WithContext(ctx).Iter()
 
 		var userIdSelected int64
-		for notificationRelationIter.Scan(&userIdSelected) {
-			notificationsCount++
+		notificationRelationIter.Scan(&userIdSelected)
+		alreadySend := false
+
+		if userIdSelected != 0 {
+			alreadySend = true
+		}
+
+		if err = notificationRelationIter.Close(); err != nil {
+			return true, errors.WithStack(err)
 		}
 
 		batch.Query("update notification_relation set event_applied = true where user_id = ? and event_type = ? "+
@@ -391,7 +399,11 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 
 		if notificationsCountSelected > notificationsCount {
-			notificationsCount = notificationsCountSelected + 1
+			if alreadySend {
+				notificationsCount = notificationsCountSelected
+			} else {
+				notificationsCount = notificationsCountSelected + 1
+			}
 		}
 	}
 
@@ -404,7 +416,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		notification.RenderingVariables = database.RenderingVariables{}
 	}
 
-	notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount, 10)
+	notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount-1, 10)
 
 	if !isCustomPush {
 		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, notification.RenderingVariables, language)
