@@ -73,7 +73,7 @@ func FileUpload(ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
 	}
 
 	return &uploadResponse{
-		FileUrl: filepath.Join(cfg.CdnBase, cfg.S3.CdnDirectory, filename),
+		FileUrl: fmt.Sprintf("%v/%v", cfg.CdnBase, filePath),
 		Size:    size,
 	}, nil
 }
