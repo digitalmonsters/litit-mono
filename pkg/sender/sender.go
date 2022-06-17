@@ -364,9 +364,13 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	alreadySend := false
 
 	if template.IsGrouped {
-		notificationRelationIter := session.Query("select user_id from notification_relation where user_id = ? and "+
-			"event_type = ? and entity_id = ? and related_entity_id = ?",
-			notification.UserId, template.Id, entityId, relatedEntityId).WithContext(ctx).Iter()
+		query := "select user_id from notification_relation where user_id = ? and event_type = ?"
+
+		if relatedEntityId != 0 {
+			query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+		}
+
+		notificationRelationIter := session.Query(query, notification.UserId, template.Id).WithContext(ctx).Iter()
 
 		var userIdSelected int64
 		notificationRelationIter.Scan(&userIdSelected)
