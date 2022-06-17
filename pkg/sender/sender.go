@@ -552,7 +552,7 @@ func (s *Sender) getNotificationForGroupSend(userId int64, eventType string, cre
 	}
 
 	var userIdFromSelect int64
-	notificationIter.Scan(userIdFromSelect, &notification.RelatedEntityId, &notification.Title, &notification.Body,
+	notificationIter.Scan(&userIdFromSelect, &notification.RelatedEntityId, &notification.Title, &notification.Body,
 		&notification.Headline, &notification.Kind, &notification.RenderingVariables, &notification.CustomData)
 
 	if err := notificationIter.Close(); err != nil {
