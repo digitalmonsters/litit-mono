@@ -41,6 +41,7 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper, setting
 	return &Sender{
 		gateway:         gateway,
 		settingsService: settingsService,
+		jobber:          jobber,
 	}
 }
 
