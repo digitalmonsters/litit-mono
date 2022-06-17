@@ -55,27 +55,28 @@ type KafkaTopicConfig struct {
 }
 
 type Wrappers struct {
-	Auth                WrapperConfig `json:"Auth"`
-	Content             WrapperConfig `json:"Content"`
-	Likes               WrapperConfig `json:"Likes"`
-	Follows             WrapperConfig `json:"Follows"`
-	Views               WrapperConfig `json:"Views"`
-	UserCategories      WrapperConfig `json:"UserCategories"`
-	UserHashtags        WrapperConfig `json:"UserHashtags"`
-	UserDislikes        WrapperConfig `json:"UserDislikes"`
-	UserBlock           WrapperConfig `json:"UserBlock"`
-	PointsCount         WrapperConfig `json:"PointsCount"`
-	AuthGo              WrapperConfig `json:"AuthGo"`
-	NotificationGateway WrapperConfig `json:"NotificationGateway"`
-	NotificationHandler WrapperConfig `json:"NotificationHandler"`
-	UserGo              WrapperConfig `json:"UserGo"`
-	BaseApi             WrapperConfig `json:"BaseApi"`
-	GoTokenomics        WrapperConfig `json:"GoTokenomics"`
-	SolanaApiGate       WrapperConfig `json:"SolanaApiGate"`
-	AdminWs             WrapperConfig `json:"AdminWs"`
-	Comment             WrapperConfig `json:"Comment"`
-	TesseractOcrApi     WrapperConfig `json:"TesseractOcrApi"`
-	Configurator        WrapperConfig `json:"Configurator"`
+	Auth                   WrapperConfig `json:"Auth"`
+	Content                WrapperConfig `json:"Content"`
+	Likes                  WrapperConfig `json:"Likes"`
+	Follows                WrapperConfig `json:"Follows"`
+	Views                  WrapperConfig `json:"Views"`
+	UserCategories         WrapperConfig `json:"UserCategories"`
+	UserHashtags           WrapperConfig `json:"UserHashtags"`
+	UserDislikes           WrapperConfig `json:"UserDislikes"`
+	UserBlock              WrapperConfig `json:"UserBlock"`
+	PointsCount            WrapperConfig `json:"PointsCount"`
+	AuthGo                 WrapperConfig `json:"AuthGo"`
+	NotificationGateway    WrapperConfig `json:"NotificationGateway"`
+	NotificationHandler    WrapperConfig `json:"NotificationHandler"`
+	UserGo                 WrapperConfig `json:"UserGo"`
+	IndecentContentChecker WrapperConfig `json:"IndecentContentChecker"`
+	BaseApi                WrapperConfig `json:"BaseApi"`
+	GoTokenomics           WrapperConfig `json:"GoTokenomics"`
+	SolanaApiGate          WrapperConfig `json:"SolanaApiGate"`
+	AdminWs                WrapperConfig `json:"AdminWs"`
+	Comment                WrapperConfig `json:"Comment"`
+	TesseractOcrApi        WrapperConfig `json:"TesseractOcrApi"`
+	Configurator           WrapperConfig `json:"Configurator"`
 }
 
 type WrapperConfig struct {
