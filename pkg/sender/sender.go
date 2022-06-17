@@ -201,9 +201,11 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	if pushNotificationGroupQueue.UserId == 0 { // empty
 		deadline = time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
 			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes)+configs.PushNotificationDeadlineMinutes, 0, 0, createdAt.Location())
+		deadlineKey := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
+			CeilToNearest(createdAt.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, createdAt.Location())
 		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
-			createdAt, 1, flooredCreatedAt.Add(configs.PushNotificationDeadlineKeyMinutes*time.Minute), deadline, userId, pushType, entityId)
+			createdAt, 1, deadlineKey, deadline, userId, pushType, entityId)
 
 		if err = session.ExecuteBatch(batch); err != nil {
 			return nil, errors.WithStack(err)
