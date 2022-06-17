@@ -4,24 +4,20 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
-	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
-	contentWrapper content.IContentWrapper, apmTransaction *apm.Transaction) (*kafka.Message, error) {
+	contentWrapper content.IContentWrapper) (*kafka.Message, error) {
 
-	apm_helper.AddApmLabel(apmTransaction, "user_id", event.UserId)
-	apm_helper.AddApmLabel(apmTransaction, "content_id", event.ContentId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_id", event.ContentId)
 
 	if !event.Like || event.ContentAuthorId == event.UserId {
 		return &event.Messages, nil
@@ -40,46 +36,27 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 	}
 
-	var title string
-	var body string
-	var headline string
-
-	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
-
-	var template = "content_like"
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	title, body, headline, _, err = notifySender.RenderTemplate(db, template, map[string]string{
+	renderingVariables := database.RenderingVariables{
 		"firstname": firstName,
 		"lastname":  lastName,
-	}, userData.Language)
-	if err == renderer.TemplateRenderingError {
-		return &event.Messages, err // we should continue, no need to retry
-	} else if err != nil {
-		return nil, err
-	}
-
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.ContentAuthorId, template, "default",
-		title, body, headline, nil, ctx); err != nil {
-		return nil, err
-	}
-
-	contentResp := <-contentWrapper.GetInternal([]int64{event.ContentId}, false, apmTransaction, false)
-	if contentResp.Error != nil {
-		return nil, err
 	}
 
 	notification := database.Notification{
-		UserId:        event.ContentAuthorId,
-		Type:          "push.content.like",
-		Title:         title,
-		Message:       body,
-		CreatedAt:     time.Now().UTC(),
-		ContentId:     null.IntFrom(event.ContentId),
-		RelatedUserId: null.IntFrom(event.UserId),
+		UserId:             event.ContentAuthorId,
+		Type:               "push.content.like",
+		ContentId:          null.IntFrom(event.ContentId),
+		RelatedUserId:      null.IntFrom(event.UserId),
+		RenderingVariables: renderingVariables,
 	}
 
 	var contentData content.SimpleContent
+
+	contentResp := <-contentWrapper.GetInternal([]int64{event.ContentId}, false, apm.TransactionFromContext(ctx), false)
+	if contentResp.Error != nil {
+		return nil, err
+	}
 
 	if contentData, ok = contentResp.Response[event.ContentId]; ok {
 		notification.Content = &database.NotificationContent{
@@ -90,14 +67,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 	}
 
-	if err = db.Create(&notification).Error; err != nil {
-		return nil, err
-	}
+	shouldRetry, err := notifySender.PushNotification(notification, event.ContentId, event.UserId, "content_like", userData.Language, "default", ctx)
+	if err != nil {
+		if shouldRetry {
+			return nil, errors.WithStack(err)
+		}
 
-	apm_helper.AddApmLabel(apmTransaction, "notification_id", notification.Id.String())
-
-	if err = notificationPkg.IncrementUnreadNotificationsCounter(db, event.UserId); err != nil {
-		return nil, err
+		return &event.Messages, err
 	}
 
 	return &event.Messages, nil

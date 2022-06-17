@@ -3,18 +3,21 @@ module github.com/digitalmonsters/notification-handler
 go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.30.25
+	github.com/RichardKnop/machinery v1.10.6
+	github.com/digitalmonsters/go-common v1.30.44
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pilagod/gorm-cursor-paginator/v2 v2.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/scylladb/gocqlx/v2 v2.7.0
 	github.com/segmentio/kafka-go v0.4.31
 	github.com/stretchr/testify v1.7.1
+	github.com/thoas/go-funk v0.9.2
+	github.com/valyala/fasthttp v1.35.0
 	go.elastic.co/apm v1.15.0
+	go.elastic.co/apm/module/apmhttp v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.23.4
 )
@@ -25,7 +28,6 @@ require (
 	cloud.google.com/go/iam v0.3.0 // indirect
 	cloud.google.com/go/pubsub v1.20.0 // indirect
 	github.com/RichardKnop/logging v0.0.0-20190827224416-1a693bdd4fae // indirect
-	github.com/RichardKnop/machinery v1.10.6 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.43.44 // indirect
@@ -57,7 +59,6 @@ require (
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/iancoleman/strcase v0.0.0-20180726023541-3605ed457bf7 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/imroc/req/v3 v3.10.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -79,6 +80,7 @@ require (
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/lib/pq v1.10.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mattn/go-sqlite3 v1.14.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -97,19 +99,18 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/thoas/go-funk v0.9.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.35.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/xdg/scram v1.0.5 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	go.elastic.co/apm/module/apmgocql/v2 v2.1.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
-	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/apm/module/apmzerolog v1.15.0 // indirect
+	go.elastic.co/apm/v2 v2.1.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
@@ -132,5 +133,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/driver/postgres v1.3.4 // indirect
+	gorm.io/driver/sqlite v1.1.4 // indirect
 	howett.net/plist v1.0.0 // indirect
 )

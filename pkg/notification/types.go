@@ -12,10 +12,10 @@ import (
 type TypeGroup string
 
 const (
-	TypeGroupAll       = "all"
-	TypeGroupComment   = "comment"
-	TypeGroupSystem    = "system"
-	TypeGroupFollowing = "following"
+	TypeGroupAll       = TypeGroup("all")
+	TypeGroupComment   = TypeGroup("comment")
+	TypeGroupSystem    = TypeGroup("system")
+	TypeGroupFollowing = TypeGroup("following")
 )
 
 type NotificationsResponse struct {
@@ -33,7 +33,8 @@ type NotificationsResponseItem struct {
 	Message              string                        `json:"message"`
 	RelatedUserId        null.Int                      `json:"related_user_id"`
 	RelatedUser          *NotificationsResponseUser    `json:"related_user"`
-	RenderingVariables   map[string]string             `json:"rendering_variables"`
+	RenderingVariables   database.RenderingVariables   `json:"rendering_variables"`
+	CustomData           database.CustomData           `json:"custom_data"`
 	CommentId            null.Int                      `json:"comment_id"`
 	Comment              *database.NotificationComment `json:"comment"`
 	ContentId            null.Int                      `json:"content_id"`
@@ -43,6 +44,7 @@ type NotificationsResponseItem struct {
 	ContentCreatorStatus *user_go.CreatorStatus        `json:"content_creator_status"`
 	KycReason            *eventsourcing.KycReason      `json:"kyc_reason,omitempty"`
 	CreatedAt            time.Time                     `json:"created_at"`
+	NotificationsCount   int64                         `json:"notifications_count"`
 }
 
 type NotificationsResponseContent struct {
@@ -78,4 +80,12 @@ type ListNotificationsByAdminRequest struct {
 type ListNotificationsByAdminResponse struct {
 	Items      []NotificationsResponseItem `json:"items"`
 	TotalCount null.Int                    `json:"total_count"`
+}
+
+type ReadNotificationRequest struct {
+	NotificationId int64 `json:"notification_id"`
+}
+
+type GetNotificationsReadCountRequest struct {
+	NotificationIds []int64 `json:"notification_ids"`
 }

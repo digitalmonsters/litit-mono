@@ -1,15 +1,24 @@
 package configs
 
 import (
+	"crypto/tls"
 	_ "embed"
 	"fmt"
+	"github.com/RichardKnop/machinery/v1"
+	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
 var CDN_BASE string
 
 const (
-	PREFIX_CONTENT = "content"
+	PushNotificationDeadlineKeyMinutes = 30
+	PushNotificationDeadlineMinutes    = 5
+)
+
+const (
+	PREFIX_CONTENT            = "content"
+	PREFIX_NOTIFICATION_IMAGE = "notification_image"
 )
 
 type Settings struct {
@@ -21,7 +30,6 @@ type Settings struct {
 	ReadonlyDb                     boilerplate.DbConfig                   `json:"ReadonlyDb"`
 	KafkaWriter                    boilerplate.KafkaWriterConfiguration   `json:"KafkaWriter"`
 	SendingQueueListener           boilerplate.KafkaListenerConfiguration `json:"SendingQueueListener"`
-	SendingQueueCustomListener     boilerplate.KafkaListenerConfiguration `json:"SendingQueueCustomListener"`
 	CreatorsListener               boilerplate.KafkaListenerConfiguration `json:"CreatorsListener"`
 	CommentListener                boilerplate.KafkaListenerConfiguration `json:"CommentListener"`
 	VoteListener                   boilerplate.KafkaListenerConfiguration `json:"VoteListener"`
@@ -36,6 +44,8 @@ type Settings struct {
 	UserBannedListener             boilerplate.KafkaListenerConfiguration `json:"UserBannedListener"`
 	EmailLinks                     EmailLinks                             `json:"EmailLinks"`
 	Scylla                         boilerplate.ScyllaConfiguration        `json:"Scylla"`
+	S3                             boilerplate.S3Config                   `json:"S3"`
+	Jobber                         JobberConfig                           `json:"Jobber"`
 }
 
 type EmailLinks struct {
@@ -73,3 +83,53 @@ func GetConfig() Settings {
 func UpdateScyllaKeyspaceForCiConfig(keyspace string) {
 	settings.Scylla.Keyspace = keyspace
 }
+
+type JobberConfig struct {
+	DefaultQueue  string `json:"DefaultQueue"`
+	ResultExpire  int    `json:"ResultExpire"`
+	Broker        string `json:"Broker"`
+	ResultBackend string `json:"ResultBackend"`
+	Lock          string `json:"Lock"`
+	Concurrency   int    `json:"Concurrency"`
+	Tls           bool   `json:"Tls"`
+}
+
+func GetJobber(cred *JobberConfig) (*machinery.Server, error) {
+	cnf := &config.Config{
+		DefaultQueue:    cred.DefaultQueue,
+		ResultsExpireIn: cred.ResultExpire,
+		Broker:          cred.Broker,
+		ResultBackend:   cred.ResultBackend,
+		Lock:            cred.Lock,
+		NoUnixSignals:   true,
+		Redis: &config.RedisConfig{
+			MaxIdle:                3,
+			IdleTimeout:            240,
+			ReadTimeout:            15,
+			WriteTimeout:           15,
+			ConnectTimeout:         15,
+			NormalTasksPollPeriod:  1000,
+			DelayedTasksPollPeriod: 500,
+		},
+	}
+
+	if cred.Tls {
+		cnf.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	server, err := boilerplate.NewServer(cnf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return server, nil
+}
+
+type MachineryTask string
+
+const (
+	GeneralPushNotificationTask  MachineryTask = "general:push_notification"
+	PeriodicPushNotificationTask MachineryTask = "periodic:push_notification"
+	UserPushNotificationTask     MachineryTask = "user:push_notification"
+)
