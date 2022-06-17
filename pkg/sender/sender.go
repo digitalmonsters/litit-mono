@@ -356,6 +356,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 
 	notificationsCount := int64(1)
+	alreadySend := false
 
 	if template.IsGrouped {
 		notificationRelationIter := session.Query("select user_id from notification_relation where user_id = ? and "+
@@ -364,7 +365,6 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 		var userIdSelected int64
 		notificationRelationIter.Scan(&userIdSelected)
-		alreadySend := false
 
 		if userIdSelected != 0 {
 			alreadySend = true
@@ -461,9 +461,11 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		return true, errors.WithStack(err)
 	}
 
-	if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, headline, notification.UserId, notification.CustomData, template.IsGrouped,
-		entityId, notification.CreatedAt, ctx); err != nil {
-		return true, errors.WithStack(err)
+	if !alreadySend {
+		if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, headline, notification.UserId, notification.CustomData, template.IsGrouped,
+			entityId, notification.CreatedAt, ctx); err != nil {
+			return true, errors.WithStack(err)
+		}
 	}
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
