@@ -232,10 +232,17 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		return nil, nil
 	}
 
+	notificationCount := pushNotificationGroupQueue.NotificationCount + 1
+
+	newDeadline := pushNotificationGroupQueue.Deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
+
+	if notificationCount <= 2 || newDeadline.After(pushNotificationGroupQueue.DeadlineKey) {
+		newDeadline = pushNotificationGroupQueue.Deadline
+	}
+
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
-		pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueue.NotificationCount+1,
-		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline.Add(configs.PushNotificationDeadlineMinutes*time.Minute),
+		pushNotificationGroupQueue.CreatedAt, notificationCount, pushNotificationGroupQueue.DeadlineKey, newDeadline,
 		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
 
 	if err = session.ExecuteBatch(batch); err != nil {
