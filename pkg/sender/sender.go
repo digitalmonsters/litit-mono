@@ -666,7 +666,7 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 			ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
 
 			var currentDateUnmarshalled time.Time
-			currentDateUnmarshalled, err = time.Parse(currentDate, currentDate)
+			currentDateUnmarshalled, err = time.Parse("2006-01-02 15:04:05 -0700 UTC", currentDate)
 			if err != nil {
 				apm_helper.LogError(errors.WithStack(err), ctx)
 				return errors.WithStack(err)
