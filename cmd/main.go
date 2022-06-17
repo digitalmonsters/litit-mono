@@ -97,6 +97,10 @@ func main() {
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
 		cfg.Wrappers.NotificationGateway), settingsService, jobber)
 
+	if err = notificationSender.RegisterUserPushNotificationTasks(); err != nil {
+		log.Fatal().Err(err).Msgf("[HTTP] Could not register user push notifications tasks")
+	}
+
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
@@ -134,7 +138,7 @@ func main() {
 	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
-	
+
 	if err := api.InitInternalNotificationApi(httpRouter, apiDef); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init internal notification api")
 	}

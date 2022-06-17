@@ -183,7 +183,8 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		return nil, errors.WithStack(err)
 	}
 
-	flooredCreatedAt := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(), FloorToNearest(createdAt.Minute(), 5), 0, 0, createdAt.Location())
+	flooredCreatedAt := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
+		FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
 	for _, item := range pushNotificationsGroupQueue {
 		if !flooredCreatedAt.After(item.CreatedAt.Add(time.Duration(configs.PushNotificationDeadlineKeyMinutes)*time.Minute)) || !item.Deadline.Equal(deadline) {
 			continue
@@ -197,10 +198,10 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	if pushNotificationGroupQueue.UserId == 0 { // empty
 		deadline = time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
+			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes)+configs.PushNotificationDeadlineMinutes, 0, 0, createdAt.Location())
 		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
-			createdAt, 1, flooredCreatedAt, deadline, userId, pushType, entityId)
+			createdAt, 1, flooredCreatedAt.Add(configs.PushNotificationDeadlineKeyMinutes*time.Minute), deadline, userId, pushType, entityId)
 
 		if err = session.ExecuteBatch(batch); err != nil {
 			return nil, errors.WithStack(err)
@@ -227,7 +228,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
 		pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueue.NotificationCount+1,
-		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
+		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline.Add(configs.PushNotificationDeadlineMinutes*time.Minute),
 		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
 
 	if err = session.ExecuteBatch(batch); err != nil {
@@ -460,14 +461,9 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	currentDate := time.Now().UTC()
 	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
 	deadlineKeys := make([]time.Time, deadlineKeysLen)
-	newTime := currentDate
-	newCurrentMinute := 0
+	newTime := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
+		FloorToNearest(currentDate.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, currentDate.Location())
 
-	if newTime.Minute() > configs.PushNotificationDeadlineKeyMinutes {
-		newCurrentMinute = configs.PushNotificationDeadlineKeyMinutes
-	}
-
-	newTime = time.Date(newTime.Year(), newTime.Month(), newTime.Day(), newTime.Hour(), newCurrentMinute, 0, 0, newTime.Location())
 	for i := 0; i < deadlineKeysLen; i++ {
 		deadlineKeys[i] = newTime
 
@@ -477,7 +473,7 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	}
 
 	deadline := currentDate
-	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), 5)
+	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), configs.PushNotificationDeadlineMinutes)
 	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
 	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
@@ -602,7 +598,7 @@ func (s *Sender) updateNotificationQueueAndSendPush(deadlineKey time.Time, deadl
 
 func (s *Sender) SendDeadlinedNotification(currentDate time.Time, item scylla.PushNotificationGroupQueue, ctx context.Context) (shouldLog bool, innerErr error) {
 	flooredCreatedAt := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		FloorToNearest(currentDate.Minute(), 5), 0, 0, currentDate.Location())
+		FloorToNearest(currentDate.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, currentDate.Location())
 
 	if flooredCreatedAt.After(item.CreatedAt.Add(time.Duration(configs.PushNotificationDeadlineKeyMinutes)*time.Minute)) &&
 		item.CreatedAt.Add(time.Duration(configs.PushNotificationDeadlineKeyMinutes+configs.PushNotificationDeadlineMinutes)*time.Minute).After(flooredCreatedAt) {
