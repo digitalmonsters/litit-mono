@@ -198,12 +198,12 @@ func (l LoveEvent) GetPublishKey() string {
 	return fmt.Sprintf("{\"content_id\":%v,\"user_id\":%v}", l.ContentId, l.UserId)
 }
 
-type UserStatsEvent struct {
+type ContentUserStatsEvent struct {
 	UserId int64 `json:"user_id"`
 	Shares int   `json:"shares"`
 	BaseChangeEvent
 }
 
-func (e UserStatsEvent) GetPublishKey() string {
+func (e ContentUserStatsEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v", e.UserId)
 }
