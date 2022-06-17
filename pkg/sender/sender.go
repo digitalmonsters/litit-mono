@@ -479,6 +479,9 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
 
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline_key", deadlineKeys)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline", deadlines)
+
 	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
 		"where deadline_key in (%v) and deadline in (%v)",
@@ -496,6 +499,9 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	if err := pushNotificationGroupQueueIter.Close(); err != nil {
 		return errors.WithStack(err)
 	}
+
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "grouped_queued_notifications_count", len(pushNotificationsGroupQueue))
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "push_notifications_group_queue", pushNotificationsGroupQueue)
 
 	for _, item := range pushNotificationsGroupQueue {
 		itemMarshalled, _ := json.Marshal(item)
