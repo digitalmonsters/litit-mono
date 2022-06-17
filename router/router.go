@@ -257,7 +257,11 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 						return string(v)
 					}
 				}
-
+				if ctx.PostArgs() != nil {
+					if v := ctx.PostArgs().Peek(key); len(v) > 0 {
+						return string(v)
+					}
+				}
 				if v := ctx.Request.Header.Peek(key); len(v) > 0 {
 					return string(v)
 				}
