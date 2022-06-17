@@ -393,7 +393,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		var notificationsCountSelected int64
 
 		for notificationIter.Scan(&entityIdSelected, &relatedEntityIdSelected, &createdAt, &notificationsCountSelected) {
-			if entityIdSelected == entityId {
+			if (relatedEntityId != 0 && entityIdSelected == entityId) || relatedEntityId == 0 {
 				found = true
 				break
 			}
