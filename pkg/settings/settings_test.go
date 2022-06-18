@@ -15,12 +15,12 @@ import (
 var gormDb *gorm.DB
 var config configs.Settings
 var session *gocql.Session
-var settingsService *Service
+var settingsService *service
 
 func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	session = database.GetScyllaSession()
-	settingsService = NewService().(*Service)
+	settingsService = NewService().(*service)
 	gormDb = database.GetDb(database.DbTypeMaster)
 
 	os.Exit(m.Run())

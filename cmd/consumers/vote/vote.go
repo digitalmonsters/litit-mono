@@ -3,22 +3,17 @@ package vote
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
-	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
-	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"strconv"
-	"time"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
-	apmTransaction *apm.Transaction) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender,
+	userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
 	if !event.Upvote.Valid || event.CommentAuthorId == event.UserId {
 		return &event.Messages, nil
 	}
@@ -38,35 +33,18 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
-	renderData := map[string]string{
+	renderData := database.RenderingVariables{
 		"firstname": firstName,
 		"lastname":  lastName,
 		"comment":   event.Comment,
 	}
 
-	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
-
-	var title string
-	var body string
-	var headline string
 	var templateName string
 
 	if event.Upvote.Bool {
 		templateName = "comment_vote_like"
 	} else {
 		templateName = "comment_vote_dislike"
-	}
-
-	title, body, headline, _, err = notifySender.RenderTemplate(db, templateName, renderData, userData.Language)
-	if err == renderer.TemplateRenderingError {
-		return &event.Messages, err // we should continue, no need to retry
-	} else if err != nil {
-		return nil, err
-	}
-
-	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, event.CommentAuthorId, templateName, "default",
-		title, body, headline, nil, ctx); err != nil {
-		return nil, err
 	}
 
 	notificationContent := database.NotificationComment{
@@ -86,21 +64,20 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		notificationContent.ProfileId = null.IntFrom(event.EntityId)
 	}
 
-	if err = db.Create(&database.Notification{
-		UserId:        event.CommentAuthorId,
-		Type:          "push.comment.vote",
-		Title:         title,
-		Message:       body,
-		CreatedAt:     time.Now().UTC(),
-		CommentId:     null.IntFrom(event.CommentId),
-		Comment:       &notificationContent,
-		RelatedUserId: null.IntFrom(event.UserId),
-	}).Error; err != nil {
-		return nil, err
-	}
+	shouldRetry, err := notifySender.PushNotification(database.Notification{
+		UserId:             event.CommentAuthorId,
+		Type:               "push.comment.vote",
+		CommentId:          null.IntFrom(event.CommentId),
+		Comment:            &notificationContent,
+		RelatedUserId:      null.IntFrom(event.UserId),
+		RenderingVariables: renderData,
+	}, event.CommentId, event.UserId, templateName, userData.Language, "default", ctx)
+	if err != nil {
+		if shouldRetry {
+			return nil, errors.WithStack(err)
+		}
 
-	if err = notificationPkg.IncrementUnreadNotificationsCounter(db, event.CommentAuthorId); err != nil {
-		return nil, err
+		return &event.Messages, err
 	}
 
 	return &event.Messages, nil

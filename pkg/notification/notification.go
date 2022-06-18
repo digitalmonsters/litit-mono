@@ -2,94 +2,132 @@ package notification
 
 import (
 	"context"
+	"encoding/base32"
+	"encoding/json"
+	"fmt"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/google/uuid"
-	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
-	"go.elastic.co/apm"
+	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"strings"
 )
 
-func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) (*NotificationsResponse, error) {
+func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, limit int, userGoWrapper user_go.IUserGoWrapper,
+	followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+	if strings.Contains(page, "empty") {
+		return &NotificationsResponse{
+			Data:        make([]NotificationsResponseItem, 0),
+			Next:        "empty",
+			Prev:        page,
+			UnreadCount: 0,
+		}, nil
+	}
+
+	var pageState []byte
+
+	if len(page) > 0 {
+		var err error
+
+		pageState, err = base32.StdEncoding.DecodeString(page)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		pageState, err = snappy.Decode(pageState)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	templates := make([]string, 0)
+	for _, notificationType := range getNotificationsTypesByTypeGroup(typeGroup) {
+		templates = append(templates, database.GetNotificationTemplates(notificationType)...)
+	}
+
+	templatesIn := utils.JoinStringsForInStatement(templates)
+	session := database.GetScyllaSession()
+
+	query := "select title, body, notifications_count, notification_info from notification where user_id = ?"
+
+	if len(templatesIn) > 0 {
+		query = fmt.Sprintf("%v and event_type in (%v)", query, templatesIn)
+	}
+
+	iter := session.Query(query, userId).WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
+
+	nextPageState := iter.PageState()
+	scanner := iter.Scanner()
+
 	notifications := make([]database.Notification, 0)
+	notificationsCounts := make(map[uuid.UUID]int64)
 
-	p := paginator.New(
-		&paginator.Config{
-			Rules: []paginator.Rule{{
-				Key:   "CreatedAt",
-				Order: paginator.DESC,
-			}},
-			Limit: 10,
-			After: page,
-		},
-	)
+	for scanner.Next() {
+		var title string
+		var body string
+		var notificationsCount int64
+		var notificationInfo string
 
-	query := db.Model(notifications).
-		Where("user_id = ? and type in ?", userId, getNotificationsTypesByTypeGroup(typeGroup))
-	result, cursor, err := p.Paginate(query, &notifications)
-	if err != nil {
+		if err := scanner.Scan(&title, &body, &notificationsCount, &notificationInfo); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		var notification database.Notification
+		if err := json.Unmarshal([]byte(notificationInfo), &notification); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		notification.Title = title
+		notification.Message = body
+		notificationsCounts[notification.Id] = notificationsCount
+
+		notifications = append(notifications, notification)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if err := iter.Close(); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	if result.Error != nil {
-		return nil, errors.WithStack(result.Error)
+	nextPage := ""
+
+	if len(nextPageState) > 0 {
+		nextPage = base32.StdEncoding.EncodeToString(snappy.Encode(nextPageState))
 	}
+
+	notificationsResp := mapNotificationsToResponseItems(notifications, notificationsCounts, userGoWrapper, followWrapper, ctx)
 
 	var userNotification database.UserNotification
 
-	if err = db.Where("user_id = ?", userId).Find(&userNotification).Error; err != nil {
-		return nil, err
+	if err := db.Where("user_id = ?", userId).Find(&userNotification).Error; err != nil {
+		return nil, errors.WithStack(err)
 	}
-
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction, ctx)
 
 	resp := NotificationsResponse{
 		Data:        notificationsResp,
 		UnreadCount: userNotification.UnreadCount,
 	}
 
-	if cursor.After != nil {
-		resp.Next = *cursor.After
+	if len(nextPage) > 0 {
+		resp.Next = nextPage
 	} else {
-		resp.Next = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+		resp.Next = "empty"
 	}
 
-	if cursor.Before != nil {
-		resp.Prev = *cursor.Before
+	if len(page) > 0 {
+		resp.Prev = page
 	} else {
-		resp.Prev = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+		resp.Prev = "empty"
 	}
 
 	return &resp, nil
 }
-
-//func getFrontendSupportedNotificationTypes() []string { // temp fix https://tracki-workspace.slack.com/archives/C02LP6X90PL/p1648825668159999?thread_ts=1648825150.159869&cid=C02LP6X90PL
-//	return []string{
-//		"push.content.comment",
-//		"push.profile.comment",
-//		"push.comment.reply",
-//		"push.profile.following",
-//		"system",
-//		"push.admin.bulk",
-//		"push.comment.vote",
-//		"push.content.like",
-//		"push.bonus.daily",
-//		"push.bonus.followers",
-//		"push.content.successful-upload",
-//		"push.content.new-posted",
-//		"push.tip",
-//		"push.content.rejected",
-//		"push.kyc.status",
-//		"push.content-creator.status",
-//		"push.referral.other",
-//		"push.referral.first",
-//		"push.referral.megabonus",
-//	}
-//}
 
 func getNotificationsTypesByTypeGroup(typeGroup TypeGroup) []string {
 	switch typeGroup {
@@ -149,7 +187,7 @@ func IncrementUnreadNotificationsCounter(db *gorm.DB, userId int64) error {
 }
 
 func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, apmTransaction *apm.Transaction, ctx context.Context) (*ListNotificationsByAdminResponse, error) {
+	followWrapper follow.IFollowWrapper, ctx context.Context) (*ListNotificationsByAdminResponse, error) {
 	notifications := make([]database.Notification, 0)
 	query := db.Model(notifications)
 
@@ -172,14 +210,68 @@ func ListNotificationsByAdmin(db *gorm.DB, req ListNotificationsByAdminRequest, 
 		}
 	}
 
-	if err := db.Offset(req.Offset).Limit(req.Limit).Find(&notifications).Error; err != nil {
+	if err := query.Offset(req.Offset).Limit(req.Limit).Find(&notifications).Error; err != nil {
 		return nil, err
 	}
 
-	notificationsResp := mapNotificationsToResponseItems(notifications, userGoWrapper, followWrapper, apmTransaction, ctx)
+	notificationsResp := mapNotificationsToResponseItems(notifications, nil, userGoWrapper, followWrapper, ctx)
 
 	return &ListNotificationsByAdminResponse{
 		Items:      notificationsResp,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func ReadNotification(req ReadNotificationRequest, userId int64, ctx context.Context) error {
+	session := database.GetScyllaSession()
+
+	iter := session.Query("select notification_id from user_notifications_read where cluster_key = ? and notification_id = ? and user_id = ? limit 1;",
+		GetUserNotificationsReadClusterKey(userId), req.NotificationId, userId).
+		WithContext(ctx).Iter()
+
+	isNotificationAlreadyRead := iter.NumRows() > 0
+
+	if err := iter.Close(); err != nil {
+		return err
+	}
+
+	if !isNotificationAlreadyRead {
+		if err := session.Query(
+			"insert into user_notifications_read (cluster_key, notification_id, user_id) values (?, ?, ?)",
+			GetUserNotificationsReadClusterKey(userId), req.NotificationId, userId,
+		).Exec(); err != nil {
+			return err
+		}
+
+		if err := session.Query(
+			"update user_notifications_read_counter set read_count = read_count + ? where notification_id = ?",
+			1, req.NotificationId,
+		).Exec(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetNotificationsReadCount(req GetNotificationsReadCountRequest, ctx context.Context) (map[int64]int64, error) {
+	notificationsReadCountMap := make(map[int64]int64)
+	session := database.GetScyllaSession()
+
+	iter := session.Query("select notification_id, read_count from user_notifications_read_counter where notification_id in ?;",
+		req.NotificationIds).
+		WithContext(ctx).Iter()
+
+	var notificationId int64
+	var readCount int64
+
+	for iter.Scan(&notificationId, &readCount) {
+		notificationsReadCountMap[notificationId] = readCount
+	}
+
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+
+	return notificationsReadCountMap, nil
 }

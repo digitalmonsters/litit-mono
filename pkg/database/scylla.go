@@ -52,8 +52,15 @@ func initCi() {
 	config := configs.GetConfig()
 
 	var err error
+	var cluster *gocql.ClusterConfig
 
-	_, session, err = boilerplate_testing.GetScyllaTestCluster(&config.Scylla)
+	cluster, err = boilerplate_testing.GetScyllaTestCluster(&config.Scylla)
+	if err != nil {
+		log.Panic().Err(err).Msg("cannot initialize scylla cluster")
+		return
+	}
+
+	session, err = cluster.CreateSession()
 	if err != nil {
 		log.Panic().Err(err).Msg("cannot initialize scylla session")
 		return

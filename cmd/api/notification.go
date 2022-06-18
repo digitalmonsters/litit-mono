@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/extract"
 	"github.com/digitalmonsters/go-common/router"
@@ -19,11 +20,12 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 	notificationsPath := "/mobile/v1/notifications"
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
+	readNotificationPath := "/mobile/v1/notification/read"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		page := extract.String(executionData.GetUserValue, "page", "")
-		typeGroup := notificationPkg.TypeGroup(extract.String(executionData.GetUserValue, "notification_type", notificationPkg.TypeGroupAll))
+		typeGroup := notificationPkg.TypeGroup(extract.String(executionData.GetUserValue, "notification_type", string(notificationPkg.TypeGroupAll)))
 
 		userId := executionData.UserId
 
@@ -32,7 +34,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		}
 
 		resp, err := notificationPkg.GetNotifications(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context),
-			executionData.UserId, page, typeGroup, userGoWrapper, followWrapper, executionData.ApmTransaction, executionData.Context)
+			executionData.UserId, page, typeGroup, 10, userGoWrapper, followWrapper, executionData.Context)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
@@ -83,6 +85,27 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		return err
 	}
 
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		userId := executionData.UserId
+		if userId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
+		}
+
+		var req notificationPkg.ReadNotificationRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		if err := notificationPkg.ReadNotification(req, executionData.UserId, executionData.Context); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, readNotificationPath, http.MethodPost).RequireIdentityValidation().Build()); err != nil {
+		return err
+	}
+
 	apiDef[notificationsPath] = swagger.ApiDescription{
 		AdditionalSwaggerParameters: []swagger.ParameterDescription{
 			{
@@ -121,6 +144,12 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 
 	apiDef[readAllNotificationsPath] = swagger.ApiDescription{
 		MethodDescription: "read all notifications",
+		Tags:              []string{"notification"},
+	}
+
+	apiDef[readNotificationPath] = swagger.ApiDescription{
+		Request:           notificationPkg.ReadNotificationRequest{},
+		MethodDescription: "read notification",
 		Tags:              []string{"notification"},
 	}
 
