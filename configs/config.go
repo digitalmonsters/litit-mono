@@ -12,8 +12,8 @@ import (
 var CDN_BASE string
 
 const (
-	PushNotificationDeadlineKeyMinutes = 12 * 60
-	PushNotificationDeadlineMinutes    = (11 * 60) + 35 // diff 25 mins
+	PushNotificationDeadlineKeyMinutes = 30
+	PushNotificationDeadlineMinutes    = 5
 )
 
 const (
