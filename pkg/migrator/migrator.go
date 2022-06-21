@@ -14,6 +14,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/gocql/gocql"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
@@ -56,6 +57,10 @@ func RegisterMigratorTasks(jobber *machinery.Server) error {
 }
 
 func MigrateNotificationsToScylla(ctx context.Context) error {
+	logger := zerolog.Ctx(ctx)
+
+	logger.Info().Msg("[MigrateNotificationsToScylla] start")
+
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
 	timeNow := time.Now().UTC()
 
@@ -67,6 +72,7 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 	}
 
 	if len(dbNotifications) == 0 {
+		logger.Info().Msg("[MigrateNotificationsToScylla] dbNotification len 0")
 		return nil
 	}
 
@@ -76,6 +82,7 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 	}
 
 	if len(templates) == 0 {
+		logger.Info().Msg("[MigrateNotificationsToScylla] templates len 0")
 		return nil
 	}
 
@@ -90,10 +97,13 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 	groupedNotifications := make(map[int64]map[string]map[int64]scylla.Notification)
 	var scyllaNotificationsToUpdate []scylla.Notification
 
+	logger.Info().Msgf("[MigrateNotificationsToScylla] before dbNotifications iterations, len %v", len(scyllaNotificationsToUpdate))
+
 	for _, dbNotification := range dbNotifications {
 		eventTypes := database.GetNotificationTemplates(dbNotification.Type)
 
 		if len(eventTypes) == 0 {
+			logger.Info().Msgf("[MigrateNotificationsToScylla] eventTypes for \"%v\" not found", dbNotification.Type)
 			continue
 		}
 
@@ -145,13 +155,17 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 		}
 
 		if len(eventType) == 0 {
+			logger.Info().Msgf("[MigrateNotificationsToScylla] eventTypes for \"%v\" not found is switch", dbNotification.Type)
 			continue
 		}
 
 		template, ok := templatesMap[eventType]
 		if !ok {
+			logger.Info().Msgf("[MigrateNotificationsToScylla] template for \"%v\" not found", eventType)
 			continue
 		}
+
+		logger.Info().Msgf("[MigrateNotificationsToScylla] eventType \"%v\" parsed for notification \"%v\"", eventType, dbNotification.Id.String())
 
 		customDataMarshalled, _ := json.Marshal(dbNotification.CustomData)
 		renderingVariablesMarshalled, _ := json.Marshal(dbNotification.RenderingVariables)
@@ -271,6 +285,8 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 		}
 	}
 
+	logger.Info().Msgf("[MigrateNotificationsToScylla] before groupedNotifications iterations, len %v", len(groupedNotifications))
+
 	for _, scyllaNotificationsEntities := range groupedNotifications {
 		for _, scyllaNotificationEntity := range scyllaNotificationsEntities {
 			for _, scyllaNotification := range scyllaNotificationEntity {
@@ -301,6 +317,7 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 
 				template, ok := templatesMap[scyllaNotification.EventType]
 				if !ok {
+					logger.Info().Msgf("[MigrateNotificationsToScylla] template \"%v\" not found in templatesMap", scyllaNotification.EventType)
 					continue
 				}
 
@@ -362,6 +379,8 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 		}
 	}
 
+	logger.Info().Msgf("[MigrateNotificationsToScylla] before scyllaNotificationsToUpdate iterations, len %v", len(scyllaNotificationsToUpdate))
+
 	for _, scyllaNotification := range scyllaNotificationsToUpdate {
 		ttl := timeNow.Unix() - scyllaNotification.CreatedAt.Unix()
 		if ttl <= 0 {
@@ -379,9 +398,13 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 		)
 	}
 
+	logger.Info().Msg("[MigrateNotificationsToScylla] before ExecuteBatch")
+
 	if err := session.ExecuteBatch(batch); err != nil {
 		return errors.WithStack(err)
 	}
+
+	logger.Info().Msg("[MigrateNotificationsToScylla] before ExecuteBatch")
 
 	return nil
 }
