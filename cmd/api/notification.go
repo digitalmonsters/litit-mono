@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
+	"github.com/digitalmonsters/notification-handler/pkg/migrator"
 	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -21,6 +22,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 	readNotificationPath := "/mobile/v1/notification/read"
+	migrateNotificationsToScyllaPath := "/migrate_notifications_to_scylla"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -103,6 +105,17 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 
 		return nil, nil
 	}, readNotificationPath, http.MethodPost).RequireIdentityValidation().Build()); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		if err := migrator.MigrateNotificationsToScylla(executionData.Context); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, migrateNotificationsToScyllaPath, http.MethodGet).Build()); err != nil {
 		return err
 	}
 
