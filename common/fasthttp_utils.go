@@ -69,7 +69,6 @@ func GetRealIp(req *fasthttp.RequestCtx) string {
 
 	return ip
 }
-
 func StripSlashFromUrl(input string) string {
 	if len(input) == 0 {
 		return input
