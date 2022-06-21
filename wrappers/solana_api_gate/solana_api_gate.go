@@ -13,8 +13,9 @@ import (
 )
 
 type ISolanaApiGateWrapper interface {
-	TransferToken(from string, amount string, account string, recipientType string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[TransferTokenResponseData]
-	CreateVesting(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateVestingResponseData]
+	TransferToken(from string, amount string, account string, recipientType string, withdrawalTransactionId int64, userId int64, adminId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[TransactionResponseData]
+	CreateVesting(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64, userId int64, adminId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[TransactionResponseData]
+	GetTransactionsStatus(withdrawalIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]TransactionDetail]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -48,11 +49,11 @@ func NewSolanaApiGateWrapper(config boilerplate.WrapperConfig) ISolanaApiGateWra
 	}
 }
 
-func (w SolanaApiGateWrapper) TransferToken(from string, amount string, account string, recipientType string, withdrawalTransactionId int64,
+func (w SolanaApiGateWrapper) TransferToken(from string, amount string, account string, recipientType string, withdrawalTransactionId int64, userId int64, adminId int64,
 	ctx context.Context,
-	forceLog bool) chan wrappers.GenericResponseChan[TransferTokenResponseData] {
+	forceLog bool) chan wrappers.GenericResponseChan[TransactionResponseData] {
 
-	return wrappers.ExecuteRpcRequestAsync[TransferTokenResponseData](w.baseWrapper, w.apiUrl, "TransferToken", TransferRequest{
+	return wrappers.ExecuteRpcRequestAsync[TransactionResponseData](w.baseWrapper, w.apiUrl, "TransferToken", TransferRequest{
 		From:                    from,
 		Amount:                  amount,
 		WithdrawalTransactionId: withdrawalTransactionId,
@@ -60,17 +61,26 @@ func (w SolanaApiGateWrapper) TransferToken(from string, amount string, account 
 			Account: account,
 			Type:    recipientType,
 		},
+		UserId:  userId,
+		AdminId: adminId,
 	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w SolanaApiGateWrapper) CreateVesting(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64,
-	ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateVestingResponseData] {
+func (w SolanaApiGateWrapper) CreateVesting(from string, to string, amounts string, timestamps string, withdrawalTransactionId int64, userId int64, adminId int64,
+	ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[TransactionResponseData] {
 
-	return wrappers.ExecuteRpcRequestAsync[CreateVestingResponseData](w.baseWrapper, w.apiUrl, "CreateVesting", CreateVestingRequest{
+	return wrappers.ExecuteRpcRequestAsync[TransactionResponseData](w.baseWrapper, w.apiUrl, "CreateVesting", CreateVestingRequest{
 		From:                    from,
 		To:                      to,
 		Amounts:                 amounts,
 		Timestamps:              timestamps,
 		WithdrawalTransactionId: withdrawalTransactionId,
+		UserId:                  userId,
+		AdminId:                 adminId,
 	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w SolanaApiGateWrapper) GetTransactionsStatus(withdrawalIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]TransactionDetail] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]TransactionDetail](w.baseWrapper, w.apiUrl, "GetTransactionsStatus",
+		GetTransactionsStatusRequest{WithdrawalIds: withdrawalIds}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
