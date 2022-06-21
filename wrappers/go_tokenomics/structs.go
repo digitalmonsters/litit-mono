@@ -97,6 +97,8 @@ const (
 	PointsEarnedTypeSpotsBonusPerformance = PointsEarnedType(38)
 	PointsEarnedTypeEmailMarketingAdded   = PointsEarnedType(39) // "email marketing added"
 	PointsEarnedTypeIronsource            = PointsEarnedType(40) // "ironsource"
+	PointsEarnedTypeTopSpotDaily          = PointsEarnedType(41)
+	PointsEarnedTypeTopSpotWeekly         = PointsEarnedType(42)
 )
 
 type WithdrawalStatus int16
