@@ -36,7 +36,9 @@ func RegisterMigratorTasks(jobber *machinery.Server) error {
 					"migrator", nil, parsed)
 			}
 
-			defer apmTransaction.End()
+			defer func() {
+				apmTransaction.End()
+			}()
 
 			ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
 

@@ -211,7 +211,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		return nil, nil
 	}
 
-	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
+	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes/configs.PushNotificationDeadlineMinutes)*2 + 1
 	deadlineKeys := make([]time.Time, deadlineKeysLen)
 	newTime := TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineKeyMinutes, true)
 
@@ -225,7 +225,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	deadline := createdAt
 	minutesDiff := (deadline.Unix() - TimeToNearestMinutes(deadline, configs.PushNotificationDeadlineMinutes, true).Unix()) / 60
-	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
+	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes) * time.Minute)
 	deadline = time.Date(deadline.Year(), deadline.Month(), deadline.Day(), deadline.Hour(), deadline.Minute(), 0, 0, deadline.Location())
 	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
@@ -548,7 +548,7 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	session := database.GetScyllaSession()
 
 	currentDate := time.Now().UTC()
-	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
+	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes/configs.PushNotificationDeadlineMinutes)*2 + 1
 	deadlineKeys := make([]time.Time, deadlineKeysLen)
 	newTime := TimeToNearestMinutes(currentDate, configs.PushNotificationDeadlineKeyMinutes, true)
 
@@ -562,7 +562,7 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 
 	deadline := currentDate
 	minutesDiff := (deadline.Unix() - TimeToNearestMinutes(deadline, configs.PushNotificationDeadlineMinutes, true).Unix()) / 60
-	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
+	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes) * time.Minute)
 	deadline = time.Date(deadline.Year(), deadline.Month(), deadline.Day(), deadline.Hour(), deadline.Minute(), 0, 0, deadline.Location())
 	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
@@ -786,7 +786,9 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 		apmTransaction := apm_helper.StartNewApmTransaction(string(configs.GeneralPushNotificationTask),
 			"push_notification", nil, nil)
 
-		defer apmTransaction.End()
+		defer func() {
+			apmTransaction.End()
+		}()
 
 		ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
 
