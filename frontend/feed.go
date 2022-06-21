@@ -24,6 +24,7 @@ type VideoUserModel struct {
 	Verified          bool                      `json:"verified"`
 	IsTipEnabled      bool                      `json:"is_tip_enabled"`
 	NamePrivacyStatus user_go.NamePrivacyStatus `json:"name_privacy_status"`
+	Email             string                    `json:"email"`
 }
 
 type ContentModel struct {
