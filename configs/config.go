@@ -12,8 +12,9 @@ import (
 var CDN_BASE string
 
 const (
-	PushNotificationDeadlineKeyMinutes = 30
-	PushNotificationDeadlineMinutes    = 5
+	PushNotificationDeadlineKeyMinutes = 720
+	PushNotificationDeadlineMinutes    = 720
+	PushNotificationJobCron            = "1 */12 * * *" // should be equal to PushNotificationDeadlineMinutes
 )
 
 const (
@@ -132,4 +133,6 @@ const (
 	GeneralPushNotificationTask  MachineryTask = "general:push_notification"
 	PeriodicPushNotificationTask MachineryTask = "periodic:push_notification"
 	UserPushNotificationTask     MachineryTask = "user:push_notification"
+
+	Migrator1Task MachineryTask = "migrator1"
 )

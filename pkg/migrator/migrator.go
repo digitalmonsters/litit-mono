@@ -4,16 +4,54 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/RichardKnop/machinery/v1"
+	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/translation"
+	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
 	"github.com/digitalmonsters/notification-handler/pkg/renderer"
 	"github.com/gocql/gocql"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+func RegisterMigratorTasks(jobber *machinery.Server) error {
+	if err := jobber.RegisterTask(string(configs.Migrator1Task),
+		func(traceHeader string) error {
+			var apmTransaction *apm.Transaction
+
+			if parsed, err := apmhttp.ParseTraceparentHeader(traceHeader); err != nil {
+				log.Err(err).Send()
+				apmTransaction = apm_helper.StartNewApmTransaction(string(configs.Migrator1Task),
+					"migrator", nil, nil)
+			} else {
+				apmTransaction = apm_helper.StartNewApmTransactionWithTraceData(string(configs.Migrator1Task),
+					"migrator", nil, parsed)
+			}
+
+			defer apmTransaction.End()
+
+			ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
+
+			if err := MigrateNotificationsToScylla(ctx); err != nil {
+				apm_helper.LogError(errors.WithStack(err), ctx)
+				return errors.WithStack(err)
+			}
+
+			return nil
+		}); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
 
 func MigrateNotificationsToScylla(ctx context.Context) error {
 	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
