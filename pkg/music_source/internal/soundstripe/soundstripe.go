@@ -1,9 +1,11 @@
 package soundstripe
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/music_source/internal"
@@ -38,7 +40,7 @@ func NewService(cfg configs.SoundStripeConfig) internal.IMusicStorageAdapter {
 	}
 }
 
-func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTransaction *apm.Transaction) error {
+func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) error {
 	var missing []string
 
 	var songsInDb []string
@@ -76,7 +78,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTrans
 			continue
 		}
 
-		chans = append(chans, s.getSong(songId, apmTransaction))
+		chans = append(chans, s.getSong(songId, apmTransaction, ctx))
 	}
 
 	var internalErrors []error
@@ -110,7 +112,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTrans
 
 	if len(internalErrors) > 0 {
 		for _, err := range internalErrors {
-			apm_helper.CaptureApmError(err, apmTransaction)
+			apm_helper.LogError(err, ctx)
 		}
 
 		return errors.Wrap(internalErrors[0], "sync error")
@@ -119,7 +121,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTrans
 	return nil
 }
 
-func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
+func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, apmTx *apm.Transaction, ctx context.Context) chan internal.GetSongsListResponseChan {
 	resChan := make(chan internal.GetSongsListResponseChan, 2)
 	s.workerPool.Submit(func() {
 		finalResponse := internal.GetSongsListResponseChan{}
@@ -131,7 +133,7 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 
 		link := fmt.Sprintf("songs%v", queryParams)
 
-		internalResp, err := s.makeApiRequestInternal(link, "GET", nil, apmTransaction)
+		internalResp, err := s.makeApiRequestInternal(link, "GET", nil, apmTx)
 		if err != nil {
 			finalResponse.Error = err
 			resChan <- finalResponse
@@ -146,7 +148,7 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 				return
 			}
 
-			songs := s.mapToOurModel(ssResp, apmTransaction)
+			songs := s.mapToOurModel(ssResp, ctx)
 
 			finalResponse.Response = internal.GetSongsListResponse{
 				Songs:      songs,
@@ -160,7 +162,7 @@ func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, ap
 	return resChan
 }
 
-func (s *Service) mapToOurModel(ssResp soundstripeSongsResp, apmTransaction *apm.Transaction) []internal.SongModel {
+func (s *Service) mapToOurModel(ssResp soundstripeSongsResp, ctx context.Context) []internal.SongModel {
 	includedMapped := map[string]map[string]includedData{}
 	for _, song := range ssResp.Included {
 		if _, ok := includedMapped[song.Type]; !ok {
@@ -189,7 +191,7 @@ func (s *Service) mapToOurModel(ssResp soundstripeSongsResp, apmTransaction *apm
 		}
 
 		if artist == nil || audioFiles == nil {
-			apm_helper.CaptureApmError(errors.New("can not map artist or audio files"), apmTransaction)
+			apm_helper.LogError(errors.New("can not map artist or audio files"), ctx)
 			continue
 		}
 
@@ -211,8 +213,8 @@ func (s *Service) mapToOurModel(ssResp soundstripeSongsResp, apmTransaction *apm
 	return songs
 }
 
-func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error) {
-	songResp := <-s.getSong(externalSongId, apmTransaction)
+func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) (map[string]string, error) {
+	songResp := <-s.getSong(externalSongId, apmTransaction, ctx)
 	if songResp.Error != nil {
 		return nil, songResp.Error
 	}
@@ -220,7 +222,7 @@ func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction 
 	return songResp.Song.Files, nil
 }
 
-func (s *Service) getSong(externalId string, apmTransaction *apm.Transaction) chan internal.GetSongResponseChan {
+func (s *Service) getSong(externalId string, apmTransaction *apm.Transaction, ctx context.Context) chan internal.GetSongResponseChan {
 	resChan := make(chan internal.GetSongResponseChan, 2)
 	s.workerPool.Submit(func() {
 		finalResponse := internal.GetSongResponseChan{}
@@ -244,7 +246,7 @@ func (s *Service) getSong(externalId string, apmTransaction *apm.Transaction) ch
 				MusicData:  []musicData{songResp.MusicData},
 				Pagination: songResp.Pagination,
 				Included:   songResp.Included,
-			}, apmTransaction)
+			}, ctx)
 
 			if len(songs) == 0 {
 				finalResponse.Error = errors.New("can not map song")
@@ -280,7 +282,7 @@ func (s *Service) makeApiRequestInternal(apiMethod string, httpMethod string, bo
 
 	utils.AppendBrowserHeaders(httpReq)
 
-	err := apm_helper.SendHttpRequestWithClient(cl, httpReq, httpRes, apmTransaction, s.timeout, true)
+	err := sendHttpRequestWithClient(cl, httpReq, httpRes, apmTransaction, s.timeout, true)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -290,4 +292,48 @@ func (s *Service) makeApiRequestInternal(apiMethod string, httpMethod string, bo
 	}
 
 	return utils.UnpackFastHttpBody(httpRes)
+}
+
+func sendHttpRequestWithClient(client *fasthttp.Client, request *fasthttp.Request, response *fasthttp.Response, parentTx *apm.Transaction,
+	timeout time.Duration, logResponse bool) error {
+	if request == nil {
+		return errors.New("request should not be nil")
+	}
+	if response == nil {
+		return errors.New("response should not be nil")
+	}
+
+	tx := apm_helper.StartNewApmTransaction(
+		fmt.Sprintf("[%v] %v", string(request.Header.Method()), request.URI().String()),
+		"http_external",
+		nil,
+		parentTx,
+	)
+
+	defer tx.End()
+
+	err := client.DoTimeout(request, response, timeout)
+
+	if err != nil {
+		return err
+	}
+
+	data, _ := common.UnpackFastHttpBody(response)
+
+	tx.Context.SetHTTPStatusCode(response.StatusCode())
+
+	if logResponse || (response.StatusCode() != 200 && response.StatusCode() != 201) {
+		headers := map[string]string{}
+
+		response.Header.VisitAll(func(key, value []byte) {
+			headers[string(key)] = string(value)
+		})
+
+		b, _ := json.Marshal(headers)
+
+		apm_helper.AddApmData(tx, "headers", string(b))
+		tx.Context.SetCustom("response_body", string(data))
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package song
 
 import (
+	"context"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/music_source"
 	"github.com/pkg/errors"
@@ -10,7 +11,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransaction *apm.Transaction, musicStorageService *music_source.MusicStorageService) error {
+func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransaction *apm.Transaction, musicStorageService *music_source.MusicStorageService, ctx context.Context) error {
 	tx := db.Begin()
 	defer tx.Rollback()
 
@@ -21,7 +22,7 @@ func AddSongToPlaylistBulk(req AddSongToPlaylistRequest, db *gorm.DB, apmTransac
 		}
 	}
 
-	err := musicStorageService.SyncMusic(externalSongIds, req.Source, tx, apmTransaction)
+	err := musicStorageService.SyncMusic(externalSongIds, req.Source, tx, apmTransaction, ctx)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -149,7 +150,7 @@ func PlaylistSongListAdmin(req PlaylistSongListRequest, db *gorm.DB) (*PlaylistS
 	}, nil
 }
 
-func GetSongUrl(req GetSongUrlRequest, db *gorm.DB, apmTransaction *apm.Transaction, service *music_source.MusicStorageService) (map[string]string, error) {
+func GetSongUrl(req GetSongUrlRequest, db *gorm.DB, apmTransaction *apm.Transaction, service *music_source.MusicStorageService, ctx context.Context) (map[string]string, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
@@ -158,7 +159,7 @@ func GetSongUrl(req GetSongUrlRequest, db *gorm.DB, apmTransaction *apm.Transact
 		return nil, errors.WithStack(err)
 	}
 
-	data, err := service.GetMusicUrl(song.ExternalId, song.Source, db, apmTransaction)
+	data, err := service.GetMusicUrl(song.ExternalId, song.Source, db, apmTransaction, ctx)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

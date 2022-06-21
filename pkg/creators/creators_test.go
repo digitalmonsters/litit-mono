@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
-	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/stretchr/testify/assert"
-	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
@@ -29,19 +28,23 @@ func TestMain(m *testing.M) {
 	userWrapper = &user_go.UserGoWrapperMock{}
 	service = NewService(nil)
 
-	userWrapper.GetUsersFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user_go.GetUsersResponseChan {
-		ch := make(chan user_go.GetUsersResponseChan, 2)
+	userWrapper.GetUsersFn = func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord] {
+		ch := make(chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord], 2)
 		resp := map[int64]user_go.UserRecord{}
 
 		for _, userId := range userIds {
 			resp[userId] = user_go.UserRecord{
-				UserId: userId,
+				UserId:    userId,
+				Username:  fmt.Sprintf("username%v", userId),
+				Firstname: fmt.Sprintf("firstname%v", userId),
+				Lastname:  fmt.Sprintf("lastname%v", userId),
+				Email:     fmt.Sprintf("email%v", userId),
 			}
 		}
 
-		ch <- user_go.GetUsersResponseChan{
-			Error: nil,
-			Items: resp,
+		ch <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
+			Error:    nil,
+			Response: resp,
 		}
 		close(ch)
 
@@ -63,7 +66,7 @@ func TestBecomeMusicCreator(t *testing.T) {
 		UserId:  userId,
 	}
 
-	err := service.BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData)
+	err := service.BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData, userWrapper)
 	assert.Nil(t, err)
 
 	var creatorRequest database.Creator
@@ -71,7 +74,7 @@ func TestBecomeMusicCreator(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, creatorRequest.LibraryUrl, link)
 
-	err = service.BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData)
+	err = service.BecomeMusicCreator(BecomeMusicCreatorRequest{LibraryLink: link}, gormDb, executionData, userWrapper)
 	assert.NotNil(t, err)
 }
 
@@ -83,13 +86,13 @@ func TestCreatorRequestsList(t *testing.T) {
 	var requests []database.Creator
 	for i := 0; i < 10; i++ {
 		r := database.Creator{
-			Status:     eventsourcing.CreatorStatusPending,
+			Status:     user_go.CreatorStatusPending,
 			UserId:     int64(i),
 			LibraryUrl: fmt.Sprintf("https://music%v", i),
 		}
 
 		if i%2 == 0 {
-			r.Status = eventsourcing.CreatorStatusApproved
+			r.Status = user_go.CreatorStatusApproved
 			r.ApprovedAt = null.TimeFrom(time.Now())
 		}
 
@@ -103,7 +106,11 @@ func TestCreatorRequestsList(t *testing.T) {
 	userId := int64(100)
 	thresholdRequest := database.Creator{
 		UserId:    userId,
-		Status:    eventsourcing.CreatorStatusPending,
+		Username:  "username100",
+		Firstname: "firstname100",
+		Lastname:  "lastname100",
+		Email:     "email100",
+		Status:    user_go.CreatorStatusPending,
 		CreatedAt: time.Date(2020, 1, 1, 1, 1, 1, 1, time.UTC),
 	}
 
@@ -112,7 +119,7 @@ func TestCreatorRequestsList(t *testing.T) {
 	}
 
 	resp, err := service.CreatorRequestsList(CreatorRequestsListRequest{
-		Statuses:             []eventsourcing.CreatorStatus{eventsourcing.CreatorStatusPending},
+		Statuses:             []user_go.CreatorStatus{user_go.CreatorStatusPending},
 		MaxThresholdExceeded: false,
 		Limit:                10,
 		Offset:               0,
@@ -130,6 +137,18 @@ func TestCreatorRequestsList(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, resp.Items, 1)
 	assert.Equal(t, resp.Items[0].UserId, userId)
+
+	resp, err = service.CreatorRequestsList(CreatorRequestsListRequest{
+		MaxThresholdExceeded: true,
+		Limit:                10,
+		Offset:               0,
+		SearchQuery:          "firstname",
+		Email:                "email",
+	}, gormDb, config.Creators.MaxThresholdHours, nil, userWrapper)
+
+	assert.Nil(t, err)
+	assert.Len(t, resp.Items, 1)
+	assert.Equal(t, resp.Items[0].UserId, userId)
 }
 
 func TestCreatorRequestApprove(t *testing.T) {
@@ -140,13 +159,13 @@ func TestCreatorRequestApprove(t *testing.T) {
 	var requests []database.Creator
 	for i := 0; i < 10; i++ {
 		r := database.Creator{
-			Status:     eventsourcing.CreatorStatusPending,
+			Status:     user_go.CreatorStatusPending,
 			UserId:     int64(i),
 			LibraryUrl: fmt.Sprintf("https://music%v", i),
 		}
 
 		if i%2 == 0 {
-			r.Status = eventsourcing.CreatorStatusApproved
+			r.Status = user_go.CreatorStatusApproved
 			r.ApprovedAt = null.TimeFrom(time.Now())
 		}
 
@@ -170,7 +189,7 @@ func TestCreatorRequestApprove(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, r := range finalRequests {
-		assert.Equal(t, r.Status, eventsourcing.CreatorStatusApproved)
+		assert.Equal(t, r.Status, user_go.CreatorStatusApproved)
 	}
 }
 
@@ -182,13 +201,13 @@ func TestCreatorRequestReject(t *testing.T) {
 	var requests []database.Creator
 	for i := 0; i < 10; i++ {
 		r := database.Creator{
-			Status:     eventsourcing.CreatorStatusPending,
+			Status:     user_go.CreatorStatusPending,
 			UserId:     int64(i),
 			LibraryUrl: fmt.Sprintf("https://music%v", i),
 		}
 
 		if i%2 == 0 {
-			r.Status = eventsourcing.CreatorStatusRejected
+			r.Status = user_go.CreatorStatusRejected
 			r.ApprovedAt = null.TimeFrom(time.Now())
 		}
 
@@ -228,11 +247,11 @@ func TestCreatorRequestReject(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, r := range finalRequests {
-		assert.Equal(t, r.Status, eventsourcing.CreatorStatusRejected)
+		assert.Equal(t, r.Status, user_go.CreatorStatusRejected)
 	}
 }
 
-func addCreator(t *testing.T, userId int64, status eventsourcing.CreatorStatus) *database.Creator {
+func addCreator(t *testing.T, userId int64, status user_go.CreatorStatus) *database.Creator {
 	creator := database.Creator{
 		UserId:     userId,
 		Status:     status,
@@ -277,7 +296,7 @@ func TestUploadNewSong(t *testing.T) {
 	}
 
 	userId := int64(111)
-	creator := addCreator(t, userId, eventsourcing.CreatorStatusApproved)
+	creator := addCreator(t, userId, user_go.CreatorStatusApproved)
 	assert.NotNil(t, creator)
 
 	executionData := router.MethodExecutionData{

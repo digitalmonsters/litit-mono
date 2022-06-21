@@ -5,6 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/api"
 	"github.com/digitalmonsters/music/pkg/creators"
 	"github.com/digitalmonsters/music/pkg/creators/categories"
@@ -16,7 +17,7 @@ import (
 	"net/http"
 )
 
-func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, creatorsService *creators.Service) error {
+func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, creatorsService *creators.Service, userGoWrapper user_go.IUserGoWrapper) error {
 	if err := publicRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req creators.BecomeMusicCreatorRequest
 
@@ -28,14 +29,14 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("library_link is required"), error_codes.GenericValidationError)
 		}
 
-		if err := creatorsService.BecomeMusicCreator(req, database.GetDbWithContext(database.DbTypeMaster, executionData.Context), executionData); err != nil {
+		if err := creatorsService.BecomeMusicCreator(req, database.GetDbWithContext(database.DbTypeMaster, executionData.Context), executionData, userGoWrapper); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
 		return api.SuccessResponse{
 			Success: true,
 		}, nil
-	}, "/creators/request/send", http.MethodPost, true, false)); err != nil {
+	}, "/creators/request/send", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -76,7 +77,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/creators/song/add", http.MethodPost, true, false)); err != nil {
+	}, "/creators/song/add", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -87,7 +88,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/creators/request/status", http.MethodGet, true, false)); err != nil {
+	}, "/creators/request/status", http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -107,7 +108,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/categories/list", http.MethodGet, false, false)); err != nil {
+	}, "/categories/list", http.MethodGet).Build()); err != nil {
 		return err
 	}
 
@@ -127,7 +128,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/moods/list", http.MethodGet, false, false)); err != nil {
+	}, "/moods/list", http.MethodGet).Build()); err != nil {
 		return err
 	}
 

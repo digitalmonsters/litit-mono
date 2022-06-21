@@ -107,7 +107,7 @@ func FavoriteSongsList(req FavoriteSongsListRequest, db *gorm.DB, executionData 
 		return resp, nil
 	}
 
-	resp.Items = frontend.ConvertSongsToFrontendModel(dbSongs, executionData.UserId, db, executionData.ApmTransaction)
+	resp.Items = frontend.ConvertSongsToFrontendModel(dbSongs, executionData.UserId, db, executionData.Context)
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After

@@ -1,12 +1,12 @@
 package moderation
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/pkg/errors"
-	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -74,7 +74,7 @@ func ApproveMusic(req ApproveMusicRequest, db *gorm.DB) error {
 	return nil
 }
 
-func List(req ListRequest, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, apmTransaction *apm.Transaction) (*ListResponse, *error_codes.ErrorWithCode) {
+func List(req ListRequest, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, ctx context.Context) (*ListResponse, *error_codes.ErrorWithCode) {
 	var records []database.CreatorSong
 	query := db.Model(records).Preload("Category").Preload("Mood")
 
@@ -114,7 +114,7 @@ func List(req ListRequest, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, ap
 		userIds = append(userIds, song.UserId)
 	}
 
-	userResp := <-userGoWrapper.GetUsers(userIds, apmTransaction, false)
+	userResp := <-userGoWrapper.GetUsers(userIds, ctx, false)
 	if userResp.Error != nil {
 		return nil, error_codes.NewErrorWithCodeRef(userResp.Error.ToError(), error_codes.GenericServerError)
 	}
@@ -145,7 +145,7 @@ func List(req ListRequest, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, ap
 			item.Mood = song.Mood.Name
 		}
 
-		if user, ok := userResp.Items[song.UserId]; ok {
+		if user, ok := userResp.Response[song.UserId]; ok {
 			item.Username = user.Username
 		}
 

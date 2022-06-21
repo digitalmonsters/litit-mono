@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"github.com/digitalmonsters/music/pkg/database"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -8,9 +9,9 @@ import (
 )
 
 type IMusicStorageAdapter interface {
-	SyncSongsList(songIds []string, tx *gorm.DB, apmTransaction *apm.Transaction) error
-	GetSongsList(req GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan GetSongsListResponseChan
-	GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error)
+	SyncSongsList(songIds []string, tx *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) error
+	GetSongsList(req GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) chan GetSongsListResponseChan
+	GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) (map[string]string, error)
 }
 
 type GetSongsListResponseChan struct {

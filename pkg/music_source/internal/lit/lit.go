@@ -1,6 +1,7 @@
 package lit
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/music_source/internal"
@@ -18,7 +19,7 @@ func NewService() internal.IMusicStorageAdapter {
 	return &Service{}
 }
 
-func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTransaction *apm.Transaction) error {
+func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) error {
 	var missing []string
 
 	var songsInDb []string
@@ -65,7 +66,7 @@ func (s *Service) SyncSongsList(externalSongsIds []string, tx *gorm.DB, apmTrans
 	return nil
 }
 
-func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction) (map[string]string, error) {
+func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) (map[string]string, error) {
 	var song database.MusicStorage
 	if err := db.Model(&song).Where("id = ?", externalSongId).Find(&song).Error; err != nil {
 		return nil, errors.WithStack(err)
@@ -87,7 +88,7 @@ func (s *Service) GetSongUrl(externalSongId string, db *gorm.DB, apmTransaction 
 
 }
 
-func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction) chan internal.GetSongsListResponseChan {
+func (s *Service) GetSongsList(req internal.GetSongsListRequest, db *gorm.DB, apmTransaction *apm.Transaction, ctx context.Context) chan internal.GetSongsListResponseChan {
 	ch := make(chan internal.GetSongsListResponseChan, 2)
 
 	go func() {

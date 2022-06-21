@@ -45,7 +45,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 				Success: true,
 			}, nil
 		}
-	}, "/song/favorites/add/{song_id}", http.MethodPost, true, false)); err != nil {
+	}, "/song/favorites/add/{song_id}", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -75,7 +75,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 				Success: true,
 			}, nil
 		}
-	}, "/song/favorites/remove/{song_id}", http.MethodPost, true, false)); err != nil {
+	}, "/song/favorites/remove/{song_id}", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -102,7 +102,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/playlist", http.MethodGet, true, false)); err != nil {
+	}, "/playlist", http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -133,7 +133,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/playlist/{playlist_id}", http.MethodGet, true, false)); err != nil {
+	}, "/playlist/{playlist_id}", http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -165,7 +165,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/song/favorites", http.MethodGet, true, false)); err != nil {
+	}, "/song/favorites", http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -196,7 +196,7 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		}
 
 		return resp, nil
-	}, "/song/popular", http.MethodGet, true, false)); err != nil {
+	}, "/song/popular", http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -217,14 +217,14 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 		resp, err := song.GetSongUrl(song.GetSongUrlRequest{SongId: songId},
 			database.GetDb(database.DbTypeMaster).WithContext(executionData.Context),
 			executionData.ApmTransaction,
-			musicStorageService)
+			musicStorageService, executionData.Context)
 
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
 		return resp, nil
-	}, "/song/url/{song_id}", http.MethodGet, true, false)); err != nil {
+	}, "/song/url/{song_id}", http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
