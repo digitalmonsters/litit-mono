@@ -364,15 +364,24 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	alreadySend := false
 
 	if template.IsGrouped {
-		notificationRelationIter := session.Query("select user_id from notification_relation where user_id = ? and "+
-			"event_type = ? and entity_id = ? and related_entity_id = ?",
-			notification.UserId, template.Id, entityId, relatedEntityId).WithContext(ctx).Iter()
+		query := "select user_id, entity_id, related_entity_id from notification_relation where user_id = ? and " +
+			"event_type = ?"
+
+		if relatedEntityId != 0 {
+			query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+		}
+
+		notificationRelationIter := session.Query(query, notification.UserId, template.Id).WithContext(ctx).Iter()
 
 		var userIdSelected int64
-		notificationRelationIter.Scan(&userIdSelected)
-
-		if userIdSelected != 0 {
-			alreadySend = true
+		var entityIdSelected int64
+		var relatedEntityIdSelected int64
+		for notificationRelationIter.Scan(&userIdSelected, &entityIdSelected, &relatedEntityIdSelected) {
+			if entityIdSelected == entityId && relatedEntityIdSelected == relatedEntityId {
+				alreadySend = true
+			} else {
+				notificationsCount++
+			}
 		}
 
 		if err = notificationRelationIter.Close(); err != nil {
@@ -382,17 +391,16 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		batch.Query("update notification_relation set event_applied = true where user_id = ? and event_type = ? "+
 			"and entity_id = ? and related_entity_id = ?", notification.UserId, template.Id, entityId, relatedEntityId)
 
-		notificationIter := session.Query("select entity_id, related_entity_id, created_at, "+
-			"notifications_count from notification where user_id = ? and event_type = ? and created_at >= ?",
+		notificationIter := session.Query("select entity_id, related_entity_id, created_at "+
+			"from notification where user_id = ? and event_type = ? and created_at >= ?",
 			notification.UserId, template.Id, notification.CreatedAt.Add(-3*24*30*time.Hour)).WithContext(ctx).Iter()
 
 		found := false
-		var entityIdSelected int64
-		var relatedEntityIdSelected int64
+		entityIdSelected = 0
+		relatedEntityIdSelected = 0
 		var createdAt time.Time
-		var notificationsCountSelected int64
 
-		for notificationIter.Scan(&entityIdSelected, &relatedEntityIdSelected, &createdAt, &notificationsCountSelected) {
+		for notificationIter.Scan(&entityIdSelected, &relatedEntityIdSelected, &createdAt) {
 			if (relatedEntityId != 0 && entityIdSelected == entityId) || relatedEntityId == 0 {
 				found = true
 				break
@@ -406,14 +414,6 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		if found {
 			batch.Query("delete from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
 				notification.UserId, template.Id, createdAt, entityIdSelected, relatedEntityIdSelected)
-
-			if notificationsCountSelected >= notificationsCount {
-				if alreadySend {
-					notificationsCount = notificationsCountSelected
-				} else {
-					notificationsCount = notificationsCountSelected + 1
-				}
-			}
 		}
 	}
 
@@ -583,8 +583,8 @@ func (s *Sender) getNotificationForGroupSend(userId int64, eventType string, cre
 		return nil, errors.WithStack(err)
 	}
 
-	if userIdFromSelect == 0 { // should not happen
-		return nil, errors.WithStack(errors.New("notification not found"))
+	if userIdFromSelect == 0 { // should do nothing
+		return nil, nil
 	}
 
 	return &notification, nil
@@ -611,6 +611,10 @@ func (s *Sender) updateNotificationQueueAndSendPush(deadlineKey time.Time, deadl
 	notification, err := s.getNotificationForGroupSend(userId, eventType, createdAt, entityId, ctx)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	if notification == nil { // should do nothing
+		return nil
 	}
 
 	var customData database.CustomData
