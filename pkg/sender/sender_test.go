@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"testing"
+	"time"
 )
 
 var config configs.Settings
@@ -27,6 +28,121 @@ func TestMain(m *testing.M) {
 	sender = NewSender(nil, nil, nil)
 
 	os.Exit(m.Run())
+}
+
+func TestTimeToNearestMinutes(t *testing.T) {
+	date := time.Date(2022, 06, 21, 17, 32, 20, 4, time.UTC)
+	newDate := TimeToNearestMinutes(date, 30, true)
+
+	a := assert.New(t)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(date.Month(), newDate.Month())
+	a.Equal(date.Day(), newDate.Day())
+	a.Equal(date.Hour(), newDate.Hour())
+	a.Equal(30, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 30, false)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(date.Month(), newDate.Month())
+	a.Equal(date.Day(), newDate.Day())
+	a.Equal(date.Hour()+1, newDate.Hour())
+	a.Equal(0, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 120, true)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(date.Month(), newDate.Month())
+	a.Equal(date.Day(), newDate.Day())
+	a.Equal(date.Hour()-1, newDate.Hour())
+	a.Equal(0, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 120, false)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(date.Month(), newDate.Month())
+	a.Equal(date.Day(), newDate.Day())
+	a.Equal(date.Hour()+1, newDate.Hour())
+	a.Equal(0, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 121, false)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(date.Month(), newDate.Month())
+	a.Equal(date.Day(), newDate.Day())
+	a.Equal(date.Hour()+1, newDate.Hour())
+	a.Equal(1, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 21662, true)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(date.Month(), newDate.Month())
+	a.Equal(16, newDate.Day())
+	a.Equal(1, newDate.Hour())
+	a.Equal(2, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 21662, false)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(date.Month()+1, newDate.Month())
+	a.Equal(1, newDate.Day())
+	a.Equal(1, newDate.Hour())
+	a.Equal(2, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 302462, true)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(time.Month(1), newDate.Month())
+	a.Equal(1, newDate.Day())
+	a.Equal(1, newDate.Hour())
+	a.Equal(2, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 302462, false)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(time.Month(8), newDate.Month())
+	a.Equal(1, newDate.Day())
+	a.Equal(1, newDate.Hour())
+	a.Equal(2, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 561600, true)
+
+	a.Equal(date.Year()-1, newDate.Year())
+	a.Equal(time.Month(1), newDate.Month())
+	a.Equal(31, newDate.Day())
+	a.Equal(0, newDate.Hour())
+	a.Equal(0, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
+
+	newDate = TimeToNearestMinutes(date, 561600, false)
+
+	a.Equal(date.Year(), newDate.Year())
+	a.Equal(time.Month(1), newDate.Month())
+	a.Equal(31, newDate.Day())
+	a.Equal(0, newDate.Hour())
+	a.Equal(0, newDate.Minute())
+	a.Equal(0, newDate.Second())
+	a.Equal(0, newDate.Nanosecond())
 }
 
 func TestSender_PushNotification_Likes(t *testing.T) {

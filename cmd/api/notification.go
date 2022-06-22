@@ -2,14 +2,16 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/RichardKnop/machinery/v1"
+	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/extract"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	"github.com/digitalmonsters/notification-handler/pkg/migrator"
 	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -17,7 +19,7 @@ import (
 )
 
 func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper) error {
+	followWrapper follow.IFollowWrapper, jobber *machinery.Server) error {
 	notificationsPath := "/mobile/v1/notifications"
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
@@ -110,7 +112,15 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		if err := migrator.MigrateNotificationsToScylla(executionData.Context); err != nil {
+		if _, err := jobber.SendTask(&tasks.Signature{
+			Name: string(configs.Migrator1Task),
+			Args: []tasks.Arg{
+				{
+					Name:  "traceHeader",
+					Type:  "string",
+					Value: "",
+				},
+			}}); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 

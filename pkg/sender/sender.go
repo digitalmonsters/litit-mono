@@ -49,6 +49,70 @@ func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, c
 	return <-s.gateway.EnqueueEmail(msg, ctx)
 }
 
+func TimeToNearestMinutes(date time.Time, roundToMinutes int, floorOrCeil bool) time.Time {
+	if roundToMinutes <= 0 {
+		return time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0, 0, date.Location())
+	}
+
+	if roundToMinutes < 60 { // 1h
+		minutes := date.Minute()
+
+		if floorOrCeil {
+			minutes = FloorToNearest(minutes, roundToMinutes)
+		} else {
+			minutes = CeilToNearest(minutes, roundToMinutes)
+		}
+
+		return time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), minutes, 0, 0, date.Location())
+	}
+
+	if roundToMinutes >= 60 && roundToMinutes < 1440 { // 1h and 24h
+		hours := date.Hour()
+
+		if floorOrCeil {
+			hours = FloorToNearest(hours, roundToMinutes/60)
+		} else {
+			hours = CeilToNearest(hours, roundToMinutes/60)
+		}
+
+		return time.Date(date.Year(), date.Month(), date.Day(), hours, roundToMinutes%60, 0, 0, date.Location())
+	}
+
+	if roundToMinutes >= 1440 && roundToMinutes < 43200 { // 24h and 30 days
+		days := date.Day()
+
+		if floorOrCeil {
+			days = FloorToNearest(days, roundToMinutes/1440) + 1
+		} else {
+			days = CeilToNearest(days, roundToMinutes/1440) + 1
+		}
+
+		return time.Date(date.Year(), date.Month(), days, 0, roundToMinutes%1440, 0, 0, date.Location())
+	}
+
+	if roundToMinutes >= 43200 && roundToMinutes < 518400 { // 30 days and 12 months
+		months := int(date.Month())
+
+		if floorOrCeil {
+			months = FloorToNearest(months, roundToMinutes/43200) + 1
+		} else {
+			months = CeilToNearest(months, roundToMinutes/43200) + 1
+		}
+
+		return time.Date(date.Year(), time.Month(months), 1, 0, roundToMinutes%43200, 0, 0, date.Location())
+	}
+
+	years := date.Year()
+
+	if floorOrCeil {
+		years = FloorToNearest(years, roundToMinutes/518400)
+	} else {
+		years = CeilToNearest(years, roundToMinutes/518400)
+	}
+
+	return time.Date(years, 1, 1, 0, roundToMinutes%518400, 0, 0, date.Location())
+}
+
 func FloorToNearest(x, floorTo int) int {
 	xF := float64(x) / float64(100)
 	floorToF := float64(floorTo) / float64(100)
@@ -147,10 +211,9 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		return nil, nil
 	}
 
-	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
+	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes/configs.PushNotificationDeadlineMinutes)*2 + 1
 	deadlineKeys := make([]time.Time, deadlineKeysLen)
-	newTime := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-		FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, createdAt.Location())
+	newTime := TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineKeyMinutes, true)
 
 	for i := 0; i < deadlineKeysLen; i++ {
 		deadlineKeys[i] = newTime
@@ -161,8 +224,8 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	}
 
 	deadline := createdAt
-	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), configs.PushNotificationDeadlineMinutes)
-	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
+	minutesDiff := (deadline.Unix() - TimeToNearestMinutes(deadline, configs.PushNotificationDeadlineMinutes, true).Unix()) / 60
+	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes) * time.Minute)
 	deadline = time.Date(deadline.Year(), deadline.Month(), deadline.Day(), deadline.Hour(), deadline.Minute(), 0, 0, deadline.Location())
 	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
@@ -188,8 +251,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		return nil, errors.WithStack(err)
 	}
 
-	flooredCreatedAt := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-		FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
+	flooredCreatedAt := TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineMinutes, true)
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "grouped_queued_notifications_count", len(pushNotificationsGroupQueue))
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "push_notifications_group_queue", pushNotificationsGroupQueue)
@@ -209,12 +271,11 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "has_previous_push_notification_group_queue_item", hasPreviousPushNotificationGroupQueueItem)
 
 	if !hasPreviousPushNotificationGroupQueueItem {
-		deadline = time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes)+configs.PushNotificationDeadlineMinutes, 0, 0, createdAt.Location())
+		deadline = TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineMinutes, true).
+			Add(configs.PushNotificationDeadlineMinutes * time.Minute)
 
 		deadlineKey := createdAt.Add(configs.PushNotificationDeadlineKeyMinutes * time.Minute)
-		deadlineKey = time.Date(deadlineKey.Year(), deadlineKey.Month(), deadlineKey.Day(), deadlineKey.Hour(),
-			CeilToNearest(deadlineKey.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
+		deadlineKey = TimeToNearestMinutes(deadlineKey, configs.PushNotificationDeadlineMinutes, false)
 
 		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
@@ -487,10 +548,9 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	session := database.GetScyllaSession()
 
 	currentDate := time.Now().UTC()
-	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
+	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes/configs.PushNotificationDeadlineMinutes)*2 + 1
 	deadlineKeys := make([]time.Time, deadlineKeysLen)
-	newTime := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		FloorToNearest(currentDate.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, currentDate.Location())
+	newTime := TimeToNearestMinutes(currentDate, configs.PushNotificationDeadlineKeyMinutes, true)
 
 	for i := 0; i < deadlineKeysLen; i++ {
 		deadlineKeys[i] = newTime
@@ -501,8 +561,8 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 	}
 
 	deadline := currentDate
-	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), configs.PushNotificationDeadlineMinutes)
-	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
+	minutesDiff := (deadline.Unix() - TimeToNearestMinutes(deadline, configs.PushNotificationDeadlineMinutes, true).Unix()) / 60
+	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes) * time.Minute)
 	deadline = time.Date(deadline.Year(), deadline.Month(), deadline.Day(), deadline.Hour(), deadline.Minute(), 0, 0, deadline.Location())
 	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
@@ -636,8 +696,7 @@ func (s *Sender) updateNotificationQueueAndSendPush(deadlineKey time.Time, deadl
 }
 
 func (s *Sender) SendDeadlinedNotification(currentDate time.Time, item scylla.PushNotificationGroupQueue, ctx context.Context) (shouldLog bool, innerErr error) {
-	flooredCreatedAt := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		FloorToNearest(currentDate.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, currentDate.Location())
+	flooredCreatedAt := TimeToNearestMinutes(currentDate, configs.PushNotificationDeadlineMinutes, true)
 
 	if !flooredCreatedAt.Before(item.DeadlineKey) && // >=
 		flooredCreatedAt.Before(item.DeadlineKey.Add(configs.PushNotificationDeadlineMinutes*time.Minute)) {
@@ -649,12 +708,8 @@ func (s *Sender) SendDeadlinedNotification(currentDate time.Time, item scylla.Pu
 		return true, nil
 	}
 
-	ceilDeadline := time.Date(item.Deadline.Year(), item.Deadline.Month(),
-		item.Deadline.Day(), item.Deadline.Hour(),
-		CeilToNearest(item.Deadline.Minute(), configs.PushNotificationDeadlineMinutes),
-		0, 0, item.Deadline.Location())
-	ceilCurrent := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		CeilToNearest(currentDate.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, currentDate.Location())
+	ceilDeadline := TimeToNearestMinutes(item.Deadline, configs.PushNotificationDeadlineMinutes, false)
+	ceilCurrent := TimeToNearestMinutes(currentDate, configs.PushNotificationDeadlineMinutes, false)
 
 	if !ceilCurrent.After(ceilDeadline) || ceilCurrent.Unix()-ceilDeadline.Unix() > configs.PushNotificationDeadlineMinutes*60 {
 		return false, nil
@@ -731,7 +786,9 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 		apmTransaction := apm_helper.StartNewApmTransaction(string(configs.GeneralPushNotificationTask),
 			"push_notification", nil, nil)
 
-		defer apmTransaction.End()
+		defer func() {
+			apmTransaction.End()
+		}()
 
 		ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
 
@@ -745,7 +802,7 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 		return err
 	}
 
-	if err := s.jobber.RegisterPeriodicTask(fmt.Sprintf("*/%v * * * *", configs.PushNotificationDeadlineMinutes),
+	if err := s.jobber.RegisterPeriodicTask(configs.PushNotificationJobCron,
 		string(configs.PeriodicPushNotificationTask), &tasks.Signature{
 			Name: string(configs.GeneralPushNotificationTask),
 		}); err != nil {
