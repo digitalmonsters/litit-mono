@@ -147,6 +147,20 @@ func (c ContentEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v", c.Id)
 }
 
+type ContentPredictions struct {
+	Porn       float64 `json:"porn"`
+	Sexy       float64 `json:"sexy"`
+	Hentai     float64 `json:"hentai"`
+	Neutral    float64 `json:"neutral"`
+	Drawing    float64 `json:"drawing"`
+	Monochrome float64 `json:"monochrome"`
+}
+type ContentPredictionsEvent struct {
+	BaseChangeEvent
+	ContentId   int64              `json:"content_id"`
+	Predictions ContentPredictions `json:"predictions"`
+}
+
 type BaseChangeEvent struct {
 	CrudOperation       ChangeEvenType `json:"crud_operation"`
 	CrudOperationReason string         `json:"crud_operation_reason"`
