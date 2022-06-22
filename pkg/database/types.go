@@ -272,6 +272,8 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"content_reject"}
 	case "push.kyc.status":
 		return []string{"kyc_status_verified", "kyc_status_rejected"}
+	case "push.content-creator.status":
+		return []string{"creator_status_rejected", "creator_status_approved", "creator_status_pending"}
 	case "push.user.daily_top_spot_reward":
 		return []string{"top_daily_spot_bonus"}
 	case "push.user.weekly_top_spot_reward":
