@@ -140,7 +140,7 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 		logger.Info().Msgf("[MigrateNotificationsToScylla] before dbNotifications iterations, len %v", len(dbNotifications))
 
 		for _, dbNotification := range dbNotifications {
-			if dbNotification.Type == "push.admin.bulk" {
+			if dbNotification.Type == "push.admin.bulk" || dbNotification.Type == "popup" || len(dbNotification.Type) == 0 {
 				continue
 			}
 
@@ -192,6 +192,14 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 						eventType = "kyc_status_verified"
 					} else {
 						eventType = "kyc_status_rejected"
+					}
+				case "push.content-creator.status":
+					if strings.Contains(dbNotification.Message, "Your Creator approval process has been rejected.") {
+						eventType = "creator_status_rejected"
+					} else if strings.Contains(dbNotification.Message, "Your Creator status has been approved") {
+						eventType = "creator_status_approved"
+					} else {
+						eventType = "creator_status_pending"
 					}
 				}
 			} else {
@@ -394,9 +402,13 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 					scyllaNotification.NotificationsCount = notificationsCount
 				}
 
+				if len(scyllaNotification.RenderingVariables) == 0 {
+					scyllaNotification.RenderingVariables = "{}"
+				}
+
 				var renderingVariables database.RenderingVariables
 				if err := json.Unmarshal([]byte(scyllaNotification.RenderingVariables), &renderingVariables); err != nil {
-					return errors.WithStack(err)
+					continue
 				}
 
 				if renderingVariables == nil {
