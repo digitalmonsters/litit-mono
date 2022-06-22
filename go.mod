@@ -4,13 +4,15 @@ go 1.18
 
 require (
 	github.com/RichardKnop/machinery v1.10.6
-	github.com/digitalmonsters/go-common v1.30.44
+	github.com/digitalmonsters/go-common v1.31.5
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/pilagod/gorm-cursor-paginator/v2 v2.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
+	github.com/samber/lo v1.21.0
 	github.com/scylladb/gocqlx/v2 v2.7.0
 	github.com/segmentio/kafka-go v0.4.31
 	github.com/stretchr/testify v1.7.1
@@ -59,6 +61,7 @@ require (
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/iancoleman/strcase v0.0.0-20180726023541-3605ed457bf7 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/imroc/req/v3 v3.10.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -80,7 +83,6 @@ require (
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/lib/pq v1.10.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-sqlite3 v1.14.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -115,6 +117,7 @@ require (
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect
@@ -133,6 +136,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/driver/postgres v1.3.4 // indirect
-	gorm.io/driver/sqlite v1.1.4 // indirect
 	howett.net/plist v1.0.0 // indirect
 )

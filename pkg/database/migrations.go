@@ -449,5 +449,22 @@ func getMigrations() []*gormigrate.Migration {
 				`)
 			},
 		},
+		{
+			ID: "drop_headline_render_templates_150620221200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+					alter table render_templates drop column headline;
+				`)
+			},
+		},
+		{
+			ID: "feat_top_spots_templates_210620221354",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('top_daily_spot_bonus', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.user.daily_top_spot_reward') on conflict do nothing;",
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('top_weekly_spot_bonus', '2022-03-18 16:00:00.000000', '2022-03-18 16:00:00.000000', 'push.user.weekly_top_spot_reward') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
