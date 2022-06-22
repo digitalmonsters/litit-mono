@@ -18,8 +18,9 @@ type CreatorRequestsListRequest struct {
 	OrderOption          OrderOption             `json:"order_option"`
 	Limit                int                     `json:"limit"`
 	Offset               int                     `json:"offset"`
-	SearchQuery          string                  `json:"search_query"`
-	Email                string                  `json:"email"`
+	//filtering
+	SearchQuery string `json:"search_query"`
+	Email       string `json:"email"`
 }
 
 type OrderOption int8
