@@ -205,8 +205,6 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 				continue
 			}
 
-			logger.Info().Msgf("[MigrateNotificationsToScylla] eventType \"%v\" parsed for notification \"%v\"", eventType, dbNotification.Id.String())
-
 			customDataMarshalled, _ := json.Marshal(dbNotification.CustomData)
 			renderingVariablesMarshalled, _ := json.Marshal(dbNotification.RenderingVariables)
 			notificationMarshalled, _ := json.Marshal(dbNotification)
@@ -402,7 +400,7 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 				title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err :=
 					renderer.Render(template, renderingVariables, translation.DefaultUserLanguage)
 				if err != nil {
-					return errors.WithStack(err)
+					continue
 				}
 
 				if scyllaNotification.NotificationsCount == 1 {
