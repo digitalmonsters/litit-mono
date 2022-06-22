@@ -353,6 +353,12 @@
         "daily_max_amount_of_paid_spots_views_reached_headline_multiple": "",
         "first_email_marketing_added_title_multiple": "",
         "first_email_marketing_added_body_multiple": "",
-        "first_email_marketing_added_headline_multiple": ""
+        "first_email_marketing_added_headline_multiple": "",
+        "top_daily_spot_bonus_title": "",
+        "top_daily_spot_bonus_body": "",
+        "top_daily_spot_bonus_headline": "",
+        "top_weekly_spot_bonus_title": "",
+        "top_weekly_spot_bonus_body": "",
+        "top_weekly_spot_bonus_headline": ""
     }
 }

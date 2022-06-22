@@ -20,6 +20,5 @@ func (a AccessLevel) ToString() string {
 	case AccessLevelService:
 		return "service"
 	}
-
 	return "unk"
 }
