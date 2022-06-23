@@ -140,7 +140,7 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init notification api")
 	}
 
-	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
+	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper, jobber); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
 

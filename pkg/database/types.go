@@ -282,19 +282,6 @@ func GetNotificationTemplates(notificationType string) []string {
 	return []string{}
 }
 
-//without push.user.after_signup, push.guest.after_install
-func GetMarketingNotifications() []string {
-	return []string{
-		"push.bonus.daily_followers.first", "push.bonus.daily_time.first", "push.earned_points.first",
-		"push.paid_views.first", "push.referral.first", "push.share.first", "push.bonus.weekly_followers.first",
-		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
-		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
-		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
-		"push.avatar.first", "push.upload.first", "push.upload.spot.first", "push.description.first", "push.gender.first_x_paid_views",
-		"push.user.first_email_marketing_added", "push.user.daily_top_spot_reward", "push.user.weekly_top_spot_reward",
-	}
-}
-
 type UserNotificationsSettings struct {
 	ClusterKey int64
 	UserId     int64

@@ -18,6 +18,21 @@ const (
 	TypeGroupFollowing = TypeGroup("following")
 )
 
+func TypeGroupToScyllaViewName(typeGroup TypeGroup) string {
+	switch typeGroup {
+	case TypeGroupAll:
+		return "notification_all"
+	case TypeGroupComment:
+		return "notification_comment"
+	case TypeGroupSystem:
+		return "notification_system"
+	case TypeGroupFollowing:
+		return "notification_following"
+	}
+
+	return ""
+}
+
 type NotificationsResponse struct {
 	Data        []NotificationsResponseItem `json:"data"`
 	Next        string                      `json:"next"`

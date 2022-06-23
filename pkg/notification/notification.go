@@ -8,7 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	"github.com/digitalmonsters/notification-handler/pkg/utils"
+	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
@@ -44,19 +44,14 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 		}
 	}
 
-	templates := make([]string, 0)
-	for _, notificationType := range getNotificationsTypesByTypeGroup(typeGroup) {
-		templates = append(templates, database.GetNotificationTemplates(notificationType)...)
-	}
-
-	templatesIn := utils.JoinStringsForInStatement(templates)
 	session := database.GetScyllaSession()
 
-	query := "select title, body, notifications_count, notification_info from notification where user_id = ?"
-
-	if len(templatesIn) > 0 {
-		query = fmt.Sprintf("%v and event_type in (%v)", query, templatesIn)
+	notificationByTypeGroupView := TypeGroupToScyllaViewName(typeGroup)
+	if len(notificationByTypeGroupView) == 0 {
+		return nil, errors.WithStack(errors.New("unknown group"))
 	}
+
+	query := fmt.Sprintf("select created_at, event_type, entity_id, related_entity_id from %v where user_id = ?", notificationByTypeGroupView)
 
 	iter := session.Query(query, userId).WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
 
@@ -67,12 +62,26 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	notificationsCounts := make(map[uuid.UUID]int64)
 
 	for scanner.Next() {
+		notificationByTypeGroup := scylla.NotificationByTypeGroup{UserId: userId}
+
+		if err := scanner.Scan(&notificationByTypeGroup.CreatedAt, &notificationByTypeGroup.EventType,
+			&notificationByTypeGroup.EntityId, &notificationByTypeGroup.RelatedEntityId); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		notificationIter := session.Query("select title, body, notifications_count, notification_info from notification "+
+			"where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
+			userId, notificationByTypeGroup.EventType, notificationByTypeGroup.CreatedAt,
+			notificationByTypeGroup.EntityId, notificationByTypeGroup.RelatedEntityId).Iter()
+
 		var title string
 		var body string
 		var notificationsCount int64
 		var notificationInfo string
 
-		if err := scanner.Scan(&title, &body, &notificationsCount, &notificationInfo); err != nil {
+		notificationIter.Scan(&title, &body, &notificationsCount, &notificationInfo)
+
+		if err := notificationIter.Close(); err != nil {
 			return nil, errors.WithStack(err)
 		}
 
@@ -127,28 +136,6 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	}
 
 	return &resp, nil
-}
-
-func getNotificationsTypesByTypeGroup(typeGroup TypeGroup) []string {
-	switch typeGroup {
-	case TypeGroupAll:
-		var all = []string{"push.comment.new", "push.comment.reply", "push.comment.vote", "push.profile.comment",
-			"push.content.comment", "push.admin.bulk", "push.admin.single", "push.profile.following",
-			"push.content.new-posted", "push.like.new", "push.tip", "push.content.like", "push.bonus.followers",
-			"push.bonus.daily", "push.content.successful-upload", "push.spot.successful-upload", "push.content.rejected", "push.kyc.status",
-			"push.content-creator.status"}
-		all = append(all, database.GetMarketingNotifications()...)
-		return all
-	case TypeGroupComment:
-		return []string{"push.comment.new", "push.comment.reply", "push.comment.vote", "push.profile.comment",
-			"push.content.comment"}
-	case TypeGroupSystem:
-		return []string{"push.admin.bulk", "push.admin.single"}
-	case TypeGroupFollowing:
-		return []string{"push.profile.following"}
-	default:
-		return []string{}
-	}
 }
 
 func DeleteNotification(db *gorm.DB, userId int64, id uuid.UUID) error {
