@@ -83,7 +83,7 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 	session := database.GetScyllaSession()
 	notificationRelationBatch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 	batchCount := 0
-	maxBatchCount := 200
+	maxBatchCount := 100
 
 	groupedNotifications := make(map[int64]map[string]map[int64]scylla.Notification)
 	var scyllaNotificationsToUpdate []scylla.Notification
