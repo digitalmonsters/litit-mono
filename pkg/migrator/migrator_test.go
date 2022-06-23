@@ -23,7 +23,6 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -447,10 +446,6 @@ func TestMigrateNotificationsToScyllaWithSeed(t *testing.T) {
 
 	a.NotNil(resp)
 	a.Len(resp.Data, 12)
-	dataMarshalled, err := json.Marshal(resp.Data)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	path, err := boilerplate.RecursiveFindFile("./test_data/expected_seed.json", "./", 30)
 	if err != nil {
@@ -462,15 +457,36 @@ func TestMigrateNotificationsToScyllaWithSeed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var dataExpected, dataActual interface{}
+	var dataExpected []notification.NotificationsResponseItem
 
 	if err = json.Unmarshal(data, &dataExpected); err != nil {
 		t.Fatal(err)
 	}
 
-	if err = json.Unmarshal(dataMarshalled, &dataActual); err != nil {
-		t.Fatal(err)
-	}
+	for _, expected := range dataExpected {
+		foundItem, found := lo.Find(resp.Data, func(item notification.NotificationsResponseItem) bool {
+			return item.Id == expected.Id
+		})
 
-	a.True(reflect.DeepEqual(dataExpected, dataActual))
+		a.True(found)
+		a.Equal(expected.Id, foundItem.Id)
+		a.Equal(expected.UserId, foundItem.UserId)
+		a.Equal(expected.Type, foundItem.Type)
+		a.Equal(expected.Title, foundItem.Title)
+		a.Equal(expected.Message, foundItem.Message)
+		a.Equal(expected.RelatedUserId, foundItem.RelatedUserId)
+		a.Equal(expected.RelatedUser, foundItem.RelatedUser)
+		a.Equal(expected.RenderingVariables, foundItem.RenderingVariables)
+		a.Equal(expected.CustomData, foundItem.CustomData)
+		a.Equal(expected.CommentId, foundItem.CommentId)
+		a.Equal(expected.Comment, foundItem.Comment)
+		a.Equal(expected.ContentId, foundItem.ContentId)
+		a.Equal(expected.Content, foundItem.Content)
+		a.Equal(expected.QuestionId, foundItem.QuestionId)
+		a.Equal(expected.KycStatus, foundItem.KycStatus)
+		a.Equal(expected.ContentCreatorStatus, foundItem.ContentCreatorStatus)
+		a.Equal(expected.KycReason, foundItem.KycReason)
+		a.Equal(expected.CreatedAt, foundItem.CreatedAt)
+		a.Equal(expected.NotificationsCount, foundItem.NotificationsCount)
+	}
 }
