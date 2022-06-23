@@ -59,6 +59,7 @@ const (
 	TransactionStatusSentForProcessing TransactionStatus = 2
 	TransactionStatusPaid              TransactionStatus = 3
 	TransactionStatusFailed            TransactionStatus = 4
+	TransactionStatusTechnicalFail     TransactionStatus = 5
 )
 
 type TransactionType int
