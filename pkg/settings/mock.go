@@ -18,7 +18,7 @@ func (s *ServiceMock) GetPushSettings(userId int64, ctx context.Context, db *gor
 }
 
 func (s *ServiceMock) GetPushSettingsByAdmin(req GetPushSettingsByAdminRequest, ctx context.Context, db *gorm.DB) (map[string]GetPushSettingsByAdminItem, error) {
-	return s.GetPushSettingsByAdmin(req, ctx, db)
+	return s.GetPushSettingsByAdminFn(req, ctx, db)
 }
 
 func (s *ServiceMock) ChangePushSettings(settings map[string]bool, userId int64, ctx context.Context) error {
