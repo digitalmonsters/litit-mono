@@ -544,10 +544,9 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	return false, nil
 }
 
-func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error {
+func (s *Sender) CheckPushNotificationDeadlineMinutes(currentDate time.Time, ctx context.Context) error {
 	session := database.GetScyllaSession()
 
-	currentDate := time.Now().UTC()
 	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes/configs.PushNotificationDeadlineMinutes)*2 + 1
 	deadlineKeys := make([]time.Time, deadlineKeysLen)
 	newTime := TimeToNearestMinutes(currentDate, configs.PushNotificationDeadlineKeyMinutes, true)
@@ -782,7 +781,7 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 		return err
 	}
 
-	if err := s.jobber.RegisterTask(string(configs.GeneralPushNotificationTask), func() error {
+	if err := s.jobber.RegisterTask(string(configs.GeneralPushNotificationTask), func(currentDate string) error {
 		apmTransaction := apm_helper.StartNewApmTransaction(string(configs.GeneralPushNotificationTask),
 			"push_notification", nil, nil)
 
@@ -792,7 +791,22 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 
 		ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
 
-		if err := s.CheckPushNotificationDeadlineMinutes(ctx); err != nil {
+		var currentDateUnmarshalled time.Time
+
+		if len(currentDate) == 0 {
+			currentDateUnmarshalled = time.Now().UTC()
+		} else {
+			var err error
+			currentDateUnmarshalled, err = time.Parse("2006-01-02 15:04:05 -0700 UTC", currentDate)
+			if err != nil {
+				apm_helper.LogError(errors.WithStack(err), ctx)
+				return errors.WithStack(err)
+			}
+		}
+
+		apm_helper.AddApmLabel(apmTransaction, "current_date", currentDateUnmarshalled)
+
+		if err := s.CheckPushNotificationDeadlineMinutes(currentDateUnmarshalled, ctx); err != nil {
 			apm_helper.LogError(errors.WithStack(err), ctx)
 			return errors.WithStack(err)
 		}
@@ -805,6 +819,13 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 	if err := s.jobber.RegisterPeriodicTask(configs.PushNotificationJobCron,
 		string(configs.PeriodicPushNotificationTask), &tasks.Signature{
 			Name: string(configs.GeneralPushNotificationTask),
+			Args: []tasks.Arg{
+				{
+					Name:  "currentDate",
+					Type:  "string",
+					Value: "",
+				},
+			},
 		}); err != nil {
 		return err
 	}
