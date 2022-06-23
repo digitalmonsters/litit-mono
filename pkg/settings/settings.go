@@ -12,6 +12,8 @@ import (
 
 type IService interface {
 	GetPushSettings(userId int64, ctx context.Context, db *gorm.DB) (map[string]bool, error)
+	GetPushSettingsByAdmin(req GetPushSettingsByAdminRequest, ctx context.Context,
+		db *gorm.DB) (map[string]GetPushSettingsByAdminItem, error)
 	ChangePushSettings(settings map[string]bool, userId int64, ctx context.Context) error
 	IsPushNotificationMuted(userId int64, templateId string, ctx context.Context) (bool, error)
 }
@@ -67,6 +69,59 @@ func (s service) GetPushSettings(userId int64, ctx context.Context, db *gorm.DB)
 	for id := range templatesMap {
 		if _, ok := settingsMap[id]; !ok {
 			settingsMap[id] = false
+		}
+	}
+
+	return settingsMap, nil
+}
+
+func (s service) GetPushSettingsByAdmin(req GetPushSettingsByAdminRequest, ctx context.Context,
+	db *gorm.DB) (map[string]GetPushSettingsByAdminItem, error) {
+	session := database.GetScyllaSession()
+
+	iter := session.Query("select template_id, muted from user_notifications_settings where "+
+		"cluster_key = ? and user_id = ?", database.GetUserNotificationsSettingsClusterKey(req.UserId), req.UserId).
+		WithContext(ctx).Iter()
+
+	settingsMap := make(map[string]GetPushSettingsByAdminItem)
+
+	var templateId string
+	var muted bool
+
+	for iter.Scan(&templateId, &muted) {
+		settingsMap[templateId] = GetPushSettingsByAdminItem{Muted: muted}
+	}
+
+	if err := iter.Close(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	templatesMap := make(map[string]database.RenderTemplate)
+
+	for id, template := range s.templatesCache.Items() {
+		templatesMap[id] = template.Object.(database.RenderTemplate)
+	}
+
+	if len(templatesMap) == 0 {
+		var templates []database.RenderTemplate
+		if err := db.Find(&templates).Error; err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		for _, template := range templates {
+			templatesMap[template.Id] = template
+			s.templatesCache.Set(template.Id, template, 0)
+		}
+	}
+
+	for id, template := range templatesMap {
+		if v, ok := settingsMap[id]; !ok {
+			settingsMap[id] = GetPushSettingsByAdminItem{
+				RenderTemplate: template,
+				Muted:          muted,
+			}
+		} else {
+			v.RenderTemplate = template
 		}
 	}
 

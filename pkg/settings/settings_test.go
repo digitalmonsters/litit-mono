@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -33,6 +34,8 @@ func TestService_GetPushSettings(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, nil, t); err != nil {
 		t.Fatal(err)
 	}
+
+	settingsService.templatesCache.Flush()
 
 	resp, err := settingsService.GetPushSettings(1, context.TODO(), gormDb)
 	if err != nil {
@@ -79,6 +82,65 @@ func TestService_GetPushSettings(t *testing.T) {
 	respVal, ok = resp["1"]
 	a.True(ok)
 	a.True(respVal)
+}
+
+func TestService_GetPushSettingsByAdmin(t *testing.T) {
+	if err := boilerplate_testing.FlushScyllaAllTables(nil, session, config.Scylla.Keyspace, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, nil, t); err != nil {
+		t.Fatal(err)
+	}
+
+	settingsService.templatesCache.Flush()
+
+	resp, err := settingsService.GetPushSettingsByAdmin(GetPushSettingsByAdminRequest{UserId: 1}, context.TODO(), gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a := assert.New(t)
+
+	a.Equal(0, len(resp))
+
+	renderTemplate1 := database.RenderTemplate{Id: "1"}
+	if err = gormDb.Create(&renderTemplate1).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	settingsService.templatesCache.Flush()
+
+	resp, err = settingsService.GetPushSettingsByAdmin(GetPushSettingsByAdminRequest{UserId: 1}, context.TODO(), gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(1, len(resp))
+
+	var ok bool
+	var respVal GetPushSettingsByAdminItem
+
+	respVal, ok = resp["1"]
+	a.True(ok)
+	a.True(strings.Contains("1", respVal.Id))
+	a.False(respVal.Muted)
+
+	if err = session.Query("update user_notifications_settings set muted = true " +
+		"where cluster_key = 0 and user_id = 1 and template_id = '1'").Exec(); err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err = settingsService.GetPushSettingsByAdmin(GetPushSettingsByAdminRequest{UserId: 1}, context.TODO(), gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(1, len(resp))
+
+	respVal, ok = resp["1"]
+	a.True(ok)
+	a.True(strings.Contains("1", respVal.Id))
+	a.True(respVal.Muted)
 }
 
 func TestService_ChangePushSettings(t *testing.T) {
