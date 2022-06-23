@@ -369,7 +369,6 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 			logger.Error().Msgf("[MigrateNotificationsToScylla] notificationRelationBatch ExecuteBatch err %v", err.Error())
 			return errors.WithStack(err)
 		}
-		batchCount = 0
 		logger.Info().Msg("[MigrateNotificationsToScylla] after notificationRelationBatch Execute")
 	}
 
@@ -511,7 +510,6 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 			logger.Error().Msgf("[MigrateNotificationsToScylla] notificationBatch ExecuteBatch err %v", err.Error())
 			return errors.WithStack(err)
 		}
-		batchCount = 0
 		logger.Info().Msg("[MigrateNotificationsToScylla] after notificationBatch Execute")
 	}
 
