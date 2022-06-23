@@ -138,17 +138,6 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	return &resp, nil
 }
 
-func GetMobileSupportedTypes() []string {
-	var all = []string{"push.comment.reply", "push.comment.vote", "push.profile.comment",
-		"push.content.comment", "push.admin.bulk", "push.profile.following",
-		"push.content.new-posted", "push.tip", "push.content.like", "push.bonus.followers",
-		"push.bonus.daily", "push.content.successful-upload", "push.spot.successful-upload", "push.content.rejected", "push.kyc.status",
-		"push.content-creator.status"}
-	all = append(all, database.GetMarketingNotifications()...)
-
-	return all
-}
-
 func DeleteNotification(db *gorm.DB, userId int64, id uuid.UUID) error {
 	var notification database.Notification
 
