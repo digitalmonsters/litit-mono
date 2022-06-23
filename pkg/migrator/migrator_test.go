@@ -3,16 +3,25 @@ package migrator
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
+	"github.com/digitalmonsters/notification-handler/pkg/notification"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/gocql/gocql"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -21,11 +30,64 @@ import (
 var config configs.Settings
 var gormDb *gorm.DB
 var session *gocql.Session
+var userWrapperMock user_go.IUserGoWrapper
+var followWrapper *follow.FollowWrapperMock
 
 func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	session = database.GetScyllaSession()
 	gormDb = database.GetDb(database.DbTypeMaster)
+
+	userWrapperMock = &user_go.UserGoWrapperMock{
+		GetUsersDetailFn: func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserDetailRecord] {
+			respChan := make(chan wrappers.GenericResponseChan[map[int64]user_go.UserDetailRecord], 2)
+			go func() {
+				respMap := make(map[int64]user_go.UserDetailRecord)
+
+				for i, userId := range userIds {
+					respMap[userId] = user_go.UserDetailRecord{
+						Id:                userId,
+						Username:          null.StringFrom(fmt.Sprintf("%vusername", i)),
+						Firstname:         fmt.Sprintf("%vfirstname", i),
+						Lastname:          fmt.Sprintf("%vlastname", i),
+						Followers:         i,
+						Avatar:            null.StringFrom(fmt.Sprintf("%vusername", i)),
+						NamePrivacyStatus: user_go.NamePrivacyStatusVisible,
+					}
+				}
+
+				respChan <- wrappers.GenericResponseChan[map[int64]user_go.UserDetailRecord]{
+					Response: respMap,
+				}
+			}()
+			return respChan
+		},
+		GetUserBlockFn: func(blockedTo int64, blockedBy int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[user_go.UserBlockData] {
+			respChan := make(chan wrappers.GenericResponseChan[user_go.UserBlockData], 2)
+			respChan <- wrappers.GenericResponseChan[user_go.UserBlockData]{
+				Response: user_go.UserBlockData{
+					Type:      nil,
+					IsBlocked: false,
+				},
+			}
+
+			return respChan
+		},
+	}
+
+	followWrapper = &follow.FollowWrapperMock{}
+	followWrapper.GetUserFollowingRelationBulkFn = func(userId int64, requestUserIds []int64, apmTransaction *apm.Transaction,
+		forceLog bool) chan follow.GetUserFollowingRelationBulkResponseChan {
+		ch := make(chan follow.GetUserFollowingRelationBulkResponseChan, 2)
+
+		ch <- follow.GetUserFollowingRelationBulkResponseChan{
+			Error: nil,
+			Data:  map[int64]follow.RelationData{},
+		}
+		close(ch)
+
+		return ch
+	}
 
 	os.Exit(m.Run())
 }
@@ -352,4 +414,79 @@ func TestMigrateNotificationsToScylla(t *testing.T) {
 			nt.RelatedUserId.Int64 == item.RelatedEntityId && item.EventApplied
 	})
 	a.True(ok)
+}
+
+func TestMigrateNotificationsToScyllaWithSeed(t *testing.T) {
+	if err := boilerplate_testing.FlushScyllaAllTables(nil, session, config.Scylla.Keyspace, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, nil, t); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := utils.PollutePostgresDatabase(gormDb, "./test_data/seed.json"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := utils.PollutePostgresDatabase(gormDb, "./test_data/templates.json"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := MigrateNotificationsToScylla(context.TODO()); err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := notification.GetNotifications(gormDb, 1074760, "", notification.TypeGroupAll, 20,
+		userWrapperMock, followWrapper, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a := assert.New(t)
+
+	a.NotNil(resp)
+	a.Len(resp.Data, 12)
+
+	path, err := boilerplate.RecursiveFindFile("./test_data/expected_seed.json", "./", 30)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var dataExpected []notification.NotificationsResponseItem
+
+	if err = json.Unmarshal(data, &dataExpected); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, expected := range dataExpected {
+		foundItem, found := lo.Find(resp.Data, func(item notification.NotificationsResponseItem) bool {
+			return item.Id == expected.Id
+		})
+
+		a.True(found)
+		a.Equal(expected.Id, foundItem.Id)
+		a.Equal(expected.UserId, foundItem.UserId)
+		a.Equal(expected.Type, foundItem.Type)
+		a.Equal(expected.Title, foundItem.Title)
+		a.Equal(expected.Message, foundItem.Message)
+		a.Equal(expected.RelatedUserId, foundItem.RelatedUserId)
+		a.Equal(expected.RelatedUser, foundItem.RelatedUser)
+		a.Equal(expected.RenderingVariables, foundItem.RenderingVariables)
+		a.Equal(expected.CustomData, foundItem.CustomData)
+		a.Equal(expected.CommentId, foundItem.CommentId)
+		a.Equal(expected.Comment, foundItem.Comment)
+		a.Equal(expected.ContentId, foundItem.ContentId)
+		a.Equal(expected.Content, foundItem.Content)
+		a.Equal(expected.QuestionId, foundItem.QuestionId)
+		a.Equal(expected.KycStatus, foundItem.KycStatus)
+		a.Equal(expected.ContentCreatorStatus, foundItem.ContentCreatorStatus)
+		a.Equal(expected.KycReason, foundItem.KycReason)
+		a.Equal(expected.CreatedAt.UTC(), foundItem.CreatedAt.UTC())
+		a.Equal(expected.NotificationsCount, foundItem.NotificationsCount)
+	}
 }
