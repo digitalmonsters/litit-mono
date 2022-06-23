@@ -466,5 +466,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "fix_kind_23062022",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"update public.render_templates set kind = 'popup' where id in ('top_daily_spot_bonus', 'top_weekly_spot_bonus');",
+				)
+			},
+		},
 	}
 }

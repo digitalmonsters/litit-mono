@@ -31,6 +31,10 @@ func (a settingsApp) Init(subAppLogger zerolog.Logger) error {
 		return err
 	}
 
+	if err := a.initAdminApi(a.httpRouter.GetRpcAdminEndpoint()); err != nil {
+		return err
+	}
+
 	return nil
 }
 
