@@ -467,10 +467,11 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 	logger.Info().Msg("[MigrateNotificationsToScylla] before ExecuteBatch")
 
 	if err := session.ExecuteBatch(batch); err != nil {
+		logger.Error().Msgf("[MigrateNotificationsToScylla] ExecuteBatch err %v", err.Error())
 		return errors.WithStack(err)
 	}
 
-	logger.Info().Msg("[MigrateNotificationsToScylla] before ExecuteBatch")
+	logger.Info().Msg("[MigrateNotificationsToScylla] after ExecuteBatch")
 
 	return nil
 }
