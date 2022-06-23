@@ -104,13 +104,14 @@ const (
 type WithdrawalStatus int16
 
 const (
-	WithdrawalStatusNone           WithdrawalStatus = 0
-	WithdrawalStatusPending        WithdrawalStatus = 1
-	WithdrawalStatusApproved       WithdrawalStatus = 2
-	WithdrawalStatusRejected       WithdrawalStatus = 3 // final
-	WithdrawalStatusFailed         WithdrawalStatus = 4 // final
-	WithdrawalStatusPaymentPending WithdrawalStatus = 5
-	WithdrawalStatusPaid           WithdrawalStatus = 6 // final
+	WithdrawalStatusNone                         WithdrawalStatus = 0
+	WithdrawalStatusPending                      WithdrawalStatus = 1
+	WithdrawalStatusApproved                     WithdrawalStatus = 2
+	WithdrawalStatusRejected                     WithdrawalStatus = 3 // final
+	WithdrawalStatusFailed                       WithdrawalStatus = 4 // final
+	WithdrawalStatusPaymentPending               WithdrawalStatus = 5
+	WithdrawalStatusPaid                         WithdrawalStatus = 6 // final
+	WithdrawalStatusPaymentInvestigationRequired WithdrawalStatus = 7
 )
 
 func (s WithdrawalStatus) ToString() string {
@@ -127,6 +128,8 @@ func (s WithdrawalStatus) ToString() string {
 		return "payment pending"
 	case WithdrawalStatusPaid:
 		return "paid"
+	case WithdrawalStatusPaymentInvestigationRequired:
+		return "payment investigation required"
 	default:
 		return fmt.Sprint(s)
 	}

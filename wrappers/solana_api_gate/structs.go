@@ -1,5 +1,7 @@
 package solana_api_gate
 
+import "fmt"
+
 type TransferTokenResponseData struct {
 	TransferredAmount string `json:"transferred_amount"`
 	Sender            string `json:"sender"`
@@ -62,9 +64,37 @@ const (
 	TransactionStatusTechnicalFail     TransactionStatus = 5
 )
 
+func (s TransactionStatus) ToString() string {
+	switch s {
+	case TransactionStatusPending:
+		return "pending"
+	case TransactionStatusSentForProcessing:
+		return "sent for processing"
+	case TransactionStatusPaid:
+		return "paid"
+	case TransactionStatusFailed:
+		return "failed"
+	case TransactionStatusTechnicalFail:
+		return "technical fail"
+	default:
+		return fmt.Sprint(s)
+	}
+}
+
 type TransactionType int
 
 const (
 	TransactionTypeTransfer TransactionType = 1
 	TransactionTypeVesting  TransactionType = 2
 )
+
+func (s TransactionType) ToString() string {
+	switch s {
+	case TransactionTypeTransfer:
+		return "transfer"
+	case TransactionTypeVesting:
+		return "vesting"
+	default:
+		return fmt.Sprint(s)
+	}
+}
