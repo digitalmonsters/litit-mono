@@ -486,7 +486,7 @@ func TestMigrateNotificationsToScyllaWithSeed(t *testing.T) {
 		a.Equal(expected.KycStatus, foundItem.KycStatus)
 		a.Equal(expected.ContentCreatorStatus, foundItem.ContentCreatorStatus)
 		a.Equal(expected.KycReason, foundItem.KycReason)
-		a.Equal(expected.CreatedAt, foundItem.CreatedAt)
+		a.Equal(expected.CreatedAt.UTC(), foundItem.CreatedAt.UTC())
 		a.Equal(expected.NotificationsCount, foundItem.NotificationsCount)
 	}
 }
