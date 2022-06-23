@@ -162,9 +162,9 @@ func (s *Sender) sendGroupedPush(pushType, kind, title, body, headline string, u
 		return nil
 	}
 
-	if err = <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, pushType, kind, title, body, headline, fmt.Sprint(userId), customData), ctx); err != nil {
-		return errors.WithStack(err)
-	}
+	//if err = <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, pushType, kind, title, body, headline, fmt.Sprint(userId), customData), ctx); err != nil {
+	//	return errors.WithStack(err)
+	//}
 
 	return nil
 }
