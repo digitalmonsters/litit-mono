@@ -23,7 +23,7 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	"os"
-	"strings"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -462,5 +462,15 @@ func TestMigrateNotificationsToScyllaWithSeed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	a.True(strings.Contains(string(dataMarshalled), string(data)))
+	var dataExpected, dataActual interface{}
+
+	if err = json.Unmarshal(data, &dataExpected); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = json.Unmarshal(dataMarshalled, &dataActual); err != nil {
+		t.Fatal(err)
+	}
+
+	a.True(reflect.DeepEqual(dataExpected, dataActual))
 }
