@@ -475,7 +475,7 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 
 	notificationBatch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 	batchSizeBytes := uintptr(0)
-	maxBatchSizeBytes := uintptr(45000)
+	maxBatchSizeBytes := uintptr(10000)
 
 	for _, scyllaNotification := range scyllaNotificationsToUpdate {
 		ttl := timeNow.Unix() - scyllaNotification.CreatedAt.Unix()
