@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 func RegisterMigratorTasks(jobber *machinery.Server) error {
@@ -473,12 +474,35 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 	logger.Info().Msgf("[MigrateNotificationsToScylla] before scyllaNotificationsToUpdate iterations, len %v", len(scyllaNotificationsToUpdate))
 
 	notificationBatch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
-	batchCount = 0
+	batchSizeBytes := uintptr(0)
+	maxBatchSizeBytes := uintptr(45000)
 
 	for _, scyllaNotification := range scyllaNotificationsToUpdate {
 		ttl := timeNow.Unix() - scyllaNotification.CreatedAt.Unix()
 		if ttl <= 0 {
 			ttl = 7776000
+		}
+
+		scyllaNotificationSize := unsafe.Sizeof(scyllaNotification)
+
+		if scyllaNotificationSize > maxBatchSizeBytes {
+			logger.Info().Msgf("[MigrateNotificationsToScylla] scyllaNotificationSize %v more than maxBatchSizeBytes, execute without batch", scyllaNotificationSize)
+
+			if err := session.Query(fmt.Sprintf("update notification using ttl %v set notifications_count = ?, title = ?, "+
+				"body = ?, headline = ?, kind = ?, rendering_variables = ?, custom_data = ?, notification_info = ? "+
+				"where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
+				ttl), scyllaNotification.NotificationsCount, scyllaNotification.Title, scyllaNotification.Body,
+				scyllaNotification.Headline, scyllaNotification.Kind, scyllaNotification.RenderingVariables,
+				scyllaNotification.CustomData, scyllaNotification.NotificationInfo, scyllaNotification.UserId,
+				scyllaNotification.EventType, scyllaNotification.CreatedAt, scyllaNotification.EntityId,
+				scyllaNotification.RelatedEntityId).Exec(); err != nil {
+				logger.Error().Msgf("[MigrateNotificationsToScylla] notificationBatch Execute err %v", err.Error())
+				return errors.WithStack(err)
+			}
+
+			logger.Info().Msg("[MigrateNotificationsToScylla] after execute without batch")
+
+			continue
 		}
 
 		notificationBatch.Query(fmt.Sprintf("update notification using ttl %v set notifications_count = ?, title = ?, "+
@@ -490,22 +514,23 @@ func MigrateNotificationsToScylla(ctx context.Context) error {
 			scyllaNotification.EventType, scyllaNotification.CreatedAt, scyllaNotification.EntityId,
 			scyllaNotification.RelatedEntityId,
 		)
-		batchCount++
 
-		if batchCount == maxBatchCount {
-			logger.Info().Msgf("[MigrateNotificationsToScylla] before notificationBatch Execute, len %v", batchCount)
+		batchSizeBytes += scyllaNotificationSize
+
+		if batchSizeBytes >= maxBatchSizeBytes {
+			logger.Info().Msgf("[MigrateNotificationsToScylla] before notificationBatch Execute, len %v", batchSizeBytes)
 			if err := session.ExecuteBatch(notificationBatch); err != nil {
 				logger.Error().Msgf("[MigrateNotificationsToScylla] ExecuteBatch err %v", err.Error())
 				return errors.WithStack(err)
 			}
-			batchCount = 0
+			batchSizeBytes = 0
 			notificationBatch = session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 			logger.Info().Msg("[MigrateNotificationsToScylla] after notificationBatch Execute")
 		}
 	}
 
-	if batchCount != 0 {
-		logger.Info().Msgf("[MigrateNotificationsToScylla] before notificationBatch Execute, len %v", batchCount)
+	if batchSizeBytes != 0 {
+		logger.Info().Msgf("[MigrateNotificationsToScylla] before notificationBatch Execute, len %v", batchSizeBytes)
 		if err := session.ExecuteBatch(notificationBatch); err != nil {
 			logger.Error().Msgf("[MigrateNotificationsToScylla] notificationBatch ExecuteBatch err %v", err.Error())
 			return errors.WithStack(err)
