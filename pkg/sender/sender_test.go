@@ -3,10 +3,13 @@ package sender
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/translation"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
@@ -27,6 +30,7 @@ var session *gocql.Session
 var sender *Sender
 var gateway *notification_gateway.NotificationGatewayWrapperMock
 var settingsServiceMock *settings.ServiceMock
+var userWrapperMock *user_go.UserGoWrapperMock
 var pushSendMessages []notification_gateway.SendPushRequest
 
 func TestMain(m *testing.M) {
@@ -49,7 +53,31 @@ func TestMain(m *testing.M) {
 		return false, nil
 	}
 
-	sender = NewSender(gateway, settingsServiceMock, nil)
+	userWrapperMock = &user_go.UserGoWrapperMock{}
+	userWrapperMock.GetUsersFn = func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord] {
+		respChan := make(chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord], 2)
+		go func() {
+			respMap := make(map[int64]user_go.UserRecord)
+
+			for i, userId := range userIds {
+				respMap[userId] = user_go.UserRecord{
+					UserId:            userId,
+					Username:          fmt.Sprintf("%vusername", i),
+					Firstname:         fmt.Sprintf("%vfirstname", i),
+					Lastname:          fmt.Sprintf("%vlastname", i),
+					Avatar:            null.StringFrom(fmt.Sprintf("%vusername", i)),
+					NamePrivacyStatus: user_go.NamePrivacyStatusVisible,
+				}
+			}
+
+			respChan <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
+				Response: respMap,
+			}
+		}()
+		return respChan
+	}
+
+	sender = NewSender(gateway, settingsServiceMock, nil, userWrapperMock)
 
 	os.Exit(m.Run())
 }
@@ -574,6 +602,7 @@ func TestSender_SendDeadlinedNotification(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	pushSendMessages = nil
 	if _, err = sender.SendDeadlinedNotification(pushNotificationGroupQueue.Deadline.Add(-1*time.Second),
 		pushNotificationGroupQueue, context.TODO()); err != nil {
 		t.Fatal(err)
@@ -603,7 +632,9 @@ func TestSender_SendDeadlinedNotification(t *testing.T) {
 	a.Equal(pushNotificationGroupQueue.EntityId, pushNotificationGroupQueueUpdated.EntityId)
 	a.Equal(pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueueUpdated.CreatedAt)
 	a.Equal(pushNotificationGroupQueue.NotificationCount, pushNotificationGroupQueueUpdated.NotificationCount)
+	a.Len(pushSendMessages, 0)
 
+	pushSendMessages = nil
 	if _, err = sender.SendDeadlinedNotification(pushNotificationGroupQueue.Deadline.Add((2*configs.PushNotificationDeadlineKeyMinutes+1)*time.Minute),
 		pushNotificationGroupQueue, context.TODO()); err != nil {
 		t.Fatal(err)
@@ -631,9 +662,102 @@ func TestSender_SendDeadlinedNotification(t *testing.T) {
 	a.Equal(pushNotificationGroupQueue.EntityId, pushNotificationGroupQueueUpdated.EntityId)
 	a.Equal(pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueueUpdated.CreatedAt)
 	a.Equal(pushNotificationGroupQueue.NotificationCount, pushNotificationGroupQueueUpdated.NotificationCount)
+	a.Len(pushSendMessages, 0)
 
 	pushSendMessages = nil
 	if _, err = sender.SendDeadlinedNotification(pushNotificationGroupQueue.Deadline.Add(1*time.Second),
+		pushNotificationGroupQueue, context.TODO()); err != nil {
+		t.Fatal(err)
+	}
+
+	iter = session.Query("select deadline_key, deadline, user_id, event_type, entity_id, created_at, "+
+		"notification_count from push_notification_group_queue where deadline_key = ? and deadline = ? and user_id = ? "+
+		"and event_type = ? and entity_id = ?", pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
+		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId).Iter()
+
+	pushNotificationGroupQueueUpdated = scylla.PushNotificationGroupQueue{}
+	iter.Scan(&pushNotificationGroupQueueUpdated.DeadlineKey, &pushNotificationGroupQueueUpdated.Deadline,
+		&pushNotificationGroupQueueUpdated.UserId, &pushNotificationGroupQueueUpdated.EventType,
+		&pushNotificationGroupQueueUpdated.EntityId, &pushNotificationGroupQueueUpdated.CreatedAt,
+		&pushNotificationGroupQueueUpdated.NotificationCount)
+
+	if err = iter.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(int64(0), pushNotificationGroupQueueUpdated.UserId)
+	a.Len(pushSendMessages, 1)
+	a.Equal(notification1.Title, pushSendMessages[0].Title)
+	a.Equal(notification1.Body, pushSendMessages[0].Body)
+
+	pushNotificationGroupQueue = scylla.PushNotificationGroupQueue{
+		DeadlineKey:       TimeToNearestMinutes(baseDate, configs.PushNotificationDeadlineKeyMinutes, false),
+		Deadline:          TimeToNearestMinutes(baseDate, configs.PushNotificationDeadlineMinutes, false),
+		UserId:            notification1.UserId,
+		EventType:         notification1.EventType,
+		EntityId:          notification1.EntityId + 1,
+		CreatedAt:         notification1.CreatedAt,
+		NotificationCount: notification1.NotificationsCount,
+	}
+
+	if err = session.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
+		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
+		pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueue.NotificationCount,
+		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline, pushNotificationGroupQueue.UserId,
+		pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId).Exec(); err != nil {
+		t.Fatal(err)
+	}
+
+	pushSendMessages = nil
+	if _, err = sender.SendDeadlinedNotification(pushNotificationGroupQueue.Deadline.Add(1*time.Second),
+		pushNotificationGroupQueue, context.TODO()); err != nil {
+		t.Fatal(err)
+	}
+
+	iter = session.Query("select deadline_key, deadline, user_id, event_type, entity_id, created_at, "+
+		"notification_count from push_notification_group_queue where deadline_key = ? and deadline = ? and user_id = ? "+
+		"and event_type = ? and entity_id = ?", pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
+		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId).Iter()
+
+	pushNotificationGroupQueueUpdated = scylla.PushNotificationGroupQueue{}
+	iter.Scan(&pushNotificationGroupQueueUpdated.DeadlineKey, &pushNotificationGroupQueueUpdated.Deadline,
+		&pushNotificationGroupQueueUpdated.UserId, &pushNotificationGroupQueueUpdated.EventType,
+		&pushNotificationGroupQueueUpdated.EntityId, &pushNotificationGroupQueueUpdated.CreatedAt,
+		&pushNotificationGroupQueueUpdated.NotificationCount)
+
+	if err = iter.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueueUpdated.DeadlineKey)
+	a.Equal(pushNotificationGroupQueue.Deadline, pushNotificationGroupQueueUpdated.Deadline)
+	a.Equal(pushNotificationGroupQueue.UserId, pushNotificationGroupQueueUpdated.UserId)
+	a.Equal(pushNotificationGroupQueue.EventType, pushNotificationGroupQueueUpdated.EventType)
+	a.Equal(pushNotificationGroupQueue.EntityId, pushNotificationGroupQueueUpdated.EntityId)
+	a.Equal(pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueueUpdated.CreatedAt)
+	a.Equal(pushNotificationGroupQueue.NotificationCount, pushNotificationGroupQueueUpdated.NotificationCount)
+	a.Len(pushSendMessages, 0)
+
+	pushNotificationGroupQueue = scylla.PushNotificationGroupQueue{
+		DeadlineKey:       TimeToNearestMinutes(baseDate, configs.PushNotificationDeadlineKeyMinutes, false),
+		Deadline:          TimeToNearestMinutes(baseDate, configs.PushNotificationDeadlineMinutes, false),
+		UserId:            notification1.UserId,
+		EventType:         notification1.EventType,
+		EntityId:          notification1.EntityId,
+		CreatedAt:         notification1.CreatedAt,
+		NotificationCount: notification1.NotificationsCount,
+	}
+
+	if err = session.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
+		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
+		pushNotificationGroupQueue.CreatedAt, pushNotificationGroupQueue.NotificationCount,
+		pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline, pushNotificationGroupQueue.UserId,
+		pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId).Exec(); err != nil {
+		t.Fatal(err)
+	}
+
+	pushSendMessages = nil
+	if _, err = sender.SendDeadlinedNotification(pushNotificationGroupQueue.Deadline,
 		pushNotificationGroupQueue, context.TODO()); err != nil {
 		t.Fatal(err)
 	}
