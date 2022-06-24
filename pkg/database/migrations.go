@@ -474,5 +474,14 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "feat_spots_upload_banned_210620221354",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('max_boring_spots',"+
+						" '2022-06-24 12:00:00.000000', '2022-06-24 12:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
