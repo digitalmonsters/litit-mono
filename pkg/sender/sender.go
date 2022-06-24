@@ -216,7 +216,8 @@ func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId 
 }
 
 func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline string, userId int64,
-	customData database.CustomData, isGrouped bool, entityId int64, createdAt time.Time, ctx context.Context) (interface{}, error) {
+	customData database.CustomData, isGrouped bool, entityId int64, relatedEntityId int64, createdAt time.Time,
+	ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(database.GetDbWithContext(database.DbTypeReadonly, ctx), userId)
 
 	if err != nil {
@@ -263,10 +264,16 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline_key", deadlineKeys)
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline", deadlines)
 
-	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
+	query := fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
-		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ? and entity_id = ?",
-		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines)), userId, pushType, entityId).WithContext(ctx).Iter()
+		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ?",
+		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines))
+
+	if relatedEntityId != 0 {
+		query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+	}
+
+	pushNotificationGroupQueueIter := session.Query(query, userId, pushType).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
@@ -510,7 +517,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		if found {
 			batch.Query("delete from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
 				notification.UserId, template.Id, createdAt, entityIdSelected, relatedEntityIdSelected)
-			if err = s.UpdateCreatedAtInGroupQueue(notification.UserId, template.Id, entityId, notification.CreatedAt, ctx); err != nil {
+			if err = s.UpdateCreatedAtInGroupQueue(notification.UserId, template.Id, entityIdSelected, notification.CreatedAt, ctx); err != nil {
 				return true, errors.WithStack(err)
 			}
 		}
@@ -572,7 +579,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	if !alreadySend {
 		if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, headline, notification.UserId, notification.CustomData, template.IsGrouped,
-			entityId, notification.CreatedAt, ctx); err != nil {
+			entityId, relatedEntityId, notification.CreatedAt, ctx); err != nil {
 			return true, errors.WithStack(err)
 		}
 	}
