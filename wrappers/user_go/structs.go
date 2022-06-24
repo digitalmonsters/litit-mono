@@ -104,6 +104,7 @@ type UserDetailRecord struct {
 	AdDisabled          bool                 `json:"ad_disabled"`
 	Influencer          bool                 `json:"influencer"`
 	Language            translation.Language `json:"language"`
+	SpotsUploadBanned   bool                 `json:"spots_upload_banned"`
 }
 
 func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
@@ -328,4 +329,8 @@ type FinalizeExportRequest struct {
 
 type FinalizeExportResponse struct {
 	Success bool `json:"success"`
+}
+
+type SetUserSpotsUploadBanned struct {
+	Banned bool `json:"banned"`
 }

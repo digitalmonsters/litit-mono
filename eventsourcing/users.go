@@ -64,6 +64,7 @@ type UserEvent struct {
 	EmailMarketing         null.String               `json:"email_marketing"`
 	EmailMarketingVerified bool                      `json:"email_marketing_verified"`
 	Language               translation.Language      `json:"language"`
+	SpotsUploadBanned      bool                      `json:"spots_upload_banned"`
 	BaseChangeEvent
 }
 
