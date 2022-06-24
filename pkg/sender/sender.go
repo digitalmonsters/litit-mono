@@ -613,6 +613,10 @@ func (s *Sender) UpdateCreatedAtInGroupQueue(userId int64, eventType string, ent
 		return errors.WithStack(err)
 	}
 
+	if err := session.ExecuteBatch(batch); err != nil {
+		return errors.WithStack(err)
+	}
+
 	return nil
 }
 
