@@ -340,6 +340,9 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	if relatedEntityId == 0 {
 		pushNotificationGroupQueue.EntityId = entityId
+		batch.Query("delete from push_notification_group_queue where deadline_key = ? and deadline = ? and "+
+			"user_id = ? and event_type = ?", pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
+			pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType)
 	}
 
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
