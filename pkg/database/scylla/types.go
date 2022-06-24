@@ -38,3 +38,11 @@ type PushNotificationGroupQueue struct {
 	CreatedAt         time.Time `json:"created_at"`
 	NotificationCount int64     `json:"notification_count"`
 }
+
+type NotificationByTypeGroup struct {
+	UserId          int64     `json:"user_id"`
+	EventType       string    `json:"event_type"`
+	EntityId        int64     `json:"entity_id"`
+	RelatedEntityId int64     `json:"related_entity_id"`
+	CreatedAt       time.Time `json:"created_at"`
+}
