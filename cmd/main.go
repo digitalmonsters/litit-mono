@@ -95,8 +95,10 @@ func main() {
 		}
 	}()
 
+	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
+
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
-		cfg.Wrappers.NotificationGateway), settingsService, jobber)
+		cfg.Wrappers.NotificationGateway), settingsService, jobber, userGoWrapper)
 
 	if err = migrator.RegisterMigratorTasks(jobber); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not register migrator tasks")
@@ -106,7 +108,6 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not register user push notifications tasks")
 	}
 
-	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
 	commentWrapper := comment.NewCommentWrapper(cfg.Wrappers.Comment)
@@ -140,7 +141,7 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init notification api")
 	}
 
-	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
+	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper, jobber); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
 
