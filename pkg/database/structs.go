@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
@@ -81,15 +81,19 @@ func (MusicStorage) TableName() string {
 }
 
 type Creator struct {
-	Id           int64                       `json:"id"`
-	UserId       int64                       `json:"user_id"`
-	Status       eventsourcing.CreatorStatus `json:"status"`
-	RejectReason null.Int                    `json:"reject_reason"`
-	LibraryUrl   string                      `json:"library_url"`
-	SongsCount   int                         `json:"songs_count"`
-	CreatedAt    time.Time                   `json:"created_at"`
-	ApprovedAt   null.Time                   `json:"approved_at"`
-	DeletedAt    gorm.DeletedAt              `json:"deleted_at"`
+	Id           int64                 `json:"id"`
+	UserId       int64                 `json:"user_id"`
+	Status       user_go.CreatorStatus `json:"status"`
+	RejectReason null.Int              `json:"reject_reason"`
+	LibraryUrl   string                `json:"library_url"`
+	SongsCount   int                   `json:"songs_count"`
+	CreatedAt    time.Time             `json:"created_at"`
+	ApprovedAt   null.Time             `json:"approved_at"`
+	DeletedAt    gorm.DeletedAt        `json:"deleted_at"`
+	Username     string                `json:"username"`
+	Firstname    string                `json:"firstname"`
+	Lastname     string                `json:"lastname"`
+	Email        string                `json:"email"`
 
 	Reason *CreatorRejectReasons `json:"-" gorm:"foreignKey:reject_reason"`
 }

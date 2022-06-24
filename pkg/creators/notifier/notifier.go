@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/global"
 	"github.com/rs/zerolog/log"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"sync"
 	"time"
@@ -60,6 +61,7 @@ func (n *Notifier) Flush() []error {
 	}
 
 	defer apmTransaction.End()
+	ctx := apm.ContextWithTransaction(n.ctx, apmTransaction)
 
 	n.mutex.Lock()
 	queueCopy := n.queue
@@ -70,7 +72,7 @@ func (n *Notifier) Flush() []error {
 
 	if len(appErrors) > 0 {
 		for _, err := range appErrors {
-			apm_helper.CaptureApmError(err, apmTransaction)
+			apm_helper.LogError(err, ctx)
 		}
 
 		n.updateQueue(queueCopy)
@@ -83,7 +85,7 @@ func (n *Notifier) Flush() []error {
 
 		if len(publisherErrors) > 0 {
 			for _, err := range publisherErrors {
-				apm_helper.CaptureApmError(err, apmTransaction)
+				apm_helper.LogError(err, ctx)
 			}
 
 			n.updateQueue(queueCopy)

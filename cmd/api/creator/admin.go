@@ -23,7 +23,7 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		res, err := creatorsService.CreatorRequestsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), cfg.Creators.MaxThresholdHours, executionData.ApmTransaction, userGoWrapper)
+		res, err := creatorsService.CreatorRequestsList(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), cfg.Creators.MaxThresholdHours, executionData.Context, userGoWrapper)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
@@ -247,7 +247,7 @@ func InitAdminApi(adminEndpoint router.IRpcEndpoint, apiDef map[string]swagger.A
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		return moderation.List(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), userGoWrapper, executionData.ApmTransaction)
+		return moderation.List(req, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), userGoWrapper, executionData.Context)
 	}, common.AccessLevelRead, "music:moderation:list")); err != nil {
 		return err
 	}

@@ -1,13 +1,14 @@
 package moderation
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/stretchr/testify/assert"
-	"go.elastic.co/apm"
 	"gorm.io/gorm"
 	"os"
 	"testing"
@@ -34,8 +35,8 @@ func addCategory(t *testing.T, categoryName string) *database.Category {
 
 	userGoWrapper = &user_go.UserGoWrapperMock{}
 
-	userGoWrapper.GetUsersFn = func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan user_go.GetUsersResponseChan {
-		ch := make(chan user_go.GetUsersResponseChan, 2)
+	userGoWrapper.GetUsersFn = func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord] {
+		ch := make(chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord], 2)
 		defer close(ch)
 
 		mapped := map[int64]user_go.UserRecord{}
@@ -46,9 +47,9 @@ func addCategory(t *testing.T, categoryName string) *database.Category {
 			}
 		}
 
-		ch <- user_go.GetUsersResponseChan{
-			Error: nil,
-			Items: mapped,
+		ch <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
+			Error:    nil,
+			Response: mapped,
 		}
 
 		return ch

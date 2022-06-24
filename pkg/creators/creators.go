@@ -1,16 +1,15 @@
 package creators
 
 import (
+	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
-	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/global"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
-	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -27,9 +26,23 @@ func NewService(notifiers []global.INotifier) *Service {
 	}
 }
 
-func (s *Service) BecomeMusicCreator(req BecomeMusicCreatorRequest, db *gorm.DB, executionData router.MethodExecutionData) error {
+func (s *Service) BecomeMusicCreator(req BecomeMusicCreatorRequest, db *gorm.DB, executionData router.MethodExecutionData, userGoWrapper user_go.IUserGoWrapper) error {
 	tx := db.Begin()
 	defer tx.Rollback()
+
+	userResp := <-userGoWrapper.GetUsers([]int64{executionData.UserId}, executionData.Context, false)
+	if userResp.Error != nil {
+		apm_helper.LogError(userResp.Error.ToError(), executionData.Context)
+	}
+
+	var user user_go.UserRecord
+	if val, ok := userResp.Response[executionData.UserId]; ok {
+		user.UserId = val.UserId
+		user.Username = val.Username
+		user.Firstname = val.Firstname
+		user.Lastname = val.Lastname
+		user.Email = val.Email
+	}
 
 	var creator database.Creator
 	if err := tx.Model(creator).Clauses(clause.Locking{Strength: "UPDATE"}).
@@ -38,19 +51,23 @@ func (s *Service) BecomeMusicCreator(req BecomeMusicCreatorRequest, db *gorm.DB,
 	}
 
 	if creator.Id > 0 {
-		if creator.Status == eventsourcing.CreatorStatusApproved {
+		if creator.Status == user_go.CreatorStatusApproved {
 			return errors.New("request has been already approved")
 		}
 
-		if creator.Status == eventsourcing.CreatorStatusPending {
+		if creator.Status == user_go.CreatorStatusPending {
 			return errors.New("request is under consideration")
 		}
 	}
 
 	creator.UserId = executionData.UserId
-	creator.Status = eventsourcing.CreatorStatusPending
+	creator.Status = user_go.CreatorStatusPending
 	creator.LibraryUrl = req.LibraryLink
 	creator.CreatedAt = time.Now()
+	creator.Username = user.Username
+	creator.Firstname = user.Firstname
+	creator.Lastname = user.Lastname
+	creator.Email = user.Email
 
 	if err := tx.Save(&creator).Error; err != nil {
 		return errors.WithStack(err)
@@ -69,7 +86,7 @@ func (s *Service) BecomeMusicCreator(req BecomeMusicCreatorRequest, db *gorm.DB,
 	return nil
 }
 
-func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThreshold int, apmTransaction *apm.Transaction, userGoWrapper user_go.IUserGoWrapper) (*CreatorRequestsListResponse, error) {
+func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.DB, maxThreshold int, ctx context.Context, userGoWrapper user_go.IUserGoWrapper) (*CreatorRequestsListResponse, error) {
 	query := db.Model(database.Creator{}).Preload("Reason")
 
 	if req.UserId.Valid {
@@ -82,6 +99,16 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 
 	if req.MaxThresholdExceeded {
 		query = query.Where("created_at <= NOW() - INTERVAL ?", gorm.Expr(fmt.Sprintf("'%v HOURS'", maxThreshold)))
+	}
+
+	if len(req.SearchQuery) > 0 {
+		search := fmt.Sprintf("%%%v%%", req.SearchQuery)
+		query = query.Where("firstname ilike ? or lastname ilike ? or username ilike ?", search, search, search)
+	}
+
+	if len(req.Email) > 0 {
+		search := fmt.Sprintf("%%%v%%", req.Email)
+		query = query.Where("email ilike ?", search)
 	}
 
 	var totalCount int64
@@ -111,9 +138,9 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 		}
 	}
 
-	userResp := <-userGoWrapper.GetUsers(userIds, apmTransaction, false)
+	userResp := <-userGoWrapper.GetUsers(userIds, ctx, false)
 	if userResp.Error != nil {
-		apm_helper.CaptureApmError(userResp.Error.ToError(), apmTransaction)
+		apm_helper.LogError(userResp.Error.ToError(), ctx)
 	}
 
 	var respItems []creatorListItem
@@ -133,7 +160,7 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 			respItem.RejectReason = null.StringFrom(c.Reason.Reason)
 		}
 
-		userModel, ok := userResp.Items[c.UserId]
+		userModel, ok := userResp.Response[c.UserId]
 		if !ok {
 			continue
 		}
@@ -143,6 +170,7 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 		respItem.FirstName = userModel.Firstname
 		respItem.LastName = userModel.Lastname
 		respItem.Avatar = userModel.Avatar
+		respItem.Email = userModel.Email
 
 		respItems = append(respItems, respItem)
 	}
@@ -159,13 +187,13 @@ func (s *Service) CreatorRequestApprove(req CreatorRequestApproveRequest, db *go
 
 	var creators []*database.Creator
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("id in ? and status = ?", req.Ids, eventsourcing.CreatorStatusPending).
+		Where("id in ? and status = ?", req.Ids, user_go.CreatorStatusPending).
 		Find(&creators).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	for _, r := range creators {
-		r.Status = eventsourcing.CreatorStatusApproved
+		r.Status = user_go.CreatorStatusApproved
 		r.ApprovedAt = null.TimeFrom(time.Now())
 	}
 
@@ -202,7 +230,7 @@ func (s *Service) CreatorRequestReject(req CreatorRequestRejectRequest, db *gorm
 
 	var creatorRequests []*database.Creator
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("id in ? and status = ?", ids, eventsourcing.CreatorStatusPending).
+		Where("id in ? and status = ?", ids, user_go.CreatorStatusPending).
 		Find(&creatorRequests).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -210,7 +238,7 @@ func (s *Service) CreatorRequestReject(req CreatorRequestRejectRequest, db *gorm
 	var creatorRequestsIds []int64
 	for _, r := range creatorRequests {
 		if reasonId, ok := creatorsMapped[r.Id]; ok {
-			r.Status = eventsourcing.CreatorStatusRejected
+			r.Status = user_go.CreatorStatusRejected
 			r.RejectReason = null.IntFrom(reasonId)
 			creatorRequestsIds = append(creatorRequestsIds, r.Id)
 		}
@@ -249,7 +277,7 @@ func (s *Service) UploadNewSong(req UploadNewSongRequest, db *gorm.DB, execution
 		return nil, errors.WithStack(err)
 	}
 
-	if creator.Id == 0 || creator.Status != eventsourcing.CreatorStatusApproved {
+	if creator.Id == 0 || creator.Status != user_go.CreatorStatusApproved {
 		return nil, errors.New("only approved creators can upload music")
 	}
 

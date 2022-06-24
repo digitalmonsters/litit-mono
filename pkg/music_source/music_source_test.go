@@ -1,6 +1,7 @@
 package music_source
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
@@ -83,7 +84,7 @@ func TestNewMusicStorageService(t *testing.T) {
 		Source:        database.SongSourceOwnStorage,
 		Page:          1,
 		Size:          10,
-	}, gormDb, nil)
+	}, gormDb, nil, context.TODO())
 	assert.Nil(t, err)
 
 	assert.Len(t, resp.Songs, 1)

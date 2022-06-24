@@ -62,7 +62,7 @@ func GetPopularSongs(req GetPopularSongsRequest, db *gorm.DB, executionData rout
 		return resp, nil
 	}
 
-	resp.Items = frontend.ConvertSongsToFrontendModel(songs, executionData.UserId, db, executionData.ApmTransaction)
+	resp.Items = frontend.ConvertSongsToFrontendModel(songs, executionData.UserId, db, executionData.Context)
 
 	if cursor.After != nil {
 		resp.Cursor = *cursor.After

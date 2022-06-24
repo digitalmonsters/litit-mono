@@ -470,5 +470,18 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "creators_add_user_info_210620221405",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creators add column if not exists username text;
+						  alter table creators add column if not exists firstname text;
+						  alter table creators add column if not exists lastname text;
+						  alter table creators add column if not exists email text;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

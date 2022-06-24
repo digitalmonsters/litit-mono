@@ -69,7 +69,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := creator.InitPublicApi(httpRouter, apiDef, creatorsService); err != nil {
+	if err := creator.InitPublicApi(httpRouter, apiDef, creatorsService, userGoWrapper); err != nil {
 		log.Panic().Err(err).Msg("[Creators Public API] Cannot initialize api")
 		panic(err)
 	}
