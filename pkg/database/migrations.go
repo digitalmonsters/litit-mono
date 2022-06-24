@@ -478,8 +478,8 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "feat_spots_upload_banned_210620221354",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
-					"INSERT INTO public.render_templates (id, title, body, created_at, updated_at, kind, headline) "+
-						"VALUES ('max_boring_spots', 'Congrats!', 'You ability to create spots has been rejected because your spots have been marked as [boring] {{.max_boring_spots_number}} or more times', '2022-06-24 11:00:00.000000', '2022-06-24 11:00:00.000000',  'popup', 'Congrats!');",
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('max_boring_spots',"+
+						" '2022-06-24 12:00:00.000000', '2022-06-24 12:00:00.000000', 'popup') on conflict do nothing;",
 				)
 			},
 		},
