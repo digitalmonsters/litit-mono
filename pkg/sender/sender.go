@@ -517,7 +517,8 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		if found {
 			batch.Query("delete from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
 				notification.UserId, template.Id, createdAt, entityIdSelected, relatedEntityIdSelected)
-			if err = s.UpdateCreatedAtInGroupQueue(notification.UserId, template.Id, entityIdSelected, notification.CreatedAt, ctx); err != nil {
+			if err = s.UpdateCreatedAtInGroupQueue(notification.UserId, template.Id, entityIdSelected,
+				relatedEntityIdSelected, notification.CreatedAt, ctx); err != nil {
 				return true, errors.WithStack(err)
 			}
 		}
@@ -589,16 +590,21 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	return false, nil
 }
 
-func (s *Sender) UpdateCreatedAtInGroupQueue(userId int64, eventType string, entityId int64, newCreatedAt time.Time,
-	ctx context.Context) error {
+func (s *Sender) UpdateCreatedAtInGroupQueue(userId int64, eventType string, entityId int64, relatedEntityId int64,
+	newCreatedAt time.Time, ctx context.Context) error {
 	session := database.GetScyllaSession()
 
 	deadlineKeys, deadlines := GetDeadlinesForSelect(newCreatedAt)
 
-	iter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, event_type, entity_id, created_at, "+
+	query := fmt.Sprintf("select deadline_key, deadline, user_id, event_type, entity_id, created_at, "+
 		"notification_count from push_notification_group_queue where deadline_key in (%v) and deadline in (%v) and user_id = ? "+
-		"and event_type = ? and entity_id = ?", utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines)),
-		userId, eventType, entityId).WithContext(ctx).Iter()
+		"and event_type = ?", utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines))
+
+	if relatedEntityId != 0 {
+		query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+	}
+
+	iter := session.Query(query, userId, eventType).WithContext(ctx).Iter()
 
 	pushNotificationGroupQueue := scylla.PushNotificationGroupQueue{}
 
