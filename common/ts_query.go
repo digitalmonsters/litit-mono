@@ -15,5 +15,23 @@ func ToTsQuery(query string) string {
 
 	query = strings.ToLower(query)
 
-	return stringRg.ReplaceAllString(alpha.ReplaceAllString(query, ""), "|")
+	sp := strings.Split(stringRg.ReplaceAllString(alpha.ReplaceAllString(query, ""), "|"), "|")
+
+	appliedCount := 0
+	var builder strings.Builder
+
+	for _, s := range sp {
+		if len(s) == 0 {
+			continue
+		}
+
+		if appliedCount != 0 {
+			builder.WriteString("|")
+		}
+
+		builder.WriteString(s)
+		appliedCount += 1
+	}
+
+	return builder.String()
 }

@@ -19,6 +19,18 @@ func TestTsQuery(t *testing.T) {
 			input:  "vidjo!@#SASD ekstreme",
 			output: "vidjosasd|ekstreme",
 		},
+		{
+			input:  "girls ",
+			output: "girls",
+		},
+		{
+			input:  "girls   ",
+			output: "girls",
+		},
+		{
+			input:  "girls   vasya xer    xerov ",
+			output: "girls|vasya|xer|xerov",
+		},
 	}
 
 	for i, c := range cases {
