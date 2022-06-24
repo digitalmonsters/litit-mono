@@ -175,6 +175,12 @@ func GetNotificationType(templateId string) string {
 		return "push.gender.first_x_paid_views"
 	case "first_email_marketing_added":
 		return "push.user.first_email_marketing_added"
+	case "top_daily_spot_bonus":
+		return "push.user.daily_top_spot_reward"
+	case "top_weekly_spot_bonus":
+		return "push.user.weekly_top_spot_reward"
+	case "max_boring_spots":
+		return "push.user.max_boring_spots"
 	}
 	return ""
 }
@@ -268,21 +274,16 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"content_reject"}
 	case "push.kyc.status":
 		return []string{"kyc_status_verified", "kyc_status_rejected"}
+	case "push.content-creator.status":
+		return []string{"creator_status_rejected", "creator_status_approved", "creator_status_pending"}
+	case "push.user.daily_top_spot_reward":
+		return []string{"top_daily_spot_bonus"}
+	case "push.user.weekly_top_spot_reward":
+		return []string{"top_weekly_spot_bonus"}
+	case "push.user.max_boring_spots":
+		return []string{"max_boring_spots"}
 	}
 	return []string{}
-}
-
-//without push.user.after_signup, push.guest.after_install
-func GetMarketingNotifications() []string {
-	return []string{
-		"push.bonus.daily_followers.first", "push.bonus.daily_time.first", "push.earned_points.first",
-		"push.paid_views.first", "push.referral.first", "push.share.first", "push.bonus.weekly_followers.first",
-		"push.bonus.weekly_time.first", "push.content_owner.paid_views.first", "push.earned_points.max",
-		"push.referral.reward_increase.stage1", "push.referral.reward_increase.stage2", "push.bonus.registration.verify",
-		"push.referral.other", "push.referral.reward_increase", "push.referral.megabonus",
-		"push.avatar.first", "push.upload.first", "push.upload.spot.first", "push.description.first", "push.gender.first_x_paid_views",
-		"push.user.first_email_marketing_added",
-	}
 }
 
 type UserNotificationsSettings struct {

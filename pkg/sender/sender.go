@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
@@ -35,18 +36,85 @@ type Sender struct {
 	gateway         notification_gateway.INotificationGatewayWrapper
 	settingsService settings.IService
 	jobber          *machinery.Server
+	userWrapper     user_go.IUserGoWrapper
 }
 
-func NewSender(gateway notification_gateway.INotificationGatewayWrapper, settingsService settings.IService, jobber *machinery.Server) *Sender {
+func NewSender(gateway notification_gateway.INotificationGatewayWrapper, settingsService settings.IService,
+	jobber *machinery.Server, userWrapper user_go.IUserGoWrapper) *Sender {
 	return &Sender{
 		gateway:         gateway,
 		settingsService: settingsService,
 		jobber:          jobber,
+		userWrapper:     userWrapper,
 	}
 }
 
 func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error {
 	return <-s.gateway.EnqueueEmail(msg, ctx)
+}
+
+func TimeToNearestMinutes(date time.Time, roundToMinutes int, floorOrCeil bool) time.Time {
+	if roundToMinutes <= 0 {
+		return time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0, 0, date.Location())
+	}
+
+	if roundToMinutes < 60 { // 1h
+		minutes := date.Minute()
+
+		if floorOrCeil {
+			minutes = FloorToNearest(minutes, roundToMinutes)
+		} else {
+			minutes = CeilToNearest(minutes, roundToMinutes)
+		}
+
+		return time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), minutes, 0, 0, date.Location())
+	}
+
+	if roundToMinutes >= 60 && roundToMinutes < 1440 { // 1h and 24h
+		hours := date.Hour()
+
+		if floorOrCeil {
+			hours = FloorToNearest(hours, roundToMinutes/60)
+		} else {
+			hours = CeilToNearest(hours, roundToMinutes/60)
+		}
+
+		return time.Date(date.Year(), date.Month(), date.Day(), hours, roundToMinutes%60, 0, 0, date.Location())
+	}
+
+	if roundToMinutes >= 1440 && roundToMinutes < 43200 { // 24h and 30 days
+		days := date.Day()
+
+		if floorOrCeil {
+			days = FloorToNearest(days, roundToMinutes/1440) + 1
+		} else {
+			days = CeilToNearest(days, roundToMinutes/1440) + 1
+		}
+
+		return time.Date(date.Year(), date.Month(), days, 0, roundToMinutes%1440, 0, 0, date.Location())
+	}
+
+	if roundToMinutes >= 43200 && roundToMinutes < 518400 { // 30 days and 12 months
+		months := int(date.Month())
+
+		if floorOrCeil {
+			months = FloorToNearest(months, roundToMinutes/43200) + 1
+		} else {
+			months = CeilToNearest(months, roundToMinutes/43200) + 1
+		}
+
+		return time.Date(date.Year(), time.Month(months), 1, 0, roundToMinutes%43200, 0, 0, date.Location())
+	}
+
+	years := date.Year()
+
+	if floorOrCeil {
+		years = FloorToNearest(years, roundToMinutes/518400)
+	} else {
+		years = CeilToNearest(years, roundToMinutes/518400)
+	}
+
+	return time.Date(years, 1, 1, 0, roundToMinutes%518400, 0, 0, date.Location())
 }
 
 func FloorToNearest(x, floorTo int) int {
@@ -61,8 +129,8 @@ func CeilToNearest(x, floorTo int) int {
 	return int(math.Ceil(xF/floorToF) * floorToF * 100)
 }
 
-func (s *Sender) sendGroupedPush(pushType, kind, title, body, headline string, userId int64, entityId int64,
-	customData database.CustomData, ctx context.Context) error {
+func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId int64, notificationCount int64,
+	renderingVariables database.RenderingVariables, customData database.CustomData, ctx context.Context) error {
 	userTokens, err := token.GetUserTokens(database.GetDbWithContext(database.DbTypeReadonly, ctx), userId)
 	if err != nil {
 		return errors.WithStack(err)
@@ -72,7 +140,7 @@ func (s *Sender) sendGroupedPush(pushType, kind, title, body, headline string, u
 		return nil
 	}
 
-	isMuted, err := s.settingsService.IsPushNotificationMuted(userId, pushType, ctx)
+	isMuted, err := s.settingsService.IsPushNotificationMuted(userId, eventType, ctx)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -84,7 +152,7 @@ func (s *Sender) sendGroupedPush(pushType, kind, title, body, headline string, u
 	session := database.GetScyllaSession()
 
 	notificationRelationIter := session.Query("select user_id, event_applied from notification_relation where user_id = ? "+
-		"and event_type = ? and entity_id = ? and related_entity_id = ?", userId, pushType, entityId, 0).Iter()
+		"and event_type = ? and entity_id = ? and related_entity_id = ?", userId, eventType, entityId, 0).Iter()
 
 	var userIdFromSelect int64
 	var eventApplied bool
@@ -98,15 +166,58 @@ func (s *Sender) sendGroupedPush(pushType, kind, title, body, headline string, u
 		return nil
 	}
 
-	//if err = <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, pushType, kind, title, body, headline, fmt.Sprint(userId), customData), ctx); err != nil {
-	//	return errors.WithStack(err)
-	//}
+	var userData user_go.UserRecord
+
+	resp := <-s.userWrapper.GetUsers([]int64{userId}, ctx, false)
+	if resp.Error != nil {
+		return errors.WithStack(resp.Error.ToError())
+	}
+
+	var ok bool
+	if userData, ok = resp.Response[userId]; !ok {
+		return errors.WithStack(errors.New("user not found"))
+	}
+
+	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
+
+	var template database.RenderTemplate
+	if err = db.Where("id = ?", eventType).Find(&template).Error; err != nil {
+		return errors.WithStack(err)
+	}
+
+	if template.Id != eventType {
+		return errors.WithStack(errors.New("template not found"))
+	}
+
+	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount, 10)
+
+	var title string
+	var body string
+	var headline string
+	var titleMultiple string
+	var bodyMultiple string
+	var headlineMultiple string
+	title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, renderingVariables, userData.Language)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if notificationCount > 1 {
+		title = titleMultiple
+		body = bodyMultiple
+		headline = headlineMultiple
+	}
+
+	if err = <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, eventType, kind, title, body, headline, fmt.Sprint(userId), customData), ctx); err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }
 
 func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body, headline string, userId int64,
-	customData database.CustomData, isGrouped bool, entityId int64, createdAt time.Time, ctx context.Context) (interface{}, error) {
+	customData database.CustomData, isGrouped bool, entityId int64, relatedEntityId int64, createdAt time.Time,
+	ctx context.Context) (interface{}, error) {
 	userTokens, err := token.GetUserTokens(database.GetDbWithContext(database.DbTypeReadonly, ctx), userId)
 
 	if err != nil {
@@ -147,33 +258,22 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		return nil, nil
 	}
 
-	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
-	deadlineKeys := make([]time.Time, deadlineKeysLen)
-	newTime := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-		FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, createdAt.Location())
-
-	for i := 0; i < deadlineKeysLen; i++ {
-		deadlineKeys[i] = newTime
-
-		if i != deadlineKeysLen-1 {
-			newTime = newTime.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
-		}
-	}
-
-	deadline := createdAt
-	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), configs.PushNotificationDeadlineMinutes)
-	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
-	deadline = time.Date(deadline.Year(), deadline.Month(), deadline.Day(), deadline.Hour(), deadline.Minute(), 0, 0, deadline.Location())
-	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
-		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
+	deadlineKeys, deadlines := GetDeadlinesForSelect(createdAt)
+	deadline := deadlines[0]
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline_key", deadlineKeys)
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline", deadlines)
 
-	pushNotificationGroupQueueIter := session.Query(fmt.Sprintf("select deadline_key, deadline, user_id, "+
+	query := fmt.Sprintf("select deadline_key, deadline, user_id, "+
 		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
-		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ? and entity_id = ?",
-		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines)), userId, pushType, entityId).WithContext(ctx).Iter()
+		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ?",
+		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines))
+
+	if relatedEntityId != 0 {
+		query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+	}
+
+	pushNotificationGroupQueueIter := session.Query(query, userId, pushType).WithContext(ctx).Iter()
 
 	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
 	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
@@ -188,8 +288,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		return nil, errors.WithStack(err)
 	}
 
-	flooredCreatedAt := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-		FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
+	flooredCreatedAt := TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineMinutes, true)
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "grouped_queued_notifications_count", len(pushNotificationsGroupQueue))
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "push_notifications_group_queue", pushNotificationsGroupQueue)
@@ -209,12 +308,16 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "has_previous_push_notification_group_queue_item", hasPreviousPushNotificationGroupQueueItem)
 
 	if !hasPreviousPushNotificationGroupQueueItem {
-		deadline = time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), createdAt.Hour(),
-			FloorToNearest(createdAt.Minute(), configs.PushNotificationDeadlineMinutes)+configs.PushNotificationDeadlineMinutes, 0, 0, createdAt.Location())
+		deadline = TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineMinutes, true).
+			Add(configs.PushNotificationDeadlineMinutes * time.Minute)
 
-		deadlineKey := createdAt.Add(configs.PushNotificationDeadlineKeyMinutes * time.Minute)
-		deadlineKey = time.Date(deadlineKey.Year(), deadlineKey.Month(), deadlineKey.Day(), deadlineKey.Hour(),
-			CeilToNearest(deadlineKey.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, createdAt.Location())
+		var deadlineKey time.Time
+		if configs.PushNotificationDeadlineKeyMinutes != configs.PushNotificationDeadlineMinutes {
+			deadlineKey = createdAt.Add(configs.PushNotificationDeadlineKeyMinutes * time.Minute)
+			deadlineKey = TimeToNearestMinutes(deadlineKey, configs.PushNotificationDeadlineMinutes, false)
+		} else {
+			deadlineKey = deadline
+		}
 
 		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
@@ -233,6 +336,15 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 
 	if notificationCount <= 2 || newDeadline.After(pushNotificationGroupQueue.DeadlineKey) {
 		newDeadline = pushNotificationGroupQueue.Deadline
+	}
+
+	if relatedEntityId == 0 {
+		pushNotificationGroupQueue.EntityId = entityId
+		if err = session.Query("delete from push_notification_group_queue where deadline_key = ? and deadline = ? and "+
+			"user_id = ? and event_type = ?", pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
+			pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType).Exec(); err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
@@ -364,15 +476,24 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	alreadySend := false
 
 	if template.IsGrouped {
-		notificationRelationIter := session.Query("select user_id from notification_relation where user_id = ? and "+
-			"event_type = ? and entity_id = ? and related_entity_id = ?",
-			notification.UserId, template.Id, entityId, relatedEntityId).WithContext(ctx).Iter()
+		query := "select user_id, entity_id, related_entity_id from notification_relation where user_id = ? and " +
+			"event_type = ?"
+
+		if relatedEntityId != 0 {
+			query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+		}
+
+		notificationRelationIter := session.Query(query, notification.UserId, template.Id).WithContext(ctx).Iter()
 
 		var userIdSelected int64
-		notificationRelationIter.Scan(&userIdSelected)
-
-		if userIdSelected != 0 {
-			alreadySend = true
+		var entityIdSelected int64
+		var relatedEntityIdSelected int64
+		for notificationRelationIter.Scan(&userIdSelected, &entityIdSelected, &relatedEntityIdSelected) {
+			if entityIdSelected == entityId && relatedEntityIdSelected == relatedEntityId {
+				alreadySend = true
+			} else {
+				notificationsCount++
+			}
 		}
 
 		if err = notificationRelationIter.Close(); err != nil {
@@ -382,17 +503,16 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		batch.Query("update notification_relation set event_applied = true where user_id = ? and event_type = ? "+
 			"and entity_id = ? and related_entity_id = ?", notification.UserId, template.Id, entityId, relatedEntityId)
 
-		notificationIter := session.Query("select entity_id, related_entity_id, created_at, "+
-			"notifications_count from notification where user_id = ? and event_type = ? and created_at >= ?",
+		notificationIter := session.Query("select entity_id, related_entity_id, created_at "+
+			"from notification where user_id = ? and event_type = ? and created_at >= ?",
 			notification.UserId, template.Id, notification.CreatedAt.Add(-3*24*30*time.Hour)).WithContext(ctx).Iter()
 
 		found := false
-		var entityIdSelected int64
-		var relatedEntityIdSelected int64
+		entityIdSelected = 0
+		relatedEntityIdSelected = 0
 		var createdAt time.Time
-		var notificationsCountSelected int64
 
-		for notificationIter.Scan(&entityIdSelected, &relatedEntityIdSelected, &createdAt, &notificationsCountSelected) {
+		for notificationIter.Scan(&entityIdSelected, &relatedEntityIdSelected, &createdAt) {
 			if (relatedEntityId != 0 && entityIdSelected == entityId) || relatedEntityId == 0 {
 				found = true
 				break
@@ -406,13 +526,9 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		if found {
 			batch.Query("delete from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
 				notification.UserId, template.Id, createdAt, entityIdSelected, relatedEntityIdSelected)
-
-			if notificationsCountSelected >= notificationsCount {
-				if alreadySend {
-					notificationsCount = notificationsCountSelected
-				} else {
-					notificationsCount = notificationsCountSelected + 1
-				}
+			if err = s.UpdateCreatedAtInGroupQueue(notification.UserId, template.Id, entityIdSelected,
+				relatedEntityIdSelected, notification.CreatedAt, ctx); err != nil {
+				return true, errors.WithStack(err)
 			}
 		}
 	}
@@ -473,7 +589,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	if !alreadySend {
 		if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, headline, notification.UserId, notification.CustomData, template.IsGrouped,
-			entityId, notification.CreatedAt, ctx); err != nil {
+			entityId, relatedEntityId, notification.CreatedAt, ctx); err != nil {
 			return true, errors.WithStack(err)
 		}
 	}
@@ -483,14 +599,53 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	return false, nil
 }
 
-func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error {
+func (s *Sender) UpdateCreatedAtInGroupQueue(userId int64, eventType string, entityId int64, relatedEntityId int64,
+	newCreatedAt time.Time, ctx context.Context) error {
 	session := database.GetScyllaSession()
 
-	currentDate := time.Now().UTC()
-	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes / configs.PushNotificationDeadlineMinutes) * 2
-	deadlineKeys := make([]time.Time, deadlineKeysLen)
-	newTime := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		FloorToNearest(currentDate.Minute(), configs.PushNotificationDeadlineKeyMinutes), 0, 0, currentDate.Location())
+	deadlineKeys, deadlines := GetDeadlinesForSelect(newCreatedAt)
+
+	query := fmt.Sprintf("select deadline_key, deadline, user_id, event_type, entity_id, created_at, "+
+		"notification_count from push_notification_group_queue where deadline_key in (%v) and deadline in (%v) and user_id = ? "+
+		"and event_type = ?", utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines))
+
+	if relatedEntityId != 0 {
+		query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+	}
+
+	iter := session.Query(query, userId, eventType).WithContext(ctx).Iter()
+
+	pushNotificationGroupQueue := scylla.PushNotificationGroupQueue{}
+
+	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
+
+	for iter.Scan(&pushNotificationGroupQueue.DeadlineKey, &pushNotificationGroupQueue.Deadline,
+		&pushNotificationGroupQueue.UserId, &pushNotificationGroupQueue.EventType,
+		&pushNotificationGroupQueue.EntityId, &pushNotificationGroupQueue.CreatedAt,
+		&pushNotificationGroupQueue.NotificationCount) {
+		// need to correct select by updated created_at before send push
+		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
+			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
+			newCreatedAt, pushNotificationGroupQueue.NotificationCount,
+			pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline, pushNotificationGroupQueue.UserId,
+			pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
+	}
+
+	if err := iter.Close(); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := session.ExecuteBatch(batch); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func GetDeadlinesForSelect(fromDate time.Time) (deadlineKeys []time.Time, deadlines []time.Time) {
+	deadlineKeysLen := (configs.PushNotificationDeadlineKeyMinutes/configs.PushNotificationDeadlineMinutes)*2 + 1
+	deadlineKeys = make([]time.Time, deadlineKeysLen)
+	newTime := TimeToNearestMinutes(fromDate, configs.PushNotificationDeadlineKeyMinutes, true)
 
 	for i := 0; i < deadlineKeysLen; i++ {
 		deadlineKeys[i] = newTime
@@ -500,12 +655,20 @@ func (s *Sender) CheckPushNotificationDeadlineMinutes(ctx context.Context) error
 		}
 	}
 
-	deadline := currentDate
-	minutesDiff := deadline.Minute() - FloorToNearest(deadline.Minute(), configs.PushNotificationDeadlineMinutes)
-	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes*2) * time.Minute)
+	deadline := fromDate
+	minutesDiff := (deadline.Unix() - TimeToNearestMinutes(deadline, configs.PushNotificationDeadlineMinutes, true).Unix()) / 60
+	deadline = deadline.Add(-time.Duration(minutesDiff+configs.PushNotificationDeadlineMinutes) * time.Minute)
 	deadline = time.Date(deadline.Year(), deadline.Month(), deadline.Day(), deadline.Hour(), deadline.Minute(), 0, 0, deadline.Location())
-	deadlines := []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
+	deadlines = []time.Time{deadline, deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute),
 		deadline.Add(2 * configs.PushNotificationDeadlineMinutes * time.Minute)}
+
+	return deadlineKeys, deadlines
+}
+
+func (s *Sender) CheckPushNotificationDeadlineMinutes(currentDate time.Time, ctx context.Context) error {
+	session := database.GetScyllaSession()
+
+	deadlineKeys, deadlines := GetDeadlinesForSelect(currentDate)
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline_key", deadlineKeys)
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline", deadlines)
@@ -583,8 +746,8 @@ func (s *Sender) getNotificationForGroupSend(userId int64, eventType string, cre
 		return nil, errors.WithStack(err)
 	}
 
-	if userIdFromSelect == 0 { // should not happen
-		return nil, errors.WithStack(errors.New("notification not found"))
+	if userIdFromSelect == 0 { // should do nothing
+		return nil, nil
 	}
 
 	return &notification, nil
@@ -607,23 +770,31 @@ func (s *Sender) deleteNotificationFromQueue(deadlineKey time.Time, deadline tim
 }
 
 func (s *Sender) updateNotificationQueueAndSendPush(deadlineKey time.Time, deadline time.Time, userId int64,
-	eventType string, createdAt time.Time, entityId int64, ctx context.Context) error {
+	eventType string, createdAt time.Time, entityId int64, notificationCount int64, ctx context.Context) error {
 	notification, err := s.getNotificationForGroupSend(userId, eventType, createdAt, entityId, ctx)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
+	if notification == nil { // should do nothing
+		return nil
+	}
+
 	var customData database.CustomData
-	if err := json.Unmarshal([]byte(notification.CustomData), &customData); err != nil {
+	if err = json.Unmarshal([]byte(notification.CustomData), &customData); err != nil {
 		return errors.WithStack(err)
 	}
 
-	if err := s.sendGroupedPush(eventType, notification.Kind, notification.Title, notification.Body, notification.Headline,
-		userId, entityId, customData, ctx); err != nil {
+	var renderingVariables database.RenderingVariables
+	if err = json.Unmarshal([]byte(notification.RenderingVariables), &renderingVariables); err != nil {
 		return errors.WithStack(err)
 	}
 
-	if err := s.deleteNotificationFromQueue(deadlineKey, deadline, userId,
+	if err = s.sendGroupedPush(eventType, notification.Kind, userId, entityId, notificationCount, renderingVariables, customData, ctx); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err = s.deleteNotificationFromQueue(deadlineKey, deadline, userId,
 		eventType, entityId, ctx); err != nil {
 		return errors.WithStack(err)
 	}
@@ -632,32 +803,27 @@ func (s *Sender) updateNotificationQueueAndSendPush(deadlineKey time.Time, deadl
 }
 
 func (s *Sender) SendDeadlinedNotification(currentDate time.Time, item scylla.PushNotificationGroupQueue, ctx context.Context) (shouldLog bool, innerErr error) {
-	flooredCreatedAt := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		FloorToNearest(currentDate.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, currentDate.Location())
+	flooredCreatedAt := TimeToNearestMinutes(currentDate, configs.PushNotificationDeadlineMinutes, true)
 
 	if !flooredCreatedAt.Before(item.DeadlineKey) && // >=
 		flooredCreatedAt.Before(item.DeadlineKey.Add(configs.PushNotificationDeadlineMinutes*time.Minute)) {
 		if err := s.updateNotificationQueueAndSendPush(item.DeadlineKey, item.Deadline, item.UserId, item.EventType,
-			item.CreatedAt, item.EntityId, ctx); err != nil {
+			item.CreatedAt, item.EntityId, item.NotificationCount, ctx); err != nil {
 			return true, errors.WithStack(err)
 		}
 
 		return true, nil
 	}
 
-	ceilDeadline := time.Date(item.Deadline.Year(), item.Deadline.Month(),
-		item.Deadline.Day(), item.Deadline.Hour(),
-		CeilToNearest(item.Deadline.Minute(), configs.PushNotificationDeadlineMinutes),
-		0, 0, item.Deadline.Location())
-	ceilCurrent := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), currentDate.Hour(),
-		CeilToNearest(currentDate.Minute(), configs.PushNotificationDeadlineMinutes), 0, 0, currentDate.Location())
+	ceilDeadline := TimeToNearestMinutes(item.Deadline, configs.PushNotificationDeadlineMinutes, false)
+	ceilCurrent := TimeToNearestMinutes(currentDate, configs.PushNotificationDeadlineMinutes, false)
 
 	if !ceilCurrent.After(ceilDeadline) || ceilCurrent.Unix()-ceilDeadline.Unix() > configs.PushNotificationDeadlineMinutes*60 {
 		return false, nil
 	}
 
 	if err := s.updateNotificationQueueAndSendPush(item.DeadlineKey, item.Deadline, item.UserId, item.EventType,
-		item.CreatedAt, item.EntityId, ctx); err != nil {
+		item.CreatedAt, item.EntityId, item.NotificationCount, ctx); err != nil {
 		return true, errors.WithStack(err)
 	}
 
@@ -723,15 +889,32 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 		return err
 	}
 
-	if err := s.jobber.RegisterTask(string(configs.GeneralPushNotificationTask), func() error {
+	if err := s.jobber.RegisterTask(string(configs.GeneralPushNotificationTask), func(currentDate string) error {
 		apmTransaction := apm_helper.StartNewApmTransaction(string(configs.GeneralPushNotificationTask),
 			"push_notification", nil, nil)
 
-		defer apmTransaction.End()
+		defer func() {
+			apmTransaction.End()
+		}()
 
 		ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
 
-		if err := s.CheckPushNotificationDeadlineMinutes(ctx); err != nil {
+		var currentDateUnmarshalled time.Time
+
+		if len(currentDate) == 0 {
+			currentDateUnmarshalled = time.Now().UTC()
+		} else {
+			var err error
+			currentDateUnmarshalled, err = time.Parse("2006-01-02 15:04:05 -0700 UTC", currentDate)
+			if err != nil {
+				apm_helper.LogError(errors.WithStack(err), ctx)
+				return errors.WithStack(err)
+			}
+		}
+
+		apm_helper.AddApmLabel(apmTransaction, "current_date", currentDateUnmarshalled)
+
+		if err := s.CheckPushNotificationDeadlineMinutes(currentDateUnmarshalled, ctx); err != nil {
 			apm_helper.LogError(errors.WithStack(err), ctx)
 			return errors.WithStack(err)
 		}
@@ -741,9 +924,16 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 		return err
 	}
 
-	if err := s.jobber.RegisterPeriodicTask(fmt.Sprintf("*/%v * * * *", configs.PushNotificationDeadlineMinutes),
+	if err := s.jobber.RegisterPeriodicTask(configs.PushNotificationJobCron,
 		string(configs.PeriodicPushNotificationTask), &tasks.Signature{
 			Name: string(configs.GeneralPushNotificationTask),
+			Args: []tasks.Arg{
+				{
+					Name:  "currentDate",
+					Type:  "string",
+					Value: "",
+				},
+			},
 		}); err != nil {
 		return err
 	}
