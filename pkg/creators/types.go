@@ -1,7 +1,7 @@
 package creators
 
 import (
-	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"time"
@@ -12,12 +12,15 @@ type BecomeMusicCreatorRequest struct {
 }
 
 type CreatorRequestsListRequest struct {
-	UserId               null.Int                      `json:"user_id"`
-	Statuses             []eventsourcing.CreatorStatus `json:"statuses"`
-	MaxThresholdExceeded bool                          `json:"max_threshold_exceeded"`
-	OrderOption          OrderOption                   `json:"order_option"`
-	Limit                int                           `json:"limit"`
-	Offset               int                           `json:"offset"`
+	UserId               null.Int                `json:"user_id"`
+	Statuses             []user_go.CreatorStatus `json:"statuses"`
+	MaxThresholdExceeded bool                    `json:"max_threshold_exceeded"`
+	OrderOption          OrderOption             `json:"order_option"`
+	Limit                int                     `json:"limit"`
+	Offset               int                     `json:"offset"`
+	//filtering
+	SearchQuery string `json:"search_query"`
+	Email       string `json:"email"`
 }
 
 type OrderOption int8
@@ -34,19 +37,20 @@ type CreatorRequestsListResponse struct {
 }
 
 type creatorListItem struct {
-	Id           int64                       `json:"id"`
-	Status       eventsourcing.CreatorStatus `json:"status"`
-	RejectReason null.String                 `json:"reject_reason"`
-	LibraryUrl   string                      `json:"library_url"`
-	SlaExpired   bool                        `json:"sla_expired"`
-	UserId       int64                       `json:"user_id"`
-	FirstName    string                      `json:"first_name"`
-	LastName     string                      `json:"last_name"`
-	UserName     string                      `json:"user_name"`
-	Avatar       null.String                 `json:"avatar"`
-	CreatedAt    time.Time                   `json:"created_at"`
-	ApprovedAt   null.Time                   `json:"approved_at"`
-	DeletedAt    gorm.DeletedAt              `json:"deleted_at"`
+	Id           int64                 `json:"id"`
+	Status       user_go.CreatorStatus `json:"status"`
+	RejectReason null.String           `json:"reject_reason"`
+	LibraryUrl   string                `json:"library_url"`
+	SlaExpired   bool                  `json:"sla_expired"`
+	UserId       int64                 `json:"user_id"`
+	FirstName    string                `json:"first_name"`
+	LastName     string                `json:"last_name"`
+	UserName     string                `json:"user_name"`
+	Avatar       null.String           `json:"avatar"`
+	CreatedAt    time.Time             `json:"created_at"`
+	ApprovedAt   null.Time             `json:"approved_at"`
+	DeletedAt    gorm.DeletedAt        `json:"deleted_at"`
+	Email        string                `json:"email"`
 }
 
 type CreatorRequestApproveRequest struct {
@@ -78,6 +82,6 @@ type UploadNewSongRequest struct {
 }
 
 type CheckRequestStatusResponse struct {
-	Status       eventsourcing.CreatorStatus `json:"status"`
-	RejectReason null.String                 `json:"reject_reason"`
+	Status       user_go.CreatorStatus `json:"status"`
+	RejectReason null.String           `json:"reject_reason"`
 }

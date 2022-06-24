@@ -1,15 +1,15 @@
 package frontend
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
-	"go.elastic.co/apm"
 	"gorm.io/gorm"
 )
 
-func ConvertSongsToFrontendModel(songs []database.Song, userId int64, db *gorm.DB, apmTransaction *apm.Transaction) []Song {
+func ConvertSongsToFrontendModel(songs []database.Song, userId int64, db *gorm.DB, ctx context.Context) []Song {
 	songsArr := make([]*Song, 0)
 
 	for _, song := range songs {
@@ -37,7 +37,7 @@ func ConvertSongsToFrontendModel(songs []database.Song, userId int64, db *gorm.D
 
 	for _, c := range routines {
 		if err := <-c; err != nil {
-			apm_helper.CaptureApmError(err, apmTransaction)
+			apm_helper.LogError(err, ctx)
 		}
 	}
 
