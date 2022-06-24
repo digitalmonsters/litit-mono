@@ -338,6 +338,10 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 		newDeadline = pushNotificationGroupQueue.Deadline
 	}
 
+	if relatedEntityId == 0 {
+		pushNotificationGroupQueue.EntityId = entityId
+	}
+
 	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
 		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
 		pushNotificationGroupQueue.CreatedAt, notificationCount, pushNotificationGroupQueue.DeadlineKey, newDeadline,
