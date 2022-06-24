@@ -38,7 +38,7 @@ type IUserGoWrapper interface {
 	CreateExport(name string, exportType ExportType, filters interface{}, exportedBy int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateExportResponse]
 	FinalizeExport(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse]
 	GetGrandReferrerIds(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64]
-	SetSpotsUploadBanned(banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	SetSpotsUploadBanned(userId int64, banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -372,7 +372,7 @@ func (w UserGoWrapper) GetGrandReferrerIds(ctx context.Context, forceLog bool) c
 		"GetGrandReferrerIds", nil, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w UserGoWrapper) SetSpotsUploadBanned(banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+func (w UserGoWrapper) SetSpotsUploadBanned(userId int64, banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
 	return wrappers.ExecuteRpcRequestAsync[any](w.baseWrapper, w.serviceApiUrl,
-		"SetUserSpotsUploadBanned", SetUserSpotsUploadBanned{Banned: banned}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+		"SetUserSpotsUploadBanned", SetUserSpotsUploadBanned{Banned: banned, UserId: userId}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

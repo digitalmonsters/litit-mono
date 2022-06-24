@@ -332,5 +332,6 @@ type FinalizeExportResponse struct {
 }
 
 type SetUserSpotsUploadBanned struct {
-	Banned bool `json:"banned"`
+	Banned bool  `json:"banned"`
+	UserId int64 `json:"user_id"`
 }

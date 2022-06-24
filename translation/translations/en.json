@@ -359,6 +359,9 @@
     "top_daily_spot_bonus_headline": "",
     "top_weekly_spot_bonus_title": "Congratulations!",
     "top_weekly_spot_bonus_body": "You won the TOP spot of the week prize {{.bonus_amount}} Lit points",
-    "top_weekly_spot_bonus_headline": ""
+    "top_weekly_spot_bonus_headline": "",
+    "max_boring_spots_title": "Lit.it",
+    "max_boring_spots_body": "You ability to create spots has been rejected because your spots have been marked as [boring] {{.max_boring_spots_number}} or more times",
+    "max_boring_spots_headline": ""
   }
 }
