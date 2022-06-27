@@ -10,7 +10,9 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -36,8 +38,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		if len(userIds) > 0 {
-			if err := tx.Exec("delete from notifications where content_id = ?", event.Id).Error; err != nil {
-				return nil, err
+			var uuIds []uuid.UUID
+			if err := database.GetDbWithContext(database.DbTypeReadonly, ctx).
+				Table("notifications").Where("content_id = ?", event.Id).Pluck("id", &uuIds).Error; err != nil {
+				apm_helper.LogError(err, ctx)
+			}
+
+			for _, pack := range lo.Chunk(uuIds, 50) {
+				if err := database.GetDb(database.DbTypeMaster).
+					Exec("delete from notifications where id in ?", pack).Error; err != nil {
+					apm_helper.LogError(err, ctx)
+				}
 			}
 
 			if err := tx.Exec("update user_notifications set unread_count = unread_count - 1 where user_id in ?", userIds).Error; err != nil {
