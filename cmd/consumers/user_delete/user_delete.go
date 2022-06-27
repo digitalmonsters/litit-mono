@@ -5,6 +5,8 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
+	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 )
@@ -28,8 +30,17 @@ func process(event newSendingEvent, ctx context.Context, apmTransaction *apm.Tra
 	}
 
 	if len(userIds) > 0 {
-		if err := tx.Exec("delete from notifications where related_user_id = ?", event.UserId).Error; err != nil {
-			return nil, err
+		var uuIds []uuid.UUID
+		if err := database.GetDbWithContext(database.DbTypeReadonly, ctx).
+			Table("notifications").Where("related_user_id = ?", event.UserId).Pluck("id", &uuIds).Error; err != nil {
+			apm_helper.LogError(err, ctx)
+		}
+
+		for _, pack := range lo.Chunk(uuIds, 50) {
+			if err := database.GetDb(database.DbTypeMaster).
+				Exec("delete from notifications where id in ?", pack).Error; err != nil {
+				apm_helper.LogError(err, ctx)
+			}
 		}
 
 		if err := tx.Exec("update user_notifications set unread_count = unread_count - 1 where user_id in ?", userIds).Error; err != nil {
@@ -37,8 +48,17 @@ func process(event newSendingEvent, ctx context.Context, apmTransaction *apm.Tra
 		}
 	}
 
-	if err := tx.Exec("delete from notifications where user_id = ?", event.UserId).Error; err != nil {
-		return nil, err
+	var uuIds []uuid.UUID
+	if err := database.GetDbWithContext(database.DbTypeReadonly, ctx).
+		Table("notifications").Where("user_id = ?", event.UserId).Pluck("id", &uuIds).Error; err != nil {
+		apm_helper.LogError(err, ctx)
+	}
+
+	for _, pack := range lo.Chunk(uuIds, 50) {
+		if err := database.GetDb(database.DbTypeMaster).
+			Exec("delete from notifications where id in ?", pack).Error; err != nil {
+			apm_helper.LogError(err, ctx)
+		}
 	}
 
 	if err := tx.Exec("delete from user_notifications where user_id = ?", event.UserId).Error; err != nil {

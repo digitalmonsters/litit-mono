@@ -133,6 +133,4 @@ const (
 	GeneralPushNotificationTask  MachineryTask = "general:push_notification"
 	PeriodicPushNotificationTask MachineryTask = "periodic:push_notification"
 	UserPushNotificationTask     MachineryTask = "user:push_notification"
-
-	Migrator1Task MachineryTask = "migrator1"
 )
