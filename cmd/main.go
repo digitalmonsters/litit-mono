@@ -24,7 +24,6 @@ import (
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_delete"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/vote"
 	"github.com/digitalmonsters/notification-handler/cmd/notification"
-	"github.com/digitalmonsters/notification-handler/pkg/migrator"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	settingsPkg "github.com/digitalmonsters/notification-handler/pkg/settings"
 	templatePkg "github.com/digitalmonsters/notification-handler/pkg/template"
@@ -100,10 +99,6 @@ func main() {
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
 		cfg.Wrappers.NotificationGateway), settingsService, jobber, userGoWrapper)
 
-	if err = migrator.RegisterMigratorTasks(jobber); err != nil {
-		log.Fatal().Err(err).Msgf("[HTTP] Could not register migrator tasks")
-	}
-
 	if err = notificationSender.RegisterUserPushNotificationTasks(); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not register user push notifications tasks")
 	}
@@ -137,7 +132,7 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin creator api")
 	}
 
-	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper, jobber); err != nil {
+	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init notification api")
 	}
 

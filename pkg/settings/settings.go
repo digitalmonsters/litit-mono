@@ -122,6 +122,7 @@ func (s service) GetPushSettingsByAdmin(req GetPushSettingsByAdminRequest, ctx c
 			}
 		} else {
 			v.RenderTemplate = template
+			settingsMap[id] = v
 		}
 	}
 
