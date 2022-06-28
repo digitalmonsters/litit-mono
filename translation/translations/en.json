@@ -360,8 +360,14 @@
     "top_weekly_spot_bonus_title": "Congratulations!",
     "top_weekly_spot_bonus_body": "You won the TOP spot of the week prize {{.bonus_amount}} Lit points",
     "top_weekly_spot_bonus_headline": "",
-    "max_boring_spots_title": "Lit.it",
-    "max_boring_spots_body": "You ability to create spots has been rejected because your spots have been marked as [boring] {{.max_boring_spots_number}} or more times",
-    "max_boring_spots_headline": ""
+    "last_boring_spots_title": "Lit.it",
+    "last_boring_spots_body": "Your spot has been rejected, marked as boring the {{.boring_spots_time}} time. You have been blocked from posting spots for {{.spots_uploads_banned_duration}} days",
+    "last_boring_spots_headline": "",
+    "first_boring_spots_title": "Lit.it",
+    "first_boring_spots_body": "Your spot has been rejected, marked as boring. After {{.boring_spots_counter}} boring spots this feature would be blocked for {{.spots_uploads_banned_duration}} days",
+    "first_boring_spots_headline": "",
+    "warning_boring_spots_title": "Lit.it",
+    "warning_boring_spots_body": "Your spot has been rejected, marked as boring the {{.boring_spots_time}} time. After {{.remaining_attempts}} more boring spots this feature would be blocked for {{.spots_uploads_banned_duration}} days",
+    "warning_boring_spots_headline": ""
   }
 }
