@@ -2,6 +2,7 @@ package content
 
 import (
 	"context"
+	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/translation"
@@ -16,6 +17,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
+	"hash/fnv"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender,
@@ -104,6 +106,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 				}
 			}
 
+			if rejectReasonText == "Boring Spot" {
+				return nil, nil
+			}
+
 			renderData = map[string]string{
 				"reason": rejectReasonText,
 			}
@@ -149,8 +155,8 @@ func sendPushToFollowers(event newSendingEvent, notificationContent *database.No
 	session := database.GetScyllaSession()
 
 	for {
-		iter := session.Query("select entity_id from notification_relation where user_id = ? and event_type = ? "+
-			"and event_applied = true", event.UserId, "follow").WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
+		iter := session.Query("select entity_id, event_applied from notification_relation where user_id = ? and event_type = 'follow'",
+			event.UserId).WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
 
 		pageState = iter.PageState()
 		scanner := iter.Scanner()
@@ -158,12 +164,15 @@ func sendPushToFollowers(event newSendingEvent, notificationContent *database.No
 		var followersIds []int64
 		for scanner.Next() {
 			var entityId int64
+			var eventApplied bool
 
-			if err := scanner.Scan(&entityId); err != nil {
+			if err := scanner.Scan(&entityId, &eventApplied); err != nil {
 				return nil, errors.WithStack(err)
 			}
 
-			followersIds = append(followersIds, entityId)
+			if eventApplied {
+				followersIds = append(followersIds, entityId)
+			}
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -187,20 +196,29 @@ func sendPushToFollowers(event newSendingEvent, notificationContent *database.No
 			language = translation.DefaultUserLanguage
 
 			var shouldRetry bool
-			shouldRetry, err := notifySender.PushNotification(database.Notification{
+
+			h := fnv.New32a()
+			_, err := h.Write([]byte(fmt.Sprintf("%v%v", event.Id, event.UserId)))
+			if err != nil {
+				return &event.Messages, errors.WithStack(err)
+			}
+
+			entityId := int64(h.Sum32())
+
+			shouldRetry, err = notifySender.PushNotification(database.Notification{
 				UserId:             followerId,
 				Type:               "push.content.new-posted",
 				RelatedUserId:      null.IntFrom(event.UserId),
 				ContentId:          null.IntFrom(event.Id),
 				Content:            notificationContent,
 				RenderingVariables: renderingVariables,
-			}, event.Id, event.UserId, "content_posted", language, "default", ctx)
+			}, entityId, 0, "content_posted", language, "default", ctx)
 			if err != nil {
 				if shouldRetry {
 					return nil, errors.WithStack(err)
 				}
 
-				return &event.Messages, err
+				return &event.Messages, errors.WithStack(err)
 			}
 		}
 

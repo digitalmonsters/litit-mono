@@ -562,7 +562,7 @@ func TestSender_SendDeadlinedNotification(t *testing.T) {
 		CreatedAt:          baseDate,
 		NotificationsCount: 3,
 		Title:              "Lit.it",
-		Body:               "1  and 3 others liked your video",
+		Body:               "1  and 2 others liked your video",
 		Kind:               likeTemplate.Kind,
 		RenderingVariables: string(renderingVariablesMarshalled),
 		CustomData:         "{}",

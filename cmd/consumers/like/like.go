@@ -2,6 +2,7 @@ package like
 
 import (
 	"context"
+	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -11,6 +12,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
+	"hash/fnv"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender,
@@ -23,7 +25,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	if !event.Like || event.ContentAuthorId == event.UserId {
 		if !event.Like {
-			if err := notifySender.UnapplyEvent(event.ContentAuthorId, templateName, event.ContentId, event.UserId, ctx); err != nil {
+			if err := notifySender.UnapplyEvent(event.ContentAuthorId, templateName, event.ContentId, 0, ctx); err != nil {
 				return nil, errors.WithStack(err)
 			}
 		}
@@ -63,13 +65,21 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 	}
 
-	shouldRetry, err := notifySender.PushNotification(notification, event.ContentId, event.UserId, "content_like", language, "default", ctx)
+	h := fnv.New32a()
+	_, err = h.Write([]byte(fmt.Sprintf("%v%v", event.ContentId, event.UserId)))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	entityId := int64(h.Sum32())
+
+	shouldRetry, err := notifySender.PushNotification(notification, entityId, 0, "content_like", language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)
 		}
 
-		return &event.Messages, err
+		return &event.Messages, errors.WithStack(err)
 	}
 
 	return &event.Messages, nil

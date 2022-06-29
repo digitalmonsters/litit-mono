@@ -2,6 +2,7 @@ package vote
 
 import (
 	"context"
+	"fmt"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
@@ -9,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"gopkg.in/guregu/null.v4"
+	"hash/fnv"
 	"strconv"
 )
 
@@ -51,6 +53,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		notificationContent.ProfileId = null.IntFrom(event.EntityId)
 	}
 
+	h := fnv.New32a()
+	_, err = h.Write([]byte(fmt.Sprintf("%v%v", event.CommentId, event.UserId)))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	entityId := int64(h.Sum32())
+
 	shouldRetry, err := notifySender.PushNotification(database.Notification{
 		UserId:             event.CommentAuthorId,
 		Type:               "push.comment.vote",
@@ -58,7 +68,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Comment:            &notificationContent,
 		RelatedUserId:      null.IntFrom(event.UserId),
 		RenderingVariables: renderData,
-	}, event.CommentId, event.UserId, templateName, language, "default", ctx)
+	}, entityId, 0, templateName, language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

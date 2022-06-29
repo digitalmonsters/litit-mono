@@ -23,6 +23,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return nil, errors.WithStack(err)
 	}
 
+	if event.RenderingVariables == nil {
+		event.RenderingVariables = database.RenderingVariables{}
+	}
+
 	for k, v := range renderData {
 		event.RenderingVariables[k] = v
 	}

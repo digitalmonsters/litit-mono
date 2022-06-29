@@ -189,7 +189,7 @@ func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId 
 		return errors.WithStack(errors.New("template not found"))
 	}
 
-	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount, 10)
+	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount-1, 10)
 
 	var title string
 	var body string
@@ -944,8 +944,8 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 func (s *Sender) UnapplyEvent(userId int64, eventType string, entityId int64, relatedEntityId int64, ctx context.Context) error {
 	session := database.GetScyllaSession()
 
-	if err := session.Query("update notification_relation set event_applied = false", userId, eventType, entityId,
-		relatedEntityId, ctx).Exec(); err != nil {
+	if err := session.Query("update notification_relation set event_applied = false where user_id = ? and "+
+		"event_type = ? and entity_id = ? and related_entity_id = ?", userId, eventType, entityId, relatedEntityId, ctx).Exec(); err != nil {
 		return errors.WithStack(err)
 	}
 

@@ -1,4 +1,4 @@
-package user_banned
+package user_update
 
 import (
 	"encoding/json"
