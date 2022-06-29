@@ -22,6 +22,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/tokenomics_notification"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_banned"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_delete"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_update"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/vote"
 	"github.com/digitalmonsters/notification-handler/cmd/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
@@ -124,6 +125,7 @@ func main() {
 		notificationSender).ListenAsync()
 	userDeleteListener := user_delete.InitListener(ctx, cfg.UserDeleteListener).ListenAsync()
 	userBannedListener := user_banned.InitListener(ctx, cfg.UserBannedListener, notificationSender).ListenAsync()
+	userUpdateListener := user_update.InitListener(ctx, cfg.UserUpdateListener).ListenAsync()
 
 	api.InitInternalApi(httpRouter.GetRpcServiceEndpoint())
 
@@ -205,6 +207,9 @@ func main() {
 		},
 		func() error {
 			return userBannedListener.Close()
+		},
+		func() error {
+			return userUpdateListener.Close()
 		},
 	})
 }

@@ -23,7 +23,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	if !event.Like || event.ContentAuthorId == event.UserId {
 		if !event.Like {
-			if err := notifySender.UnapplyEvent(event.ContentAuthorId, templateName, event.ContentId, event.UserId, ctx); err != nil {
+			if err := notifySender.UnapplyEvent(event.ContentAuthorId, templateName, event.ContentId, 0, ctx); err != nil {
 				return nil, errors.WithStack(err)
 			}
 		}

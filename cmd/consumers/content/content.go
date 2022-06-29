@@ -153,8 +153,8 @@ func sendPushToFollowers(event newSendingEvent, notificationContent *database.No
 	session := database.GetScyllaSession()
 
 	for {
-		iter := session.Query("select entity_id from notification_relation where user_id = ? and event_type = ? "+
-			"and event_applied = true", event.UserId, "follow").WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
+		iter := session.Query("select entity_id, event_applied from notification_relation where user_id = ? and event_type = 'follow'",
+			event.UserId).WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
 
 		pageState = iter.PageState()
 		scanner := iter.Scanner()
@@ -162,12 +162,15 @@ func sendPushToFollowers(event newSendingEvent, notificationContent *database.No
 		var followersIds []int64
 		for scanner.Next() {
 			var entityId int64
+			var eventApplied bool
 
-			if err := scanner.Scan(&entityId); err != nil {
+			if err := scanner.Scan(&entityId, &eventApplied); err != nil {
 				return nil, errors.WithStack(err)
 			}
 
-			followersIds = append(followersIds, entityId)
+			if eventApplied {
+				followersIds = append(followersIds, entityId)
+			}
 		}
 
 		if err := scanner.Err(); err != nil {
