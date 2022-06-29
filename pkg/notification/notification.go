@@ -285,6 +285,10 @@ func MigrateGroupedNotifications(ctx context.Context) {
 					logger.Err(err).Msg("[MigrateGroupedNotifications] delete from notification error")
 					break
 				}
+				if err := session.Query(fmt.Sprintf("delete from notification_relation where user_id = ? and event_type in (%v)", groupedEventTypes), userId).Exec(); err != nil {
+					logger.Err(err).Msg("[MigrateGroupedNotifications] delete from notification error")
+					break
+				}
 			}
 
 			if err := iter.Close(); err != nil {
