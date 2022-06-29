@@ -189,7 +189,7 @@ func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId 
 		return errors.WithStack(errors.New("template not found"))
 	}
 
-	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount, 10)
+	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount-1, 10)
 
 	var title string
 	var body string
