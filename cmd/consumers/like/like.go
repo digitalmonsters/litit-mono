@@ -63,7 +63,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 	}
 
-	shouldRetry, err := notifySender.PushNotification(notification, event.ContentId, event.UserId, "content_like", language, "default", ctx)
+	shouldRetry, err := notifySender.PushNotification(notification, event.ContentId, 0, "content_like", language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

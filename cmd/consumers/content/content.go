@@ -198,7 +198,7 @@ func sendPushToFollowers(event newSendingEvent, notificationContent *database.No
 				ContentId:          null.IntFrom(event.Id),
 				Content:            notificationContent,
 				RenderingVariables: renderingVariables,
-			}, event.Id, event.UserId, "content_posted", language, "default", ctx)
+			}, event.Id, 0, "content_posted", language, "default", ctx)
 			if err != nil {
 				if shouldRetry {
 					return nil, errors.WithStack(err)

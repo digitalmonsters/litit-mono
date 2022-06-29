@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
@@ -261,4 +262,41 @@ func GetNotificationsReadCount(req GetNotificationsReadCountRequest, ctx context
 	}
 
 	return notificationsReadCountMap, nil
+}
+
+func MigrateGroupedNotifications(ctx context.Context) {
+	go func() {
+		logger := zerolog.Ctx(ctx)
+
+		logger.Info().Msg("[MigrateGroupedNotifications] start")
+
+		groupedEventTypes := "'comment_vote_like', 'comment_vote_dislike', 'content_like', 'follow', 'content_posted'"
+		limit := 1000
+		session := database.GetScyllaSession()
+
+		for {
+			iter := session.Query(fmt.Sprintf("select user_id from notification where event_type in (%v) limit %v allow filtering", groupedEventTypes, limit)).Iter()
+
+			var userId int64
+			count := 0
+			for iter.Scan(userId) {
+				count++
+				if err := session.Query("delete from notification where user_id = ? and event_type in (%v)", groupedEventTypes).Exec(); err != nil {
+					logger.Err(err).Msg("[MigrateGroupedNotifications] delete from notification error")
+					break
+				}
+			}
+
+			if err := iter.Close(); err != nil {
+				logger.Err(err).Msg("[MigrateGroupedNotifications] iter error")
+				break
+			}
+
+			if count < limit {
+				break
+			}
+		}
+
+		logger.Info().Msg("[MigrateGroupedNotifications] end")
+	}()
 }
