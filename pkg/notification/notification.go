@@ -275,7 +275,7 @@ func MigrateGroupedNotifications(ctx context.Context) {
 		session := database.GetScyllaSession()
 
 		for {
-			iter := session.Query(fmt.Sprintf("select user_id from notification where event_type in (%v) limit %v allow filtering", groupedEventTypes, limit)).Iter()
+			iter := session.Query(fmt.Sprintf("select user_id from notification where event_type in (%v) limit %v allow filtering USING TIMEOUT 300000ms", groupedEventTypes, limit)).Iter()
 
 			var userId int64
 			count := 0
