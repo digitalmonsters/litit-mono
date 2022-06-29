@@ -22,6 +22,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/tokenomics_notification"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_banned"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_delete"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_update"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/vote"
 	"github.com/digitalmonsters/notification-handler/cmd/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
@@ -107,24 +108,24 @@ func main() {
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
 	commentWrapper := comment.NewCommentWrapper(cfg.Wrappers.Comment)
 
-	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender, userGoWrapper).ListenAsync()
-	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender, userGoWrapper).ListenAsync()
-	commentListener := commentConsumer.InitListener(ctx, cfg.CommentListener, notificationSender, userGoWrapper,
-		contentWrapper, commentWrapper).ListenAsync()
-	voteListener := vote.InitListener(ctx, cfg.VoteListener, notificationSender, userGoWrapper).ListenAsync()
-	likeListener := like.InitListener(ctx, cfg.LikeListener, notificationSender, userGoWrapper, contentWrapper).ListenAsync()
-	contentListener := contentConsumer.InitListener(ctx, cfg.ContentListener, notificationSender, followWrapper,
-		userGoWrapper, contentWrapper).ListenAsync()
+	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
+	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender).ListenAsync()
+	commentListener := commentConsumer.InitListener(ctx, cfg.CommentListener, notificationSender, contentWrapper,
+		commentWrapper).ListenAsync()
+	voteListener := vote.InitListener(ctx, cfg.VoteListener, notificationSender).ListenAsync()
+	likeListener := like.InitListener(ctx, cfg.LikeListener, notificationSender, contentWrapper).ListenAsync()
+	contentListener := contentConsumer.InitListener(ctx, cfg.ContentListener, notificationSender, contentWrapper).ListenAsync()
 	kycStatusListener := kyc_status.InitListener(ctx, cfg.KysStatusListener, notificationSender).ListenAsync()
-	followListener := followConsumer.InitListener(ctx, cfg.FollowListener, notificationSender, userGoWrapper).ListenAsync()
+	followListener := followConsumer.InitListener(ctx, cfg.FollowListener, notificationSender).ListenAsync()
 	tokenomicsNotificationListener := tokenomics_notification.InitListener(ctx, cfg.TokenomicsNotificationListener,
-		notificationSender, userGoWrapper).ListenAsync()
+		notificationSender).ListenAsync()
 	emailNotificationListener := email_notification.InitListener(ctx, cfg.EmailNotificationListener,
-		notificationSender, userGoWrapper, cfg.EmailLinks).ListenAsync()
+		notificationSender, cfg.EmailLinks).ListenAsync()
 	pushAdminMessageListener := push_admin_message.InitListener(ctx, cfg.PushAdminMessageListener,
 		notificationSender).ListenAsync()
 	userDeleteListener := user_delete.InitListener(ctx, cfg.UserDeleteListener).ListenAsync()
 	userBannedListener := user_banned.InitListener(ctx, cfg.UserBannedListener, notificationSender).ListenAsync()
+	userUpdateListener := user_update.InitListener(ctx, cfg.UserUpdateListener).ListenAsync()
 
 	api.InitInternalApi(httpRouter.GetRpcServiceEndpoint())
 
@@ -206,6 +207,9 @@ func main() {
 		},
 		func() error {
 			return userBannedListener.Close()
+		},
+		func() error {
+			return userUpdateListener.Close()
 		},
 	})
 }

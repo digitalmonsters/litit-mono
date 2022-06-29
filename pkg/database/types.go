@@ -179,8 +179,12 @@ func GetNotificationType(templateId string) string {
 		return "push.user.daily_top_spot_reward"
 	case "top_weekly_spot_bonus":
 		return "push.user.weekly_top_spot_reward"
-	case "max_boring_spots":
-		return "push.user.max_boring_spots"
+	case "last_boring_spots":
+		return "push.user.boring_spots"
+	case "first_boring_spots":
+		return "push.user.boring_spots"
+	case "warning_boring_spots":
+		return "push.user.boring_spots"
 	}
 	return ""
 }
@@ -280,8 +284,8 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"top_daily_spot_bonus"}
 	case "push.user.weekly_top_spot_reward":
 		return []string{"top_weekly_spot_bonus"}
-	case "push.user.max_boring_spots":
-		return []string{"max_boring_spots"}
+	case "push.user.boring_spots":
+		return []string{"warning_boring_spots", "last_boring_spots", "first_boring_spots"}
 	}
 	return []string{}
 }

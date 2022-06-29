@@ -1,0 +1,1 @@
+truncate table push_notification_group_queue;

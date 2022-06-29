@@ -3,9 +3,9 @@ package sending_queue
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
-	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
@@ -13,27 +13,26 @@ import (
 	"strconv"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
 	db := database.GetDbWithContext(database.DbTypeMaster, ctx)
 	tx := db.Begin()
 	defer tx.Rollback()
 
-	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
-	if resp.Error != nil {
-		return nil, resp.Error.ToError()
+	renderData, language, err := utils.GetUserRenderingVariablesWithLanguage(event.UserId, ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
-	var userData user_go.UserRecord
-	var ok bool
+	if event.RenderingVariables == nil {
+		event.RenderingVariables = database.RenderingVariables{}
+	}
 
-	if userData, ok = resp.Response[event.UserId]; !ok {
-		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	for k, v := range renderData {
+		event.RenderingVariables[k] = v
 	}
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "template_name", event.TemplateName)
-
-	var err error
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -69,7 +68,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		RelatedUserId:      relatedUserId,
 		RenderingVariables: event.RenderingVariables,
 		CustomData:         customData,
-	}, event.UserId, 0, event.TemplateName, userData.Language, "", ctx)
+	}, event.UserId, 0, event.TemplateName, language, "", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

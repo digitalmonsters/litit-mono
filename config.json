@@ -133,6 +133,14 @@
     "GroupId": "local_notification_handler_user_banned_listener",
     "Topic": "local.user"
   },
+  "UserUpdateListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_user_update_listener",
+    "Topic": "local.user"
+  },
   "Wrappers": {
     "UserInfo": {
       "ApiUrl": ""

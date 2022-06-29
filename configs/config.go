@@ -43,6 +43,7 @@ type Settings struct {
 	PushAdminMessageListener       boilerplate.KafkaListenerConfiguration `json:"PushAdminMessageListener"`
 	UserDeleteListener             boilerplate.KafkaListenerConfiguration `json:"UserDeleteListener"`
 	UserBannedListener             boilerplate.KafkaListenerConfiguration `json:"UserBannedListener"`
+	UserUpdateListener             boilerplate.KafkaListenerConfiguration `json:"UserUpdateListener"`
 	EmailLinks                     EmailLinks                             `json:"EmailLinks"`
 	Scylla                         boilerplate.ScyllaConfiguration        `json:"Scylla"`
 	S3                             boilerplate.S3Config                   `json:"S3"`
