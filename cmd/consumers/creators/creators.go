@@ -7,20 +7,24 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
 	var err error
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "creator_id", event.Id)
 
-	renderingData := map[string]string{
-		"status": fmt.Sprint(event.Status),
+	renderData, language, err := utils.GetUserRenderingVariablesWithLanguage(event.UserId, ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
+
+	renderData["status"] = fmt.Sprint(event.Status)
 	var templateName string
 
 	switch event.Status {
@@ -34,24 +38,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, nil
 	}
 
-	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
-	if resp.Error != nil {
-		return nil, resp.Error.ToError()
-	}
-
-	var userData user_go.UserRecord
-	var ok bool
-
-	if userData, ok = resp.Response[event.UserId]; !ok {
-		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
-	}
-
 	shouldRetry, err := notifySender.PushNotification(database.Notification{
 		UserId:               event.UserId,
 		Type:                 "push.content-creator.status",
 		ContentCreatorStatus: &event.Status,
-		RenderingVariables:   renderingData,
-	}, event.UserId, 0, templateName, userData.Language, "content_creator", ctx)
+		RenderingVariables:   renderData,
+	}, event.UserId, 0, templateName, language, "content_creator", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)
