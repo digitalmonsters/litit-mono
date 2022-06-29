@@ -1,8 +1,6 @@
 package scylla
 
 import (
-	"github.com/digitalmonsters/go-common/translation"
-	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"time"
 )
 
@@ -47,19 +45,4 @@ type NotificationByTypeGroup struct {
 	EntityId        int64     `json:"entity_id"`
 	RelatedEntityId int64     `json:"related_entity_id"`
 	CreatedAt       time.Time `json:"created_at"`
-}
-
-type User struct {
-	ClusterKey        string                    `json:"cluster_key"`
-	UserId            int64                     `json:"user_id"`
-	Username          string                    `json:"username"`
-	Firstname         string                    `json:"firstname"`
-	Lastname          string                    `json:"lastname"`
-	NamePrivacyStatus user_go.NamePrivacyStatus `json:"name_privacy_status"`
-	Language          translation.Language      `json:"language"`
-	Email             string                    `json:"email"`
-}
-
-func GetUserClusterKey(userId int64) int64 {
-	return userId / 30000
 }

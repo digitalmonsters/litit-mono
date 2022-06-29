@@ -3,28 +3,41 @@ package vote
 import (
 	"context"
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
-	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"gopkg.in/guregu/null.v4"
 	"strconv"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender,
+	userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
 	if !event.Upvote.Valid || event.CommentAuthorId == event.UserId {
 		return &event.Messages, nil
 	}
 
+	var userData user_go.UserRecord
 	var err error
 
-	renderData, language, err := utils.GetUserRenderingVariablesWithLanguage(event.UserId, ctx)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
+	if resp.Error != nil {
+		return nil, resp.Error.ToError()
 	}
 
-	renderData["comment"] = event.Comment
+	var ok bool
+	if userData, ok = resp.Response[event.UserId]; !ok {
+		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	}
+
+	firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
+	renderData := database.RenderingVariables{
+		"firstname": firstName,
+		"lastname":  lastName,
+		"comment":   event.Comment,
+	}
 
 	var templateName string
 
@@ -58,7 +71,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Comment:            &notificationContent,
 		RelatedUserId:      null.IntFrom(event.UserId),
 		RenderingVariables: renderData,
-	}, event.CommentId, event.UserId, templateName, language, "default", ctx)
+	}, event.CommentId, event.UserId, templateName, userData.Language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

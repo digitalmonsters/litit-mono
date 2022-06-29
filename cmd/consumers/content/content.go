@@ -6,10 +6,10 @@ import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
-	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -18,8 +18,8 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender,
-	contentWrapper content.IContentWrapper) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, followWrapper follow.IFollowWrapper,
+	userGoWrapper user_go.IUserGoWrapper, contentWrapper content.IContentWrapper) (*kafka.Message, error) {
 	db := database.GetDb(database.DbTypeMaster).WithContext(ctx)
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
@@ -66,6 +66,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var err error
 	var notificationType string
 	var templateName string
+	renderData := map[string]string{}
 
 	notificationContent := &database.NotificationContent{
 		Id:      event.Id,
@@ -74,9 +75,17 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		VideoId: event.VideoId,
 	}
 
-	renderData, authorLanguage, err := utils.GetUserRenderingVariablesWithLanguage(event.UserId, ctx)
-	if err != nil {
-		return &event.Messages, err
+	var authorLanguage translation.Language
+
+	resp := <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
+	if resp.Error != nil {
+		return nil, resp.Error.ToError()
+	}
+
+	if userData, ok := resp.Response[event.UserId]; !ok {
+		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	} else {
+		authorLanguage = userData.Language
 	}
 
 	if event.CrudOperation == eventsourcing.ChangeEventTypeCreated && !event.Unlisted && !event.Draft && !event.Deleted {
@@ -139,75 +148,87 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, nil
 	}
 
-	return sendPushToFollowers(event, notificationContent, renderData, ctx, notifySender)
-}
-
-func sendPushToFollowers(event newSendingEvent, notificationContent *database.NotificationContent,
-	renderingVariables database.RenderingVariables, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
-	limit := 1000
-	var pageState []byte
-	session := database.GetScyllaSession()
-
-	for {
-		iter := session.Query("select entity_id from notification_relation where user_id = ? and event_type = ? "+
-			"and event_applied = true", event.UserId, "follow").WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
-
-		pageState = iter.PageState()
-		scanner := iter.Scanner()
-
-		var followersIds []int64
-		for scanner.Next() {
-			var entityId int64
-
-			if err := scanner.Scan(&entityId); err != nil {
-				return nil, errors.WithStack(err)
-			}
-
-			followersIds = append(followersIds, entityId)
-		}
-
-		if err := scanner.Err(); err != nil {
-			return nil, errors.WithStack(err)
-		}
-		if err := iter.Close(); err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		for _, followerId := range followersIds {
-			var language translation.Language
-
-			userIter := session.Query("select language from user where cluster_key = ? and user_id = ?",
-				scylla.GetUserClusterKey(followerId), followerId).Iter()
-			userIter.Scan(&language)
-
-			if err := userIter.Close(); err != nil {
-				return &event.Messages, errors.WithStack(err)
-			}
-
-			language = translation.DefaultUserLanguage
-
-			var shouldRetry bool
-			shouldRetry, err := notifySender.PushNotification(database.Notification{
-				UserId:             followerId,
-				Type:               "push.content.new-posted",
-				RelatedUserId:      null.IntFrom(event.UserId),
-				ContentId:          null.IntFrom(event.Id),
-				Content:            notificationContent,
-				RenderingVariables: renderingVariables,
-			}, event.Id, event.UserId, "content_posted", language, "default", ctx)
-			if err != nil {
-				if shouldRetry {
-					return nil, errors.WithStack(err)
-				}
-
-				return &event.Messages, err
-			}
-		}
-
-		if len(followersIds) < limit {
-			break
-		}
+	followersCountResp := <-followWrapper.GetFollowersCount([]int64{event.UserId}, apm.TransactionFromContext(ctx), false)
+	if followersCountResp.Error != nil {
+		return nil, followersCountResp.Error.ToError()
 	}
+
+	if len(followersCountResp.Data) == 0 {
+		return &event.Messages, nil
+	}
+
+	var ok bool
+
+	limit, ok := followersCountResp.Data[event.UserId]
+	if !ok {
+		return &event.Messages, nil
+	}
+
+	userFollowersResp := <-followWrapper.GetUserFollowers(event.UserId, "", int(limit), apm.TransactionFromContext(ctx), false)
+	if userFollowersResp.Error != nil {
+		return nil, userFollowersResp.Error.ToError()
+	}
+
+	if len(userFollowersResp.FollowerIds) == 0 {
+		return &event.Messages, nil
+	}
+
+	//var userData user_go.UserRecord
+	//
+	//resp = <-userGoWrapper.GetUsers([]int64{event.UserId}, ctx, false)
+	//if resp.Error != nil {
+	//	return nil, resp.Error.ToError()
+	//}
+	//
+	//if userData, ok = resp.Response[event.UserId]; !ok {
+	//	return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	//}
+
+	//templateName = "content_posted"
+	//notificationType = "push.content.new-posted"
+
+	//firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
+	//renderData = map[string]string{
+	//	"firstname": firstName,
+	//	"lastname":  lastName,
+	//}
+
+	//title, body, headline, _, err = notifySender.RenderTemplate(tx, templateName, renderData, userData.Language)
+	//if err == renderer.TemplateRenderingError {
+	//	return &event.Messages, err // we should continue, no need to retry
+	//} else if err != nil {
+	//	return nil, err
+	//}
+
+	//for _, followerId := range userFollowersResp.FollowerIds {
+	//	if _, err = notifySender.SendCustomTemplateToUser(notification_handler.NotificationChannelPush, followerId, templateName, "default",
+	//		title, body, headline, nil, ctx); err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	if err = tx.Create(&database.Notification{
+	//		UserId:             followerId,
+	//		Type:               notificationType,
+	//		Title:              title,
+	//		Message:            body,
+	//		ContentId:          null.IntFrom(event.Id),
+	//		Content:            notificationContent,
+	//		CreatedAt:          time.Now().UTC(),
+	//		RelatedUserId:      null.IntFrom(event.UserId),
+	//		RenderingVariables: renderData,
+	//	}).Error; err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	if err = notification.IncrementUnreadNotificationsCounter(tx, followerId); err != nil {
+	//		return nil, err
+	//	}
+	//}
+
+	//if err = tx.Commit().Error; err != nil {
+	//	return nil, err
+	//}
 
 	return &event.Messages, nil
 }

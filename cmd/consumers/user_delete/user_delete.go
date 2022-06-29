@@ -5,9 +5,7 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
-	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
@@ -69,13 +67,6 @@ func process(event newSendingEvent, ctx context.Context, apmTransaction *apm.Tra
 
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
-	}
-
-	session := database.GetScyllaSession()
-
-	if err := session.Query("delete from user where cluster_key = ? and user_id = ?",
-		scylla.GetUserClusterKey(event.UserId), event.UserId).Exec(); err != nil {
-		return nil, errors.WithStack(err)
 	}
 
 	return &event.Messages, nil

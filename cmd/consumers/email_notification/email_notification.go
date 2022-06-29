@@ -9,23 +9,22 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/configs"
-	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
-	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"strconv"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, emailLinks configs.EmailLinks) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper,
+	emailLinks configs.EmailLinks, apmTransaction *apm.Transaction) (*kafka.Message, error) {
 	var err error
 	var template string
 	var email string
 	templateData := map[string]string{}
 	var publishKey string
 
-	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "event_type", string(event.Type))
+	apm_helper.AddApmLabel(apmTransaction, "event_type", string(event.Type))
 
 	switch event.Type {
 	case eventsourcing.EmailNotificationPasswordForgot:
@@ -35,27 +34,25 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return &event.Messages, err
 		}
 
-		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
+		var userData user_go.UserRecord
 
-		var user *scylla.User
-		user, err = utils.GetUser(payload.UserId, ctx)
-		if err != nil {
-			return nil, errors.WithStack(err)
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
+
+		resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, ctx, false)
+		if resp.Error != nil {
+			return nil, resp.Error.ToError()
 		}
 
-		userRecord := user_go.UserRecord{
-			UserId:            user.UserId,
-			Username:          user.Username,
-			Firstname:         user.Firstname,
-			Lastname:          user.Lastname,
-			NamePrivacyStatus: user.NamePrivacyStatus,
+		var ok bool
+		if userData, ok = resp.Response[payload.UserId]; !ok {
+			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 
-		email = user.Email
+		email = userData.Email
 		template = "forgot_password_link"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
 
-		firstName, lastName := userRecord.GetFirstAndLastNameWithPrivacy()
+		firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
 
 		templateData["name"] = fmt.Sprintf("%v %v", firstName, lastName)
 		templateData["code"] = strconv.Itoa(payload.Code)
@@ -66,11 +63,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return &event.Messages, err
 		}
 
-		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
 
 		email = payload.Email
 
-		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "email", email)
+		apm_helper.AddApmLabel(apmTransaction, "email", email)
 
 		template = "email_verify"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
@@ -86,11 +83,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return &event.Messages, err
 		}
 
-		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
 
 		email = payload.Email
 
-		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "email", email)
+		apm_helper.AddApmLabel(apmTransaction, "email", email)
 
 		template = "email_marketing_verify"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
@@ -106,11 +103,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			return &event.Messages, err
 		}
 
-		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
+		apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
 
 		email = payload.Email
 
-		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "email", email)
+		apm_helper.AddApmLabel(apmTransaction, "email", email)
 
 		template = "email_temp_guest_info"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
@@ -123,7 +120,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	//		return &event.Messages, err
 	//	}
 	//
-	//	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx, "user_id", payload.UserId)
+	//	apm_helper.AddApmLabel(apmTransaction, "user_id", payload.UserId)
 	//
 	//	var userData user_go.UserRecord
 	//

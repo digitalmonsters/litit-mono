@@ -4,19 +4,18 @@ import (
 	"context"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
-	"github.com/digitalmonsters/go-common/translation"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
-	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 )
 
-func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
+func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, userGoWrapper user_go.IUserGoWrapper) (*kafka.Message, error) {
 	var err error
-	renderData := database.RenderingVariables{}
+	rendererData := map[string]string{}
 	var templateName string
 	var templateType string
 	contentId := null.Int{}
@@ -26,34 +25,52 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "related_user_id", event.Payload.RelatedUserId.ValueOrZero())
 
 	if event.Payload.PointsAmount.Valid {
-		renderData["pointsAmount"] = event.Payload.PointsAmount.Decimal.String()
+		rendererData["pointsAmount"] = event.Payload.PointsAmount.Decimal.String()
 	}
 
-	var language translation.Language
+	var userData user_go.UserRecord
+	var ok bool
 
 	switch event.Type {
 	case eventsourcing.TokenomicsNotificationTip:
-		renderData, language, err = utils.GetUserRenderingVariablesWithLanguage(event.Payload.RelatedUserId.ValueOrZero(), ctx)
-		if err != nil {
-			return nil, errors.WithStack(err)
+		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.RelatedUserId.ValueOrZero()}, ctx, false)
+		if resp.Error != nil {
+			return nil, resp.Error.ToError()
+		}
+
+		if userData, ok = resp.Response[event.Payload.RelatedUserId.ValueOrZero()]; !ok {
+			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 
 		templateName = "tip"
 		templateType = "push.tip"
 
+		firstName, lastName := userData.GetFirstAndLastNameWithPrivacy()
+
+		rendererData["firstname"] = firstName
+		rendererData["lastname"] = lastName
+
 		contentId = null.IntFrom(0)
 	case eventsourcing.TokenomicsNotificationDailyBonusTime:
-		renderData, language, err = utils.GetUserRenderingVariablesWithLanguage(event.Payload.UserId, ctx)
-		if err != nil {
-			return nil, errors.WithStack(err)
+		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.UserId}, ctx, false)
+		if resp.Error != nil {
+			return nil, resp.Error.ToError()
+		}
+
+		if userData, ok = resp.Response[event.Payload.UserId]; !ok {
+			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 
 		templateName = "bonus_time"
 		templateType = "push.bonus.daily"
 	case eventsourcing.TokenomicsNotificationDailyBonusFollowers:
-		renderData, language, err = utils.GetUserRenderingVariablesWithLanguage(event.Payload.UserId, ctx)
-		if err != nil {
-			return nil, errors.WithStack(err)
+		resp := <-userGoWrapper.GetUsers([]int64{event.Payload.UserId}, ctx, false)
+		if resp.Error != nil {
+			return nil, resp.Error.ToError()
+		}
+
+		if userData, ok = resp.Response[event.Payload.UserId]; !ok {
+			return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
 		}
 
 		templateName = "bonus_followers"
@@ -67,8 +84,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Type:               templateType,
 		ContentId:          contentId,
 		RelatedUserId:      event.Payload.RelatedUserId,
-		RenderingVariables: renderData,
-	}, event.Payload.RelatedUserId.ValueOrZero(), 0, templateName, language, "default", ctx)
+		RenderingVariables: rendererData,
+	}, event.Payload.RelatedUserId.ValueOrZero(), 0, templateName, userData.Language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

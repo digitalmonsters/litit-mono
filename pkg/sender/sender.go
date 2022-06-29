@@ -940,14 +940,3 @@ func (s *Sender) RegisterUserPushNotificationTasks() error {
 
 	return nil
 }
-
-func (s *Sender) UnapplyEvent(userId int64, eventType string, entityId int64, relatedEntityId int64, ctx context.Context) error {
-	session := database.GetScyllaSession()
-
-	if err := session.Query("update notification_relation set event_applied = false", userId, eventType, entityId,
-		relatedEntityId, ctx).Exec(); err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
-}
