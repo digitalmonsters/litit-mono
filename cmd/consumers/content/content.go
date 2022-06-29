@@ -104,6 +104,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 				}
 			}
 
+			if rejectReasonText == "Boring Spot" {
+				return nil, nil
+			}
+
 			renderData = map[string]string{
 				"reason": rejectReasonText,
 			}
