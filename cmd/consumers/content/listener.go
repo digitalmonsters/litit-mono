@@ -6,15 +6,12 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/kafka_listener"
 	"github.com/digitalmonsters/go-common/wrappers/content"
-	"github.com/digitalmonsters/go-common/wrappers/follow"
-	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"github.com/segmentio/kafka-go"
 )
 
 func InitListener(appCtx context.Context, configuration boilerplate.KafkaListenerConfiguration,
-	notificationSender sender.ISender, followWrapper follow.IFollowWrapper, userGoWrapper user_go.IUserGoWrapper,
-	contentWrapper content.IContentWrapper) kafka_listener.IKafkaListener {
+	notificationSender sender.ISender, contentWrapper content.IContentWrapper) kafka_listener.IKafkaListener {
 	return kafka_listener.NewSingleListener(configuration, kafka_listener.NewCommand("content",
 		func(executionData kafka_listener.ExecutionData, request ...kafka.Message) []kafka.Message {
 			singleMessage := request[0]
@@ -27,8 +24,7 @@ func InitListener(appCtx context.Context, configuration boilerplate.KafkaListene
 				return []kafka.Message{singleMessage}
 			}
 
-			result, err := process(*mapped, executionData.Context, notificationSender, followWrapper, userGoWrapper,
-				contentWrapper)
+			result, err := process(*mapped, executionData.Context, notificationSender, contentWrapper)
 
 			if err != nil {
 				apm_helper.LogError(err, executionData.Context)
