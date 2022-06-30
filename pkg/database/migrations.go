@@ -500,5 +500,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_muted_to_render_templates_300620221300",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"alter table render_templates add column if not exists muted bool default false not null;",
+				)
+			},
+		},
 	}
 }

@@ -36,13 +36,14 @@ func TestService_EditTemplate(t *testing.T) {
 	}
 
 	if err := templateService.EditTemplate(EditTemplateRequest{
-		Id:       template.Id,
-		Title:    "1",
-		Body:     "1",
-		Headline: "1",
+		Id: template.Id,
+		//Title:    "1",
+		//Body:     "1",
+		//Headline: "1",
 		Kind:     "1",
 		Route:    "1",
 		ImageUrl: "1",
+		Muted:    true,
 	}, gormDb); err != nil {
 		t.Fatal(err)
 	}
