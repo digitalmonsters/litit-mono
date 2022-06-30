@@ -76,3 +76,11 @@ const (
 func (c UserEvent) GetPublishKey() string {
 	return fmt.Sprint(c.UserId)
 }
+
+type SocialSubsEvent struct {
+	UserId int64 `json:"user_id"`
+}
+
+func (e SocialSubsEvent) GetPublishKey() string {
+	return fmt.Sprint(e.UserId)
+}
