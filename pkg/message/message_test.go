@@ -48,18 +48,38 @@ func TestMethods(t *testing.T) {
 				Title:              "test2",
 				Description:        "desc_test_2",
 				Countries:          []string{"UA", "US"},
+				IsActive:           true,
 				VerificationStatus: null.IntFrom(int64(database.VerificationStatusPending)),
 			},
 			{
 				Type:        database.MessageTypeMobile,
 				Title:       "test3",
 				Description: "desc_test_3",
+				IsActive:    true,
+				Countries:   []string{"RU"},
+			},
+			{
+				Type:        database.MessageTypeMobile,
+				Title:       "test4",
+				Description: "desc_test_4",
+				PointsFrom:  1,
+				PointsTo:    10,
+				IsActive:    true,
+				Countries:   []string{"UK"},
+			},
+			{
+				Type:        database.MessageTypeMobile,
+				Title:       "test5",
+				Description: "desc_test_5",
+				PointsFrom:  1,
+				PointsTo:    2,
+				IsActive:    false,
 				Countries:   []string{"RU"},
 			},
 		},
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, resp, 3)
+	assert.Len(t, resp, 5)
 
 	resp, err = UpsertMessageBulkAdmin(UpsertMessageAdminRequest{
 		Items: []adminMessage{
@@ -92,7 +112,7 @@ func TestMethods(t *testing.T) {
 		Offset: 0,
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, list.Items, 2)
+	assert.Len(t, list.Items, 4)
 
 	list, err = MessagesListAdmin(MessagesListAdminRequest{
 		Limit:     10,
@@ -100,7 +120,64 @@ func TestMethods(t *testing.T) {
 		Countries: []string{"RU"},
 	}, gormDb)
 	assert.Nil(t, err)
-	assert.Len(t, list.Items, 1)
+	assert.Len(t, list.Items, 2)
+
+	list1, err1 := MessagesListAdmin(MessagesListAdminRequest{
+		Limit:    10,
+		Offset:   0,
+		IsActive: null.BoolFrom(true),
+	}, gormDb)
+	assert.Nil(t, err1)
+	assert.Equal(t, 3, len(list1.Items))
+
+	list2, err1 := MessagesListAdmin(MessagesListAdminRequest{
+		Limit:              10,
+		Offset:             0,
+		IsActive:           null.BoolFrom(false),
+		VerificationStatus: nil,
+	}, gormDb)
+	assert.Nil(t, err1)
+	assert.Equal(t, 1, len(list2.Items))
+
+	list3, err3 := MessagesListAdmin(MessagesListAdminRequest{
+		Limit:              10,
+		Offset:             0,
+		IsActive:           null.BoolFrom(true),
+		Countries:          []string{"RU", "US"},
+		VerificationStatus: nil,
+	}, gormDb)
+	assert.Nil(t, err3)
+	assert.Equal(t, 2, len(list3.Items))
+
+	list4, err4 := MessagesListAdmin(MessagesListAdminRequest{
+		Limit:              10,
+		Offset:             0,
+		IsActive:           null.BoolFrom(true),
+		Countries:          []string{"RU", "UK"},
+		VerificationStatus: nil,
+	}, gormDb)
+	assert.Nil(t, err4)
+	assert.Equal(t, 2, len(list4.Items))
+
+	list5, err5 := MessagesListAdmin(MessagesListAdminRequest{
+		Limit:              10,
+		Offset:             0,
+		PointsToFrom:       2,
+		PointsToTo:         10,
+		VerificationStatus: nil,
+	}, gormDb)
+	assert.Nil(t, err5)
+	assert.Equal(t, 2, len(list5.Items))
+
+	list6, err6 := MessagesListAdmin(MessagesListAdminRequest{
+		Limit:              10,
+		Offset:             0,
+		PointsFromFrom:     1,
+		PointsFromTo:       10,
+		VerificationStatus: nil,
+	}, gormDb)
+	assert.Nil(t, err6)
+	assert.Equal(t, 2, len(list6.Items))
 }
 
 func TestGetMessageForUser(t *testing.T) {

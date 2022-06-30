@@ -32,11 +32,15 @@ type MessagesListAdminRequest struct {
 	Keyword            null.String                  `json:"keyword"`
 	Countries          []string                     `json:"countries"`
 	VerificationStatus *database.VerificationStatus `json:"verification_status"`
-	AgeFrom            int8                         `json:"age_from"`
-	AgeTo              int8                         `json:"age_to"`
-	PointsFrom         float64                      `json:"points_from"`
-	PointsTo           float64                      `json:"points_to"`
-	IsActive           bool                         `json:"is_active"`
+	AgeFromFrom        int8                         `json:"age_from_from"`
+	AgeFromTo          int8                         `json:"age_from_to"`
+	AgeToFrom          int8                         `json:"age_to_from"`
+	AgeToTo            int8                         `json:"age_to_to"`
+	PointsFromFrom     float64                      `json:"points_from_from"`
+	PointsFromTo       float64                      `json:"points_from_to"`
+	PointsToFrom       float64                      `json:"points_to_from"`
+	PointsToTo         float64                      `json:"points_to_to"`
+	IsActive           null.Bool                    `json:"is_active"`
 	Limit              int                          `json:"limit"`
 	Offset             int                          `json:"offset"`
 }
