@@ -420,6 +420,10 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		if template.Id != templateName {
 			return false, errors.WithStack(errors.New("template not found"))
 		}
+
+		if template.Muted {
+			return false, nil
+		}
 	} else {
 		title = notification.Title
 		body = notification.Message

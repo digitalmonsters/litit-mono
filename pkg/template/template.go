@@ -38,6 +38,7 @@ func (s service) EditTemplate(req EditTemplateRequest, tx *gorm.DB) error {
 	template.Kind = req.Kind
 	template.Route = req.Route
 	template.ImageUrl = req.ImageUrl
+	template.Muted = req.Muted
 	template.UpdatedAt = time.Now().UTC()
 
 	if err := tx.Save(&template).Error; err != nil {
@@ -103,6 +104,10 @@ func (s service) ListTemplates(req ListTemplatesRequest, db *gorm.DB) (*ListTemp
 		query = query.Where("render_templates.updated_at <= ?", req.UpdatedAtTo.ValueOrZero())
 	}
 
+	if req.Muted.Valid {
+		query = query.Where("render_templates.muted = ?", req.Muted.ValueOrZero())
+	}
+
 	if sortingArr := req.Sorting; len(sortingArr) > 0 {
 		for _, sorting := range sortingArr {
 			sortOrder := " asc"
@@ -138,6 +143,7 @@ func (s service) ListTemplates(req ListTemplatesRequest, db *gorm.DB) (*ListTemp
 			Kind:     template.Kind,
 			Route:    template.Route,
 			ImageUrl: template.ImageUrl,
+			Muted:    template.Muted,
 		}
 	}
 
