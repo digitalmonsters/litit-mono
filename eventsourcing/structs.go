@@ -81,6 +81,7 @@ type ContentType int
 const (
 	ContentTypeVideo = ContentType(0)
 	ContentTypeSpot  = ContentType(1)
+	ContentTypeBio   = ContentType(2)
 )
 
 type UploadStatus int

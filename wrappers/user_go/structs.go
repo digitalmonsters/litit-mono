@@ -105,6 +105,7 @@ type UserDetailRecord struct {
 	Influencer          bool                 `json:"influencer"`
 	Language            translation.Language `json:"language"`
 	SpotsUploadBanned   bool                 `json:"spots_upload_banned"`
+	BioVideoId          null.Int             `json:"bio_video_id"`
 }
 
 func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
