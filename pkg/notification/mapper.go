@@ -35,6 +35,7 @@ func mapNotificationsToResponseItems(notifications []database.Notification, noti
 			KycReason:            notification.KycReason,
 			CreatedAt:            notification.CreatedAt,
 			RenderingVariables:   notification.RenderingVariables,
+			CustomData:           notification.CustomData,
 			NotificationsCount:   1,
 		}
 
