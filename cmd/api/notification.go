@@ -21,7 +21,6 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 	readNotificationPath := "/mobile/v1/notification/read"
-	migrateGroupedNotificationsPath := "/migrate_grouped_notifications"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -104,15 +103,6 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 
 		return nil, nil
 	}, readNotificationPath, http.MethodPost).RequireIdentityValidation().Build()); err != nil {
-		return err
-	}
-
-	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
-		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
-		notificationPkg.MigrateGroupedNotifications(executionData.Context)
-
-		return nil, nil
-	}, migrateGroupedNotificationsPath, http.MethodGet).Build()); err != nil {
 		return err
 	}
 
