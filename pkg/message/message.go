@@ -5,6 +5,7 @@ import (
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -140,23 +141,49 @@ func MessagesListAdmin(req MessagesListAdminRequest, db *gorm.DB) (*MessagesList
 	}
 
 	if len(req.Countries) > 0 {
-		query = query.Where("countries && ARRAY[?]", req.Countries)
+		var countryArray pq.StringArray
+
+		for _, country := range req.Countries {
+			countryArray = append(countryArray, country)
+		}
+
+		query = query.Where("countries && ?::text[]", countryArray)
 	}
 
-	if req.AgeFrom > 0 {
-		query = query.Where("age_from >= ?", req.AgeFrom)
+	if req.AgeFromFrom > 0 {
+		query = query.Where("age_from >= ?", req.AgeFromFrom)
 	}
 
-	if req.AgeTo > 0 {
-		query = query.Where("age_to <= ?", req.AgeTo)
+	if req.AgeFromTo > 0 {
+		query = query.Where("age_from <= ?", req.AgeFromTo)
 	}
 
-	if req.PointsFrom > 0 {
-		query = query.Where("age_from >= ?", req.PointsFrom)
+	if req.AgeToFrom > 0 {
+		query = query.Where("age_to >= ?", req.AgeToFrom)
 	}
 
-	if req.PointsTo > 0 {
-		query = query.Where("age_to <= ?", req.PointsTo)
+	if req.AgeToTo > 0 {
+		query = query.Where("age_to <= ?", req.AgeToTo)
+	}
+
+	if req.PointsFromFrom > 0 {
+		query = query.Where("points_from >= ?", req.PointsFromFrom)
+	}
+
+	if req.PointsFromTo > 0 {
+		query = query.Where("points_from <= ?", req.PointsFromTo)
+	}
+
+	if req.PointsToFrom > 0 {
+		query = query.Where("points_to >= ?", req.PointsToFrom)
+	}
+
+	if req.PointsToTo > 0 {
+		query = query.Where("points_to <= ?", req.PointsToTo)
+	}
+
+	if req.IsActive.Valid {
+		query = query.Where("is_active = ?", req.IsActive.Bool)
 	}
 
 	var totalCount int64
