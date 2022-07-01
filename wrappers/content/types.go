@@ -133,6 +133,7 @@ const (
 	ReasonTypeNone  = RejectReasonType(0)
 	ReasonTypeVideo = RejectReasonType(1)
 	ReasonTypeSpot  = RejectReasonType(2)
+	ReasonTypeBio   = RejectReasonType(3)
 )
 
 type RejectReason struct {
