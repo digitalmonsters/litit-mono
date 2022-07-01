@@ -8,6 +8,7 @@ type RenderTemplate struct {
 	IsGrouped bool   `json:"is_grouped"`
 	Route     string `json:"route"`
 	ImageUrl  string `json:"image_url"`
+	Muted     bool   `json:"muted"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

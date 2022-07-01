@@ -131,6 +131,21 @@ func CeilToNearest(x, floorTo int) int {
 
 func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId int64, notificationCount int64,
 	renderingVariables database.RenderingVariables, customData database.CustomData, ctx context.Context) error {
+	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
+
+	var template database.RenderTemplate
+	if err := db.Where("id = ?", eventType).Find(&template).Error; err != nil {
+		return errors.WithStack(err)
+	}
+
+	if template.Id != eventType {
+		return errors.WithStack(errors.New("template not found"))
+	}
+
+	if template.Muted {
+		return nil
+	}
+
 	userTokens, err := token.GetUserTokens(database.GetDbWithContext(database.DbTypeReadonly, ctx), userId)
 	if err != nil {
 		return errors.WithStack(err)
@@ -176,17 +191,6 @@ func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId 
 	var ok bool
 	if userData, ok = resp.Response[userId]; !ok {
 		return errors.WithStack(errors.New("user not found"))
-	}
-
-	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
-
-	var template database.RenderTemplate
-	if err = db.Where("id = ?", eventType).Find(&template).Error; err != nil {
-		return errors.WithStack(err)
-	}
-
-	if template.Id != eventType {
-		return errors.WithStack(errors.New("template not found"))
 	}
 
 	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount-1, 10)
@@ -419,6 +423,10 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 		if template.Id != templateName {
 			return false, errors.WithStack(errors.New("template not found"))
+		}
+
+		if template.Muted {
+			return false, nil
 		}
 	} else {
 		title = notification.Title
