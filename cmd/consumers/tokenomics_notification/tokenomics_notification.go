@@ -16,7 +16,7 @@ import (
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
 	var err error
-	renderData := database.RenderingVariables{}
+	var renderData database.RenderingVariables
 	var templateName string
 	var templateType string
 	contentId := null.Int{}
@@ -24,10 +24,6 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "event_type", string(event.Type))
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.Payload.UserId)
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "related_user_id", event.Payload.RelatedUserId.ValueOrZero())
-
-	if event.Payload.PointsAmount.Valid {
-		renderData["pointsAmount"] = event.Payload.PointsAmount.Decimal.String()
-	}
 
 	var language translation.Language
 
@@ -60,6 +56,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		templateType = "push.bonus.followers"
 	default:
 		return &event.Messages, nil
+	}
+
+	if event.Payload.PointsAmount.Valid {
+		renderData["pointsAmount"] = event.Payload.PointsAmount.Decimal.String()
 	}
 
 	shouldRetry, err := notifySender.PushNotification(database.Notification{
