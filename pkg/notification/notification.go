@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
@@ -243,11 +244,15 @@ func ReadNotification(req ReadNotificationRequest, userId int64, ctx context.Con
 
 func GetNotificationsReadCount(req GetNotificationsReadCountRequest, ctx context.Context) (map[int64]int64, error) {
 	notificationsReadCountMap := make(map[int64]int64)
+
+	if len(req.NotificationIds) == 0 {
+		return notificationsReadCountMap, nil
+	}
+
 	session := database.GetScyllaSession()
 
-	iter := session.Query("select notification_id, read_count from user_notifications_read_counter where notification_id in ?;",
-		req.NotificationIds).
-		WithContext(ctx).Iter()
+	iter := session.Query("select notification_id, read_count from user_notifications_read_counter where notification_id in (%v);",
+		utils.JoinInt64ForInStatement(req.NotificationIds)).WithContext(ctx).Iter()
 
 	var notificationId int64
 	var readCount int64
