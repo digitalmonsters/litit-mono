@@ -251,8 +251,8 @@ func GetNotificationsReadCount(req GetNotificationsReadCountRequest, ctx context
 
 	session := database.GetScyllaSession()
 
-	iter := session.Query("select notification_id, read_count from user_notifications_read_counter where notification_id in (%v);",
-		utils.JoinInt64ForInStatement(req.NotificationIds)).WithContext(ctx).Iter()
+	iter := session.Query(fmt.Sprintf("select notification_id, read_count from user_notifications_read_counter where notification_id in (%v);",
+		utils.JoinInt64ForInStatement(req.NotificationIds))).WithContext(ctx).Iter()
 
 	var notificationId int64
 	var readCount int64
