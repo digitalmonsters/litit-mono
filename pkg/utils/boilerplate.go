@@ -75,7 +75,7 @@ func GetUser(userId int64, ctx context.Context) (*scylla.User, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	localCache.SetDefault(cacheKey, user)
+	localCache.SetDefault(cacheKey, &user)
 
 	return &user, nil
 }
