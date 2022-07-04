@@ -953,7 +953,7 @@ func (s *Sender) UnapplyEvent(userId int64, eventType string, entityId int64, re
 	session := database.GetScyllaSession()
 
 	if err := session.Query("update notification_relation set event_applied = false where user_id = ? and "+
-		"event_type = ? and entity_id = ? and related_entity_id = ?", userId, eventType, entityId, relatedEntityId, ctx).Exec(); err != nil {
+		"event_type = ? and entity_id = ? and related_entity_id = ?", userId, eventType, entityId, relatedEntityId).WithContext(ctx).Exec(); err != nil {
 		return errors.WithStack(err)
 	}
 

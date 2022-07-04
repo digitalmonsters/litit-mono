@@ -20,6 +20,21 @@ func JoinStringsForInStatement(values []string) string {
 	return result
 }
 
+func JoinInt64ForInStatement(values []int64) string {
+	result := ""
+
+	for i, value := range values {
+		if i == 0 {
+			result = fmt.Sprintf("%v", value)
+			continue
+		}
+
+		result = fmt.Sprintf("%v,%v", result, value)
+	}
+
+	return result
+}
+
 func FormatToScyllaDateTime(dateTime time.Time) string {
 	return dateTime.Format("2006-01-02 15:04:05.000")
 }
