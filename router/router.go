@@ -532,6 +532,14 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 		defer func() {
 			var responseBody []byte
 
+			if apmTransaction != nil {
+				apmTransaction.Outcome = "success"
+
+				if rpcResponse.Error != nil {
+					apmTransaction.Outcome = "failure"
+				}
+			}
+
 			if rpcResponse.Result != nil || rpcResponse.Error != nil {
 				if respBody, err := json.Marshal(rpcResponse); err != nil {
 					shouldLog = true
