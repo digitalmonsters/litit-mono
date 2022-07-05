@@ -170,7 +170,7 @@ func GetNotificationsLegacy(db *gorm.DB, userId int64, page string, typeGroup Ty
 
 	notificationsTypes := make([]string, len(notificationsTemplates))
 	for i, templateId := range notificationsTemplates {
-		notificationsTypes[i] = database.GetNotificationType(templateId)
+		notificationsTypes[i] = database.GetNotificationTypeForAll(templateId)
 	}
 
 	query := db.Model(notifications).Where("user_id = ?", userId)
