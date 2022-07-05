@@ -18,8 +18,8 @@ import (
 	"strings"
 )
 
-func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, limit int, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, pushAdminSupported bool, limit int,
+	userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
 	if strings.Contains(page, "empty") {
 		return &NotificationsResponse{
 			Data:        make([]NotificationsResponseItem, 0),
@@ -50,6 +50,10 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	notificationByTypeGroupView := TypeGroupToScyllaViewName(typeGroup)
 	if len(notificationByTypeGroupView) == 0 {
 		return nil, errors.WithStack(errors.New("unknown group"))
+	}
+
+	if pushAdminSupported {
+		notificationByTypeGroupView = fmt.Sprintf("%v_with_push_admin", notificationByTypeGroupView)
 	}
 
 	query := fmt.Sprintf("select created_at, event_type, entity_id, related_entity_id from %v where user_id = ?", notificationByTypeGroupView)

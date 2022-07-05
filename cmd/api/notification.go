@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	notificationPkg "github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/google/uuid"
+	ua "github.com/mileusna/useragent"
 	"github.com/pkg/errors"
 	"net/http"
 )
@@ -33,8 +34,19 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
 		}
 
+		pushAdminSupported := true
+
+		userAgent, ok := executionData.GetUserValue("User-Agent").(string)
+		if ok {
+			userAgentParsed := ua.Parse(userAgent)
+
+			if userAgentParsed.IsIOS() {
+				pushAdminSupported = false
+			}
+		}
+
 		resp, err := notificationPkg.GetNotifications(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context),
-			executionData.UserId, page, typeGroup, 10, userGoWrapper, followWrapper, executionData.Context)
+			executionData.UserId, page, typeGroup, pushAdminSupported, 10, userGoWrapper, followWrapper, executionData.Context)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

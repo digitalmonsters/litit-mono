@@ -8,6 +8,7 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.3.0
+	github.com/mileusna/useragent v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/romanyx/polluter v1.2.2
