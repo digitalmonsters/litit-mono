@@ -176,7 +176,7 @@ func GetNotificationsLegacy(db *gorm.DB, userId int64, page string, typeGroup Ty
 	query := db.Model(notifications).Where("user_id = ?", userId)
 
 	if len(notificationsTypes) > 0 {
-		query = query.Where("type in ?", userId, notificationsTypes)
+		query = query.Where("type in ?", notificationsTypes)
 	}
 
 	result, cursor, err := p.Paginate(query, &notifications)
