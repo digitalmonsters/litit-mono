@@ -11,15 +11,17 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
 	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/google/uuid"
+	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"strings"
 )
 
-func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, limit int, userGoWrapper user_go.IUserGoWrapper,
-	followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, pushAdminSupported bool, limit int,
+	userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
 	if strings.Contains(page, "empty") {
 		return &NotificationsResponse{
 			Data:        make([]NotificationsResponseItem, 0),
@@ -50,6 +52,10 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	notificationByTypeGroupView := TypeGroupToScyllaViewName(typeGroup)
 	if len(notificationByTypeGroupView) == 0 {
 		return nil, errors.WithStack(errors.New("unknown group"))
+	}
+
+	if pushAdminSupported {
+		notificationByTypeGroupView = fmt.Sprintf("%v_with_push_admin", notificationByTypeGroupView)
 	}
 
 	query := fmt.Sprintf("select created_at, event_type, entity_id, related_entity_id from %v where user_id = ?", notificationByTypeGroupView)
@@ -137,6 +143,104 @@ func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGrou
 	}
 
 	return &resp, nil
+}
+
+func GetNotificationsLegacy(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, pushAdminSupported bool,
+	limit int, userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+	notifications := make([]database.Notification, 0)
+
+	p := paginator.New(
+		&paginator.Config{
+			Rules: []paginator.Rule{{
+				Key:   "CreatedAt",
+				Order: paginator.DESC,
+			}},
+			Limit: limit,
+			After: page,
+		},
+	)
+
+	notificationsTemplates := getNotificationsTemplatesByTypeGroup(typeGroup)
+
+	if !pushAdminSupported {
+		notificationsTemplates = lo.Filter(notificationsTemplates, func(item string, i int) bool {
+			return item != "push_admin"
+		})
+	}
+
+	notificationsTypes := make([]string, len(notificationsTemplates))
+	for i, templateId := range notificationsTemplates {
+		notificationsTypes[i] = database.GetNotificationTypeForAll(templateId)
+	}
+
+	query := db.Model(notifications).Where("user_id = ?", userId)
+
+	if len(notificationsTypes) > 0 {
+		query = query.Where("type in ?", notificationsTypes)
+	}
+
+	result, cursor, err := p.Paginate(query, &notifications)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if result.Error != nil {
+		return nil, errors.WithStack(result.Error)
+	}
+
+	var userNotification database.UserNotification
+
+	if err = db.Where("user_id = ?", userId).Find(&userNotification).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	notificationsResp := mapNotificationsToResponseItems(notifications, nil, userGoWrapper, followWrapper, ctx)
+
+	resp := NotificationsResponse{
+		Data:        notificationsResp,
+		UnreadCount: userNotification.UnreadCount,
+	}
+
+	if cursor.After != nil {
+		resp.Next = *cursor.After
+	} else {
+		resp.Next = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+	}
+
+	if cursor.Before != nil {
+		resp.Prev = *cursor.Before
+	} else {
+		resp.Prev = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+	}
+
+	return &resp, nil
+}
+
+func getNotificationsTemplatesByTypeGroup(typeGroup TypeGroup) []string {
+	switch typeGroup {
+	case TypeGroupAll:
+		return []string{"comment_reply", "comment_vote_like", "comment_vote_dislike", "comment_profile_resource_create",
+			"comment_content_resource_create", "follow", "content_posted", "tip", "content_like",
+			"bonus_followers", "bonus_time", "content_upload", "spot_upload", "content_reject",
+			"kyc_status_verified", "kyc_status_rejected", "creator_status_rejected", "creator_status_approved",
+			"creator_status_pending", "first_daily_followers_bonus", "first_daily_time_bonus",
+			"first_guest_x_earned_points", "first_guest_x_paid_views", "first_x_paid_views",
+			"first_referral_joined", "first_video_shared", "first_weekly_followers_bonus", "first_weekly_time_bonus",
+			"first_x_paid_views_as_content_owner", "guest_max_earned_points_for_views", "increase_reward_stage_1",
+			"increase_reward_stage_2", "registration_verify_bonus", "other_referrals_joined", "custom_reward_increase",
+			"megabonus", "first_time_avatar_added", "first_video_uploaded", "first_spot_uploaded", "add_description_bonus",
+			"first_x_paid_views_gender_push", "first_email_marketing_added", "top_daily_spot_bonus", "top_weekly_spot_bonus",
+			"last_boring_spots", "first_boring_spots", "warning_boring_spots", "push_admin"}
+	case TypeGroupComment:
+		return []string{"comment_reply", "comment_vote_like", "comment_vote_dislike", "comment_profile_resource_create",
+			"comment_content_resource_create"}
+	case TypeGroupSystem:
+		return []string{"push_admin"}
+	case TypeGroupFollowing:
+		return []string{"follow"}
+	default:
+		return []string{}
+	}
 }
 
 func DeleteNotification(db *gorm.DB, userId int64, id uuid.UUID) error {
