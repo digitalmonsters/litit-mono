@@ -375,7 +375,7 @@
     "monthly_mega_bonus_progress_almost_finished_title": "Congratulation!",
     "monthly_mega_bonus_progress_almost_finished_body": "You are another day closer to your {{.monthly_bonus_amount}} LIT points Mega bonus. Keep watching to earn {{.daily_bonus_amount}} LIT points daily bonus. You have only {{.days_left}} days left",
     "monthly_mega_bonus_progress_almost_finished_headline": "",
-    "monthly_mega_bonus_one_day_missing_title": "Your last chance to get 10 000 LIT points",
+    "monthly_mega_bonus_one_day_missing_title": "Your last chance to get {{.monthly_bonus_amount}} LIT points",
     "monthly_mega_bonus_one_day_missing_body": "You missed your {{.monthly_bonus_daily_time}} minutes per day yesterday. You could proceed today and keep your progress",
     "monthly_mega_bonus_one_day_missing_headline": "",
     "monthly_mega_bonus_completed_title": "Congrats!",
