@@ -118,11 +118,15 @@ func (s service) ListTemplates(req ListTemplatesRequest, db *gorm.DB) (*ListTemp
 		}
 	}
 
-	var totalCount int64
+	var totalCount null.Int
+
 	if req.Offset == 0 {
-		if err := query.Count(&totalCount).Error; err != nil {
+		var count int64
+		if err := query.Count(&count).Error; err != nil {
 			return nil, errors.WithStack(err)
 		}
+
+		totalCount = null.IntFrom(count)
 	}
 
 	if req.Limit > 0 {
@@ -149,6 +153,6 @@ func (s service) ListTemplates(req ListTemplatesRequest, db *gorm.DB) (*ListTemp
 
 	return &ListTemplatesResponse{
 		Items:      respItems,
-		TotalCount: null.IntFrom(totalCount),
+		TotalCount: totalCount,
 	}, nil
 }

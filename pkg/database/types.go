@@ -189,6 +189,57 @@ func GetNotificationType(templateId string) string {
 	return ""
 }
 
+func GetNotificationTypeForAll(templateId string) string {
+	foundType := GetNotificationType(templateId)
+	if len(foundType) > 0 {
+		return foundType
+	}
+
+	switch templateId {
+	case "follow":
+		return "push.profile.following"
+	case "comment_reply":
+		return "push.comment.reply"
+	case "comment_vote_like":
+		return "push.comment.vote"
+	case "comment_vote_dislike":
+		return "push.comment.vote"
+	case "comment_profile_resource_create":
+		return "push.profile.comment"
+	case "comment_content_resource_create":
+		return "push.content.comment"
+	case "push_admin":
+		return "push.admin.bulk"
+	case "content_posted":
+		return "push.content.new-posted"
+	case "tip":
+		return "push.tip"
+	case "content_like":
+		return "push.content.like"
+	case "bonus_followers":
+		return "push.bonus.followers"
+	case "bonus_time":
+		return "push.bonus.daily"
+	case "content_upload":
+		return "push.content.successful-upload"
+	case "spot_upload":
+		return "push.spot.successful-upload"
+	case "content_reject":
+		return "push.content.rejected"
+	case "kyc_status_verified":
+		return "push.kyc.status"
+	case "kyc_status_rejected":
+		return "push.kyc.status"
+	case "creator_status_rejected":
+		return "push.content-creator.status"
+	case "creator_status_approved":
+		return "push.content-creator.status"
+	case "creator_status_pending":
+		return "push.content-creator.status"
+	}
+	return ""
+}
+
 func GetNotificationTemplates(notificationType string) []string {
 	switch notificationType {
 	case "push.bonus.daily_followers.first":

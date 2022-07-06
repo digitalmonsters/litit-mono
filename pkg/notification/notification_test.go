@@ -170,7 +170,7 @@ func TestService_GetNotifications(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := GetNotifications(gormDb, dbNotification2.UserId, "", TypeGroupAll, 1, userWrapperMock, followWrapper, context.TODO())
+	resp, err := GetNotifications(gormDb, dbNotification2.UserId, "", TypeGroupAll, true, 1, userWrapperMock, followWrapper, context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +181,7 @@ func TestService_GetNotifications(t *testing.T) {
 	a.Len(resp.Data, 1)
 	a.Equal(dbNotification2.Id, resp.Data[0].Id)
 
-	resp, err = GetNotifications(gormDb, dbNotification2.UserId, resp.Next, TypeGroupAll, 1, userWrapperMock, followWrapper, context.TODO())
+	resp, err = GetNotifications(gormDb, dbNotification2.UserId, resp.Next, TypeGroupAll, true, 1, userWrapperMock, followWrapper, context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +190,7 @@ func TestService_GetNotifications(t *testing.T) {
 	a.Len(resp.Data, 1)
 	a.Equal(dbNotification1.Id, resp.Data[0].Id)
 
-	resp, err = GetNotifications(gormDb, dbNotification2.UserId, resp.Next, TypeGroupAll, 10, userWrapperMock, followWrapper, context.TODO())
+	resp, err = GetNotifications(gormDb, dbNotification2.UserId, resp.Next, TypeGroupAll, false, 10, userWrapperMock, followWrapper, context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,47 +198,47 @@ func TestService_GetNotifications(t *testing.T) {
 	a.NotNil(resp)
 	a.Len(resp.Data, 0)
 
-	//dbNotification3 := database.Notification{
-	//	UserId:    1,
-	//	Type:      "push.admin.bulk",
-	//	Title:     "4",
-	//	Message:   "4",
-	//	CreatedAt: time.Now().UTC(),
-	//}
-	//if err = gormDb.Create(&dbNotification3).Error; err != nil {
-	//	t.Fatal(err)
-	//}
-	//
-	//dbNotification3Marshalled, err := json.Marshal(dbNotification3)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//
-	//notification3 := scylla.Notification{
-	//	UserId:             dbNotification3.UserId,
-	//	EventType:          "push_admin",
-	//	CreatedAt:          dbNotification2.CreatedAt,
-	//	NotificationsCount: 1,
-	//	Title:              dbNotification3.Title,
-	//	Body:               dbNotification3.Message,
-	//	Headline:           dbNotification3.Title,
-	//	Kind:               "1",
-	//	NotificationInfo:   string(dbNotification3Marshalled),
-	//}
-	//if err = session.Query("update notification set notifications_count = ?, title = ?, body = ?, headline = ?, kind = ?, rendering_variables = ?, "+
-	//	"custom_data = ?, notification_info = ? where user_id = ? and event_type = ? "+
-	//	"and created_at = ? and entity_id = ? and related_entity_id = ?", notification3.NotificationsCount, notification3.Title, notification3.Body, notification3.Headline,
-	//	notification3.Kind, notification3.RenderingVariables, notification3.CustomData, notification3.NotificationInfo,
-	//	notification3.UserId, notification3.EventType, notification3.CreatedAt, notification3.EntityId, notification3.RelatedEntityId).Exec(); err != nil {
-	//	t.Fatal(err)
-	//}
-	//
-	//resp, err = GetNotifications(gormDb, dbNotification3.UserId, "", TypeGroupSystem, 1, userWrapperMock, followWrapper, context.TODO())
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//
-	//a.NotNil(resp)
-	//a.Len(resp.Data, 1)
-	//a.Equal(dbNotification3.Id, resp.Data[0].Id)
+	dbNotification3 := database.Notification{
+		UserId:    1,
+		Type:      "push.admin.bulk",
+		Title:     "4",
+		Message:   "4",
+		CreatedAt: time.Now().UTC(),
+	}
+	if err = gormDb.Create(&dbNotification3).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	dbNotification3Marshalled, err := json.Marshal(dbNotification3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	notification3 := scylla.Notification{
+		UserId:             dbNotification3.UserId,
+		EventType:          "push_admin",
+		CreatedAt:          dbNotification2.CreatedAt,
+		NotificationsCount: 1,
+		Title:              dbNotification3.Title,
+		Body:               dbNotification3.Message,
+		Headline:           dbNotification3.Title,
+		Kind:               "1",
+		NotificationInfo:   string(dbNotification3Marshalled),
+	}
+	if err = session.Query("update notification set notifications_count = ?, title = ?, body = ?, headline = ?, kind = ?, rendering_variables = ?, "+
+		"custom_data = ?, notification_info = ? where user_id = ? and event_type = ? "+
+		"and created_at = ? and entity_id = ? and related_entity_id = ?", notification3.NotificationsCount, notification3.Title, notification3.Body, notification3.Headline,
+		notification3.Kind, notification3.RenderingVariables, notification3.CustomData, notification3.NotificationInfo,
+		notification3.UserId, notification3.EventType, notification3.CreatedAt, notification3.EntityId, notification3.RelatedEntityId).Exec(); err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err = GetNotifications(gormDb, dbNotification3.UserId, "", TypeGroupSystem, true, 1, userWrapperMock, followWrapper, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.NotNil(resp)
+	a.Len(resp.Data, 1)
+	a.Equal(dbNotification3.Id, resp.Data[0].Id)
 }
