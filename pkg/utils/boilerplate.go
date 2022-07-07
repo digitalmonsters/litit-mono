@@ -67,9 +67,9 @@ func GetUser(userId int64, ctx context.Context) (*scylla.User, error) {
 
 	var user scylla.User
 
-	userIter := session.Query("select user_id, username, firstname, lastname, name_privacy_status, language "+
+	userIter := session.Query("select user_id, username, email, firstname, lastname, name_privacy_status, language "+
 		"from user where cluster_key = ? and user_id = ?", scylla.GetUserClusterKey(userId), userId).WithContext(ctx).Iter()
-	userIter.Scan(&user.UserId, &user.Username, &user.Firstname, &user.Lastname, &user.NamePrivacyStatus, &user.Language)
+	userIter.Scan(&user.UserId, &user.Username, &user.Email, &user.Firstname, &user.Lastname, &user.NamePrivacyStatus, &user.Language)
 
 	if err := userIter.Close(); err != nil {
 		return nil, errors.WithStack(err)
