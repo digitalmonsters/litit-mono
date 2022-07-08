@@ -12,7 +12,7 @@ import (
 )
 
 func process(event newSendingEvent, ctx context.Context) (*kafka.Message, error) {
-	if event.CrudOperation != eventsourcing.ChangeEventTypeUpdated && event.CrudOperationReason != "general_info_updated" {
+	if !(event.CrudOperation == eventsourcing.ChangeEventTypeUpdated || event.CrudOperation == eventsourcing.ChangeEventTypeCreated) {
 		return &event.Messages, nil
 	}
 

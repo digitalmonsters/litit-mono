@@ -185,6 +185,14 @@ func GetNotificationType(templateId string) string {
 		return "push.user.boring_spots"
 	case "warning_boring_spots":
 		return "push.user.boring_spots"
+	case "monthly_mega_bonus_completed":
+		return "push.user.monthly_time_mega_bonus"
+	case "monthly_mega_bonus_progress":
+		return "push.user.monthly_time_mega_bonus"
+	case "monthly_mega_bonus_progress_almost_finished":
+		return "push.user.monthly_time_mega_bonus"
+	case "monthly_mega_bonus_one_day_missing":
+		return "push.user.monthly_time_mega_bonus"
 	}
 	return ""
 }
@@ -337,6 +345,10 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"top_weekly_spot_bonus"}
 	case "push.user.boring_spots":
 		return []string{"warning_boring_spots", "last_boring_spots", "first_boring_spots"}
+	case "push.user.monthly_time_mega_bonus":
+		return []string{"monthly_mega_bonus_completed", "monthly_mega_bonus_progress",
+			"monthly_mega_bonus_progress_almost_finished", "monthly_mega_bonus_one_day_missing",
+		}
 	}
 	return []string{}
 }

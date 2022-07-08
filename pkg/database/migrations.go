@@ -508,5 +508,23 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "monthly_mega_bonus_templates_060720221400",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('monthly_mega_bonus_progress',"+
+						" '2022-07-06 12:00:00.000000', '2022-07-06 12:00:00.000000', 'popup') on conflict do nothing;",
+
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('monthly_mega_bonus_progress_almost_finished',"+
+						" '2022-07-06 12:00:00.000000', '2022-07-06 12:00:00.000000', 'popup') on conflict do nothing;",
+
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('monthly_mega_bonus_one_day_missing',"+
+						" '2022-07-06 12:00:00.000000', '2022-07-06 12:00:00.000000', 'popup') on conflict do nothing;",
+
+					"INSERT INTO public.render_templates (id, created_at, updated_at, kind) VALUES ('monthly_mega_bonus_completed',"+
+						" '2022-07-06 12:00:00.000000', '2022-07-06 12:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
