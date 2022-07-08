@@ -195,6 +195,14 @@ func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId 
 
 	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount-1, 10)
 
+	if firstname, ok := renderingVariables["firstname"]; ok && len(strings.TrimSpace(firstname)) == 0 {
+		if notificationCount <= 1 {
+			return nil
+		} else {
+			renderingVariables["firstname"] = "Someone"
+		}
+	}
+
 	var title string
 	var body string
 	var headline string
@@ -553,6 +561,16 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount-1, 10)
 
 	if !isCustomPush {
+		if template.IsGrouped {
+			if firstname, ok := notification.RenderingVariables["firstname"]; ok && len(strings.TrimSpace(firstname)) == 0 {
+				if notificationsCount <= 1 {
+					return false, nil
+				} else {
+					notification.RenderingVariables["firstname"] = "Someone"
+				}
+			}
+		}
+
 		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, notification.RenderingVariables, language)
 		if err == renderer.TemplateRenderingError {
 			return false, errors.WithStack(err) // we should continue, no need to retry
