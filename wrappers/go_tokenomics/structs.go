@@ -101,6 +101,7 @@ const (
 	PointsEarnedTypeTopSpotWeekly            = PointsEarnedType(42)
 	PointsEarnedTypeSocialSubsTargetAchieved = PointsEarnedType(43)
 	PointsEarnedTypeMonthlyTimeMegaBonus     = PointsEarnedType(44)
+	PointsEarnedTypeUploadFirstBioVideo      = PointsEarnedType(45)
 )
 
 type WithdrawalStatus int16
