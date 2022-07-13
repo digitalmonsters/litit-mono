@@ -1,15 +1,14 @@
 package content_uploader
 
 import (
-	"github.com/digitalmonsters/go-common/rpc"
 	"go.elastic.co/apm"
 )
 
 type ContentUploaderWrapperMock struct {
-	UploadContentInternalFn func(url string, contentType string, data string, apmTransaction *apm.Transaction, forceLog bool) chan *rpc.RpcError
+	UploadContentInternalFn func(url string, contentType string, data []byte, apmTransaction *apm.Transaction, forceLog bool) chan error
 }
 
-func (m ContentUploaderWrapperMock) UploadContentInternal(url string, contentType string, data string, apmTransaction *apm.Transaction, forceLog bool) chan *rpc.RpcError {
+func (m ContentUploaderWrapperMock) UploadContentInternal(url string, contentType string, data []byte, apmTransaction *apm.Transaction, forceLog bool) chan error {
 	return m.UploadContentInternalFn(url, contentType, data, apmTransaction, forceLog)
 }
 
