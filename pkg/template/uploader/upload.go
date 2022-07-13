@@ -1,20 +1,33 @@
 package uploader
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"github.com/digitalmonsters/go-common/s3"
+	"github.com/digitalmonsters/go-common/wrappers/content_uploader"
 	"github.com/digitalmonsters/notification-handler/configs"
+	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
+	"go.elastic.co/apm"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var extensionsForImage = []string{"jpg", "jpeg", "png", "bmp"}
 
-func FileUpload(ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
+func GetSignedUrl(path string, s3Uploader s3.IUploader) (string, error) {
+	if url, err := s3Uploader.PutObjectSignedUrl(path, 10*time.Minute, ""); err != nil {
+		return "", err
+	} else {
+		return url, nil
+	}
+}
+
+func FileUpload(ctx *fasthttp.RequestCtx, uploaderWrapper content_uploader.IContentUploaderWrapper, apmTx *apm.Transaction, appCtx context.Context) (*uploadResponse, error) {
 	m, err := ctx.Request.MultipartForm()
 	if err != nil {
 		return nil, err
@@ -24,7 +37,6 @@ func FileUpload(ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
 	if len(files) == 0 {
 		return nil, errors.New("no file found")
 	}
-
 	if len(files) > 1 {
 		return nil, errors.New("multiple file upload not supported")
 	}
@@ -68,8 +80,16 @@ func FileUpload(ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
 	cfg := configs.GetConfig()
 	filePath := filepath.Join(cfg.S3.CdnDirectory, filename)
 	uploader := s3.NewUploader(&cfg.S3)
-	if err = uploader.UploadObject(filePath, body, "application/octet-stream"); err != nil {
+
+	signedUrl, err := GetSignedUrl(filePath, uploader)
+	if err != nil {
 		return nil, err
+	}
+
+	respChan := uploaderWrapper.UploadContentInternal(utils.RetrieveContentUploaderPath(appCtx, signedUrl), "application/octet-stream", string(body), apmTx, true)
+
+	if err := <-respChan; err != nil {
+		return nil, err.ToError()
 	}
 
 	return &uploadResponse{

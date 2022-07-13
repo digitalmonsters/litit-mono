@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/content_uploader"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -107,6 +108,7 @@ func main() {
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
 	commentWrapper := comment.NewCommentWrapper(cfg.Wrappers.Comment)
+	contentUploaderWrapper := content_uploader.NewContentUploaderWrapper(cfg.Wrappers.ContentUploader)
 
 	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
 	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender).ListenAsync()
@@ -152,7 +154,7 @@ func main() {
 	templateService := templatePkg.NewService()
 
 	rootApplication.
-		AddApplication(notification.Application(httpRouter, apiDef, settingsService, templateService)).
+		AddApplication(notification.Application(httpRouter, apiDef, settingsService, templateService, contentUploaderWrapper, ctx)).
 		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
