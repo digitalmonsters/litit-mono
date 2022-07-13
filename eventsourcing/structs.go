@@ -46,19 +46,20 @@ func (l UserHashtagEvent) GetPublishKey() string {
 }
 
 type ViewEvent struct {
-	UserId          int64       `json:"user_id"`
-	UserCountryCode string      `json:"user_country_code"`
-	ContentId       int64       `json:"content_id"`
-	ContentType     ContentType `json:"content_type"`
-	Duration        int         `json:"duration"`
-	UserIp          string      `json:"user_ip"`
-	SharerId        null.Int    `json:"sharer_id"`
-	ShareCode       null.String `json:"share_code"`
-	AdsId           null.Int    `json:"ads_id"`
-	IsSharedView    bool        `json:"is_shared_view"`
-	CreatedAt       int64       `json:"created_at"`
-	IsGuest         bool        `json:"is_guest"`
-	IsBot           bool        `json:"is_bot"`
+	UserId              int64       `json:"user_id"`
+	UserCountryCode     string      `json:"user_country_code"`
+	ContentId           int64       `json:"content_id"`
+	ContentType         ContentType `json:"content_type"`
+	Duration            int         `json:"duration"`
+	UserIp              string      `json:"user_ip"`
+	SharerId            null.Int    `json:"sharer_id"`
+	ShareCode           null.String `json:"share_code"`
+	AdsId               null.Int    `json:"ads_id"`
+	IsSharedView        bool        `json:"is_shared_view"`
+	CreatedAt           int64       `json:"created_at"`
+	IsGuest             bool        `json:"is_guest"`
+	IsBot               bool        `json:"is_bot"`
+	UseTokenomicVersion int8        `json:"use_tokenomic_version"`
 }
 
 func (l ViewEvent) GetPublishKey() string {
