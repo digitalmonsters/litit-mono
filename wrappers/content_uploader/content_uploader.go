@@ -37,18 +37,18 @@ func NewContentUploaderWrapper(config boilerplate.WrapperConfig) IContentUploade
 
 	return &ContentUploaderWrapper{
 		defaultTimeout: timeout,
-		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
+		apiUrl:         common.StripSlashFromUrl(config.ApiUrl),
 		serviceName:    "content_uploader",
 		baseWrapper:    wrappers.GetBaseWrapper(),
 	}
 }
 
-func (w ContentUploaderWrapper) UploadContentInternal(url string, contentType string, data string, apmTransaction *apm.Transaction, forceLog bool) chan *rpc.RpcError {
+func (w ContentUploaderWrapper) UploadContentInternal(path string, contentType string, data string, apmTransaction *apm.Transaction, forceLog bool) chan *rpc.RpcError {
 	resChan := make(chan *rpc.RpcError, 2)
 
 	go func() {
 		defer close(resChan)
-		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(url,
+		rpcInternalResponse := <-w.baseWrapper.SendRequestWithRpcResponseFromAnyService(fmt.Sprintf("%v/%v", w.apiUrl, path),
 			"PUT",
 			contentType,
 			"upload content internal",
