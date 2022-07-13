@@ -86,10 +86,10 @@ func FileUpload(ctx *fasthttp.RequestCtx, uploaderWrapper content_uploader.ICont
 		return nil, err
 	}
 
-	respChan := uploaderWrapper.UploadContentInternal(utils.RetrieveContentUploaderPath(appCtx, signedUrl), "application/octet-stream", string(body), apmTx, true)
+	respChan := uploaderWrapper.UploadContentInternal(utils.RetrieveContentUploaderPath(appCtx, signedUrl), "application/octet-stream", body, apmTx, true)
 
 	if err := <-respChan; err != nil {
-		return nil, err.ToError()
+		return nil, err
 	}
 
 	return &uploadResponse{
