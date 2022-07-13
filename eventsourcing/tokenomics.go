@@ -69,3 +69,14 @@ type ContentPaidTimeIncreased struct {
 func (t ContentPaidTimeIncreased) GetPublishKey() string {
 	return fmt.Sprintf("%v", t.ContentId)
 }
+
+type UserPaidSession struct {
+	UserId          int64  `json:"user_id"`
+	DeviceId        string `json:"device_id"`
+	Id              string `json:"id"`
+	ViewDurationSec int    `json:"view_duration_sec"`
+}
+
+func (t UserPaidSession) GetPublishKey() string {
+	return fmt.Sprintf("%v", t.UserId)
+}
