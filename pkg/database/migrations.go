@@ -526,5 +526,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "first_bio_video_uploaded_060720221420",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('first_bio_video_uploaded', '2022-03-15 15:08:08.000000', '2022-03-15 15:08:10.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }

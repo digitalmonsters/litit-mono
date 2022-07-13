@@ -228,7 +228,7 @@ func getNotificationsTemplatesByTypeGroup(typeGroup TypeGroup) []string {
 			"first_referral_joined", "first_video_shared", "first_weekly_followers_bonus", "first_weekly_time_bonus",
 			"first_x_paid_views_as_content_owner", "guest_max_earned_points_for_views", "increase_reward_stage_1",
 			"increase_reward_stage_2", "registration_verify_bonus", "other_referrals_joined", "custom_reward_increase",
-			"megabonus", "first_time_avatar_added", "first_video_uploaded", "first_spot_uploaded", "add_description_bonus",
+			"megabonus", "first_time_avatar_added", "first_video_uploaded", "first_spot_uploaded", "first_bio_video_uploaded", "add_description_bonus",
 			"first_x_paid_views_gender_push", "first_email_marketing_added", "top_daily_spot_bonus", "top_weekly_spot_bonus",
 			"last_boring_spots", "first_boring_spots", "warning_boring_spots",
 			"monthly_mega_bonus_completed", "monthly_mega_bonus_progress",

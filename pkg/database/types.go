@@ -129,6 +129,8 @@ func GetNotificationType(templateId string) string {
 		return "push.description.first"
 	case "first_video_uploaded":
 		return "push.upload.first"
+	case "first_bio_video_uploaded":
+		return "push.upload.bio.first"
 	case "first_spot_uploaded":
 		return "push.upload.spot.first"
 	case "user_need_to_first_upload":
@@ -272,6 +274,8 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"add_description_bonus"}
 	case "push.upload.first":
 		return []string{"first_video_uploaded"}
+	case "push.upload.bio.first":
+		return []string{"first_bio_video_uploaded"}
 	case "push.upload.spot.first":
 		return []string{"first_spot_uploaded"}
 	case "push.user.need.upload":
