@@ -43,6 +43,7 @@ type UserRecord struct {
 	NamePrivacyStatus            NamePrivacyStatus    `json:"name_privacy_status"`
 	Tags                         Tag                  `json:"tags"`
 	Language                     translation.Language `json:"language"`
+	Timezone                     string               `json:"timezone"`
 	CountryCode                  null.String          `json:"country_code"`
 	Birthdate                    null.Time            `json:"birthdate"`
 }
@@ -104,6 +105,7 @@ type UserDetailRecord struct {
 	AdDisabled          bool                 `json:"ad_disabled"`
 	Influencer          bool                 `json:"influencer"`
 	Language            translation.Language `json:"language"`
+	Timezone            string               `json:"timezone"`
 	SpotsUploadBanned   bool                 `json:"spots_upload_banned"`
 	BioVideoId          null.Int             `json:"bio_video_id"`
 }
