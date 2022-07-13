@@ -52,6 +52,7 @@ type KafkaTopicConfig struct {
 	Name              string `json:"Name"`
 	NumPartitions     int    `json:"NumPartitions"`
 	ReplicationFactor int    `json:"ReplicationFactor"`
+	RetentionMs       int    `json:"RetentionMs"`
 }
 
 type Wrappers struct {

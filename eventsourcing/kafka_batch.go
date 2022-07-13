@@ -496,14 +496,24 @@ func (p *KafkaEventPublisherV2[T]) ensureTopicExists(topicConfig boilerplate.Kaf
 		p.logger.Info().Msgf("topic [%v] does not exist on kafka. Creating a new one with partitions count [%v] and replication factor [%v]",
 			topicConfig.Name, topicConfig.NumPartitions, topicConfig.ReplicationFactor)
 
+		realTopicConfig := kafka.TopicConfig{
+			Topic:             topicConfig.Name,
+			NumPartitions:     topicConfig.NumPartitions,
+			ReplicationFactor: topicConfig.ReplicationFactor,
+		}
+
+		if topicConfig.RetentionMs > 0 {
+			realTopicConfig.ConfigEntries = append(realTopicConfig.ConfigEntries,
+				kafka.ConfigEntry{
+					ConfigName:  "retention.ms",
+					ConfigValue: fmt.Sprint(topicConfig.RetentionMs),
+				})
+		}
+
 		res, err := client.CreateTopics(context.TODO(), &kafka.CreateTopicsRequest{
 			Addr: writer.Addr,
 			Topics: []kafka.TopicConfig{
-				{
-					Topic:             topicConfig.Name,
-					NumPartitions:     topicConfig.NumPartitions,
-					ReplicationFactor: topicConfig.ReplicationFactor,
-				},
+				realTopicConfig,
 			},
 			ValidateOnly: false,
 		})
