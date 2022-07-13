@@ -17,7 +17,7 @@ func RetrieveContentUploaderPath(ctx context.Context, inputUrl string) string {
 		return inputUrl
 	}
 
-	repl := fmt.Sprintf("%v://%v", parsedUri.Scheme, parsedUri.Host)
+	repl := fmt.Sprintf("%v://%v/", parsedUri.Scheme, parsedUri.Host)
 
-	return strings.ReplaceAll(inputUrl, repl, "internal")
+	return strings.ReplaceAll(inputUrl, repl, "")
 }
