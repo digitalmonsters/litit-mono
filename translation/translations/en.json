@@ -380,6 +380,9 @@
     "monthly_mega_bonus_one_day_missing_headline": "",
     "monthly_mega_bonus_completed_title": "Congrats!",
     "monthly_mega_bonus_completed_body": "You earned {{.monthly_bonus_amount}} LIT points",
-    "monthly_mega_bonus_completed_headline": ""
+    "monthly_mega_bonus_completed_headline": "",
+    "monthly_mega_bonus_do_not_miss_title": "Don’t miss your {{.monthly_bonus_amount}} LIT points",
+    "monthly_mega_bonus_do_not_miss_body": "Watch viral videos on lit.it for {{.monthly_bonus_daily_time}} minutes per day for 30 days and get Megabonus",
+    "monthly_mega_bonus_do_not_miss_headline": ""
   }
 }
