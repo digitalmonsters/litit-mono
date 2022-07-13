@@ -61,3 +61,11 @@ type TokenomicsNotificationEventData struct {
 func (t TokenomicsNotificationEventData) GetPublishKey() string {
 	return fmt.Sprintf("%v", t.Payload.UserId)
 }
+
+type ContentPaidTimeIncreased struct {
+	ContentId int64 `json:"content_id"`
+}
+
+func (t ContentPaidTimeIncreased) GetPublishKey() string {
+	return fmt.Sprintf("%v", t.ContentId)
+}
