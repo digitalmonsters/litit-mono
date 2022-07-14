@@ -118,7 +118,7 @@
     "first_bio_video_uploaded_body_multiple": "",
     "first_bio_video_uploaded_headline_multiple": "",
     "first_bio_video_uploaded_title": "Congrats!",
-    "first_bio_video_uploaded_body": "You received {{.description_bonus}} LIT points to your wallet for adding a bio resume",
+    "first_bio_video_uploaded_body": "You received {{.first_upload_bonus}} LIT points to your wallet for adding a bio resume",
     "first_bio_video_uploaded_headline": "",
     "add_description_bonus_title_multiple": "",
     "add_description_bonus_body_multiple": "",
