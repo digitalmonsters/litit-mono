@@ -232,7 +232,7 @@ func getNotificationsTemplatesByTypeGroup(typeGroup TypeGroup) []string {
 			"first_x_paid_views_gender_push", "first_email_marketing_added", "top_daily_spot_bonus", "top_weekly_spot_bonus",
 			"last_boring_spots", "first_boring_spots", "warning_boring_spots",
 			"monthly_mega_bonus_completed", "monthly_mega_bonus_progress",
-			"monthly_mega_bonus_progress_almost_finished", "monthly_mega_bonus_one_day_missing",
+			"monthly_mega_bonus_progress_almost_finished", "monthly_mega_bonus_one_day_missing", "monthly_mega_bonus_do_not_miss",
 			"push_admin"}
 	case TypeGroupComment:
 		return []string{"comment_reply", "comment_vote_like", "comment_vote_dislike", "comment_profile_resource_create",

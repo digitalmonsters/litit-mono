@@ -534,5 +534,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "monthly_mega_bonus_do_not_miss_template_130720221900",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('monthly_mega_bonus_do_not_miss', '2022-07-13 19:00:00.000000', '2022-07-13 19:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
