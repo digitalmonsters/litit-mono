@@ -30,13 +30,6 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	var err error
 
-	renderData, language, err := utils.GetUserRenderingVariablesWithLanguage(event.AuthorId, ctx)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	renderData["comment"] = event.Comment.Comment
-
 	notificationComment := &database.NotificationComment{
 		Id:        event.Id,
 		Comment:   event.Comment.Comment,
@@ -45,6 +38,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		ProfileId: event.ProfileId,
 	}
 	var notificationContent *database.NotificationContent
+
+	targetEntity := event.ProfileId.ValueOrZero()
 
 	var contentAuthorId null.Int
 	if event.ContentId.Valid {
@@ -60,6 +55,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			notificationContent.Height = simpleContent.Height
 			notificationContent.VideoId = simpleContent.VideoId
 			contentAuthorId = null.IntFrom(simpleContent.AuthorId)
+			targetEntity = contentAuthorId.ValueOrZero()
 		}
 	}
 
@@ -73,6 +69,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	if commentInfo, ok := commentResp.Items[event.Id]; ok {
 		parentAuthorId = commentInfo.ParentAuthorId
 	}
+
+	renderData, language, err := utils.GetUserRenderingVariablesWithLanguage(targetEntity, ctx)
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	renderData["comment"] = event.Comment.Comment
 
 	reason, _ := strconv.Atoi(event.CrudOperationReason)
 	commentChangeReason := eventsourcing.CommentChangeReason(reason)
