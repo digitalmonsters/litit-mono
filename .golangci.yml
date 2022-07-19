@@ -1,0 +1,4 @@
+run:
+  skip-dirs:
+    - mocks
+  skip-dirs-use-default: true
