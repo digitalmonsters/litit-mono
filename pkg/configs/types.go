@@ -29,9 +29,9 @@ type GetConfigResponse struct {
 
 type ConfigModelWithRelatedUserInfo struct {
 	application.ConfigModel
-	RelatedUserId null.Int
-	Username      string
-	Email         string
+	RelatedUserId null.Int `json:"related_user_id"`
+	Username      string   `json:"username"`
+	Email         string   `json:"email"`
 }
 
 type dbConfigWithRelatedUserId struct {
