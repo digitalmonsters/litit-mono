@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"github.com/digitalmonsters/configurator/pkg/database"
 	"github.com/digitalmonsters/go-common/application"
 	"gopkg.in/guregu/null.v4"
 	"time"
@@ -22,8 +23,20 @@ type GetConfigRequest struct {
 }
 
 type GetConfigResponse struct {
-	Items      []application.ConfigModel `json:"items"`
-	TotalCount int64                     `json:"total_count"`
+	Items      []*ConfigModelWithRelatedUserInfo `json:"items"`
+	TotalCount int64                             `json:"total_count"`
+}
+
+type ConfigModelWithRelatedUserInfo struct {
+	application.ConfigModel
+	RelatedUserId null.Int `json:"related_user_id"`
+	Username      string   `json:"username"`
+	Email         string   `json:"email"`
+}
+
+type dbConfigWithRelatedUserId struct {
+	database.Config
+	RelatedUserId null.Int
 }
 
 type UpsertConfigRequest struct {

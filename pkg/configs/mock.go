@@ -12,7 +12,7 @@ import (
 type ConfigServiceMock struct {
 	GetAllConfigsFn      func(db *gorm.DB) ([]database.Config, error)
 	GetConfigsByIdsFn    func(db *gorm.DB, ids []string) ([]database.Config, error)
-	AdminGetConfigsFn    func(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error)
+	AdminGetConfigsFn    func(db *gorm.DB, req GetConfigRequest, executionData router.MethodExecutionData) (*GetConfigResponse, error)
 	AdminUpsertConfigFn  func(db *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error)
 	AdminGetConfigLogsFn func(db *gorm.DB, req GetConfigLogsRequest, executionData router.MethodExecutionData) (*GetConfigLogsResponse, error)
 	MigrateConfigsFn     func(db *gorm.DB, newConfigs map[string]application.MigrateConfigModel, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) ([]application.ConfigModel, []callback.Callback, error)
@@ -24,8 +24,8 @@ func (c *ConfigServiceMock) GetAllConfigs(db *gorm.DB) ([]database.Config, error
 func (c *ConfigServiceMock) GetConfigsByIds(db *gorm.DB, ids []string) ([]database.Config, error) {
 	return c.GetConfigsByIdsFn(db, ids)
 }
-func (c *ConfigServiceMock) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error) {
-	return c.AdminGetConfigsFn(db, req)
+func (c *ConfigServiceMock) AdminGetConfigs(db *gorm.DB, req GetConfigRequest, executionData router.MethodExecutionData) (*GetConfigResponse, error) {
+	return c.AdminGetConfigsFn(db, req, executionData)
 }
 func (c *ConfigServiceMock) AdminUpsertConfig(db *gorm.DB, req UpsertConfigRequest, userId int64,
 	publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error) {
