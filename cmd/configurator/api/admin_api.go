@@ -44,7 +44,7 @@ func (a *apiApp) getConfigs() router.ICommand {
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
-		resp, err := a.service.AdminGetConfigs(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), req)
+		resp, err := a.service.AdminGetConfigs(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), req, executionData)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

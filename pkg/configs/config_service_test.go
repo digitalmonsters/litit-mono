@@ -209,7 +209,7 @@ func TestConfigService_AdminGetConfigs(t *testing.T) {
 	resp, err := service.AdminGetConfigs(gormDb, GetConfigRequest{
 		Limit:  10,
 		Offset: 0,
-	})
+	}, router.MethodExecutionData{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,7 +220,7 @@ func TestConfigService_AdminGetConfigs(t *testing.T) {
 		for _, c := range configs {
 			if r.Key == c.Key {
 				foundCounter++
-				checkConfigModel(t, c, r)
+				checkConfigModel(t, c, r.ConfigModel)
 			}
 		}
 	}
@@ -234,13 +234,13 @@ func TestConfigService_AdminGetConfigs(t *testing.T) {
 		UpdatedTo:   null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
 		Limit:       10,
 		Offset:      0,
-	})
+	}, router.MethodExecutionData{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(resp.Items))
 	assert.Equal(t, 1, int(resp.TotalCount))
-	checkConfigModel(t, configs[0], resp.Items[0])
+	checkConfigModel(t, configs[0], resp.Items[0].ConfigModel)
 }
 func TestConfigService_AdminGetConfigLogs(t *testing.T) {
 	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, []string{"public.config"}, t); err != nil {

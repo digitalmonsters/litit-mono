@@ -7,9 +7,11 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
+	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.7.1
 	github.com/thoas/go-funk v0.9.2
 	github.com/valyala/fasthttp v1.35.0
+	go.elastic.co/apm v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.23.4
 )
@@ -92,7 +94,6 @@ require (
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.7.0 // indirect
 	github.com/segmentio/kafka-go v0.4.31 // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -100,7 +101,6 @@ require (
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	go.elastic.co/apm v1.15.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect

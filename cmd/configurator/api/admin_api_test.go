@@ -20,28 +20,38 @@ func TestGetConfigs(t *testing.T) {
 	a := apiApp{
 		apiDef: map[string]swagger.ApiDescription{},
 		service: &configs.ConfigServiceMock{
-			AdminGetConfigsFn: func(db *gorm.DB, req configs.GetConfigRequest) (*configs.GetConfigResponse, error) {
+			AdminGetConfigsFn: func(db *gorm.DB, req configs.GetConfigRequest, executionData router.MethodExecutionData) (*configs.GetConfigResponse, error) {
 				return &configs.GetConfigResponse{
-					Items: []application.ConfigModel{
-						application.ConfigModel{
-							Key:         "test_key1",
-							Value:       "45",
-							Type:        application.ConfigTypeInteger,
-							Description: "test key 1",
-							AdminOnly:   false,
-							CreatedAt:   time.Now().Add(-1 * time.Minute),
-							UpdatedAt:   time.Now().Add(-1 * time.Minute),
-							Category:    application.ConfigCategoryAd,
+					Items: []*configs.ConfigModelWithRelatedUserInfo{
+						{
+							ConfigModel: application.ConfigModel{
+								Key:         "test_key1",
+								Value:       "45",
+								Type:        application.ConfigTypeInteger,
+								Description: "test key 1",
+								AdminOnly:   false,
+								CreatedAt:   time.Now().Add(-1 * time.Minute),
+								UpdatedAt:   time.Now().Add(-1 * time.Minute),
+								Category:    application.ConfigCategoryAd,
+							},
+							RelatedUserId: null.Int{},
+							Username:      "",
+							Email:         "",
 						},
-						application.ConfigModel{
-							Key:         "test_key2",
-							Value:       "some text",
-							Type:        application.ConfigTypeString,
-							Description: "test key 2",
-							AdminOnly:   false,
-							CreatedAt:   time.Now().Add(-1 * time.Minute),
-							UpdatedAt:   time.Now().Add(-1 * time.Minute),
-							Category:    application.ConfigCategoryContent,
+						{
+							ConfigModel: application.ConfigModel{
+								Key:         "test_key2",
+								Value:       "some text",
+								Type:        application.ConfigTypeString,
+								Description: "test key 2",
+								AdminOnly:   false,
+								CreatedAt:   time.Now().Add(-1 * time.Minute),
+								UpdatedAt:   time.Now().Add(-1 * time.Minute),
+								Category:    application.ConfigCategoryContent,
+							},
+							RelatedUserId: null.Int{},
+							Username:      "",
+							Email:         "",
 						},
 					},
 					TotalCount: 2,

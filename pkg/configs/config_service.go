@@ -21,7 +21,7 @@ import (
 type IConfigService interface {
 	GetAllConfigs(db *gorm.DB) ([]database.Config, error)
 	GetConfigsByIds(db *gorm.DB, ids []string) ([]database.Config, error)
-	AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error)
+	AdminGetConfigs(db *gorm.DB, req GetConfigRequest, executionData router.MethodExecutionData) (*GetConfigResponse, error)
 	AdminUpsertConfig(db *gorm.DB, req UpsertConfigRequest, userId int64, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) (*application.ConfigModel, []callback.Callback, error)
 	AdminGetConfigLogs(db *gorm.DB, req GetConfigLogsRequest, executionData router.MethodExecutionData) (*GetConfigLogsResponse, error)
 	MigrateConfigs(db *gorm.DB, newConfigs map[string]application.MigrateConfigModel, publisher eventsourcing.Publisher[eventsourcing.ConfigEvent]) ([]application.ConfigModel, []callback.Callback, error)
@@ -58,9 +58,9 @@ func (c *ConfigService) GetConfigsByIds(db *gorm.DB, ids []string) ([]database.C
 	return cfg, nil
 }
 
-func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*GetConfigResponse, error) {
-	var cfg []database.Config
-	var q = db.Model(cfg)
+func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest, executionData router.MethodExecutionData) (*GetConfigResponse, error) {
+	var cfg []dbConfigWithRelatedUserId
+	var q = db.Model(database.Config{}).Select("*, (select related_user_id from config_logs where key = configs.key order by created_at desc limit 1) related_user_id")
 
 	if len(req.CategoryLike) > 0 {
 		q = q.Where("category ILIKE '%' || ? || '%'", req.CategoryLike)
@@ -102,19 +102,44 @@ func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest) (*Get
 		return nil, err
 	}
 
-	var respItems []application.ConfigModel
+	var respItems []*ConfigModelWithRelatedUserInfo
+	userIds := make([]int64, 0)
 	for _, c := range cfg {
-		respItems = append(respItems, application.ConfigModel{
-			Key:            c.Key,
-			Value:          c.Value,
-			Type:           c.Type,
-			Description:    c.Description,
-			AdminOnly:      c.AdminOnly,
-			CreatedAt:      c.CreatedAt,
-			UpdatedAt:      c.UpdatedAt,
-			Category:       c.Category,
-			ReleaseVersion: c.ReleaseVersion,
+		if c.RelatedUserId.Valid {
+			userIds = append(userIds, c.RelatedUserId.Int64)
+		}
+		respItems = append(respItems, &ConfigModelWithRelatedUserInfo{
+			ConfigModel: application.ConfigModel{
+				Key:            c.Key,
+				Value:          c.Value,
+				Type:           c.Type,
+				Description:    c.Description,
+				AdminOnly:      c.AdminOnly,
+				CreatedAt:      c.CreatedAt,
+				UpdatedAt:      c.UpdatedAt,
+				Category:       c.Category,
+				ReleaseVersion: c.ReleaseVersion,
+			},
+			RelatedUserId: c.RelatedUserId,
 		})
+	}
+
+	var usersMap = make(map[int64]auth_go.AdminGeneralInfo)
+	if len(userIds) > 0 {
+		usersResp := <-c.authWrapper.GetAdminsInfoById(userIds, executionData.ApmTransaction, false)
+		if usersResp.Error != nil {
+			apm_helper.LogError(usersResp.Error.ToError(), executionData.Context)
+		}
+		usersMap = usersResp.Items
+	}
+
+	for i := range respItems {
+		if userId := respItems[i].RelatedUserId; userId.Valid {
+			if val, ok := usersMap[userId.Int64]; ok {
+				respItems[i].Username = val.Name
+				respItems[i].Email = val.Email
+			}
+		}
 	}
 	return &GetConfigResponse{
 		Items:      respItems,
