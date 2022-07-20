@@ -76,6 +76,7 @@ type UserPaidSession struct {
 	DeviceId        string `json:"device_id"`
 	Id              string `json:"id"`
 	ViewDurationSec int    `json:"view_duration_sec"`
+	IsBotView       bool   `json:"is_bot_view"`
 }
 
 func (t UserPaidSession) GetPublishKey() string {
