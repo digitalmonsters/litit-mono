@@ -2,11 +2,13 @@ package creator
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/api"
+	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/creators"
 	"github.com/digitalmonsters/music/pkg/creators/categories"
 	"github.com/digitalmonsters/music/pkg/creators/moods"
@@ -69,6 +71,10 @@ func InitPublicApi(publicRouter *router.HttpRouter, apiDef map[string]swagger.Ap
 
 		if len(req.MusicAuthor) == 0 {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("music_author is required"), error_codes.GenericValidationError)
+		}
+
+		if len(req.Hashtags) > configs.GetAppConfig().MUSIC_MAX_HASHTAGS_COUNT {
+			return nil, error_codes.NewErrorWithCodeRef(fmt.Errorf("max hashtags limit is %v", configs.GetAppConfig().MUSIC_MAX_HASHTAGS_COUNT), error_codes.GenericValidationError)
 		}
 
 		resp, err := creatorsService.UploadNewSong(req, database.GetDbWithContext(database.DbTypeMaster, executionData.Context), executionData)
