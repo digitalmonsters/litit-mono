@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/global"
+	"github.com/digitalmonsters/music/utils"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"gopkg.in/guregu/null.v4"
@@ -103,7 +104,14 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 
 	if len(req.SearchQuery) > 0 {
 		search := fmt.Sprintf("%%%v%%", req.SearchQuery)
-		query = query.Where("firstname ilike ? or lastname ilike ? or username ilike ?", search, search, search)
+		query = query.Where(db.
+			Where(utils.AddSearchQuery(db.Table("creators"), []string{search}, []string{"username"})).
+			Or(db.
+				Where(
+					utils.AddSearchQuery(db.Table("creators"), []string{search}, []string{"firstname", "lastname"}),
+				),
+			),
+		)
 	}
 
 	if len(req.Email) > 0 {
