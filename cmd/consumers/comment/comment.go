@@ -150,9 +150,9 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		notificationComment.Type = database.NotificationCommentTypeProfile
 
 		shouldRetry, err := notifySender.PushNotification(database.Notification{
-			UserId:             event.AuthorId,
+			UserId:             event.ProfileId.Int64,
 			Type:               "push.profile.comment",
-			RelatedUserId:      event.ProfileId,
+			RelatedUserId:      null.IntFrom(event.AuthorId),
 			CommentId:          null.IntFrom(event.Id),
 			Comment:            notificationComment,
 			ContentId:          event.ContentId,
