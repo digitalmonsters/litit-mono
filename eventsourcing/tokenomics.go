@@ -64,6 +64,7 @@ func (t TokenomicsNotificationEventData) GetPublishKey() string {
 
 type ContentPaidTimeIncreased struct {
 	ContentId int64 `json:"content_id"`
+	AuthorId  int64 `json:"author_id"`
 }
 
 func (t ContentPaidTimeIncreased) GetPublishKey() string {
