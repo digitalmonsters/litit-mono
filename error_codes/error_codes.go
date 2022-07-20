@@ -21,6 +21,7 @@ const (
 	GenericMappingError         ErrorCode = -32700
 	GenericDuplicateError       ErrorCode = 409
 	GenericNotFoundError        ErrorCode = 404
+	InvalidContentLength        ErrorCode = 413
 	CommandNotFoundError        ErrorCode = -32601
 	GenericTimeoutError         ErrorCode = 502
 	GenericPanicError           ErrorCode = -32603
