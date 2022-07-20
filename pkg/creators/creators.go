@@ -110,13 +110,12 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 				Where(
 					utils.AddSearchQuery(db.Table("creators"), []string{search}, []string{"firstname", "lastname"}),
 				),
+			).Or(db.
+			Where(
+				utils.AddSearchQuery(db.Table("creators"), []string{search}, []string{"email"}),
 			),
+		),
 		)
-	}
-
-	if len(req.Email) > 0 {
-		search := fmt.Sprintf("%%%v%%", req.Email)
-		query = query.Where("email ilike ?", search)
 	}
 
 	var totalCount int64
