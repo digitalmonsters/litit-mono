@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
+	"github.com/digitalmonsters/go-common/frontend"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
@@ -14,6 +15,7 @@ import (
 
 type IContentWrapper interface {
 	GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent]
+	GetInternalAdminModels(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]frontend.ContentModel]
 	GetTopNotFollowingUsers(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetTopNotFollowingUsersResponse]
 	GetHashtagsInternal(hashtags []string, omitHashtags []string, limit int, offset int, withViews null.Bool, apmTransaction *apm.Transaction,
 		shouldHaveValidContent bool, forceLog bool) chan wrappers.GenericResponseChan[HashtagResponseData]
@@ -62,6 +64,13 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 	return wrappers.ExecuteRpcRequestAsync[map[int64]SimpleContent](w.baseWrapper, w.apiUrl, "ContentGetInternal", ContentGetInternalRequest{
 		ContentIds:     contentIds,
 		IncludeDeleted: includeDeleted,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w *ContentWrapper) GetInternalAdminModels(contentIds []int64, apmTransaction *apm.Transaction,
+	forceLog bool) chan wrappers.GenericResponseChan[map[int64]frontend.ContentModel] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]frontend.ContentModel](w.baseWrapper, w.apiUrl, "ContentGetInternalAdminModels", ContentGetInternalAdminModelsRequest{
+		ContentIds: contentIds,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }
 

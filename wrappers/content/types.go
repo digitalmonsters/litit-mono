@@ -41,6 +41,10 @@ type ContentGetInternalRequest struct {
 	ContentIds     []int64 `json:"content_ids"`
 }
 
+type ContentGetInternalAdminModelsRequest struct {
+	ContentIds []int64 `json:"content_ids"`
+}
+
 type HashtagResponseData struct {
 	Items      []SimpleHashtagModel `json:"items"`
 	TotalCount int64                `json:"total_count"`
