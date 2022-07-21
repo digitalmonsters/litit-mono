@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/ops"
@@ -10,8 +11,8 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
-	"github.com/digitalmonsters/music/cmd/api/creator"
-	"github.com/digitalmonsters/music/cmd/api/music"
+	"github.com/digitalmonsters/music/cmd/creator"
+	"github.com/digitalmonsters/music/cmd/music"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/creators"
 	"github.com/digitalmonsters/music/pkg/creators/notifier"
@@ -30,6 +31,7 @@ func main() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
 
+	var rootApplication application.RootApplication
 	ctx, healthCancel := context.WithCancel(context.Background())
 
 	cfg := configs.GetConfig()
@@ -59,28 +61,10 @@ func main() {
 
 	creatorsService := creators.NewService(notifiers)
 
-	if err := music.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, musicStorageService); err != nil {
-		log.Panic().Err(err).Msg("[Music Admin API] Cannot initialize api")
-		panic(err)
-	}
-
-	if err := music.InitPublicApi(httpRouter, apiDef, musicStorageService); err != nil {
-		log.Panic().Err(err).Msg("[Music Public API] Cannot initialize api")
-		panic(err)
-	}
-
-	if err := creator.InitPublicApi(httpRouter, apiDef, creatorsService, userGoWrapper); err != nil {
-		log.Panic().Err(err).Msg("[Creators Public API] Cannot initialize api")
-		panic(err)
-	}
-
-	if err := creator.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef, cfg, userGoWrapper, creatorsService); err != nil {
-		log.Panic().Err(err).Msg("[Creators Admin API] Cannot initialize api")
-		panic(err)
-	}
-
-	music.InitUploadApi(httpRouter, &cfg)
-	creator.InitUploadApi(httpRouter, &cfg)
+	rootApplication.
+		AddApplication(creator.Application(httpRouter, apiDef, creatorsService, userGoWrapper, cfg.Creators, &cfg)).
+		AddApplication(music.Application(httpRouter, apiDef, musicStorageService, &cfg)).
+		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)
