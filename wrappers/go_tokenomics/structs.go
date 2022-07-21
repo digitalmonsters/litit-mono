@@ -103,6 +103,7 @@ const (
 	PointsEarnedTypeMonthlyTimeMegaBonus                      = PointsEarnedType(44)
 	PointsEarnedTypeUploadFirstBioVideo                       = PointsEarnedType(45)
 	PointsEarnedTypeAdditionalBonusCreatorVerifyGrandReferrer = PointsEarnedType(46)
+	PointsEarnedTypeSocialMediasAdded                         = PointsEarnedType(47)
 )
 
 type WithdrawalStatus int16
@@ -191,6 +192,7 @@ type UserActivity struct {
 	FirstSpotUploaded        bool `json:"first_spot_uploaded"`
 	FirstTimeAvatarAdded     bool `json:"first_time_avatar_added"`
 	FirstEmailMarketingAdded bool `json:"first_email_marketing_added"`
+	FirstXSocialMediaAdded   bool `json:"first_x_social_media_added"`
 }
 
 type FilterField string
