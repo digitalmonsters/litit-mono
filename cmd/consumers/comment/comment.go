@@ -149,15 +149,23 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 		notificationComment.Type = database.NotificationCommentTypeProfile
 
+		var renderDataAuthor database.RenderingVariables
+		renderDataAuthor, _, err = utils.GetUserRenderingVariablesWithLanguage(event.AuthorId, ctx)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		renderDataAuthor["comment"] = event.Comment.Comment
+
 		shouldRetry, err := notifySender.PushNotification(database.Notification{
-			UserId:             event.ProfileId.Int64,
+			UserId:             event.AuthorId,
 			Type:               "push.profile.comment",
-			RelatedUserId:      null.IntFrom(event.AuthorId),
+			RelatedUserId:      event.ProfileId,
 			CommentId:          null.IntFrom(event.Id),
 			Comment:            notificationComment,
 			ContentId:          event.ContentId,
 			Content:            notificationContent,
-			RenderingVariables: renderData,
+			RenderingVariables: renderDataAuthor,
 		}, event.ProfileId.Int64, 0, templateName, language, "default", ctx)
 		if err != nil {
 			if shouldRetry {
