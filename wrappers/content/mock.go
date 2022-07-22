@@ -23,6 +23,7 @@ type ContentWrapperMock struct {
 	GetConfigPropertiesFn          func(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string]
 	GetRejectReasonFn              func(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason]
 	GetTopUsersInCategoriesFn      func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64][]int64]
+	InsertMusicContentFn           func(content MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SimpleContent]
 }
 
 func (w *ContentWrapperMock) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent] {
@@ -69,6 +70,10 @@ func (w *ContentWrapperMock) GetRejectReason(ids []int64, includeDeleted bool, c
 
 func (w *ContentWrapperMock) GetTopUsersInCategories(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64][]int64] {
 	return w.GetTopUsersInCategoriesFn(ctx, forceLog)
+}
+
+func (w *ContentWrapperMock) InsertMusicContent(content MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SimpleContent] {
+	return w.InsertMusicContentFn(content, ctx, forceLog)
 }
 
 func GetMock() IContentWrapper { // for compiler errors

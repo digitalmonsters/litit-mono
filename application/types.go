@@ -30,6 +30,7 @@ const (
 	ConfigCategoryAd           = ConfigCategory("ad")
 	ConfigUsers                = ConfigCategory("users")
 	ConfigBots                 = ConfigCategory("bots")
+	ConfigMusic                = ConfigCategory("music")
 )
 
 type ConfigModel struct {

@@ -28,6 +28,7 @@ type IContentWrapper interface {
 	GetConfigProperties(properties []string, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[string]string]
 	GetRejectReason(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason]
 	GetTopUsersInCategories(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64][]int64]
+	InsertMusicContent(content MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SimpleContent]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -143,7 +144,10 @@ func (w *ContentWrapper) GetRejectReason(ids []int64, includeDeleted bool, ctx c
 }
 
 func (w *ContentWrapper) GetTopUsersInCategories(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64][]int64] {
-
 	return wrappers.ExecuteRpcRequestAsync[map[int64][]int64](w.baseWrapper, w.apiUrl, "InternalGetTopUsersInCategories", nil,
 		map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w *ContentWrapper) InsertMusicContent(content MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SimpleContent] {
+	return wrappers.ExecuteRpcRequestAsync[SimpleContent](w.baseWrapper, w.apiUrl, "InsertMusicContentInternal", content, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

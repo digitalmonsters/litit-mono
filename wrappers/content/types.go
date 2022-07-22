@@ -153,3 +153,10 @@ type GetContentRejectReasonRequest struct {
 	Ids            []int64 `json:"ids"`
 	IncludeDeleted bool    `json:"include_deleted"`
 }
+
+type MusicContentRequest struct {
+	ContentType eventsourcing.ContentType `json:"type"`
+	Duration    int                       `json:"duration"`
+	AuthorId    int64                     `json:"author_id"`
+	Hashtags    []string                  `json:"hashtags"`
+}
