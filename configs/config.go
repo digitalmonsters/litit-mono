@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -54,6 +55,12 @@ func init() {
 		settings.ReadonlyDb.Db = settings.MasterDb.Db
 	}
 
+	if boilerplate.GetCurrentEnvironment() != boilerplate.Ci && boilerplate.GetCurrentEnvironment() != boilerplate.Local {
+		cfgService = application.NewConfigurator[AppConfig]().
+			WithRetriever(application.NewHttpRetriever(application.HttpRetrieverDefaultUrl)).
+			WithMigrator(application.NewHttpMigrator(application.HttpMigratorDefaultUrl), GetConfigsMigration()).
+			MustInit()
+	}
 }
 
 func GetConfig() Settings {

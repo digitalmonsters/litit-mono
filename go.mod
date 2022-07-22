@@ -6,6 +6,7 @@ require (
 	github.com/digitalmonsters/go-common v1.30.42
 	github.com/gammazero/workerpool v1.1.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
+	github.com/jinzhu/inflection v1.0.0
 	github.com/lib/pq v1.10.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
@@ -62,6 +63,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/iancoleman/strcase v0.0.0-20180726023541-3605ed457bf7 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/imroc/req/v3 v3.10.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -71,7 +73,6 @@ require (
 	github.com/jackc/pgtype v1.11.0 // indirect
 	github.com/jackc/pgx/v4 v4.16.0 // indirect
 	github.com/jcchavezs/porto v0.4.0 // indirect
-	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect

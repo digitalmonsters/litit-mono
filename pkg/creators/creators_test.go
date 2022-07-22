@@ -143,7 +143,6 @@ func TestCreatorRequestsList(t *testing.T) {
 		Limit:                10,
 		Offset:               0,
 		SearchQuery:          "firstname",
-		Email:                "email",
 	}, gormDb, config.Creators.MaxThresholdHours, nil, userWrapper)
 
 	assert.Nil(t, err)
