@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/creator/internal/api"
+	"github.com/digitalmonsters/music/cmd/creator/internal/categories"
 	"github.com/digitalmonsters/music/cmd/creator/internal/moods"
 	"github.com/digitalmonsters/music/cmd/creator/internal/reject_reasons"
 	"github.com/digitalmonsters/music/configs"
@@ -23,5 +24,6 @@ func Application(
 	return application.NewBaseApplication("creator").
 		AddSubApplication(api.SubApp(httpRouter, apiDef, creatorsService, userGoWrapper, creatorsCfg, cfg)).
 		AddSubApplication(reject_reasons.SubApp(httpRouter, apiDef)).
-		AddSubApplication(moods.SubApp(httpRouter, apiDef))
+		AddSubApplication(moods.SubApp(httpRouter, apiDef)).
+		AddSubApplication(categories.SubApp(httpRouter, apiDef))
 }
