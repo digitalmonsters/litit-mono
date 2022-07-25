@@ -59,8 +59,8 @@ func (c *ConfigService) GetConfigsByIds(db *gorm.DB, ids []string) ([]database.C
 }
 
 func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest, executionData router.MethodExecutionData) (*GetConfigResponse, error) {
-	var cfg []dbConfigWithRelatedUserId
-	var q = db.Model(database.Config{}).Select("*, (select related_user_id from config_logs where key = configs.key order by created_at desc limit 1) related_user_id")
+	var cfg []database.Config
+	var q = db.Model(&cfg)
 
 	if len(req.CategoryLike) > 0 {
 		q = q.Where("category ILIKE '%' || ? || '%'", req.CategoryLike)
@@ -92,6 +92,10 @@ func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest, execu
 		q = q.Where("release_version ILIKE '%' || ? || '%'", req.ReleaseVersionLike)
 	}
 
+	if len(req.AdminIds) > 0 {
+		q = q.Where("last_changed_by_id in ?", req.AdminIds)
+	}
+
 	var count int64
 	if err := q.Count(&count).Error; err != nil {
 		return nil, err
@@ -105,8 +109,8 @@ func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest, execu
 	var respItems []*ConfigModelWithRelatedUserInfo
 	userIds := make([]int64, 0)
 	for _, c := range cfg {
-		if c.RelatedUserId.Valid {
-			userIds = append(userIds, c.RelatedUserId.Int64)
+		if c.LastChangedById.Valid {
+			userIds = append(userIds, c.LastChangedById.Int64)
 		}
 		respItems = append(respItems, &ConfigModelWithRelatedUserInfo{
 			ConfigModel: application.ConfigModel{
@@ -120,7 +124,7 @@ func (c *ConfigService) AdminGetConfigs(db *gorm.DB, req GetConfigRequest, execu
 				Category:       c.Category,
 				ReleaseVersion: c.ReleaseVersion,
 			},
-			RelatedUserId: c.RelatedUserId,
+			RelatedUserId: c.LastChangedById,
 		})
 	}
 
@@ -209,6 +213,7 @@ func (c ConfigService) AdminUpsertConfig(tx *gorm.DB, req UpsertConfigRequest, u
 		}
 		currentConfig.Description = req.Description
 		currentConfig.Value = req.Value
+		currentConfig.LastChangedById = null.IntFrom(userId)
 
 		if err := tx.Where("key = ?", currentConfig.Key).Save(&currentConfig).Error; err != nil {
 			return nil, nil, err

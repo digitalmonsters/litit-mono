@@ -7,15 +7,16 @@ import (
 )
 
 type Config struct {
-	Key            string
-	Value          string
-	Type           application.ConfigType
-	Description    string
-	AdminOnly      bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	Category       application.ConfigCategory
-	ReleaseVersion string
+	Key             string
+	Value           string
+	Type            application.ConfigType
+	Description     string
+	AdminOnly       bool
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Category        application.ConfigCategory
+	ReleaseVersion  string
+	LastChangedById null.Int
 }
 
 func (Config) TableName() string {

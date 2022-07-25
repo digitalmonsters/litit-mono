@@ -87,5 +87,19 @@ alter table config_logs add column if not exists old_value varchar(255);
 `)
 			},
 		},
+		{
+			ID: "add_last_changed_by_id_on_configs_20220725",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+alter table configs add column if not exists last_changed_by_id integer;`)
+			},
+		},
+		{
+			ID: "migrate_last_changed_by_id_values_20220725",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+update configs set last_changed_by_id = (select related_user_id from config_logs where key = configs.key order by created_at desc limit 1);`)
+			},
+		},
 	}
 }

@@ -55,24 +55,26 @@ func TestMain(m *testing.M) {
 func insertConfigs(t *testing.T, withConfigLog bool) ([]database.Config, []database.ConfigLog) {
 	var configs = []database.Config{
 		{
-			Key:         "test_key1",
-			Value:       "50",
-			Type:        application.ConfigTypeInteger,
-			Description: "test",
-			AdminOnly:   false,
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
-			Category:    application.ConfigCategoryTokens,
+			Key:             "test_key1",
+			Value:           "50",
+			Type:            application.ConfigTypeInteger,
+			Description:     "test",
+			AdminOnly:       false,
+			CreatedAt:       time.Now().UTC(),
+			UpdatedAt:       time.Now().UTC(),
+			Category:        application.ConfigCategoryTokens,
+			LastChangedById: null.IntFrom(1),
 		},
 		{
-			Key:         "test_key2",
-			Value:       "test",
-			Type:        application.ConfigTypeString,
-			Description: "new description",
-			AdminOnly:   false,
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
-			Category:    application.ConfigCategoryTokens,
+			Key:             "test_key2",
+			Value:           "test",
+			Type:            application.ConfigTypeString,
+			Description:     "new description",
+			AdminOnly:       false,
+			CreatedAt:       time.Now().UTC(),
+			UpdatedAt:       time.Now().UTC(),
+			Category:        application.ConfigCategoryTokens,
+			LastChangedById: null.IntFrom(2),
 		},
 	}
 	if err := gormDb.Create(&configs).Error; err != nil {
@@ -234,6 +236,18 @@ func TestConfigService_AdminGetConfigs(t *testing.T) {
 		UpdatedTo:   null.TimeFrom(time.Now().UTC().Add(1 * time.Hour)),
 		Limit:       10,
 		Offset:      0,
+	}, router.MethodExecutionData{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 1, len(resp.Items))
+	assert.Equal(t, 1, int(resp.TotalCount))
+	checkConfigModel(t, configs[0], resp.Items[0].ConfigModel)
+
+	resp, err = service.AdminGetConfigs(gormDb, GetConfigRequest{
+		AdminIds: []int64{1},
+		Limit:    10,
+		Offset:   0,
 	}, router.MethodExecutionData{})
 	if err != nil {
 		t.Fatal(err)
