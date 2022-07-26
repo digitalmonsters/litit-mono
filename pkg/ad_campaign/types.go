@@ -6,15 +6,15 @@ import (
 )
 
 type CreateAdCampaignRequest struct {
-	Name         string
-	AdType       database.AdType
-	ContentId    int64
-	Link         null.String
-	LinkButtonId null.Int
-	Country      null.String
-	DurationMin  uint
-	Budget       uint
-	Gender       null.String
-	AgeFrom      uint
-	AgeTo        uint
+	Name         string          `json:"name"`
+	AdType       database.AdType `json:"ad_type"`
+	ContentId    int64           `json:"content_id"`
+	Link         null.String     `json:"link"`
+	LinkButtonId null.Int        `json:"link_button_id"`
+	Country      null.String     `json:"country"`
+	DurationMin  uint            `json:"duration_min"`
+	Budget       uint            `json:"budget"`
+	Gender       null.String     `json:"gender"`
+	AgeFrom      uint            `json:"age_from"`
+	AgeTo        uint            `json:"age_to"`
 }
