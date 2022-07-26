@@ -69,5 +69,36 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "ad_campaigns_2507221240",
+			Migrate: func(db *gorm.DB) error {
+				return db.Exec(`create table if not exists ad_campaigns
+					(
+						id serial
+							constraint ad_campaigns_pk
+								primary key,
+						user_id bigint,
+						name text not null,
+						ad_type smallint not null default 1,
+						status smallint not null default 0,
+						content_id bigint not null,
+						link text,
+						link_button_id int,
+						country varchar(255),
+						created_at timestamp with time zone default current_timestamp,
+						started_at timestamp with time zone,
+						ended_at timestamp with time zone,
+						duration_min int not null default 0,
+						budget int not null default 0,
+						gender varchar(255) default NULL::character varying,
+						age_from int,
+						age_to int
+					)
+				`).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

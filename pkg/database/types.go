@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/lib/pq"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"time"
 )
@@ -56,3 +57,44 @@ func VerificationStatusFromString(status string) VerificationStatus {
 		return VerificationStatusNone
 	}
 }
+
+type AdCampaign struct {
+	Id           int64
+	UserId       int64
+	Name         string
+	AdType       AdType
+	Status       AdCampaignStatus
+	ContentId    int64
+	Link         null.String
+	LinkButtonId null.Int
+	Country      null.String
+	CreatedAt    time.Time
+	StartedAt    null.Time
+	EndedAt      null.Time
+	DurationMin  uint
+	Budget       uint
+	Gender       null.String
+	AgeFrom      uint
+	AgeTo        uint
+}
+
+func (AdCampaign) TableName() string {
+	return "ad_campaigns"
+}
+
+type AdType int
+
+const (
+	AdTypeContent = AdType(1)
+	AdTypeLink    = AdType(2)
+)
+
+type AdCampaignStatus int
+
+const (
+	AdCampaignStatusPending   = AdCampaignStatus(1)
+	AdCampaignStatusModerated = AdCampaignStatus(2)
+	AdCampaignStatusReject    = AdCampaignStatus(3)
+	AdCampaignStatusActive    = AdCampaignStatus(4)
+	AdCampaignStatusCompleted = AdCampaignStatus(5)
+)
