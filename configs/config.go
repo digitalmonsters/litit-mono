@@ -1,8 +1,12 @@
 package configs
 
 import (
+	"crypto/tls"
 	"fmt"
-	"github.com/digitalmonsters/go-common/application"
+	"github.com/RichardKnop/logging"
+	"github.com/RichardKnop/machinery/v1"
+	"github.com/RichardKnop/machinery/v1/config"
+	log2 "github.com/RichardKnop/machinery/v1/log"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -19,6 +23,25 @@ type Settings struct {
 	Creators               CreatorsConfig                       `json:"Creators"`
 	KafkaWriter            boilerplate.KafkaWriterConfiguration `json:"KafkaWriter"`
 	NotifierCreatorsConfig NotifierConfig                       `json:"NotifierCreatorsConfig"`
+	Feed                   MusicFeedConfiguration               `json:"Feed"`
+	Redis                  RedisConfig                          `json:"Redis"`
+	Jobber                 JobberConfig                         `json:"Jobber"`
+}
+
+type RedisConfig struct {
+	Db   int    `json:"Db"`
+	Host string `json:"Host"`
+	Tls  bool   `json:"Tls"`
+}
+
+type JobberConfig struct {
+	Tls           bool   `json:"tls"`
+	DefaultQueue  string `json:"DefaultQueue"`
+	ResultExpire  int    `json:"ResultExpire"`
+	Broker        string `json:"Broker"`
+	ResultBackend string `json:"ResultBackend"`
+	Lock          string `json:"Lock"`
+	Concurrency   int    `json:"Concurrency"`
 }
 
 type NotifierConfig struct {
@@ -54,15 +77,52 @@ func init() {
 		log.Info().Msg(fmt.Sprintf("ci db name generated: %v", settings.MasterDb.Db))
 		settings.ReadonlyDb.Db = settings.MasterDb.Db
 	}
-
-	if boilerplate.GetCurrentEnvironment() != boilerplate.Ci && boilerplate.GetCurrentEnvironment() != boilerplate.Local {
-		cfgService = application.NewConfigurator[AppConfig]().
-			WithRetriever(application.NewHttpRetriever(application.HttpRetrieverDefaultUrl)).
-			WithMigrator(application.NewHttpMigrator(application.HttpMigratorDefaultUrl), GetConfigsMigration()).
-			MustInit()
-	}
 }
 
 func GetConfig() Settings {
 	return settings
+}
+
+func GetJobber(cred JobberConfig) (*machinery.Server, error) {
+	cnf := &config.Config{
+		DefaultQueue:    cred.DefaultQueue,
+		ResultsExpireIn: cred.ResultExpire,
+		Broker:          cred.Broker,
+		ResultBackend:   cred.ResultBackend,
+		Lock:            cred.Lock,
+		NoUnixSignals:   true,
+		Redis: &config.RedisConfig{
+			MaxIdle:                3,
+			IdleTimeout:            240,
+			ReadTimeout:            15,
+			WriteTimeout:           15,
+			ConnectTimeout:         15,
+			NormalTasksPollPeriod:  1000,
+			DelayedTasksPollPeriod: 500,
+		},
+	}
+
+	if cred.Tls {
+		cnf.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	server, err := boilerplate.NewServer(cnf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	iface := logging.New(nil, nil, new(logging.ColouredFormatter))
+
+	log2.DEBUG = iface[logging.DEBUG]
+	// INFO ...
+	log2.INFO = iface[logging.INFO]
+	// WARNING ...
+	log2.WARNING = iface[logging.WARNING]
+	// ERROR ...
+	log2.ERROR = iface[logging.ERROR]
+	// FATAL ...
+	log2.FATAL = iface[logging.FATAL]
+
+	return server, nil
 }

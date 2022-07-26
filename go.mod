@@ -3,16 +3,18 @@ module github.com/digitalmonsters/music
 go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.30.42
+	github.com/RichardKnop/machinery v1.10.6
+	github.com/digitalmonsters/go-common v1.31.45
 	github.com/gammazero/workerpool v1.1.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/jinzhu/inflection v1.0.0
 	github.com/lib/pq v1.10.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
-	github.com/shopspring/decimal v1.3.1
+	github.com/samber/lo v1.26.0
 	github.com/stretchr/testify v1.7.1
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/thoas/go-funk v0.9.2
@@ -28,7 +30,6 @@ require (
 	cloud.google.com/go/iam v0.3.0 // indirect
 	cloud.google.com/go/pubsub v1.20.0 // indirect
 	github.com/RichardKnop/logging v0.0.0-20190827224416-1a693bdd4fae // indirect
-	github.com/RichardKnop/machinery v1.10.6 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.43.44 // indirect
@@ -47,7 +48,6 @@ require (
 	github.com/fsnotify/fsnotify v1.5.3 // indirect
 	github.com/gammazero/deque v0.1.1 // indirect
 	github.com/go-redis/redis v6.15.9+incompatible // indirect
-	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/go-redsync/redsync/v4 v4.5.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gocql/gocql v1.0.0 // indirect
@@ -98,6 +98,7 @@ require (
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.7.0 // indirect
 	github.com/segmentio/kafka-go v0.4.31 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -105,14 +106,18 @@ require (
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	go.elastic.co/apm/module/apmgocql/v2 v2.1.0 // indirect
+	go.elastic.co/apm/module/apmgoredisv8 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/apm/module/apmzerolog v1.15.0 // indirect
+	go.elastic.co/apm/v2 v2.1.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect
@@ -129,7 +134,7 @@ require (
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.3.4 // indirect
 	howett.net/plist v1.0.0 // indirect
 )

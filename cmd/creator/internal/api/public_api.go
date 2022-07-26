@@ -105,7 +105,7 @@ func (c *creatorApp) addSong() *router.RestCommand {
 			return nil, error_codes.NewErrorWithCodeRef(fmt.Errorf("max hashtags limit is %v", configs.GetAppConfig().MUSIC_MAX_HASHTAGS_COUNT), error_codes.GenericValidationError)
 		}
 
-		resp, err := c.creatorsService.UploadNewSong(req, database.GetDbWithContext(database.DbTypeMaster, executionData.Context), executionData)
+		resp, err := c.creatorsService.UploadNewSong(req, c.contentWrapper, database.GetDbWithContext(database.DbTypeMaster, executionData.Context), executionData)
 		if err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

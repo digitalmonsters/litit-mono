@@ -3,7 +3,6 @@ package database
 import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/lib/pq"
-	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"time"
@@ -152,16 +151,23 @@ type CreatorSong struct {
 	ShortSongDuration float64           `json:"short_song_duration"`
 	ImageUrl          string            `json:"image_url"`
 	Hashtags          pq.StringArray    `gorm:"type:text[]" json:"hashtags"`
-	ShortListens      int               `json:"short_listens"`
-	FullListens       int               `json:"full_listens"`
-	Likes             int               `json:"likes"`
-	Comments          int               `json:"comments"`
-	UsedInVideo       int               `json:"used_in_video"`
-	PointsEarned      decimal.Decimal   `json:"points_earned"`
 	RejectReason      null.Int          `json:"reject_reason"`
-	CreatedAt         time.Time         `json:"created_at"`
-	UpdatedAt         null.Time         `json:"updated_at"`
-	DeletedAt         gorm.DeletedAt    `json:"deleted_at"`
+
+	ShortListens int `json:"short_listens"`
+	FullListens  int `json:"full_listens"`
+	Likes        int `json:"likes"`
+	Dislikes     int `json:"dislikes"`
+	Loves        int `json:"loves"`
+	Shares       int `json:"shares"`
+	Comments     int `json:"comments"`
+	UsedInVideo  int `json:"used_in_video"`
+	//PointsEarned decimal.Decimal `json:"points_earned"` //todo
+
+	Score int `json:"score"`
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt null.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at"`
 
 	Category *Category             `gorm:"foreignKey:category_id" json:"-"`
 	Mood     *Mood                 `gorm:"foreignKey:mood_id" json:"-"`
@@ -194,4 +200,13 @@ type Mood struct {
 
 func (Mood) TableName() string {
 	return "moods"
+}
+
+type ListenedMusic struct {
+	UserId int64 `json:"user_id"`
+	SongId int64 `json:"song_id"`
+}
+
+func (ListenedMusic) TableName() string {
+	return "listened_music"
 }
