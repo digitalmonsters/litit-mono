@@ -3,13 +3,14 @@ module github.com/digitalmonsters/comments
 go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.30.3
+	github.com/digitalmonsters/go-common v1.31.44
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/romanyx/polluter v1.2.2
 	github.com/rs/zerolog v1.26.1
+	github.com/samber/lo v1.25.0
 	github.com/segmentio/kafka-go v0.4.31
 	github.com/stretchr/testify v1.7.1
 	github.com/thoas/go-funk v0.9.2
@@ -62,6 +63,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/imroc/req/v3 v3.10.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -109,14 +111,17 @@ require (
 	github.com/xdg/scram v1.0.5 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	go.elastic.co/apm/module/apmgocql/v2 v2.1.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect
 	go.elastic.co/apm/module/apmzerolog v1.15.0 // indirect
+	go.elastic.co/apm/v2 v2.1.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect

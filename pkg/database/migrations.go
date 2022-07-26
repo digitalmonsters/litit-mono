@@ -343,5 +343,17 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_comment_num_reports_072020220924",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table comment add column if not exists num_reports integer default 0;`
+
+				return db.Exec(query).Error
+
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
