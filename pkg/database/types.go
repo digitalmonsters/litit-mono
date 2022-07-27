@@ -199,6 +199,8 @@ func GetNotificationType(templateId string) string {
 		return "push.user.monthly_time_mega_bonus"
 	case "first_x_social_media_added":
 		return "push.social_medias.first"
+	case "add_social_subs_target_achieved_bonus":
+		return "push.social_subs.bonus"
 	}
 	return ""
 }
@@ -360,6 +362,8 @@ func GetNotificationTemplates(notificationType string) []string {
 		}
 	case "push.social_medias.first":
 		return []string{"first_x_social_media_added"}
+	case "push.push.social_subs.bonus.first":
+		return []string{"add_social_subs_target_achieved_bonus"}
 	}
 	return []string{}
 }

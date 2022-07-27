@@ -542,5 +542,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_social_subs_target_achieved_bonus_template_270720221900",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('add_social_subs_target_achieved_bonus', '2022-07-27 14:00:00.000000', '2022-07-27 14:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
