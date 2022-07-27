@@ -48,22 +48,23 @@ func (l UserHashtagEvent) GetPublishKey() string {
 type ViewEvent struct {
 	UserId              int64       `json:"user_id"`
 	UserCountryCode     string      `json:"user_country_code"`
+	UserIp              string      `json:"user_ip"`
 	ContentId           int64       `json:"content_id"`
 	ContentType         ContentType `json:"content_type"`
-	Duration            int         `json:"duration"`
-	UserIp              string      `json:"user_ip"`
+	ContentAuthorId     int64       `json:"content_author_id"`
+	ContentTotalViews   int64       `json:"content_total_views"`
+	WatchTime           int         `json:"watch_time"`
+	WatchPercent        int8        `json:"watch_percent"`
 	SharerId            null.Int    `json:"sharer_id"`
-	ShareCode           null.String `json:"share_code"`
-	AdsId               null.Int    `json:"ads_id"`
+	SharerCode          null.String `json:"sharer_code"`
 	IsSharedView        bool        `json:"is_shared_view"`
-	CreatedAt           int64       `json:"created_at"`
-	IsGuest             bool        `json:"is_guest"`
 	IsBot               bool        `json:"is_bot"`
+	CreatedAt           time.Time   `json:"created_at"`
 	UseTokenomicVersion int8        `json:"use_tokenomic_version"`
 }
 
-func (l ViewEvent) GetPublishKey() string {
-	return fmt.Sprintf("{\"content_id\":%v,\"user_id\":%v}", l.ContentId, l.UserId)
+func (v *ViewEvent) GetPublishKey() string {
+	return fmt.Sprintf("%v_%v", v.UserId, v.ContentId)
 }
 
 type FollowEvent struct {
