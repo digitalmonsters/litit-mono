@@ -151,3 +151,9 @@ func (h *NotificationHandlerWrapper) GetNotificationsReadCount(notificationIds [
 		"GetNotificationsReadCount", GetNotificationsReadCountRequest{NotificationIds: notificationIds},
 		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
 }
+
+func (h *NotificationHandlerWrapper) DisableUnregisteredTokens(tokens []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]string] {
+	return wrappers.ExecuteRpcRequestAsync[[]string](h.baseWrapper, h.apiUrl,
+		"DisableUnregisteredTokens", DisableUnregisteredTokensRequest{Tokens: tokens},
+		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
+}

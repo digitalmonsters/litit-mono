@@ -13,6 +13,7 @@ type INotificationHandlerWrapper interface {
 		renderingVars map[string]string, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult
 	EnqueueNotificationWithCustomTemplate(title, body, headline string, userId int64, customData map[string]interface{}, ctx context.Context) chan EnqueueMessageResult
 	GetNotificationsReadCount(notificationIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64]
+	DisableUnregisteredTokens(tokens []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]string]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -63,4 +64,8 @@ const (
 
 type GetNotificationsReadCountRequest struct {
 	NotificationIds []int64 `json:"notification_ids"`
+}
+
+type DisableUnregisteredTokensRequest struct {
+	Tokens []string `json:"tokens"`
 }
