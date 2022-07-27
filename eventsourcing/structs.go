@@ -61,11 +61,20 @@ type ViewEvent struct {
 	IsBot               bool        `json:"is_bot"`
 	CreatedAt           time.Time   `json:"created_at"`
 	UseTokenomicVersion int8        `json:"use_tokenomic_version"`
+	ListenType          ListenType  `json:"listen_type"`
 }
 
 func (v ViewEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v_%v", v.UserId, v.ContentId)
 }
+
+type ListenType int
+
+const (
+	ListenTypeNone  = ListenType(0)
+	ListenTypeShort = ListenType(1)
+	ListenTypeFull  = ListenType(2)
+)
 
 type FollowEvent struct {
 	ToUserId  int64 `json:"to_user_id"`
