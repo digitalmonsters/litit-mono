@@ -11,7 +11,7 @@ import (
 func GetUserTokens(db *gorm.DB, userId int64) ([]database.Device, error) {
 	var records []database.Device
 
-	if err := db.Where("\"userId\" = ?", userId).Find(&records).Error; err != nil {
+	if err := db.Where("\"userId\" = ? and unregistered = false", userId).Find(&records).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 

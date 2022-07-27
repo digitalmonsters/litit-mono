@@ -7,6 +7,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -241,4 +242,39 @@ func TestService_GetNotifications(t *testing.T) {
 	a.NotNil(resp)
 	a.Len(resp.Data, 1)
 	a.Equal(dbNotification3.Id, resp.Data[0].Id)
+}
+
+func TestDisableUnregisteredTokens(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresAllTables(config.MasterDb, nil, t); err != nil {
+		t.Fatal(err)
+	}
+	tokens := make([]string, 0)
+	for i := int64(1); i <= 10; i++ {
+		token := "push_token" + fmt.Sprint(i)
+		tokens = append(tokens, token)
+		if err := gormDb.Create(&database.Device{
+			UserId:       i,
+			DeviceId:     "device_id" + fmt.Sprint(i),
+			PushToken:    token,
+			Platform:     "some_platform",
+			Unregistered: false,
+		}).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if _, err := DisableUnregisteredTokens(notification_handler.DisableUnregisteredTokensRequest{
+		Tokens: tokens[:5],
+	}, gormDb); err != nil {
+		t.Fatal(err)
+	}
+
+	var devices []database.Device
+
+	if err := gormDb.Where("unregistered = true").Find(&devices).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, 5, len(devices))
+
 }
