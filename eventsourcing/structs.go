@@ -63,7 +63,7 @@ type ViewEvent struct {
 	UseTokenomicVersion int8        `json:"use_tokenomic_version"`
 }
 
-func (v *ViewEvent) GetPublishKey() string {
+func (v ViewEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v_%v", v.UserId, v.ContentId)
 }
 
