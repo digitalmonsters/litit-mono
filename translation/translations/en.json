@@ -392,6 +392,9 @@
     "monthly_mega_bonus_do_not_miss_headline": "",
     "first_x_social_media_added_title": "Congratulation!",
     "first_x_social_media_added_body": "You earned {{.social_media_bonus}} LIT points for adding social networks",
-    "first_x_social_media_added_headline": ""
+    "first_x_social_media_added_headline": "",
+    "add_social_subs_target_achieved_bonus_title": "Congratulation!",
+    "add_social_subs_target_achieved_bonus_body": "You earned {{.social_subs_target_achieved_bonus}} LIT points for following social media",
+    "add_social_subs_target_achieved_bonus_headline": ""
   }
 }
