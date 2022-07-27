@@ -3,8 +3,10 @@ package main
 import (
 	adCampaignApp "github.com/digitalmonsters/ads-manager/cmd/ad_campaign"
 	"github.com/digitalmonsters/ads-manager/cmd/api"
+	"github.com/digitalmonsters/ads-manager/cmd/common"
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/ad_campaign"
+	commonPkg "github.com/digitalmonsters/ads-manager/pkg/common"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/ops"
@@ -51,9 +53,11 @@ func main() {
 	}
 
 	adCampaignService := ad_campaign.NewService(contentWrapper)
+	commonService := commonPkg.NewService()
 
 	rootApplication.
 		AddApplication(adCampaignApp.Application(httpRouter, apiDef, adCampaignService)).
+		AddApplication(common.Application(httpRouter, apiDef, commonService)).
 		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {

@@ -59,23 +59,24 @@ func VerificationStatusFromString(status string) VerificationStatus {
 }
 
 type AdCampaign struct {
-	Id           int64
-	UserId       int64
-	Name         string
-	AdType       AdType
-	Status       AdCampaignStatus
-	ContentId    int64
-	Link         null.String
-	LinkButtonId null.Int
-	Country      null.String
-	CreatedAt    time.Time
-	StartedAt    null.Time
-	EndedAt      null.Time
-	DurationMin  uint
-	Budget       uint
-	Gender       null.String
-	AgeFrom      uint
-	AgeTo        uint
+	Id             int64
+	UserId         int64
+	Name           string
+	AdType         AdType
+	Status         AdCampaignStatus
+	ContentId      int64
+	Link           null.String
+	LinkButtonId   null.Int
+	Country        null.String
+	CreatedAt      time.Time
+	StartedAt      null.Time
+	EndedAt        null.Time
+	DurationMin    uint
+	Budget         uint
+	Gender         null.String
+	AgeFrom        uint
+	AgeTo          uint
+	RejectReasonId null.Int
 }
 
 func (AdCampaign) TableName() string {

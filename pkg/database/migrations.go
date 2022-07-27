@@ -100,5 +100,62 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "dictionary_tables_create_2607221623",
+			Migrate: func(db *gorm.DB) error {
+				return db.Exec(
+					`create table if not exists
+    reject_reasons
+(
+    id         bigserial primary key,
+    reason     text,
+    created_at timestamp with time zone default current_timestamp,
+    deleted_at timestamp with time zone
+);
+
+create unique index if not exists reject_reasons_reason_uq on reject_reasons(reason) where deleted_at is null;
+
+create table if not exists
+    action_buttons
+(
+    id         bigserial primary key,
+    name     text,
+	type smallint,
+    created_at timestamp with time zone default current_timestamp,
+    deleted_at timestamp with time zone
+);
+
+create unique index if not exists action_buttons_name_uq on action_buttons(name) where deleted_at is null;`).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "ads_campaign_reject_reason_220520221310",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table ad_campaigns add column if not exists reject_reason_id bigint;`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "action_buttons_insert_220520221310",
+			Migrate: func(db *gorm.DB) error {
+				query := `insert into action_buttons (name, type) values
+                                               ('Learn more', 1),
+                                               ('Shop now', 1),
+                                               ('Sign up', 1),
+                                               ('Contact us', 1),
+                                               ('Apply now', 1),
+                                               ('Book now', 1);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }
