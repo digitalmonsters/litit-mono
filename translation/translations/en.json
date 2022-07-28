@@ -395,6 +395,24 @@
     "first_x_social_media_added_headline": "",
     "add_social_subs_target_achieved_bonus_title": "Congratulation!",
     "add_social_subs_target_achieved_bonus_body": "You earned {{.social_subs_target_achieved_bonus}} LIT points for following social media",
-    "add_social_subs_target_achieved_bonus_headline": ""
+    "add_social_subs_target_achieved_bonus_headline": "",
+    "music_creator_status_rejected_title_multiple": "",
+    "music_creator_status_rejected_body_multiple": "",
+    "music_creator_status_rejected_headline_multiple": "",
+    "music_creator_status_rejected_title": "Lit.it",
+    "music_creator_status_rejected_body": "Your Music Creator approval process has been rejected.",
+    "music_creator_status_rejected_headline": "",
+    "music_creator_status_approved_title_multiple": "",
+    "music_creator_status_approved_body_multiple": "",
+    "music_creator_status_approved_headline_multiple": "",
+    "music_creator_status_approved_title": "Lit.it",
+    "music_creator_status_approved_body": "You have received the status of a music creator! Your request has been Approved",
+    "music_creator_status_approved_headline": "",
+    "music_creator_status_pending_title_multiple": "",
+    "music_creator_status_pending_body_multiple": "",
+    "music_creator_status_pending_headline_multiple": "",
+    "music_creator_status_pending_title": "Lit.it",
+    "music_creator_status_pending_body": "Your Music Creator approval process has been successfully initiated",
+    "music_creator_status_pending_headline": ""
   }
 }
