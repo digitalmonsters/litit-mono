@@ -550,5 +550,13 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_first_x_social_media_added_template_280720221400",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('first_x_social_media_added', '2022-07-28 14:00:00.000000', '2022-07-28 14:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
