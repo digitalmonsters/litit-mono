@@ -79,6 +79,7 @@ type Wrappers struct {
 	TesseractOcrApi        WrapperConfig `json:"TesseractOcrApi"`
 	Configurator           WrapperConfig `json:"Configurator"`
 	ContentUploader        WrapperConfig `json:"ContentUploader"`
+	Music                  WrapperConfig `json:"Music"`
 }
 
 type WrapperConfig struct {

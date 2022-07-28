@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type ILikeWrapper interface {
+type IMusicWrapper interface {
 	GetMusicInternal(ids []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleMusic]
 }
 
@@ -23,7 +23,7 @@ type MusicWrapper struct {
 	serviceName    string
 }
 
-func NewMusicWrapper(config boilerplate.WrapperConfig) ILikeWrapper {
+func NewMusicWrapper(config boilerplate.WrapperConfig) IMusicWrapper {
 	timeout := 5 * time.Second
 
 	if config.TimeoutSec > 0 {

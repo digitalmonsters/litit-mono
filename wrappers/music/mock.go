@@ -14,6 +14,6 @@ func (w *MusicWrapperMock) GetMusicInternal(ids []int64, ctx context.Context, fo
 	return w.GetMusicInternalFn(ids, ctx, forceLog)
 }
 
-func GetMock() ILikeWrapper { // for compiler errors
+func GetMock() IMusicWrapper { // for compiler errors
 	return &MusicWrapperMock{}
 }
