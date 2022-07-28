@@ -18,6 +18,7 @@ import (
 	followConsumer "github.com/digitalmonsters/notification-handler/cmd/consumers/follow"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/kyc_status"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/like"
+	"github.com/digitalmonsters/notification-handler/cmd/consumers/music_creator"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/push_admin_message"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/sending_queue"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/tokenomics_notification"
@@ -111,6 +112,7 @@ func main() {
 	contentUploaderWrapper := content_uploader.NewContentUploaderWrapper(cfg.Wrappers.ContentUploader)
 
 	creatorsListener := creators.InitListener(ctx, cfg.CreatorsListener, notificationSender).ListenAsync()
+	musicCreatorListener := music_creator.InitListener(ctx, cfg.MusicCreatorListener, notificationSender).ListenAsync()
 	sendingQueueListener := sending_queue.InitListener(ctx, cfg.SendingQueueListener, notificationSender).ListenAsync()
 	commentListener := commentConsumer.InitListener(ctx, cfg.CommentListener, notificationSender, contentWrapper,
 		commentWrapper).ListenAsync()
@@ -176,6 +178,9 @@ func main() {
 		},
 		func() error {
 			return creatorsListener.Close()
+		},
+		func() error {
+			return musicCreatorListener.Close()
 		},
 		func() error {
 			return commentListener.Close()

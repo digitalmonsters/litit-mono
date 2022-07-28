@@ -48,6 +48,7 @@ type Settings struct {
 	Scylla                         boilerplate.ScyllaConfiguration        `json:"Scylla"`
 	S3                             boilerplate.S3Config                   `json:"S3"`
 	Jobber                         JobberConfig                           `json:"Jobber"`
+	MusicCreatorListener           boilerplate.KafkaListenerConfiguration `json:"MusicCreatorListener"`
 }
 
 type EmailLinks struct {

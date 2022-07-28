@@ -252,6 +252,12 @@ func GetNotificationTypeForAll(templateId string) string {
 		return "push.content-creator.status"
 	case "creator_status_pending":
 		return "push.content-creator.status"
+	case "music_creator_status_rejected":
+		return "push.music-creator.status"
+	case "music_creator_status_approved":
+		return "push.music-creator.status"
+	case "music_creator_status_pending":
+		return "push.music-creator.status"
 	}
 	return ""
 }
@@ -349,6 +355,8 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"kyc_status_verified", "kyc_status_rejected"}
 	case "push.content-creator.status":
 		return []string{"creator_status_rejected", "creator_status_approved", "creator_status_pending"}
+	case "push.music-creator.status":
+		return []string{"music_creator_status_rejected", "music_creator_status_approved", "music_creator_status_pending"}
 	case "push.user.daily_top_spot_reward":
 		return []string{"top_daily_spot_bonus"}
 	case "push.user.weekly_top_spot_reward":
