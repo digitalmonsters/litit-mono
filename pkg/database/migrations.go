@@ -558,5 +558,14 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "add_add_moderation_templates_280720221400",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('ads_campaign_rejected', '2022-07-28 14:00:00.000000', '2022-07-28 14:00:00.000000', 'popup') on conflict do nothing;",
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('ads_campaign_approved', '2022-07-28 14:00:00.000000', '2022-07-28 14:00:00.000000', 'popup') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
