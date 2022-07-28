@@ -414,5 +414,11 @@
     "music_creator_status_pending_title": "Lit.it",
     "music_creator_status_pending_body": "Your Music Creator approval process has been successfully initiated",
     "music_creator_status_pending_headline": ""
+    "ads_campaign_rejected_title": "Lit.it",
+    "ads_campaign_rejected_body": "Your ad has been rejected. See details on your Lit.it ads manager",
+    "ads_campaign_rejected_headline": "",
+    "ads_campaign_approved_title": "Congratulations!",
+    "ads_campaign_approved_body": "Your ad has been approved. Launch it now on the Lit.it ads manager",
+    "ads_campaign_approved_headline": ""
   }
 }
