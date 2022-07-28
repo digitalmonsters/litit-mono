@@ -165,7 +165,7 @@ func (a *apiApp) listActionButtons() router.ICommand {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		db := database.GetDbWithContext(database.DbTypeMaster, executionData.Context)
+		db := database.GetDbWithContext(database.DbTypeReadonly, executionData.Context)
 
 		resp, err := a.commonService.ListActionButtons(req, db)
 		if err != nil {
@@ -192,7 +192,7 @@ func (a *apiApp) listRejectReasons() router.ICommand {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		db := database.GetDbWithContext(database.DbTypeMaster, executionData.Context)
+		db := database.GetDbWithContext(database.DbTypeReadonly, executionData.Context)
 
 		resp, err := a.commonService.ListRejectReasons(req, db)
 		if err != nil {
