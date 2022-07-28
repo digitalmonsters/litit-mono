@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
@@ -47,7 +48,7 @@ func TestNewFeed(t *testing.T) {
 		songs = append(songs, database.CreatorSong{
 			UserId:       userId,
 			Name:         fmt.Sprintf("test song %v", i),
-			Status:       database.CreatorSongStatusApproved,
+			Status:       music.CreatorSongStatusApproved,
 			CreatedAt:    time.Now(),
 			CategoryId:   cat.Id,
 			MoodId:       mood.Id,
@@ -194,7 +195,7 @@ func TestFeedBuilder_LaunchTask(t *testing.T) {
 		songs = append(songs, database.CreatorSong{
 			UserId:       userId,
 			Name:         fmt.Sprintf("test song %v", i),
-			Status:       database.CreatorSongStatusApproved,
+			Status:       music.CreatorSongStatusApproved,
 			CreatedAt:    time.Now(),
 			CategoryId:   cat.Id,
 			MoodId:       mood.Id,
