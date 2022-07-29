@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
@@ -28,6 +29,12 @@ func init() {
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
 		settings.MasterDb.Db = fmt.Sprintf("ci_%v", boilerplate.GetGenerator().Generate().String())
 		settings.ReadonlyDb.Db = settings.MasterDb.Db
+	}
+	if boilerplate.GetCurrentEnvironment() != boilerplate.Ci && boilerplate.GetCurrentEnvironment() != boilerplate.Local {
+		cfgService = application.NewConfigurator[AppConfig]().
+			WithRetriever(application.NewHttpRetriever(application.HttpRetrieverDefaultUrl)).
+			WithMigrator(application.NewHttpMigrator(application.HttpMigratorDefaultUrl), GetConfigsMigration()).
+			MustInit()
 	}
 }
 
