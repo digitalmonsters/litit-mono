@@ -24,8 +24,8 @@ where user_id is not null
                      'last_boring_spots', 'first_boring_spots', 'warning_boring_spots',
                      'monthly_mega_bonus_completed', 'monthly_mega_bonus_progress',
                      'monthly_mega_bonus_progress_almost_finished', 'monthly_mega_bonus_one_day_missing', 'monthly_mega_bonus_do_not_miss',
-                     'first_x_social_media_added', 'add_social_subs_target_achieved_bonus', 'music_creator_status_rejected', 'music_creator_status_approved',
-                     'music_creator_status_pending'
+                     'first_x_social_media_added', 'add_social_subs_target_achieved_bonus',
+                     'ads_campaign_rejected', 'ads_campaign_approved'
     )
   and entity_id is not null
   and related_entity_id is not null
@@ -53,8 +53,8 @@ where user_id is not null
                      'last_boring_spots', 'first_boring_spots', 'warning_boring_spots',
                      'monthly_mega_bonus_completed', 'monthly_mega_bonus_progress',
                      'monthly_mega_bonus_progress_almost_finished', 'monthly_mega_bonus_one_day_missing', 'monthly_mega_bonus_do_not_miss',
-                     'first_x_social_media_added', 'add_social_subs_target_achieved_bonus', 'music_creator_status_rejected', 'music_creator_status_approved',
-                     'music_creator_status_pending',
+                     'first_x_social_media_added', 'add_social_subs_target_achieved_bonus',
+                     'ads_campaign_rejected', 'ads_campaign_approved',
                      'push_admin')
   and entity_id is not null
   and related_entity_id is not null

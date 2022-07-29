@@ -201,6 +201,10 @@ func GetNotificationType(templateId string) string {
 		return "push.social_medias.first"
 	case "add_social_subs_target_achieved_bonus":
 		return "push.social_subs.bonus"
+	case "ads_campaign_approved":
+		return "push.ads_moderation.status"
+	case "ads_campaign_rejected":
+		return "push.ads_moderation.status"
 	}
 	return ""
 }
@@ -372,6 +376,8 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"first_x_social_media_added"}
 	case "push.push.social_subs.bonus.first":
 		return []string{"add_social_subs_target_achieved_bonus"}
+	case "push.ads_moderation.status":
+		return []string{"ads_campaign_rejected", "ads_campaign_approved"}
 	}
 	return []string{}
 }
