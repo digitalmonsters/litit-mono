@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/global"
+	"github.com/digitalmonsters/music/utils"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"gopkg.in/guregu/null.v4"
@@ -103,12 +106,18 @@ func (s *Service) CreatorRequestsList(req CreatorRequestsListRequest, db *gorm.D
 
 	if len(req.SearchQuery) > 0 {
 		search := fmt.Sprintf("%%%v%%", req.SearchQuery)
-		query = query.Where("firstname ilike ? or lastname ilike ? or username ilike ?", search, search, search)
-	}
-
-	if len(req.Email) > 0 {
-		search := fmt.Sprintf("%%%v%%", req.Email)
-		query = query.Where("email ilike ?", search)
+		query = query.Where(db.
+			Where(utils.AddSearchQuery(db.Table("creators"), []string{search}, []string{"username"})).
+			Or(db.
+				Where(
+					utils.AddSearchQuery(db.Table("creators"), []string{search}, []string{"firstname", "lastname"}),
+				),
+			).Or(db.
+			Where(
+				utils.AddSearchQuery(db.Table("creators"), []string{search}, []string{"email"}),
+			),
+		),
+		)
 	}
 
 	var totalCount int64
@@ -268,7 +277,7 @@ func (s *Service) CreatorRequestReject(req CreatorRequestRejectRequest, db *gorm
 	return creatorRequests, nil
 }
 
-func (s *Service) UploadNewSong(req UploadNewSongRequest, db *gorm.DB, executionData router.MethodExecutionData) (*database.CreatorSong, error) {
+func (s *Service) UploadNewSong(req UploadNewSongRequest, contentWrapper content.IContentWrapper, db *gorm.DB, executionData router.MethodExecutionData) (*database.CreatorSong, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
@@ -279,6 +288,17 @@ func (s *Service) UploadNewSong(req UploadNewSongRequest, db *gorm.DB, execution
 
 	if creator.Id == 0 || creator.Status != user_go.CreatorStatusApproved {
 		return nil, errors.New("only approved creators can upload music")
+	}
+
+	newContent := <-contentWrapper.InsertMusicContent(content.MusicContentRequest{
+		ContentType: eventsourcing.ContentTypeMusic,
+		Duration:    int(req.FullSongDuration),
+		AuthorId:    executionData.UserId,
+		Hashtags:    req.Hashtags,
+	}, executionData.Context, true)
+
+	if newContent.Error != nil {
+		return nil, newContent.Error.ToError()
 	}
 
 	song := database.CreatorSong{

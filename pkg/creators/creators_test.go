@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
@@ -143,7 +144,6 @@ func TestCreatorRequestsList(t *testing.T) {
 		Limit:                10,
 		Offset:               0,
 		SearchQuery:          "firstname",
-		Email:                "email",
 	}, gormDb, config.Creators.MaxThresholdHours, nil, userWrapper)
 
 	assert.Nil(t, err)
@@ -295,6 +295,21 @@ func TestUploadNewSong(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	contentWrapper := &content.ContentWrapperMock{}
+
+	contentWrapper.InsertMusicContentFn = func(content1 content.MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[content.SimpleContent] {
+		ch := make(chan wrappers.GenericResponseChan[content.SimpleContent], 2)
+		ch <- wrappers.GenericResponseChan[content.SimpleContent]{
+			Error: nil,
+			Response: content.SimpleContent{
+				Id: 1,
+			},
+		}
+		close(ch)
+
+		return ch
+	}
+
 	userId := int64(111)
 	creator := addCreator(t, userId, user_go.CreatorStatusApproved)
 	assert.NotNil(t, creator)
@@ -318,7 +333,7 @@ func TestUploadNewSong(t *testing.T) {
 		ShortSongUrl: "https://short-url.com",
 		ImageUrl:     "https://image-url.com",
 		Hashtags:     []string{"test"},
-	}, gormDb, executionData)
+	}, contentWrapper, gormDb, executionData)
 	assert.Nil(t, err)
 
 	var song database.CreatorSong

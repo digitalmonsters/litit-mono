@@ -1,20 +1,18 @@
-package creator
+package api
 
 import (
-	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/uploader"
 	"github.com/digitalmonsters/music/utils"
 	"github.com/valyala/fasthttp"
 	"strconv"
 )
 
-func InitUploadApi(httpRouter *router.HttpRouter, cfg *configs.Settings) {
-	httpRouter.Router().OPTIONS("/creator/upload", func(ctx *fasthttp.RequestCtx) {
+func (c *creatorApp) initUploadApi() {
+	c.httpRouter.Router().OPTIONS("/creator/upload", func(ctx *fasthttp.RequestCtx) {
 		utils.SetCors(ctx)
 	})
 
-	httpRouter.Router().POST("/creator/upload", func(ctx *fasthttp.RequestCtx) {
+	c.httpRouter.Router().POST("/creator/upload", func(ctx *fasthttp.RequestCtx) {
 		defer func() {
 			utils.SetCors(ctx)
 		}()
@@ -43,7 +41,7 @@ func InitUploadApi(httpRouter *router.HttpRouter, cfg *configs.Settings) {
 			return
 		}
 
-		resp, err := uploader.FileUpload(cfg, uploadType, ctx)
+		resp, err := uploader.FileUpload(c.cfg, uploadType, ctx)
 		if err != nil {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		} else {

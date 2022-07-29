@@ -43,6 +43,20 @@
     },
     "PollTimeMs": 2000
   },
+  "Redis": {
+    "Host": "localhost:6379",
+    "Tls": false,
+    "Db": 1
+  },
+  "Jobber": {
+    "Tls": true,
+    "DefaultQueue": "local_music_tasks",
+    "ResultExpire": 3600,
+    "Broker": "redis://127.0.0.1:6379",
+    "ResultBackend": "redis://127.0.0.1:6379",
+    "Lock": "redis://127.0.0.1:6379",
+    "Concurrency": 15
+  },
   "Wrappers": {
     "Content": {
       "ApiUrl": ""
