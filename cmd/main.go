@@ -11,8 +11,10 @@ import (
 	"github.com/digitalmonsters/comments/cmd/api/vote"
 	vote2 "github.com/digitalmonsters/comments/cmd/api/vote/notifiers/vote"
 	"github.com/digitalmonsters/comments/cmd/consumers/user_consumer"
+	report2 "github.com/digitalmonsters/comments/cmd/report"
 	"github.com/digitalmonsters/comments/configs"
 	"github.com/digitalmonsters/comments/pkg/database"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/ops"
@@ -77,6 +79,12 @@ func main() {
 	if err := api.InitInternalApi(fastHttpRouter.GetRpcServiceEndpoint(), apiDef, db); err != nil {
 		panic(err)
 	}
+
+	var rootApplication application.RootApplication
+
+	rootApplication.
+		AddApplication(report2.Application(fastHttpRouter, apiDef, userWrapper, contentWrapper)).
+		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		fastHttpRouter.RegisterDocs(apiDef, nil)

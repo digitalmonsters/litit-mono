@@ -17,6 +17,7 @@ type Comment struct {
 	ContentId    null.Int `json:"content_id"`
 	ProfileId    null.Int `json:"profile_id"`
 	ParentId     null.Int `json:"parent_id"`
+	NumReports   int64    `json:"num_reports"`
 }
 
 func (Comment) TableName() string {
@@ -42,6 +43,7 @@ type Report struct {
 	ReporterId int64
 	CommentId  int64
 	Detail     string
+	CreatedAt  time.Time
 }
 
 func (Report) TableName() string {
