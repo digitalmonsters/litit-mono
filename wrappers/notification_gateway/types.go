@@ -41,6 +41,7 @@ type SendPushRequest struct {
 	Body       string            `json:"body"`
 	ExtraData  map[string]string `json:"extra_data"`
 	PublishKey string            `json:"publish_key"`
+	UserId     int64             `json:"user_id"`
 }
 
 func (v SendPushRequest) GetPublishKey() string {
