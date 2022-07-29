@@ -26,7 +26,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, getAdsMessagePath, router.MethodGet, true, false)); err != nil {
+	}, getAdsMessagePath, router.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
@@ -42,7 +42,7 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}
 
 		return resp, nil
-	}, messagePath, router.MethodGet, true, false)); err != nil {
+	}, messagePath, router.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 

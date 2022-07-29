@@ -1,14 +1,23 @@
 package main
 
 import (
+	adCampaignApp "github.com/digitalmonsters/ads-manager/cmd/ad_campaign"
 	"github.com/digitalmonsters/ads-manager/cmd/api"
+	"github.com/digitalmonsters/ads-manager/cmd/common"
 	"github.com/digitalmonsters/ads-manager/configs"
+	"github.com/digitalmonsters/ads-manager/pkg/ad_campaign"
+	"github.com/digitalmonsters/ads-manager/pkg/ad_campaign/ad_moderation"
+	commonPkg "github.com/digitalmonsters/ads-manager/pkg/common"
+	converter2 "github.com/digitalmonsters/ads-manager/pkg/converter"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
+	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -21,6 +30,7 @@ func main() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()
 
+	var rootApplication application.RootApplication
 	cfg := configs.GetConfig()
 	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
@@ -33,6 +43,8 @@ func main() {
 	)
 
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
+	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
+	notificationHandler := notification_handler.NewNotificationHandlerWrapper(cfg.Wrappers.NotificationHandler)
 
 	if err := api.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
@@ -43,6 +55,16 @@ func main() {
 		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
 		panic(err)
 	}
+
+	adCampaignService := ad_campaign.NewService(contentWrapper)
+	converter := converter2.NewConverter(userGoWrapper)
+	adModerationService := ad_moderation.NewService(notificationHandler, converter)
+	commonService := commonPkg.NewService()
+
+	rootApplication.
+		AddApplication(adCampaignApp.Application(httpRouter, apiDef, adCampaignService, adModerationService)).
+		AddApplication(common.Application(httpRouter, apiDef, commonService)).
+		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)
