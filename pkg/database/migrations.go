@@ -483,5 +483,33 @@ func getMigrations() []*gormigrate.Migration {
 				return nil
 			},
 		},
+		{
+			ID: "feat_listened_music_21072022",
+			Migrate: func(db *gorm.DB) error {
+				query := `create table if not exists listened_music
+						(
+							user_id    bigint not null,
+							song_id    bigint not null,
+							primary key (user_id, song_id)
+						);
+				
+						create index listened_by_user_inx
+							on listened_music (user_id) include (song_id);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "feat_music_reactions_220720221137",
+			Migrate: func(db *gorm.DB) error {
+				query := `alter table creator_songs add column if not exists dislikes integer default 0;
+						  alter table creator_songs add column if not exists loves integer default 0;
+						  alter table creator_songs add column if not exists shares integer default 0;
+						  alter table creator_songs add column if not exists score integer default 0;`
+				return db.Exec(query).Error
+			},
+		},
 	}
 }

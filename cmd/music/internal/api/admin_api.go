@@ -37,7 +37,7 @@ func (m *musicApp) initAdminApi() error {
 }
 
 func (m *musicApp) upsertPlaylists() router.ICommand {
-	method := "UpsertPlaylistAdmin"
+	method := "UpsertPlaylist"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  playlist.UpsertPlaylistRequest{},
@@ -62,7 +62,7 @@ func (m *musicApp) upsertPlaylists() router.ICommand {
 }
 
 func (m *musicApp) deletePlaylists() router.ICommand {
-	method := "DeletePlaylistsBulkAdmin"
+	method := "DeletePlaylistsBulk"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  playlist.DeletePlaylistsBulkRequest{},
@@ -87,7 +87,7 @@ func (m *musicApp) deletePlaylists() router.ICommand {
 }
 
 func (m *musicApp) playlistsListAdmin() router.ICommand {
-	method := "PlaylistListingAdmin"
+	method := "PlaylistListing"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  playlist.PlaylistListingAdminRequest{},
@@ -112,7 +112,7 @@ func (m *musicApp) playlistsListAdmin() router.ICommand {
 }
 
 func (m *musicApp) addSongToPlaylistAdmin() router.ICommand {
-	method := "AddSongToPlaylistBulkAdmin"
+	method := "AddSongToPlaylistBulk"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  song.AddSongToPlaylistRequest{},
@@ -137,7 +137,7 @@ func (m *musicApp) addSongToPlaylistAdmin() router.ICommand {
 }
 
 func (m *musicApp) deleteSongFromPlaylistAdmin() router.ICommand {
-	method := "DeleteSongFromPlaylistsBulkAdmin"
+	method := "DeleteSongFromPlaylistsBulk"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  song.DeleteSongsFromPlaylistBulkRequest{},
@@ -162,7 +162,7 @@ func (m *musicApp) deleteSongFromPlaylistAdmin() router.ICommand {
 }
 
 func (m *musicApp) playlistSongListAdmin() router.ICommand {
-	method := "PlaylistSongListAdmin"
+	method := "PlaylistSongList"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  song.PlaylistSongListRequest{},
@@ -187,7 +187,7 @@ func (m *musicApp) playlistSongListAdmin() router.ICommand {
 }
 
 func (m *musicApp) allSongsListAdmin() router.ICommand {
-	method := "AllSongsListAdmin"
+	method := "AllSongsList"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  music_source.ListMusicRequest{},
@@ -212,7 +212,7 @@ func (m *musicApp) allSongsListAdmin() router.ICommand {
 }
 
 func (m *musicApp) upsertSongsToOwnStorage() router.ICommand {
-	method := "UpsertSongsToOwnStorageBulk"
+	method := "UpsertSongToOwnStorageBulk"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  own_storage.AddSongsToOwnStorageRequest{},
@@ -237,7 +237,7 @@ func (m *musicApp) upsertSongsToOwnStorage() router.ICommand {
 }
 
 func (m *musicApp) deleteSongsFromOwnStorage() router.ICommand {
-	method := "DeleteSongsFromOwnStorageBulk"
+	method := "DeleteSongFromOwnStorageBulk"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  own_storage.DeleteSongsFromOwnStorageRequest{},
@@ -261,7 +261,7 @@ func (m *musicApp) deleteSongsFromOwnStorage() router.ICommand {
 }
 
 func (m *musicApp) ownStorageMusicList() router.ICommand {
-	method := "OwnStorageMusicList"
+	method := "OwnStorageSongsList"
 
 	m.apiDef[method] = swagger.ApiDescription{
 		Request:  own_storage.OwnStorageMusicListRequest{},

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/global"
@@ -275,7 +277,7 @@ func (s *Service) CreatorRequestReject(req CreatorRequestRejectRequest, db *gorm
 	return creatorRequests, nil
 }
 
-func (s *Service) UploadNewSong(req UploadNewSongRequest, db *gorm.DB, executionData router.MethodExecutionData) (*database.CreatorSong, error) {
+func (s *Service) UploadNewSong(req UploadNewSongRequest, contentWrapper content.IContentWrapper, db *gorm.DB, executionData router.MethodExecutionData) (*database.CreatorSong, error) {
 	tx := db.Begin()
 	defer tx.Rollback()
 
@@ -286,6 +288,17 @@ func (s *Service) UploadNewSong(req UploadNewSongRequest, db *gorm.DB, execution
 
 	if creator.Id == 0 || creator.Status != user_go.CreatorStatusApproved {
 		return nil, errors.New("only approved creators can upload music")
+	}
+
+	newContent := <-contentWrapper.InsertMusicContent(content.MusicContentRequest{
+		ContentType: eventsourcing.ContentTypeMusic,
+		Duration:    int(req.FullSongDuration),
+		AuthorId:    executionData.UserId,
+		Hashtags:    req.Hashtags,
+	}, executionData.Context, true)
+
+	if newContent.Error != nil {
+		return nil, newContent.Error.ToError()
 	}
 
 	song := database.CreatorSong{

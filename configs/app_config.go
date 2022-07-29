@@ -23,7 +23,15 @@ func GetAppConfig() AppConfig {
 }
 
 type AppConfig struct {
-	MUSIC_MAX_HASHTAGS_COUNT int
+	MUSIC_MAX_HASHTAGS_COUNT                    int
+	MUSIC_FEED_LIMIT                            int
+	MUSIC_CALCULATION_LOVE_COUNT_WEIGHT         int
+	MUSIC_CALCULATION_LIKE_COUNT_WEIGHT         int
+	MUSIC_CALCULATION_SHORT_LISTEN_COUNT_WEIGHT int
+	MUSIC_CALCULATION_DISLIKE_COUNT_WEIGHT      int
+	MUSIC_CALCULATION_TIMING_START_CONF         int
+	MUSIC_CALCULATION_TIMING_DELIMITER          int
+	MUSIC_FEED_UPDATE_SCORE_FREQUENCY_MINUTES   int
 }
 
 func GetConfigsMigration() map[string]application.MigrateConfigModel {
@@ -35,6 +43,70 @@ func GetConfigsMigration() map[string]application.MigrateConfigModel {
 			Description:    "Max hashtags count in music",
 			Category:       application.ConfigCategoryApplications,
 			ReleaseVersion: "22.07.22",
+		},
+		"MUSIC_FEED_LIMIT": {
+			Key:            "MUSIC_FEED_LIMIT",
+			Value:          fmt.Sprint(10000),
+			Type:           application.ConfigTypeInteger,
+			Description:    "Max music feed limit",
+			Category:       application.ConfigCategoryApplications,
+			ReleaseVersion: "22.07.22",
+		},
+		"MUSIC_CALCULATION_LOVE_COUNT_WEIGHT": {
+			Key:            "MUSIC_CALCULATION_LOVE_COUNT_WEIGHT",
+			Value:          "10",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Music feed. c.loves * [X]",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_CALCULATION_LIKE_COUNT_WEIGHT": {
+			Key:            "MUSIC_CALCULATION_LIKE_COUNT_WEIGHT",
+			Value:          "6",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Music feed. c.likes * [X]",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_CALCULATION_DISLIKE_COUNT_WEIGHT": {
+			Key:            "MUSIC_CALCULATION_DISLIKE_COUNT_WEIGHT",
+			Value:          "1",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Music feed. (calculations...) - c.dislikes * [X]",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_CALCULATION_SHORT_LISTEN_COUNT_WEIGHT": {
+			Key:            "MUSIC_CALCULATION_SHORT_LISTEN_COUNT_WEIGHT",
+			Value:          "1",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Music feed. c.short_listens * [X]",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_CALCULATION_TIMING_START_CONF": {
+			Key:            "MUSIC_CALCULATION_TIMING_START_CONF",
+			Value:          "5000",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Music calculation timing start value",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_CALCULATION_TIMING_DELIMITER": {
+			Key:            "MUSIC_CALCULATION_TIMING_DELIMITER",
+			Value:          "60",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Music calculation delimiter",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_FEED_UPDATE_SCORE_FREQUENCY_MINUTES": {
+			Key:            "MUSIC_FEED_UPDATE_SCORE_FREQUENCY_MINUTES",
+			Value:          "60",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Period per music score update",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "29.07.2022",
 		},
 	}
 }
