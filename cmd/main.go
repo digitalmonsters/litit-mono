@@ -96,7 +96,7 @@ func main() {
 	feedService := feedPkg.NewFeed(deDuplicator, feedConverter, jobber, cfgService)
 
 	rootApplication.
-		AddApplication(creator.Application(httpRouter, apiDef, creatorsService, userGoWrapper, cfg.Creators, &cfg, feedService)).
+		AddApplication(creator.Application(httpRouter, apiDef, creatorsService, userGoWrapper, cfg.Creators, &cfg, feedService, ctx)).
 		AddApplication(music.Application(httpRouter, apiDef, musicStorageService, &cfg)).
 		MustInit()
 
