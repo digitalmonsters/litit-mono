@@ -206,3 +206,7 @@ const (
 	CurrentRate        FilterField = "current_rate"
 	WithdrawnTokens    FilterField = "withdrawn_tokens"
 )
+
+type CreateBotViewsRequest struct {
+	BotViews map[int64][]int64 `json:"bot_views"`
+}
