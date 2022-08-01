@@ -23,9 +23,10 @@ func Application(
 	creatorsCfg configs.CreatorsConfig,
 	cfg *configs.Settings,
 	musicFeedService *feedPkg.Feed,
+	appConfig *application.Configurator[configs.AppConfig],
 ) *application.BaseApplication {
 	return application.NewBaseApplication("creator").
-		AddSubApplication(api.SubApp(httpRouter, apiDef, creatorsService, userGoWrapper, creatorsCfg, cfg)).
+		AddSubApplication(api.SubApp(httpRouter, apiDef, creatorsService, userGoWrapper, creatorsCfg, cfg, appConfig)).
 		AddSubApplication(reject_reasons.SubApp(httpRouter, apiDef)).
 		AddSubApplication(moods.SubApp(httpRouter, apiDef)).
 		AddSubApplication(categories.SubApp(httpRouter, apiDef)).
