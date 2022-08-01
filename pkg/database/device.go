@@ -6,12 +6,11 @@ import (
 )
 
 type Device struct {
-	Id           uuid.UUID         `gorm:"primaryKey;autoIncrement"`
-	UserId       int64             `gorm:"column:userId"`
-	DeviceId     string            `gorm:"column:deviceId"`
-	PushToken    string            `gorm:"column:pushToken"`
-	Platform     common.DeviceType `json:"platform"`
-	Unregistered bool
+	Id        uuid.UUID         `gorm:"primaryKey;autoIncrement"`
+	UserId    int64             `gorm:"column:userId"`
+	DeviceId  string            `gorm:"column:deviceId"`
+	PushToken string            `gorm:"column:pushToken"`
+	Platform  common.DeviceType `json:"platform"`
 }
 
 func (Device) TableName() string {

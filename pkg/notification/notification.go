@@ -377,10 +377,7 @@ func GetNotificationsReadCount(req GetNotificationsReadCountRequest, ctx context
 }
 
 func DisableUnregisteredTokens(req notification_handler.DisableUnregisteredTokensRequest, db *gorm.DB) ([]string, error) {
-	if err := db.Model(database.Device{}).
-		Where(`"pushToken" in ?`, req.Tokens).
-		Update("unregistered", true).
-		Error; err != nil {
+	if err := db.Exec(`delete from "devices" where "pushToken" in ?`, req.Tokens).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 

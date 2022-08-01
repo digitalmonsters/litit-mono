@@ -253,11 +253,10 @@ func TestDisableUnregisteredTokens(t *testing.T) {
 		token := "push_token" + fmt.Sprint(i)
 		tokens = append(tokens, token)
 		if err := gormDb.Create(&database.Device{
-			UserId:       i,
-			DeviceId:     "device_id" + fmt.Sprint(i),
-			PushToken:    token,
-			Platform:     "some_platform",
-			Unregistered: false,
+			UserId:    i,
+			DeviceId:  "device_id" + fmt.Sprint(i),
+			PushToken: token,
+			Platform:  "some_platform",
 		}).Error; err != nil {
 			t.Fatal(err)
 		}
@@ -271,7 +270,7 @@ func TestDisableUnregisteredTokens(t *testing.T) {
 
 	var devices []database.Device
 
-	if err := gormDb.Where("unregistered = true").Find(&devices).Error; err != nil {
+	if err := gormDb.Find(&devices).Error; err != nil {
 		t.Fatal(err)
 	}
 

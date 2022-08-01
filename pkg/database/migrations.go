@@ -567,12 +567,5 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
-		{
-			ID: "add_unregistered_devices_20220727",
-			Migrate: func(db *gorm.DB) error {
-				return boilerplate_testing.ExecutePostgresSql(db,
-					"alter table devices add column if not exists unregistered boolean default false;")
-			},
-		},
 	}
 }
