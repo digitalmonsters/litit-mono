@@ -16,6 +16,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/samber/lo v1.26.0
+	github.com/segmentio/kafka-go v0.4.31
 	github.com/stretchr/testify v1.7.1
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/thoas/go-funk v0.9.2
@@ -98,7 +99,6 @@ require (
 	github.com/savsgio/gotils v0.0.0-20220401102855-e56b59f40436 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.7.0 // indirect
-	github.com/segmentio/kafka-go v0.4.31 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
@@ -106,6 +106,8 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
+	github.com/xdg/scram v1.0.5 // indirect
+	github.com/xdg/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.elastic.co/apm/module/apmgocql/v2 v2.1.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect

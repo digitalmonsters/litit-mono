@@ -1,12 +1,17 @@
 package creator
 
 import (
+	"context"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/creator/internal/api"
 	"github.com/digitalmonsters/music/cmd/creator/internal/categories"
+	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/dislike"
+	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/like"
+	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/listen"
+	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/love"
 	"github.com/digitalmonsters/music/cmd/creator/internal/feed"
 	"github.com/digitalmonsters/music/cmd/creator/internal/moods"
 	"github.com/digitalmonsters/music/cmd/creator/internal/reject_reasons"
@@ -23,11 +28,16 @@ func Application(
 	creatorsCfg configs.CreatorsConfig,
 	cfg *configs.Settings,
 	musicFeedService *feedPkg.Feed,
+	ctx context.Context,
 ) *application.BaseApplication {
 	return application.NewBaseApplication("creator").
 		AddSubApplication(api.SubApp(httpRouter, apiDef, creatorsService, userGoWrapper, creatorsCfg, cfg)).
 		AddSubApplication(reject_reasons.SubApp(httpRouter, apiDef)).
 		AddSubApplication(moods.SubApp(httpRouter, apiDef)).
 		AddSubApplication(categories.SubApp(httpRouter, apiDef)).
-		AddSubApplication(feed.SubApp(httpRouter, apiDef, musicFeedService))
+		AddSubApplication(feed.SubApp(httpRouter, apiDef, musicFeedService)).
+		AddSubApplication(like.SubApp(ctx, creatorsCfg.Listeners.LikeCounter)).
+		AddSubApplication(dislike.SubApp(ctx, creatorsCfg.Listeners.DislikeCounter)).
+		AddSubApplication(love.SubApp(ctx, creatorsCfg.Listeners.LoveCounter)).
+		AddSubApplication(listen.SubApp(ctx, creatorsCfg.Listeners.ListenCounter))
 }
