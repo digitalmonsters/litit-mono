@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
@@ -103,7 +104,7 @@ func TestRejectMusic(t *testing.T) {
 		Name:       "test_song",
 		MoodId:     mood.Id,
 		CategoryId: category.Id,
-		Status:     database.CreatorSongStatusPublished,
+		Status:     music.CreatorSongStatusPublished,
 	}
 
 	if err := gormDb.Create(&song).Error; err != nil {
@@ -122,7 +123,7 @@ func TestRejectMusic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, songToCheck.Status, database.CreatorSongStatusRejected)
+	assert.Equal(t, songToCheck.Status, music.CreatorSongStatusRejected)
 	assert.Equal(t, songToCheck.RejectReason.Int64, rejectReasons[0].Id)
 	assert.Equal(t, songToCheck.Reject.Reason, "test1")
 
@@ -136,7 +137,7 @@ func TestRejectMusic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, songToCheck.Status, database.CreatorSongStatusApproved)
+	assert.Equal(t, songToCheck.Status, music.CreatorSongStatusApproved)
 	assert.False(t, songToCheck.RejectReason.Valid)
 }
 
@@ -158,7 +159,7 @@ func TestList(t *testing.T) {
 		songs = append(songs, database.CreatorSong{
 			UserId:     1,
 			Name:       fmt.Sprintf("test %v", i),
-			Status:     database.CreatorSongStatusPublished,
+			Status:     music.CreatorSongStatusPublished,
 			CategoryId: category.Id,
 			MoodId:     mood.Id,
 		})

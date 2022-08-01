@@ -7,6 +7,7 @@ import (
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/global"
@@ -304,7 +305,7 @@ func (s *Service) UploadNewSong(req UploadNewSongRequest, contentWrapper content
 	song := database.CreatorSong{
 		UserId:            executionData.UserId,
 		Name:              req.Name,
-		Status:            database.CreatorSongStatusPublished,
+		Status:            music.CreatorSongStatusPublished,
 		LyricAuthor:       req.LyricAuthor,
 		MusicAuthor:       req.MusicAuthor,
 		FullSongDuration:  req.FullSongDuration,

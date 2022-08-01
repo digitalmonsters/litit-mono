@@ -49,7 +49,7 @@ func (f *Feed) GetFeed(db *gorm.DB, userId int64, count int, executionData route
 		" where listened_music.user_id = ?)", userId)
 
 	if len(idsToIgnore) > 0 {
-		query = query.Where("content.id not in ?", idsToIgnore)
+		query = query.Where("creator_songs.id not in ?", idsToIgnore)
 	}
 
 	query = query.Order("score desc")

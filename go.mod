@@ -3,8 +3,9 @@ module github.com/digitalmonsters/music
 go 1.18
 
 require (
+	github.com/RichardKnop/logging v0.0.0-20190827224416-1a693bdd4fae
 	github.com/RichardKnop/machinery v1.10.6
-	github.com/digitalmonsters/go-common v1.31.45
+	github.com/digitalmonsters/go-common v1.32.7
 	github.com/gammazero/workerpool v1.1.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-redis/redis/v8 v8.11.5
@@ -20,6 +21,7 @@ require (
 	github.com/thoas/go-funk v0.9.2
 	github.com/valyala/fasthttp v1.35.0
 	go.elastic.co/apm v1.15.0
+	go.elastic.co/apm/module/apmgoredisv8 v1.15.0
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/gorm v1.23.4
 )
@@ -29,7 +31,6 @@ require (
 	cloud.google.com/go/compute v1.6.1 // indirect
 	cloud.google.com/go/iam v0.3.0 // indirect
 	cloud.google.com/go/pubsub v1.20.0 // indirect
-	github.com/RichardKnop/logging v0.0.0-20190827224416-1a693bdd4fae // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.43.44 // indirect
@@ -107,7 +108,6 @@ require (
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.elastic.co/apm/module/apmgocql/v2 v2.1.0 // indirect
-	go.elastic.co/apm/module/apmgoredisv8 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmgormv2 v1.15.0 // indirect
 	go.elastic.co/apm/module/apmhttp v1.15.0 // indirect
 	go.elastic.co/apm/module/apmsql v1.15.0 // indirect

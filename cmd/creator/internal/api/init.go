@@ -44,6 +44,10 @@ func (c creatorApp) Init(subAppLogger zerolog.Logger) error {
 		return err
 	}
 
+	if err := c.initServiceApi(); err != nil {
+		return err
+	}
+
 	c.initUploadApi()
 
 	return c.initAdminApi()

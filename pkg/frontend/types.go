@@ -2,7 +2,7 @@ package frontend
 
 import (
 	"github.com/digitalmonsters/go-common/frontend"
-	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v4"
 	"time"
@@ -42,26 +42,26 @@ type RejectReason struct {
 }
 
 type CreatorSongModel struct {
-	Id                int64                      `json:"id"`
-	UserId            int64                      `json:"user_id"`
-	Name              string                     `json:"name"`
-	Status            database.CreatorSongStatus `json:"status"`
-	LyricAuthor       null.String                `json:"lyric_author"`
-	MusicAuthor       string                     `json:"music_author"`
-	CategoryId        int64                      `json:"category_id"`
-	MoodId            int64                      `json:"mood_id"`
-	FullSongUrl       string                     `json:"full_song_url"`
-	FullSongDuration  float64                    `json:"full_song_duration"`
-	ShortSongUrl      string                     `json:"short_song_url"`
-	ShortSongDuration float64                    `json:"short_song_duration"`
-	ImageUrl          string                     `json:"image_url"`
-	Hashtags          pq.StringArray             `gorm:"type:text[]" json:"hashtags"`
-	ShortListens      int                        `json:"short_listens"`
-	FullListens       int                        `json:"full_listens"`
-	Likes             int                        `json:"likes"`
-	Comments          int                        `json:"comments"`
-	UsedInVideo       int                        `json:"used_in_video"`
-	CreatedAt         time.Time                  `json:"created_at"`
+	Id                int64                   `json:"id"`
+	UserId            int64                   `json:"user_id"`
+	Name              string                  `json:"name"`
+	Status            music.CreatorSongStatus `json:"status"`
+	LyricAuthor       null.String             `json:"lyric_author"`
+	MusicAuthor       string                  `json:"music_author"`
+	CategoryId        int64                   `json:"category_id"`
+	MoodId            int64                   `json:"mood_id"`
+	FullSongUrl       string                  `json:"full_song_url"`
+	FullSongDuration  float64                 `json:"full_song_duration"`
+	ShortSongUrl      string                  `json:"short_song_url"`
+	ShortSongDuration float64                 `json:"short_song_duration"`
+	ImageUrl          string                  `json:"image_url"`
+	Hashtags          pq.StringArray          `gorm:"type:text[]" json:"hashtags"`
+	ShortListens      int                     `json:"short_listens"`
+	FullListens       int                     `json:"full_listens"`
+	Likes             int                     `json:"likes"`
+	Comments          int                     `json:"comments"`
+	UsedInVideo       int                     `json:"used_in_video"`
+	CreatedAt         time.Time               `json:"created_at"`
 
 	IsCreatorFollowing bool `json:"is_creator_following"`
 	IsFollowing        bool `json:"is_following"`
