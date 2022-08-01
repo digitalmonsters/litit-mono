@@ -74,6 +74,11 @@ func NewRouter(rpcEndpointPath string, auth auth_go.IAuthGoWrapper) *HttpRouter 
 	return h
 }
 
+func (r *HttpRouter) WithUserExecutorValidator(userExecutorValidator UserExecutorValidator) *HttpRouter {
+	r.userExecutorValidator = userExecutorValidator
+	return r
+}
+
 func (r *HttpRouter) GetRpcAdminLegacyEndpoint() IRpcEndpoint {
 	if r.rpcEndpointAdminLegacy == nil {
 		r.rpcEndpointAdminLegacy = newRpcEndpointPublic()

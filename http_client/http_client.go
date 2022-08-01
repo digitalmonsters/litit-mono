@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"time"
 )
@@ -136,6 +137,10 @@ func NewHttpClient() *HttpClient {
 	})
 
 	return h
+}
+
+func (h *HttpClient) GetClient() *http.Client {
+	return h.cl.GetClient()
 }
 
 func (h *HttpClient) WithServiceName(serviceName string) *HttpClient {
