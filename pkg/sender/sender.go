@@ -220,7 +220,8 @@ func (s *Sender) sendGroupedPush(eventType, kind string, userId int64, entityId 
 		headline = headlineMultiple
 	}
 
-	if err = <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, eventType, kind, title, body, headline, fmt.Sprint(userId), customData), ctx); err != nil {
+	if err = <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, eventType, kind, title, body, headline, fmt.Sprint(userId), customData,
+		userId), ctx); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -250,7 +251,8 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 	}
 
 	if !isGrouped {
-		sendResult := <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, pushType, kind, title, body, headline, fmt.Sprint(userId), customData), ctx)
+		sendResult := <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, pushType, kind, title, body, headline, fmt.Sprint(userId), customData,
+			userId), ctx)
 		return nil, sendResult
 	}
 
@@ -372,7 +374,7 @@ func (s *Sender) sendCustomPushTemplateMessageToUser(pushType, kind, title, body
 }
 
 func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kind, title string, body string, headline string,
-	key string, customData database.CustomData) []notification_gateway.SendPushRequest {
+	key string, customData database.CustomData, userId int64) []notification_gateway.SendPushRequest {
 	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
 
 	var extraData = map[string]string{
@@ -397,6 +399,7 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 				Body:       body,
 				ExtraData:  extraData,
 				PublishKey: key,
+				UserId:     userId,
 			}
 
 			mm[t.Platform] = &req
