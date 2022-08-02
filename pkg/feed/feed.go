@@ -62,5 +62,5 @@ func (f *Feed) GetFeed(db *gorm.DB, userId int64, count int, executionData route
 		f.deDuplicator.SetIdsToIgnore(songs, userId, expirationData, executionData.Context)
 	}()
 
-	return f.feedConverter.ConvertToSongModel(songs, executionData.UserId, executionData.ApmTransaction, executionData.Context), nil
+	return f.feedConverter.ConvertToSongModel(songs, executionData.UserId, false, executionData.ApmTransaction, executionData.Context), nil
 }

@@ -147,7 +147,7 @@ func (s *Service) getRejectReason(rejectReasonId int64) *frontend.RejectReason {
 	return nil
 }
 
-func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserId int64, apmTransaction *apm.Transaction, ctx context.Context) []frontend.CreatorSongModel {
+func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserId int64, withPrivateInfo bool, apmTransaction *apm.Transaction, ctx context.Context) []frontend.CreatorSongModel {
 	if len(songs) == 0 {
 		return []frontend.CreatorSongModel{}
 	}
@@ -163,7 +163,7 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 		}
 
 		if !funk.ContainsInt64(songIds, song.Id) {
-			authorIds = append(songIds, song.Id)
+			songIds = append(songIds, song.Id)
 		}
 
 		model := &frontend.CreatorSongModel{
@@ -184,9 +184,15 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 			ShortListens:      song.ShortListens,
 			FullListens:       song.FullListens,
 			Likes:             song.Likes,
+			Dislikes:          song.Dislikes,
+			Loves:             song.Loves,
 			Comments:          song.Comments,
 			UsedInVideo:       song.UsedInVideo,
 			CreatedAt:         song.CreatedAt,
+		}
+
+		if withPrivateInfo {
+			model.PointsEarned = song.PointsEarned
 		}
 
 		if model.CategoryId > 0 {

@@ -402,7 +402,7 @@ func (s *Service) SongsList(req SongsListRequest, currentUserId int64, db *gorm.
 	}
 
 	resp := &SongsListResponse{
-		Items: s.feedConverter.ConvertToSongModel(songs, currentUserId, executionData.ApmTransaction, executionData.Context),
+		Items: s.feedConverter.ConvertToSongModel(songs, currentUserId, currentUserId == req.UserId, executionData.ApmTransaction, executionData.Context),
 	}
 
 	if cursor.After != nil {

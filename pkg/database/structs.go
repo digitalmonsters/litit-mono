@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/lib/pq"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"time"
@@ -154,15 +155,15 @@ type CreatorSong struct {
 	Hashtags          pq.StringArray          `gorm:"type:text[]" json:"hashtags"`
 	RejectReason      null.Int                `json:"reject_reason"`
 
-	ShortListens int `json:"short_listens"`
-	FullListens  int `json:"full_listens"`
-	Likes        int `json:"likes"`
-	Dislikes     int `json:"dislikes"`
-	Loves        int `json:"loves"`
-	Shares       int `json:"shares"`
-	Comments     int `json:"comments"`
-	UsedInVideo  int `json:"used_in_video"`
-	//PointsEarned decimal.Decimal `json:"points_earned"` //todo
+	ShortListens int             `json:"short_listens"`
+	FullListens  int             `json:"full_listens"`
+	Likes        int             `json:"likes"`
+	Dislikes     int             `json:"dislikes"`
+	Loves        int             `json:"loves"`
+	Shares       int             `json:"shares"`
+	Comments     int             `json:"comments"`
+	UsedInVideo  int             `json:"used_in_video"`
+	PointsEarned decimal.Decimal `json:"points_earned"`
 
 	Score int `json:"score"`
 

@@ -7,7 +7,6 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/music/cmd/api"
-	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/creators"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/utils"
@@ -105,7 +104,7 @@ func (c *creatorApp) addSong() *router.RestCommand {
 		}
 
 		if len(req.Hashtags) > c.appConfig.Values.MUSIC_MAX_HASHTAGS_COUNT {
-			return nil, error_codes.NewErrorWithCodeRef(fmt.Errorf("max hashtags limit is %v", configs.GetAppConfig().MUSIC_MAX_HASHTAGS_COUNT), error_codes.GenericValidationError)
+			return nil, error_codes.NewErrorWithCodeRef(fmt.Errorf("max hashtags limit is %v", c.appConfig.Values.MUSIC_MAX_HASHTAGS_COUNT), error_codes.GenericValidationError)
 		}
 
 		resp, err := c.creatorsService.UploadNewSong(req, c.contentWrapper, database.GetDbWithContext(database.DbTypeMaster, executionData.Context), executionData)
