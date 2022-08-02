@@ -567,5 +567,15 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "music_creators_templates_280720221400",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db,
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('music_creator_status_approved', '2022-07-28 14:00:00.000000', '2022-07-28 14:00:00.000000', 'music_creator') on conflict do nothing;",
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('music_creator_status_rejected', '2022-07-28 14:00:00.000000', '2022-07-28 14:00:00.000000', 'music_creator') on conflict do nothing;",
+					"insert into public.render_templates (id, created_at, updated_at, kind) VALUES ('music_creator_status_pending', '2022-07-28 14:00:00.000000', '2022-07-28 14:00:00.000000', 'music_creator') on conflict do nothing;",
+				)
+			},
+		},
 	}
 }
