@@ -8,6 +8,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/like"
 	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
@@ -69,7 +70,21 @@ func TestMain(m *testing.M) {
 		return ch
 	}
 
-	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, context.Background())
+	likeWrapper := &like.LikeWrapperMock{}
+
+	likeWrapper.GetInternalSpotReactionsByUserFn = func(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan like.GetInternalSpotReactionsByUserResponseChan {
+		ch := make(chan like.GetInternalSpotReactionsByUserResponseChan, 2)
+
+		ch <- like.GetInternalSpotReactionsByUserResponseChan{
+			Error: nil,
+			Data:  map[int64]like.SpotReaction{},
+		}
+		close(ch)
+
+		return ch
+	}
+
+	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, likeWrapper, context.Background())
 
 	service = NewService(feedConverter, nil)
 

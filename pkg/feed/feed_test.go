@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/like"
 	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
@@ -115,7 +116,21 @@ func TestNewFeed(t *testing.T) {
 		return ch
 	}
 
-	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, context.Background())
+	likeWrapper := &like.LikeWrapperMock{}
+
+	likeWrapper.GetInternalSpotReactionsByUserFn = func(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan like.GetInternalSpotReactionsByUserResponseChan {
+		ch := make(chan like.GetInternalSpotReactionsByUserResponseChan, 2)
+
+		ch <- like.GetInternalSpotReactionsByUserResponseChan{
+			Error: nil,
+			Data:  map[int64]like.SpotReaction{},
+		}
+		close(ch)
+
+		return ch
+	}
+
+	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, likeWrapper, context.Background())
 	deDuplicator := deduplicator.GetMock()
 	var configurator = &application.Configurator[configs.AppConfig]{}
 	configurator.Values.MUSIC_MAX_HASHTAGS_COUNT = 1000

@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	frontend2 "github.com/digitalmonsters/go-common/frontend"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/like"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/frontend"
@@ -27,13 +28,15 @@ type Service struct {
 	db                *gorm.DB
 	userWrapper       user_go.IUserGoWrapper
 	followWrapper     follow.IFollowWrapper
+	likeWrapper       like.ILikeWrapper
 }
 
-func NewFeedConverter(userWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, ctx context.Context) *Service {
+func NewFeedConverter(userWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, likeWrapper like.ILikeWrapper, ctx context.Context) *Service {
 	s := &Service{
 		db:                database.GetDb(database.DbTypeReadonly),
 		userWrapper:       userWrapper,
 		followWrapper:     followWrapper,
+		likeWrapper:       likeWrapper,
 		categoryCache:     cache.New(10*time.Minute, 12*time.Minute),
 		moodCache:         cache.New(10*time.Minute, 12*time.Minute),
 		rejectReasonCache: cache.New(10*time.Minute, 12*time.Minute),
@@ -149,7 +152,7 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 		return []frontend.CreatorSongModel{}
 	}
 
-	var authorIds []int64
+	var authorIds, songIds []int64
 
 	feedSongsMap := make(map[int64]*frontend.CreatorSongModel)
 	feedSongsArr := make([]*frontend.CreatorSongModel, 0)
@@ -157,6 +160,10 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 	for _, song := range songs {
 		if !funk.ContainsInt64(authorIds, song.UserId) {
 			authorIds = append(authorIds, song.UserId)
+		}
+
+		if !funk.ContainsInt64(songIds, song.Id) {
+			authorIds = append(songIds, song.Id)
 		}
 
 		model := &frontend.CreatorSongModel{
@@ -201,6 +208,7 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 	routines := []chan error{
 		s.fillFollowingData(feedSongsMap, currentUserId, authorIds, apmTransaction),
 		s.fillUsersAndApplyUserPrivacySettings(feedSongsMap, ctx),
+		s.fillMyReactions(feedSongsMap, songIds, currentUserId, apmTransaction),
 	}
 
 	for _, c := range routines {
@@ -319,6 +327,41 @@ func (s *Service) fillUsersAndApplyUserPrivacySettings(
 				NamePrivacyStatus: userResp.NamePrivacyStatus,
 			}
 		}
+	}()
+
+	return ch
+}
+
+func (s *Service) fillMyReactions(contentModels map[int64]*frontend.CreatorSongModel, contentIds []int64, currentUserId int64,
+	apmTransaction *apm.Transaction) chan error {
+	ch := make(chan error, 2)
+
+	if len(contentModels) == 0 || currentUserId == 0 || len(contentIds) == 0 {
+		close(ch)
+
+		return ch
+	}
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+
+		reactionsData := <-s.likeWrapper.GetInternalSpotReactionsByUser(contentIds, currentUserId, apmTransaction, false)
+		if reactionsData.Error != nil {
+			ch <- reactionsData.Error.ToError()
+			return
+		}
+
+		for contentId, reaction := range reactionsData.Data {
+			if v, ok := contentModels[contentId]; ok {
+				v.LikedByMe = reaction.Like
+				v.DislikedByMe = reaction.Dislike
+				v.LovedByMe = reaction.Love
+			}
+		}
+
+		ch <- nil
 	}()
 
 	return ch

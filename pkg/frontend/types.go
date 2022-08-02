@@ -65,6 +65,9 @@ type CreatorSongModel struct {
 
 	IsCreatorFollowing bool `json:"is_creator_following"`
 	IsFollowing        bool `json:"is_following"`
+	LikedByMe          bool `json:"liked_by_me"`
+	LovedByMe          bool `json:"loved_by_me"`
+	DislikedByMe       bool `json:"disliked_by_me"`
 
 	User         frontend.VideoUserModel `json:"user"`
 	Category     *Category               `json:"category"`
