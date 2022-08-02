@@ -101,7 +101,7 @@ func (c *creatorApp) addSong() *router.RestCommand {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("music_author is required"), error_codes.GenericValidationError)
 		}
 
-		if len(req.Hashtags) > configs.GetAppConfig().MUSIC_MAX_HASHTAGS_COUNT {
+		if len(req.Hashtags) > c.appConfig.Values.MUSIC_MAX_HASHTAGS_COUNT {
 			return nil, error_codes.NewErrorWithCodeRef(fmt.Errorf("max hashtags limit is %v", configs.GetAppConfig().MUSIC_MAX_HASHTAGS_COUNT), error_codes.GenericValidationError)
 		}
 
