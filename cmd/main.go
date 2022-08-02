@@ -11,6 +11,7 @@ import (
 	"github.com/digitalmonsters/go-common/shutdown"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/creator"
@@ -45,6 +46,7 @@ func main() {
 	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
+	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
@@ -96,7 +98,7 @@ func main() {
 	feedService := feedPkg.NewFeed(deDuplicator, feedConverter, jobber, cfgService)
 
 	rootApplication.
-		AddApplication(creator.Application(httpRouter, apiDef, creatorsService, userGoWrapper, cfg.Creators, &cfg, feedService, ctx)).
+		AddApplication(creator.Application(httpRouter, apiDef, creatorsService, userGoWrapper, contentWrapper, cfg.Creators, &cfg, feedService, ctx)).
 		AddApplication(music.Application(httpRouter, apiDef, musicStorageService, &cfg)).
 		MustInit()
 

@@ -26,6 +26,7 @@ func SubApp(
 	apiDef map[string]swagger.ApiDescription,
 	creatorsService *creators.Service,
 	userGoWrapper user_go.IUserGoWrapper,
+	contentWrapper content.IContentWrapper,
 	creatorsCfg configs.CreatorsConfig,
 	cfg *configs.Settings,
 ) application.SubApplication {
@@ -33,6 +34,7 @@ func SubApp(
 		httpRouter:      httpRouter,
 		apiDef:          apiDef,
 		creatorsService: creatorsService,
+		contentWrapper:  contentWrapper,
 		userGoWrapper:   userGoWrapper,
 		creatorsCfg:     creatorsCfg,
 		cfg:             cfg,
