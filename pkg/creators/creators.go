@@ -308,6 +308,7 @@ func (s *Service) UploadNewSong(req UploadNewSongRequest, contentWrapper content
 	}
 
 	song := database.CreatorSong{
+		Id:                newContent.Response.Id,
 		UserId:            executionData.UserId,
 		Name:              req.Name,
 		Status:            music.CreatorSongStatusPublished,
