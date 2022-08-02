@@ -34,7 +34,7 @@ func Application(
 	appConfig *application.Configurator[configs.AppConfig],
 ) *application.BaseApplication {
 	return application.NewBaseApplication("creator").
-		AddSubApplication(api.SubApp(httpRouter, apiDef, creatorsService, userGoWrapper, contentWrapper, creatorsCfg, cfg)).
+		AddSubApplication(api.SubApp(httpRouter, apiDef, creatorsService, userGoWrapper, contentWrapper, creatorsCfg, cfg, appConfig)).
 		AddSubApplication(reject_reasons.SubApp(httpRouter, apiDef)).
 		AddSubApplication(moods.SubApp(httpRouter, apiDef)).
 		AddSubApplication(categories.SubApp(httpRouter, apiDef)).
