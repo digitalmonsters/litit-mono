@@ -2,6 +2,7 @@ package creators
 
 import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/digitalmonsters/music/pkg/frontend"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"time"
@@ -82,4 +83,20 @@ type UploadNewSongRequest struct {
 type CheckRequestStatusResponse struct {
 	Status       user_go.CreatorStatus `json:"status"`
 	RejectReason null.String           `json:"reject_reason"`
+}
+
+type MySongsListRequest struct {
+	Count  int    `json:"count"`
+	Cursor string `json:"cursor"`
+}
+
+type SongsListRequest struct {
+	UserId int64  `json:"user_id"`
+	Count  int    `json:"count"`
+	Cursor string `json:"cursor"`
+}
+
+type SongsListResponse struct {
+	Items  []frontend.CreatorSongModel `json:"items"`
+	Cursor string                      `json:"cursor"`
 }

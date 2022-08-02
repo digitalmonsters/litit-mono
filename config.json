@@ -28,7 +28,73 @@
     "Bucket": ""
   },
   "Creators": {
-    "MaxThresholdHours": 48
+    "MaxThresholdHours": 48,
+    "Listeners": {
+      "DislikeCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_dislike_consumer",
+          "Topic": "local.dislikes_count",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      },
+      "LoveCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_love_consumer",
+          "Topic": "local.loves_count",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      },
+      "LikeCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_like_consumer",
+          "Topic": "local.likes_count",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      },
+      "ListenCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_listen_consumer",
+          "Topic": "local.view_stats_update",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      }
+    }
   },
   "KafkaWriter": {
     "Hosts": "",

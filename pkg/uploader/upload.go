@@ -3,7 +3,6 @@ package uploader
 import (
 	"bytes"
 	"crypto/md5"
-	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/s3"
 	"github.com/digitalmonsters/music/configs"
@@ -20,7 +19,7 @@ import (
 var extensionsForMusic = []string{"mp3"}
 var extensionsForImage = []string{"jpg", "jpeg", "png"}
 
-func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.RequestCtx) ([]byte, error) {
+func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
 	m, err := ctx.Request.MultipartForm()
 	if err != nil {
 		return nil, err
@@ -89,15 +88,11 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 		duration = null.FloatFrom(getSongDuration(body))
 	}
 
-	if respBytes, err := json.Marshal(&uploadResponse{
+	return &uploadResponse{
 		FileUrl:  fileUrl,
 		Size:     size,
 		Duration: duration,
-	}); err != nil {
-		return nil, err
-	} else {
-		return respBytes, nil
-	}
+	}, nil
 }
 
 func checkFileExtension(t UploadType, ext string) bool {

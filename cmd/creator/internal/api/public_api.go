@@ -10,6 +10,7 @@ import (
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/creators"
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/utils"
 	"github.com/pkg/errors"
 	"net/http"
 )
@@ -19,6 +20,8 @@ func (c *creatorApp) initPublicApi() error {
 		c.sendCreatorRequest(),
 		c.addSong(),
 		c.getRequestStatus(),
+		c.getMySongs(),
+		c.getUserSongs(),
 	}
 
 	for _, command := range restCommands {
@@ -132,4 +135,90 @@ func (c *creatorApp) getRequestStatus() *router.RestCommand {
 
 		return resp, nil
 	}, path, http.MethodGet).RequireIdentityValidation().Build()
+}
+
+func (c *creatorApp) getMySongs() *router.RestCommand {
+	path := "/me/songs"
+
+	c.apiDef[path] = swagger.ApiDescription{
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "count",
+				In:          swagger.ParameterInQuery,
+				Description: "count per page",
+				Required:    false,
+				Type:        "integer",
+			},
+			{
+				Name:        "cursor",
+				In:          swagger.ParameterInQuery,
+				Description: "cursor position",
+				Required:    false,
+				Type:        "string",
+			},
+		},
+		Response:          creators.SongsListResponse{},
+		MethodDescription: "my songs list",
+		Tags:              []string{"creator", "song"},
+	}
+
+	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		cursor := utils.ExtractString(executionData.GetUserValue, "cursor", "")
+		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
+
+		return c.creatorsService.SongsList(creators.SongsListRequest{
+			UserId: executionData.UserId,
+			Count:  int(count),
+			Cursor: cursor,
+		}, executionData.UserId, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), executionData)
+	}, path, http.MethodGet).RequireIdentityValidation().Build()
+}
+
+func (c *creatorApp) getUserSongs() *router.RestCommand {
+	path := "/{user_id}/songs"
+
+	c.apiDef[path] = swagger.ApiDescription{
+		AdditionalSwaggerParameters: []swagger.ParameterDescription{
+			{
+				Name:        "user_id",
+				In:          swagger.ParameterInPath,
+				Description: "requested user id",
+				Required:    true,
+				Type:        "string",
+			},
+			{
+				Name:        "count",
+				In:          swagger.ParameterInQuery,
+				Description: "count per page",
+				Required:    false,
+				Type:        "integer",
+			},
+			{
+				Name:        "cursor",
+				In:          swagger.ParameterInQuery,
+				Description: "cursor position",
+				Required:    false,
+				Type:        "string",
+			},
+		},
+		Response:          creators.SongsListResponse{},
+		MethodDescription: "my songs list",
+		Tags:              []string{"creator", "song"},
+	}
+
+	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		cursor := utils.ExtractString(executionData.GetUserValue, "cursor", "")
+		count := utils.ExtractInt64(executionData.GetUserValue, "count", 10, 50)
+
+		userId := utils.ExtractInt64(executionData.GetUserValue, "user_id", 0, 0)
+		if userId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
+		}
+
+		return c.creatorsService.SongsList(creators.SongsListRequest{
+			UserId: userId,
+			Count:  int(count),
+			Cursor: cursor,
+		}, executionData.UserId, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), executionData)
+	}, path, http.MethodGet).Build()
 }
