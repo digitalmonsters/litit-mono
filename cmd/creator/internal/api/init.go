@@ -19,6 +19,7 @@ type creatorApp struct {
 	contentWrapper  content.IContentWrapper
 	creatorsCfg     configs.CreatorsConfig
 	cfg             *configs.Settings
+	appConfig       *application.Configurator[configs.AppConfig]
 }
 
 func SubApp(
@@ -29,6 +30,7 @@ func SubApp(
 	contentWrapper content.IContentWrapper,
 	creatorsCfg configs.CreatorsConfig,
 	cfg *configs.Settings,
+	appConfig *application.Configurator[configs.AppConfig],
 ) application.SubApplication {
 	return &creatorApp{
 		httpRouter:      httpRouter,
@@ -38,6 +40,7 @@ func SubApp(
 		userGoWrapper:   userGoWrapper,
 		creatorsCfg:     creatorsCfg,
 		cfg:             cfg,
+		appConfig:       appConfig,
 	}
 }
 
