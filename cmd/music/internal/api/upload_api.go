@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/digitalmonsters/music/pkg/uploader"
 	"github.com/digitalmonsters/music/utils"
 	"github.com/valyala/fasthttp"
@@ -21,7 +22,11 @@ func (m *musicApp) InitUploadApi() {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		} else {
 			ctx.Response.Header.Set("Content-Type", "application/json")
-			ctx.Response.SetBody(resp)
+			if respBytes, err := json.Marshal(resp); err != nil {
+				ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			} else {
+				ctx.Response.SetBody(respBytes)
+			}
 		}
 	})
 }

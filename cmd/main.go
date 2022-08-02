@@ -91,11 +91,10 @@ func main() {
 		creatorsNotifier,
 	}
 
-	creatorsService := creators.NewService(notifiers)
-
 	feedConverter := feed_converter.NewFeedConverter(userGoWrapper, followWrapper, ctx)
 	deDuplicator := deduplicator.NewDeDuplicator(redisClient)
 	feedService := feedPkg.NewFeed(deDuplicator, feedConverter, jobber, cfgService)
+	creatorsService := creators.NewService(feedConverter, notifiers)
 
 	rootApplication.
 		AddApplication(creator.Application(httpRouter, apiDef, creatorsService, userGoWrapper, contentWrapper, cfg.Creators, &cfg, feedService, ctx, cfgService)).
