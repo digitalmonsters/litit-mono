@@ -80,6 +80,7 @@ type Wrappers struct {
 	Configurator           WrapperConfig `json:"Configurator"`
 	ContentUploader        WrapperConfig `json:"ContentUploader"`
 	Music                  WrapperConfig `json:"Music"`
+	AdsManager             WrapperConfig `json:"AdsManager"`
 }
 
 type WrapperConfig struct {

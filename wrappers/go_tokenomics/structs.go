@@ -104,6 +104,7 @@ const (
 	PointsEarnedTypeUploadFirstBioVideo                       = PointsEarnedType(45)
 	PointsEarnedTypeAdditionalBonusCreatorVerifyGrandReferrer = PointsEarnedType(46)
 	PointsEarnedTypeSocialMediasAdded                         = PointsEarnedType(47)
+	PointsEarnedTypePointsWriteOffForAd                       = PointsEarnedType(48) // write off money for ad
 )
 
 type WithdrawalStatus int16
@@ -209,4 +210,10 @@ const (
 
 type CreateBotViewsRequest struct {
 	BotViews map[int64][]int64 `json:"bot_views"`
+}
+
+type WriteOffUserTokensForAdRequest struct {
+	UserId       int64           `json:"user_id"`
+	AdCampaignId int64           `json:"ad_campaign_id"`
+	Amount       decimal.Decimal `json:"amount"`
 }

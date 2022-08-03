@@ -62,6 +62,7 @@ type ViewEvent struct {
 	CreatedAt           time.Time   `json:"created_at"`
 	UseTokenomicVersion int8        `json:"use_tokenomic_version"`
 	ListenType          ListenType  `json:"listen_type"`
+	SourceView          SourceView  `json:"source_view"`
 }
 
 func (v ViewEvent) GetPublishKey() string {

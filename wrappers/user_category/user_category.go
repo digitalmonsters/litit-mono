@@ -1,6 +1,7 @@
 package user_category
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -15,6 +16,8 @@ import (
 
 type IUserCategoryWrapper interface {
 	GetUserCategorySubscriptionStateBulk(categoryIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUserCategorySubscriptionStateResponseChan
+	GetInternalUserCategorySubscriptions(userId int64, limit int, pageState string,
+		ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetInternalUserCategorySubscriptionsResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -85,4 +88,14 @@ func (w *UserCategoryWrapper) GetUserCategorySubscriptionStateBulk(categoryIds [
 	}()
 
 	return respCh
+}
+
+func (w *UserCategoryWrapper) GetInternalUserCategorySubscriptions(userId int64, limit int, pageState string,
+	ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetInternalUserCategorySubscriptionsResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetInternalUserCategorySubscriptionsResponse](w.baseWrapper, w.apiUrl,
+		"GetInternalUserCategorySubscriptions", GetInternalUserCategorySubscriptionsRequest{
+			UserId:    userId,
+			Limit:     limit,
+			PageState: pageState,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

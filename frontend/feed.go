@@ -82,6 +82,10 @@ type ContentModel struct {
 
 	City        string `json:"city"`
 	CountryCode string `json:"country_code"`
+
+	Link           null.String `json:"link"`
+	LinkButtonId   null.Int    `json:"link_button_id"`
+	LinkButtonName null.String `json:"link_button_name"`
 }
 
 type ContentWithPointsCount struct {

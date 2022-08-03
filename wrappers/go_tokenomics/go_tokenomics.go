@@ -32,6 +32,7 @@ type IGoTokenomicsWrapper interface {
 	GetReferralsInfo(referrerId int64, referralIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralInfoResponse]
 	GetActivitiesInfo(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse]
 	CreateBotViews(botViews map[int64][]int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	WriteOffUserTokensForAd(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
@@ -201,5 +202,13 @@ func (w *Wrapper) GetActivitiesInfo(userId int64, apmTransaction *apm.Transactio
 func (w *Wrapper) CreateBotViews(botViews map[int64][]int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
 	return wrappers.ExecuteRpcRequestAsync[any](w.baseWrapper, w.apiUrl, "CreateBotViews", CreateBotViewsRequest{
 		BotViews: botViews,
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w *Wrapper) WriteOffUserTokensForAd(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+	return wrappers.ExecuteRpcRequestAsync[any](w.baseWrapper, w.apiUrl, "WriteOffUserTokensForAd", WriteOffUserTokensForAdRequest{
+		UserId:       userId,
+		AdCampaignId: adCampaignId,
+		Amount:       amount,
 	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

@@ -13,3 +13,14 @@ type GetUserCategorySubscriptionStateBulkRequest struct {
 	UserId      int64   `json:"user_id"`
 	CategoryIds []int64 `json:"category_ids"`
 }
+
+type GetInternalUserCategorySubscriptionsRequest struct {
+	UserId    int64  `json:"user_id"`
+	Limit     int    `json:"limit"`
+	PageState string `json:"page_state"`
+}
+
+type GetInternalUserCategorySubscriptionsResponse struct {
+	CategoryIds []int64 `json:"category_ids"`
+	PageState   string  `json:"page_state"`
+}
