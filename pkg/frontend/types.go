@@ -66,6 +66,7 @@ type CreatorSongModel struct {
 	Comments          int                     `json:"comments"`
 	UsedInVideo       int                     `json:"used_in_video"`
 	CreatedAt         time.Time               `json:"created_at"`
+	CreatedAtTs       int64                   `json:"created_at_ts"`
 
 	IsCreatorFollowing bool `json:"is_creator_following"`
 	IsFollowing        bool `json:"is_following"`

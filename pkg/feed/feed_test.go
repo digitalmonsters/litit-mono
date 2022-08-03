@@ -2,7 +2,6 @@ package feed
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
@@ -153,11 +152,7 @@ func TestNewFeed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Len(t, feedSongs, 8)
-
-	if b, err := json.Marshal(&feedSongs); err == nil {
-		fmt.Println(string(b))
-	}
+	assert.Len(t, feedSongs.Data, 8)
 }
 
 func addCategory(t *testing.T, categoryName string) *database.Category {
