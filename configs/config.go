@@ -59,6 +59,7 @@ type CreatorListeners struct {
 	LoveCounter    CounterListener `json:"LoveCounter"`
 	DislikeCounter CounterListener `json:"DislikeCounter"`
 	ListenCounter  CounterListener `json:"ListenCounter"`
+	ListenedMusic  CounterListener `json:"ListenedMusic"`
 }
 
 type SoundStripeConfig struct {

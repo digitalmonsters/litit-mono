@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"github.com/RichardKnop/machinery/v1"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/eventsourcing"
@@ -81,6 +82,23 @@ func main() {
 		log.Err(err).Msgf("[Jobber] Could not create jobber")
 	}
 
+	var machineryWorker *machinery.Worker
+
+	go func() {
+		defer func() {
+			_ = recover() // https://github.com/RichardKnop/machinery/issues/437
+		}()
+
+		machineryWorker = jobber.NewCustomQueueWorker(boilerplate.GetGenerator().Generate().String(),
+			cfg.Jobber.Concurrency, cfg.Jobber.DefaultQueue)
+
+		if err := machineryWorker.Launch(); err != nil {
+			if err != machinery.ErrWorkerQuitGracefully {
+				log.Logger.Err(err).Send()
+			}
+		}
+	}()
+
 	musicStorageService := music_source.NewMusicStorageService(&cfg)
 
 	creatorsNotifier := notifier.NewService(
@@ -124,6 +142,12 @@ func main() {
 			return nil
 		},
 		func() error {
+			return nil
+		},
+		func() error {
+			if machineryWorker != nil {
+				machineryWorker.Quit()
+			}
 			return nil
 		},
 	})
