@@ -31,6 +31,10 @@ func (a *apiApp) Init(subAppLogger zerolog.Logger) error {
 		return err
 	}
 
+	if err := a.initPublicApi(a.httpRouter); err != nil {
+		return err
+	}
+
 	return nil
 }
 

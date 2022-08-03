@@ -35,6 +35,12 @@ type ListActionButtonsRequest struct {
 	Offset int `json:"offset"`
 }
 
+type PublicListActionButtonsRequest struct {
+	Limit  int      `json:"limit"`
+	Offset int      `json:"offset"`
+	Type   null.Int `json:"type"`
+}
+
 type ListActionButtonsResponse struct {
 	Items      []ActionButtonModel `json:"items"`
 	TotalCount int64               `json:"total_count"`

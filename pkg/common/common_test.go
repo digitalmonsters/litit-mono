@@ -85,7 +85,7 @@ func TestNewService_RejectReasons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := gormDb.Order("id").Find(&reasons).Error; err != nil {
+	if err := gormDb.Order("id").Where("deleted_at is null").Find(&reasons).Error; err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(reasons))
@@ -133,6 +133,17 @@ func TestNewService_ActionButtons(t *testing.T) {
 	assert.Equal(t, int64(3), resp.TotalCount)
 	assert.Equal(t, 3, len(resp.Items))
 
+	publicResp, err := commonService.PublicListActionButtons(PublicListActionButtonsRequest{
+		Type:   null.IntFrom(int64(database.LinkButtonType)),
+		Limit:  10,
+		Offset: 0,
+	}, gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, int64(1), publicResp.TotalCount)
+	assert.Equal(t, 1, len(publicResp.Items))
+
 	req = UpsertActionButtonsRequest{Items: []UpsertButtonItem{
 		{
 			Id:   null.IntFrom(buttons[0].Id),
@@ -158,7 +169,7 @@ func TestNewService_ActionButtons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := gormDb.Order("id").Find(&buttons).Error; err != nil {
+	if err := gormDb.Order("id").Where("deleted_at is null").Find(&buttons).Error; err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(buttons))
