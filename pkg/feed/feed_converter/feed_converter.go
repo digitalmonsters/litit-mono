@@ -189,6 +189,7 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 			Comments:          song.Comments,
 			UsedInVideo:       song.UsedInVideo,
 			CreatedAt:         song.CreatedAt,
+			CreatedAtTs:       song.CreatedAt.Unix(),
 		}
 
 		if withPrivateInfo {

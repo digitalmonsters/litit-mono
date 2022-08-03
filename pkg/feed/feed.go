@@ -59,8 +59,18 @@ func (f *Feed) GetFeed(db *gorm.DB, userId int64, count int, executionData route
 		f.deDuplicator.SetIdsToIgnore(songs, userId, expirationData, executionData.Context)
 	}()
 
+	convertedSongs := f.feedConverter.ConvertToSongModel(songs, executionData.UserId, false, executionData.ApmTransaction, executionData.Context)
+
+	var finalRespItems []MusicFeedItem
+	for _, s := range convertedSongs {
+		finalRespItems = append(finalRespItems, MusicFeedItem{
+			Type: "music",
+			Data: s,
+		})
+	}
+
 	return &ContentFeedResponse{
-		Data:     f.feedConverter.ConvertToSongModel(songs, executionData.UserId, false, executionData.ApmTransaction, executionData.Context),
+		Data:     finalRespItems,
 		FeedType: "music",
 	}, nil
 }
