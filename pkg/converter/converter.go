@@ -25,6 +25,7 @@ func (c *Converter) MapFromDbAddCampaign(dbModels []database.AdCampaign, ctx con
 	var items []*common.AddModerationItem
 
 	for _, dbModel := range dbModels {
+		userIds = append(userIds, dbModel.UserId)
 		items = append(items, &common.AddModerationItem{
 			Id:             dbModel.Id,
 			UserId:         dbModel.UserId,
