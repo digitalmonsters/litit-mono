@@ -6,9 +6,11 @@ import (
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/filters"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/ads_manager"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
 	"github.com/digitalmonsters/go-common/wrappers/user_category"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/shopspring/decimal"
@@ -27,6 +29,7 @@ var adCampaignService IService
 var contentWrapperMock content.IContentWrapper
 var userCategoryWrapper user_category.IUserCategoryWrapper
 var userWrapper user_go.IUserGoWrapper
+var goTokenomicsWrapper *go_tokenomics.GoTokenomicsWrapperMock
 
 func TestMain(m *testing.M) {
 	gormDb = database.GetDb(database.DbTypeMaster)
@@ -128,7 +131,32 @@ func TestMain(m *testing.M) {
 		},
 	}
 
-	adCampaignService = NewService(contentWrapperMock, userCategoryWrapper, userWrapper, nil)
+	goTokenomicsWrapper = &go_tokenomics.GoTokenomicsWrapperMock{}
+
+	goTokenomicsWrapper.GetUsersTokenomicsInfoFn = func(userIds []int64, filters []filters.Filter, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]go_tokenomics.UserTokenomicsInfo] {
+		var respCh = make(chan wrappers.GenericResponseChan[map[int64]go_tokenomics.UserTokenomicsInfo], 1)
+		resp := make(map[int64]go_tokenomics.UserTokenomicsInfo, len(userIds))
+		for _, userId := range userIds {
+			resp[userId] = go_tokenomics.UserTokenomicsInfo{
+				TotalPoints:        decimal.NewFromInt(100),
+				CurrentPoints:      decimal.NewFromInt(100),
+				VaultPoints:        decimal.NewFromInt(100),
+				AllTimeVaultPoints: decimal.NewFromInt(100),
+				CurrentTokens:      decimal.NewFromInt(100),
+				CurrentRate:        decimal.NewFromInt(1),
+				WithdrawnTokens:    decimal.NewFromInt(100),
+			}
+		}
+
+		respCh <- wrappers.GenericResponseChan[map[int64]go_tokenomics.UserTokenomicsInfo]{
+			Error:    nil,
+			Response: resp,
+		}
+		close(respCh)
+		return respCh
+	}
+
+	adCampaignService = NewService(contentWrapperMock, userCategoryWrapper, userWrapper, nil, goTokenomicsWrapper)
 
 	os.Exit(m.Run())
 }
@@ -426,7 +454,7 @@ func TestService_StartAdCampaign(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := adCampaignService.StartAdCampaign(1, StartAdCampaignRequest{AdCampaignId: 1}, gormDb); err != nil {
+	if err := adCampaignService.StartAdCampaign(1, StartAdCampaignRequest{AdCampaignId: 1}, gormDb, context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -447,7 +475,7 @@ func TestService_ListAdCampaigns(t *testing.T) {
 	if err := gormDb.Create(&database.AdCampaign{
 		Id:        1,
 		UserId:    1,
-		Name:      "1",
+		Name:      "ad1",
 		AdType:    database.AdTypeContent,
 		Status:    database.AdCampaignStatusModerated,
 		ContentId: 1,
@@ -462,7 +490,7 @@ func TestService_ListAdCampaigns(t *testing.T) {
 	if err := gormDb.Create(&database.AdCampaign{
 		Id:        2,
 		UserId:    1,
-		Name:      "2",
+		Name:      "ad2",
 		AdType:    database.AdTypeContent,
 		Status:    database.AdCampaignStatusActive,
 		ContentId: 2,
@@ -501,6 +529,7 @@ func TestService_ListAdCampaigns(t *testing.T) {
 	}
 
 	resp, err := adCampaignService.ListAdCampaigns(1, ListAdCampaignsRequest{
+		Name:   null.StringFrom("ad"),
 		Status: nil,
 		Limit:  10,
 		Offset: 0,

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/digitalmonsters/ads-manager/pkg/ad_campaign"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
@@ -169,7 +170,7 @@ func (a *apiApp) startAdCampaign() *router.RestCommand {
 		tx := database.GetDbWithContext(database.DbTypeMaster, executionData.Context).Begin()
 		defer tx.Rollback()
 
-		if err := a.adCampaignService.StartAdCampaign(executionData.UserId, req, tx); err != nil {
+		if err := a.adCampaignService.StartAdCampaign(executionData.UserId, req, tx, context.TODO()); err != nil {
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
 
