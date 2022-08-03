@@ -2,6 +2,7 @@ package ad_campaign
 
 import (
 	"context"
+	"fmt"
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
@@ -265,34 +266,39 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 		return nil, errors.WithStack(err)
 	}
 
+	newAd := lo.Filter(adCampaignsData, func(item *ads_manager.ContentAd, _ int) bool {
+		_, ok := lo.Find(req.ContentIdsToMix, func(id int64) bool {
+			return item.ContentId == id
+		})
+
+		return !ok
+	})
+	sort.Slice(newAd, func(i, j int) bool {
+		return newAd[i].ContentId < newAd[j].ContentId
+	})
+
 	adCampaignsDataMap := make(map[int64]*ads_manager.ContentAd, len(adCampaignsData))
 	for _, v := range adCampaignsData {
 		adCampaignsDataMap[v.ContentId] = v
 	}
 
 	adCampaignsDataMapLen := len(adCampaignsDataMap)
-	adContentIds := make([]int64, adCampaignsDataMapLen)
+	adContentIds := make([]int64, len(newAd))
 	adContentIdsIter := 0
-	for id := range adCampaignsDataMap {
-		adContentIds[adContentIdsIter] = id
+	for _, item := range newAd {
+		adContentIds[adContentIdsIter] = item.ContentId
 		adContentIdsIter++
 	}
-	sort.Slice(adContentIds, func(i, j int) bool {
-		return adContentIds[i] < adContentIds[j]
-	})
 	adContentIdsIter = 0
 
 	respData := make([]int64, respDataLen)
 	contentIdsToMixIter := 0
-	contentAds := make(map[int64]*ads_manager.ContentAd, adCampaignsDataMapLen)
 
 	adIter := 0
 	for i := 0; i < respDataLen; i++ {
 		if i != 0 && adIter == adsPerVideos && adContentIdsIter < adCampaignsDataMapLen {
 			respData[i] = adContentIds[adContentIdsIter]
 			adContentIdsIter++
-			val := adCampaignsDataMap[respData[i]]
-			contentAds[val.ContentId] = val
 			adIter = 0
 
 			continue
@@ -306,6 +312,16 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 
 		respData[i] = req.ContentIdsToMix[contentIdsToMixIter]
 		contentIdsToMixIter++
+	}
+
+	contentAds := make(map[int64]*ads_manager.ContentAd, adCampaignsDataMapLen)
+	for _, item := range respData {
+		val, ok := adCampaignsDataMap[item]
+		if !ok {
+			continue
+		}
+
+		contentAds[val.ContentId] = val
 	}
 
 	respData = lo.Filter(respData, func(item int64, _ int) bool {
@@ -397,7 +413,12 @@ func (s *service) StartAdCampaign(userId int64, req StartAdCampaignRequest, tx *
 	}
 
 	adCampaign.Status = database.AdCampaignStatusActive
-	if err := tx.Model(&adCampaign).Update("status", adCampaign.Status).Error; err != nil {
+	adCampaign.StartedAt = null.TimeFrom(time.Now().UTC())
+	adCampaign.EndedAt = null.TimeFrom(adCampaign.StartedAt.Time.Add(time.Duration(adCampaign.DurationMin) * time.Minute))
+	if err := tx.Model(&adCampaign).
+		Update("started_at", adCampaign.StartedAt.Time).
+		Update("ended_at", adCampaign.EndedAt.Time).
+		Update("status", adCampaign.Status).Error; err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -411,6 +432,15 @@ func (s *service) ListAdCampaigns(userId int64, req ListAdCampaignsRequest, db *
 
 	if req.Status != nil {
 		query = query.Where("ad_campaigns.status = ?", req.Status)
+	}
+
+	if req.Name.Valid {
+		search := fmt.Sprintf("%%%v%%", req.Name)
+		query = query.Where("ad_campaigns.name ilike ?", search)
+	}
+
+	if req.Age.Valid {
+		query = query.Where("ad_campaigns.age_from >= ? and ad_campaigns.age_to <= ?", req.Age.Int64, req.Age.Int64)
 	}
 
 	var totalCount int64

@@ -35,8 +35,10 @@ type StartAdCampaignRequest struct {
 }
 
 type ListAdCampaignsRequest struct {
+	Name     null.String                `json:"name"`
 	DateFrom null.Time                  `json:"date_from"`
 	DateTo   null.Time                  `json:"date_to"`
+	Age      null.Int                   `json:"age"`
 	Status   *database.AdCampaignStatus `json:"status"`
 	Limit    int                        `json:"limit"`
 	Offset   int                        `json:"offset"`
