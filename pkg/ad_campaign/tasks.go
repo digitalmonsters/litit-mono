@@ -12,7 +12,7 @@ import (
 
 func (s *service) InitTasks() error {
 	if err := s.jobber.RegisterTask("ad_campaigns:check_end",
-		func(traceHeader string) error {
+		func() error {
 			apmTransaction := apm_helper.StartNewApmTransaction("ad_campaigns:check_end", "task", nil, nil)
 			defer apmTransaction.End()
 			ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)

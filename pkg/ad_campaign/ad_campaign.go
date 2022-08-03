@@ -199,7 +199,7 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 	}
 
 	if user.Birthdate.Valid {
-		query = query.Where("? <= now() - interval '1 years' * age_from and ? >= now() - interval '1 years' * age_to",
+		query = query.Where("(age_from is not null or ? <= now() - interval '1 years' * age_from) and (age_to is not null or ? >= now() - interval '1 years' * age_to)",
 			user.Birthdate.Time, user.Birthdate.Time)
 	}
 

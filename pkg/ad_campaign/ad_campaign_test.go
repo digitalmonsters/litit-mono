@@ -368,6 +368,48 @@ func TestService_GetAdsContentForUser(t *testing.T) {
 	a.Equal(int64(10), resp.MixedContentIdsWithAd[8]) // ad
 	a.Equal(int64(20), resp.MixedContentIdsWithAd[9])
 	a.Equal(int64(11), resp.MixedContentIdsWithAd[10])
+
+	if err = gormDb.Create(&database.AdCampaign{
+		Id:             5,
+		UserId:         1,
+		Name:           "ad5",
+		AdType:         database.AdTypeContent,
+		Status:         database.AdCampaignStatusActive,
+		ContentId:      21,
+		DurationMin:    15,
+		Budget:         decimal.NewFromInt(1),
+		OriginalBudget: decimal.NewFromInt(1),
+		StartedAt:      null.TimeFrom(time.Now().UTC().Add(-5 * time.Minute)),
+		EndedAt:        null.TimeFrom(time.Now().UTC().Add(10 * time.Minute)),
+		Link:           null.StringFrom("link"),
+		LinkButtonId:   null.IntFrom(0),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err = adCampaignService.GetAdsContentForUser(ads_manager.GetAdsContentForUserRequest{
+		UserId:             2,
+		ContentIdsToMix:    []int64{1, 2, 3, 4, 5, 6, 7, 9, 10, 11},
+		ContentIdsToIgnore: []int64{7, 8, 20},
+	}, gormDb, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.NotNil(resp)
+
+	a.Len(resp.MixedContentIdsWithAd, 11)
+	a.Equal(int64(1), resp.MixedContentIdsWithAd[0])
+	a.Equal(int64(2), resp.MixedContentIdsWithAd[1])
+	a.Equal(int64(3), resp.MixedContentIdsWithAd[2])
+	a.Equal(int64(4), resp.MixedContentIdsWithAd[3])
+	a.Equal(int64(5), resp.MixedContentIdsWithAd[4])
+	a.Equal(int64(6), resp.MixedContentIdsWithAd[5])
+	a.Equal(int64(7), resp.MixedContentIdsWithAd[6])
+	a.Equal(int64(9), resp.MixedContentIdsWithAd[7])
+	a.Equal(int64(10), resp.MixedContentIdsWithAd[8]) // ad
+	a.Equal(int64(21), resp.MixedContentIdsWithAd[9])
+	a.Equal(int64(11), resp.MixedContentIdsWithAd[10])
 }
 
 func TestService_ClickLink(t *testing.T) {
