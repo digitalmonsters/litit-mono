@@ -8,11 +8,16 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 )
 
 func (a *apiApp) initPublicApi(httpRouter *router.HttpRouter) error {
 	restCommands := []*router.RestCommand{
 		a.createAdCampaign(),
+		a.clickLink(),
+		a.stopAdCampaign(),
+		a.startAdCampaign(),
+		a.listAdCampaigns(),
 	}
 
 	for _, c := range restCommands {
@@ -49,7 +54,7 @@ func (a *apiApp) createAdCampaign() *router.RestCommand {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid content_id"), error_codes.GenericValidationError)
 		}
 
-		if req.Budget == 0 {
+		if req.Budget.LessThanOrEqual(decimal.Zero) {
 			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid budget"), error_codes.GenericValidationError)
 		}
 
@@ -65,5 +70,140 @@ func (a *apiApp) createAdCampaign() *router.RestCommand {
 		}
 
 		return nil, nil
+	}, path, router.MethodPost).RequireIdentityValidation().Build()
+}
+
+func (a *apiApp) clickLink() *router.RestCommand {
+	path := "/click_link"
+
+	a.apiDef[path] = swagger.ApiDescription{
+		Request: ad_campaign.ClickLinkRequest{},
+		Tags:    []string{"ad_campaign"},
+	}
+
+	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req ad_campaign.ClickLinkRequest
+
+		if len(request) > 0 {
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+		}
+
+		if req.ContentId == 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid content_id"), error_codes.GenericValidationError)
+		}
+
+		tx := database.GetDbWithContext(database.DbTypeMaster, executionData.Context).Begin()
+		defer tx.Rollback()
+
+		if err := a.adCampaignService.ClickLink(executionData.UserId, req, tx); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, path, router.MethodPost).RequireIdentityValidation().Build()
+}
+
+func (a *apiApp) stopAdCampaign() *router.RestCommand {
+	path := "/stop_ad_campaign"
+
+	a.apiDef[path] = swagger.ApiDescription{
+		Request: ad_campaign.StopAdCampaignRequest{},
+		Tags:    []string{"ad_campaign"},
+	}
+
+	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req ad_campaign.StopAdCampaignRequest
+
+		if len(request) > 0 {
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+		}
+
+		if req.AdCampaignId == 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid ad_campaign_id"), error_codes.GenericValidationError)
+		}
+
+		tx := database.GetDbWithContext(database.DbTypeMaster, executionData.Context).Begin()
+		defer tx.Rollback()
+
+		if err := a.adCampaignService.StopAdCampaign(executionData.UserId, req, tx); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, path, router.MethodPost).RequireIdentityValidation().Build()
+}
+
+func (a *apiApp) startAdCampaign() *router.RestCommand {
+	path := "/start_ad_campaign"
+
+	a.apiDef[path] = swagger.ApiDescription{
+		Request: ad_campaign.StartAdCampaignRequest{},
+		Tags:    []string{"ad_campaign"},
+	}
+
+	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req ad_campaign.StartAdCampaignRequest
+
+		if len(request) > 0 {
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+		}
+
+		if req.AdCampaignId == 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid ad_campaign_id"), error_codes.GenericValidationError)
+		}
+
+		tx := database.GetDbWithContext(database.DbTypeMaster, executionData.Context).Begin()
+		defer tx.Rollback()
+
+		if err := a.adCampaignService.StartAdCampaign(executionData.UserId, req, tx); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, path, router.MethodPost).RequireIdentityValidation().Build()
+}
+
+func (a *apiApp) listAdCampaigns() *router.RestCommand {
+	path := "/list_ad_campaigns"
+
+	a.apiDef[path] = swagger.ApiDescription{
+		Request:  ad_campaign.ListAdCampaignsRequest{},
+		Response: ad_campaign.ListAdCampaignsResponse{},
+		Tags:     []string{"ad_campaign"},
+	}
+
+	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req ad_campaign.ListAdCampaignsRequest
+
+		if len(request) > 0 {
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+		}
+
+		resp, err := a.adCampaignService.ListAdCampaigns(executionData.UserId, req, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context), executionData.Context)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
 	}, path, router.MethodPost).RequireIdentityValidation().Build()
 }

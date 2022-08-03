@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/RichardKnop/machinery/v1"
 	adCampaignApp "github.com/digitalmonsters/ads-manager/cmd/ad_campaign"
 	"github.com/digitalmonsters/ads-manager/cmd/api"
 	"github.com/digitalmonsters/ads-manager/cmd/common"
@@ -18,6 +19,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
+	"github.com/digitalmonsters/go-common/wrappers/user_category"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -44,6 +46,7 @@ func main() {
 
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
+	userCategoryWrapper := user_category.NewUserCategoryWrapper(cfg.Wrappers.UserCategories)
 	notificationHandler := notification_handler.NewNotificationHandlerWrapper(cfg.Wrappers.NotificationHandler)
 
 	if err := api.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef); err != nil {
@@ -56,7 +59,36 @@ func main() {
 		panic(err)
 	}
 
-	adCampaignService := ad_campaign.NewService(contentWrapper)
+	log.Info().Msg("getting jobber")
+
+	jobber, err := configs.GetJobber(&cfg.Jobber)
+
+	if err != nil {
+		log.Err(err).Msgf("[Jobber] Could not create jobber")
+	}
+
+	_ = jobber.RegisterTask("", func() error {
+		return nil
+	})
+
+	var machineryWorker *machinery.Worker
+
+	go func() {
+		defer func() {
+			_ = recover() // https://github.com/RichardKnop/machinery/issues/437
+		}()
+
+		machineryWorker = jobber.NewCustomQueueWorker(boilerplate.GetGenerator().Generate().String(),
+			cfg.Jobber.Concurrency, cfg.Jobber.DefaultQueue)
+
+		if err = machineryWorker.Launch(); err != nil {
+			if err != machinery.ErrWorkerQuitGracefully {
+				log.Logger.Err(err).Send()
+			}
+		}
+	}()
+
+	adCampaignService := ad_campaign.NewService(contentWrapper, userCategoryWrapper, userGoWrapper, jobber)
 	converter := converter2.NewConverter(userGoWrapper)
 	adModerationService := ad_moderation.NewService(notificationHandler, converter)
 	commonService := commonPkg.NewService()

@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/shopspring/decimal"
 )
 
 var cfgService *application.Configurator[AppConfig]
@@ -22,7 +23,9 @@ func GetAppConfig() AppConfig {
 }
 
 type AppConfig struct {
-	ADS_MODERATION_SLA int
+	ADS_MODERATION_SLA                     int
+	ADS_CAMPAIGN_VIDEOS_PER_CONTENT_VIDEOS int
+	ADS_CAMPAIGN_GLOBAL_PRICE              decimal.Decimal
 }
 
 func GetConfigsMigration() map[string]application.MigrateConfigModel {
@@ -34,6 +37,22 @@ func GetConfigsMigration() map[string]application.MigrateConfigModel {
 			Description:    "Ads moderation SLA",
 			Category:       application.ConfigCategoryAd,
 			ReleaseVersion: "29.07.22",
+		},
+		"ADS_CAMPAIGN_VIDEOS_PER_CONTENT_VIDEOS": {
+			Key:            "ADS_CAMPAIGN_VIDEOS_PER_CONTENT_VIDEOS",
+			Value:          "9",
+			Type:           application.ConfigTypeInteger,
+			Description:    "Ads campaign videos per content videos frequency, possible values are: 2, 4, 5, 10, 20",
+			Category:       application.ConfigCategoryAd,
+			ReleaseVersion: "05.08.22",
+		},
+		"ADS_CAMPAIGN_GLOBAL_PRICE": {
+			Key:            "ADS_CAMPAIGN_GLOBAL_PRICE",
+			Value:          "10",
+			Type:           application.ConfigTypeDecimal,
+			Description:    "Ads campaign global price",
+			Category:       application.ConfigCategoryAd,
+			ReleaseVersion: "05.08.22",
 		},
 	}
 }

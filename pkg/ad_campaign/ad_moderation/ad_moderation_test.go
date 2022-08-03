@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
@@ -69,7 +70,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 			StartedAt:      null.TimeFrom(time.Now().UTC().Add(-24 * time.Hour)),
 			EndedAt:        null.TimeFrom(time.Now().UTC().Add(24 * time.Hour)),
 			DurationMin:    267,
-			Budget:         198,
+			Budget:         decimal.NewFromInt(198),
 			Gender:         null.StringFrom("male"),
 			AgeFrom:        22,
 			AgeTo:          34,
@@ -88,7 +89,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 			StartedAt:      null.TimeFrom(time.Now().UTC().Add(-5 * time.Hour)),
 			EndedAt:        null.TimeFrom(time.Now().UTC().Add(256 * time.Hour)),
 			DurationMin:    2178,
-			Budget:         1671,
+			Budget:         decimal.NewFromInt(1671),
 			Gender:         null.StringFrom("female"),
 			AgeFrom:        19,
 			AgeTo:          25,
@@ -106,7 +107,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 			StartedAt:      null.TimeFrom(time.Now().UTC().Add(-2 * time.Hour)),
 			EndedAt:        null.TimeFrom(time.Now().UTC().Add(122 * time.Hour)),
 			DurationMin:    22,
-			Budget:         18,
+			Budget:         decimal.NewFromInt(18),
 			Gender:         null.StringFrom("male"),
 			AgeFrom:        34,
 			AgeTo:          56,
@@ -189,7 +190,7 @@ func TestService_SetAdRejectReason(t *testing.T) {
 				StartedAt:      null.TimeFrom(time.Now().UTC().Add(-24 * time.Hour)),
 				EndedAt:        null.TimeFrom(time.Now().UTC().Add(24 * time.Hour)),
 				DurationMin:    267,
-				Budget:         198,
+				Budget:         decimal.NewFromInt(198),
 				Gender:         null.StringFrom("male"),
 				AgeFrom:        22,
 				AgeTo:          34,

@@ -39,6 +39,7 @@ func (c *Converter) MapFromDbAddCampaign(dbModels []database.AdCampaign, ctx con
 			EndedAt:        dbModel.EndedAt,
 			DurationMin:    dbModel.DurationMin,
 			Budget:         dbModel.Budget,
+			OriginalBudget: dbModel.OriginalBudget,
 			Gender:         dbModel.Gender,
 			AgeFrom:        dbModel.AgeFrom,
 			AgeTo:          dbModel.AgeTo,

@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/digitalmonsters/ads-manager/pkg/database"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"time"
 )
@@ -77,7 +78,8 @@ type AddModerationItem struct {
 	StartedAt      null.Time                 `json:"started_at"`
 	EndedAt        null.Time                 `json:"ended_at"`
 	DurationMin    uint                      `json:"duration_min"`
-	Budget         uint                      `json:"budget"`
+	Budget         decimal.Decimal           `json:"budget"`
+	OriginalBudget decimal.Decimal           `json:"original_budget"`
 	Gender         null.String               `json:"gender"`
 	AgeFrom        uint                      `json:"age_from"`
 	AgeTo          uint                      `json:"age_to"`
