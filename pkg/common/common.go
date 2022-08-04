@@ -15,12 +15,14 @@ type IService interface {
 	UpsertRejectReasons(req UpsertRejectReasonsRequest, tx *gorm.DB) error
 	DeleteRejectReasons(req DeleteRequest, tx *gorm.DB) error
 	PublicListActionButtons(request PublicListActionButtonsRequest, tx *gorm.DB) (*ListActionButtonsResponse, error)
+	UpsertAdCampaignCountryPrice(request UpsertAdCampaignCountryPriceRequest, tx *gorm.DB) error
+	ListAdCampaignCountryPrices(request ListAdCampaignCountryPriceRequest, tx *gorm.DB) (*ListAdCampaignCountryPriceResponse, error)
 }
 
 type service struct {
 }
 
-func (s service) ListActionButtons(request ListActionButtonsRequest, tx *gorm.DB) (*ListActionButtonsResponse, error) {
+func (s *service) ListActionButtons(request ListActionButtonsRequest, tx *gorm.DB) (*ListActionButtonsResponse, error) {
 	var count int64
 	var items []database.ActionButton
 
@@ -48,7 +50,7 @@ func (s service) ListActionButtons(request ListActionButtonsRequest, tx *gorm.DB
 	}, nil
 }
 
-func (s service) ListRejectReasons(request ListRejectReasonsRequest, tx *gorm.DB) (*ListRejectReasonsResponse, error) {
+func (s *service) ListRejectReasons(request ListRejectReasonsRequest, tx *gorm.DB) (*ListRejectReasonsResponse, error) {
 	var count int64
 	var items []database.RejectReason
 
@@ -75,7 +77,7 @@ func (s service) ListRejectReasons(request ListRejectReasonsRequest, tx *gorm.DB
 	}, nil
 }
 
-func (s service) UpsertActionButtons(req UpsertActionButtonsRequest, tx *gorm.DB) error {
+func (s *service) UpsertActionButtons(req UpsertActionButtonsRequest, tx *gorm.DB) error {
 	var creates []database.ActionButton
 	for _, item := range req.Items {
 		if item.Id.Valid {
@@ -100,7 +102,7 @@ func (s service) UpsertActionButtons(req UpsertActionButtonsRequest, tx *gorm.DB
 	return nil
 }
 
-func (s service) DeleteActionButtons(req DeleteRequest, tx *gorm.DB) error {
+func (s *service) DeleteActionButtons(req DeleteRequest, tx *gorm.DB) error {
 	var count int64
 
 	if err := tx.Model(database.AdCampaign{}).Where("link_button_id in ?", req.Ids).Count(&count).Error; err != nil {
@@ -112,7 +114,7 @@ func (s service) DeleteActionButtons(req DeleteRequest, tx *gorm.DB) error {
 	return tx.Model(database.ActionButton{}).Where("id in ?", req.Ids).Update("deleted_at", time.Now().UTC()).Error
 }
 
-func (s service) UpsertRejectReasons(req UpsertRejectReasonsRequest, tx *gorm.DB) error {
+func (s *service) UpsertRejectReasons(req UpsertRejectReasonsRequest, tx *gorm.DB) error {
 	var creates []database.RejectReason
 	for _, item := range req.Items {
 		if item.Id.Valid {
@@ -135,7 +137,7 @@ func (s service) UpsertRejectReasons(req UpsertRejectReasonsRequest, tx *gorm.DB
 	return nil
 }
 
-func (s service) DeleteRejectReasons(req DeleteRequest, tx *gorm.DB) error {
+func (s *service) DeleteRejectReasons(req DeleteRequest, tx *gorm.DB) error {
 	var count int64
 
 	if err := tx.Model(database.AdCampaign{}).Where("reject_reason_id in ?", req.Ids).Count(&count).Error; err != nil {
@@ -151,7 +153,7 @@ func NewService() IService {
 	return &service{}
 }
 
-func (s service) PublicListActionButtons(request PublicListActionButtonsRequest, tx *gorm.DB) (*ListActionButtonsResponse, error) {
+func (s *service) PublicListActionButtons(request PublicListActionButtonsRequest, tx *gorm.DB) (*ListActionButtonsResponse, error) {
 	var count int64
 	var items []database.ActionButton
 
@@ -182,4 +184,11 @@ func (s service) PublicListActionButtons(request PublicListActionButtonsRequest,
 		Items:      models,
 		TotalCount: count,
 	}, nil
+}
+
+func (s *service) UpsertAdCampaignCountryPrice(request UpsertAdCampaignCountryPriceRequest, tx *gorm.DB) error {
+	return nil
+}
+func (s *service) ListAdCampaignCountryPrices(request ListAdCampaignCountryPriceRequest, tx *gorm.DB) (*ListAdCampaignCountryPriceResponse, error) {
+	return nil, nil
 }
