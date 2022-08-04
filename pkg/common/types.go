@@ -94,10 +94,10 @@ type AddModerationItem struct {
 }
 
 type UpsertAdCampaignCountryPriceRequest struct {
-	Items []AdCampaignCountryPriceItem `json:"items"`
+	Items []AdCampaignCountryPriceItemModel `json:"items"`
 }
 
-type AdCampaignCountryPriceItem struct {
+type AdCampaignCountryPriceItemModel struct {
 	CountryCode   string          `json:"country_code"`
 	Price         decimal.Decimal `json:"price"`
 	CountryName   string          `json:"country_name"`
@@ -115,6 +115,6 @@ type ListAdCampaignCountryPriceRequest struct {
 }
 
 type ListAdCampaignCountryPriceResponse struct {
-	Items      []AdCampaignCountryPriceItem `json:"items"`
-	TotalCount int64                        `json:"total_count"`
+	Items      []AdCampaignCountryPriceItemModel `json:"items"`
+	TotalCount int64                             `json:"total_count"`
 }

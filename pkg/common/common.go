@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -187,8 +188,76 @@ func (s *service) PublicListActionButtons(request PublicListActionButtonsRequest
 }
 
 func (s *service) UpsertAdCampaignCountryPrice(request UpsertAdCampaignCountryPriceRequest, tx *gorm.DB) error {
+
+	var dbModels []database.AdCampaignCountriesPrice
+
+	for _, item := range request.Items {
+		dbModels = append(dbModels, database.AdCampaignCountriesPrice{
+			CountryCode:   item.CountryCode,
+			Price:         item.Price,
+			CountryName:   item.CountryName,
+			IsGlobalPrice: item.IsGlobalPrice,
+		})
+	}
+
+	if err := tx.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{
+				Name: "country_code",
+			},
+		},
+		DoUpdates: clause.AssignmentColumns([]string{"country_name", "is_global_price", "price"}),
+	}).Create(&dbModels).Error; err != nil {
+		return err
+	}
+
 	return nil
 }
 func (s *service) ListAdCampaignCountryPrices(request ListAdCampaignCountryPriceRequest, tx *gorm.DB) (*ListAdCampaignCountryPriceResponse, error) {
-	return nil, nil
+
+	var items []database.AdCampaignCountriesPrice
+
+	var q = tx.Model(items)
+
+	if request.CountryName.Valid {
+		q = q.Where("country_name ilike ?", request.CountryName.ValueOrZero())
+	}
+	if request.CountryCode.Valid {
+		q = q.Where("country_code ilike ?", request.CountryCode.ValueOrZero())
+	}
+	if request.IsGlobalPrice.Valid {
+		q = q.Where("is_global_price ilike ?", request.IsGlobalPrice.ValueOrZero())
+	}
+	if request.PriceFrom.Valid {
+		q = q.Where("price >= ?", request.PriceFrom.Decimal)
+	}
+	if request.PriceTo.Valid {
+		q = q.Where("price <= ?", request.PriceTo.Decimal)
+	}
+	var totalCount int64
+	if err := q.Count(&totalCount).Error; err != nil {
+		return nil, err
+	}
+
+	if request.Limit > 0 {
+		q = q.Limit(request.Limit)
+	}
+	if err := q.Offset(request.Offset).Find(&items).Error; err != nil {
+		return nil, err
+	}
+	var models []AdCampaignCountryPriceItemModel
+
+	for _, item := range items {
+		models = append(models, AdCampaignCountryPriceItemModel{
+			CountryCode:   item.CountryCode,
+			Price:         item.Price,
+			CountryName:   item.CountryName,
+			IsGlobalPrice: item.IsGlobalPrice,
+		})
+	}
+	var resp = ListAdCampaignCountryPriceResponse{
+		Items:      models,
+		TotalCount: totalCount,
+	}
+	return &resp, nil
 }

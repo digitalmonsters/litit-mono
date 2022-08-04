@@ -201,3 +201,60 @@ func (a *apiApp) listRejectReasons() router.ICommand {
 		return resp, nil
 	}, common.AccessLevelRead, "ads:reject_reason:view")
 }
+
+func (a *apiApp) upsertAdCampaignCountryPrices() router.ICommand {
+	methodName := "UpsertAdCampaignCountryPrices"
+
+	a.apiDef[methodName] = swagger.ApiDescription{
+		Request:  commonPkg.UpsertAdCampaignCountryPriceRequest{},
+		Response: nil,
+		Tags:     []string{"common", "country price"},
+	}
+
+	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req commonPkg.UpsertAdCampaignCountryPriceRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		tx := database.GetDbWithContext(database.DbTypeMaster, executionData.Context).Begin()
+		defer tx.Rollback()
+
+		if err := a.commonService.UpsertAdCampaignCountryPrice(req, tx); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+		return nil, nil
+
+	}, common.AccessLevelWrite, "ads:country_price:modify")
+}
+
+func (a *apiApp) listAdCampaignCountryPrices() router.ICommand {
+	methodName := "ListAdCampaignCountryPrices"
+
+	a.apiDef[methodName] = swagger.ApiDescription{
+		Request:  commonPkg.ListAdCampaignCountryPriceRequest{},
+		Response: commonPkg.ListAdCampaignCountryPriceResponse{},
+		Tags:     []string{"common", "country price"},
+	}
+
+	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req commonPkg.ListAdCampaignCountryPriceRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		db := database.GetDbWithContext(database.DbTypeReadonly, executionData.Context)
+
+		resp, err := a.commonService.ListAdCampaignCountryPrices(req, db)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+		return resp, nil
+	}, common.AccessLevelRead, "ads:country_price:view")
+}
