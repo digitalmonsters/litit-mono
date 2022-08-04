@@ -130,7 +130,7 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 
 		adCampaign.Budget = adCampaign.Budget.Sub(adCampaign.Price)
 
-		if adCampaign.Budget.LessThanOrEqual(decimal.Zero) {
+		if adCampaign.Budget.LessThan(decimal.Zero) {
 			adCampaign.Status = database.AdCampaignStatusCompleted
 			if err := tx2.Model(&adCampaign).
 				Update("status", adCampaign.Status).
