@@ -99,4 +99,32 @@ func Test_handleOne(t *testing.T) {
 	}
 
 	a.Equal(int64(1), adCampaignView.AdCampaignId)
+
+	if err := viewContentService.handleOne(gormDb, fullEvent{
+		ViewEvent: eventsourcing.ViewEvent{
+			UserId:          3,
+			ContentId:       1,
+			ContentType:     eventsourcing.ContentTypeVideo,
+			ContentAuthorId: 1,
+			SourceView:      eventsourcing.SourceViewFeedInterests,
+		},
+	}, context.TODO()); err != nil {
+		t.Fatal(err)
+	}
+
+	adCampaign = database.AdCampaign{}
+	if err := gormDb.Where("id = 1").Find(&adCampaign).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.True(adCampaign.Budget.Equal(decimal.NewFromInt(20)))
+	a.True(adCampaign.Paid)
+	a.Equal(2, adCampaign.Views)
+
+	adCampaignView = database.AdCampaignView{}
+	if err := gormDb.Where("ad_campaign_id = 1 and user_id = 3").Find(&adCampaignView).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(int64(1), adCampaignView.AdCampaignId)
 }

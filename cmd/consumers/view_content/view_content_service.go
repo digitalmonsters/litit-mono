@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"github.com/shopspring/decimal"
+	"go.elastic.co/apm"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -38,6 +39,11 @@ func (s *service) process(db *gorm.DB, event fullEvent, ctx context.Context) *ka
 }
 
 func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) error {
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_id", event.ContentId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_author_id", event.ContentAuthorId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "source_view", event.SourceView)
+
 	if event.UserId <= 0 || event.UserId == event.ContentAuthorId || !isSourceViewSupportedForAd(event.SourceView) {
 		return nil
 	}

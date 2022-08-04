@@ -1,6 +1,7 @@
 {
   "HttpPort": 5212,
   "PrivateHttpPort": 5211,
+  "CdnBase": "https://awesomecdn.com",
   "MasterDb": {
     "Host": "localhost",
     "Port": 5432,
