@@ -91,4 +91,7 @@ type AddModerationItem struct {
 	AgeTo          uint                      `json:"age_to"`
 	RejectReasonId null.Int                  `json:"reject_reason_id"`
 	SlaExpired     bool                      `json:"sla_expired"`
+	Thumbnail      string                    `json:"thumbnail"`
+	VideoUrl       string                    `json:"video_url"`
+	AnimUrl        string                    `json:"anim_url"`
 }
