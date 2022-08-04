@@ -100,7 +100,7 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 
 	needPay := false
 
-	if !adCampaign.Paid && ((adCampaign.Views-1)%1000 == 0) {
+	if (adCampaign.Views-1)%1000 == 0 {
 		adCampaign.Paid = false
 		if err := tx.Model(&adCampaign).Update("paid", adCampaign.Paid).Error; err != nil {
 			return errors.WithStack(err)
@@ -114,10 +114,11 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 	}
 
 	if needPay {
-		tx = db.Begin()
+		tx2 := db.Begin()
+		defer tx2.Rollback()
 
 		adCampaign = database.AdCampaign{}
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		if err := tx2.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("content_id = ? and status = ?", event.ContentId, database.AdCampaignStatusActive).
 			Find(&adCampaign).Error; err != nil {
 			return errors.WithStack(err)
@@ -129,19 +130,18 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 
 		writeOffUserTokensForAdResp := <-s.goTokenomicsWrapper.WriteOffUserTokensForAd(adCampaign.UserId, adCampaign.Id, adCampaign.Price, ctx, false)
 		if writeOffUserTokensForAdResp.Error != nil {
-			apm_helper.LogError(writeOffUserTokensForAdResp.Error.ToError(), ctx)
-			return nil
+			return errors.WithStack(writeOffUserTokensForAdResp.Error.ToError())
 		}
 
 		adCampaign.Paid = true
 		adCampaign.Budget = adCampaign.Budget.Sub(adCampaign.Price)
-		if err := tx.Model(&adCampaign).
+		if err := tx2.Model(&adCampaign).
 			Update("paid", adCampaign.Paid).
 			Update("budget", adCampaign.Budget).Error; err != nil {
 			return errors.WithStack(err)
 		}
 
-		if err := tx.Commit().Error; err != nil {
+		if err := tx2.Commit().Error; err != nil {
 			return errors.WithStack(err)
 		}
 	}
