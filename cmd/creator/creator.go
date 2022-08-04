@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/creator/internal/api"
 	"github.com/digitalmonsters/music/cmd/creator/internal/categories"
+	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/comments_counter"
 	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/dislike"
 	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/like"
 	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/listen"
@@ -44,5 +45,6 @@ func Application(
 		AddSubApplication(dislike.SubApp(ctx, creatorsCfg.Listeners.DislikeCounter)).
 		AddSubApplication(love.SubApp(ctx, creatorsCfg.Listeners.LoveCounter)).
 		AddSubApplication(listen.SubApp(ctx, creatorsCfg.Listeners.ListenCounter)).
-		AddSubApplication(listened_music.SubApp(ctx, creatorsCfg.Listeners.ListenedMusic))
+		AddSubApplication(listened_music.SubApp(ctx, creatorsCfg.Listeners.ListenedMusic)).
+		AddSubApplication(comments_counter.SubApp(ctx, creatorsCfg.Listeners.CommentsCounter))
 }

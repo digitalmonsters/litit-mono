@@ -55,11 +55,12 @@ type CreatorsConfig struct {
 }
 
 type CreatorListeners struct {
-	LikeCounter    CounterListener `json:"LikeCounter"`
-	LoveCounter    CounterListener `json:"LoveCounter"`
-	DislikeCounter CounterListener `json:"DislikeCounter"`
-	ListenCounter  CounterListener `json:"ListenCounter"`
-	ListenedMusic  CounterListener `json:"ListenedMusic"`
+	LikeCounter     CounterListener                        `json:"LikeCounter"`
+	LoveCounter     CounterListener                        `json:"LoveCounter"`
+	DislikeCounter  CounterListener                        `json:"DislikeCounter"`
+	ListenCounter   CounterListener                        `json:"ListenCounter"`
+	ListenedMusic   CounterListener                        `json:"ListenedMusic"`
+	CommentsCounter boilerplate.KafkaListenerConfiguration `json:"CommentsCounter"`
 }
 
 type SoundStripeConfig struct {
