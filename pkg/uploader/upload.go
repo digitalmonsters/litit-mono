@@ -35,10 +35,13 @@ func FileUpload(cfg *configs.Settings, appConfig *application.Configurator[confi
 		return nil, errors.New("multiple file upload not supported")
 	}
 
+	var fileUrl string
+
 	header := files[0]
 	size := header.Size
 
 	f := strings.Split(header.Filename, ".")
+
 	if len(f) < 2 {
 		return nil, errors.New("invalid file format")
 	}
@@ -87,9 +90,11 @@ func FileUpload(cfg *configs.Settings, appConfig *application.Configurator[confi
 				return nil, errors.New("song duration is greater than max song duration")
 			}
 		}
+
 	}
 
 	filePath = filepath.Join(filePath, uploadType.ToString(), filename)
+	fileUrl = fmt.Sprintf("%v/%v", cfg.S3.CdnUrl, filePath)
 
 	uploader := s3.NewUploader(&cfg.S3)
 	if err := uploader.UploadObject(filePath, body, "application/octet-stream"); err != nil {
@@ -97,7 +102,7 @@ func FileUpload(cfg *configs.Settings, appConfig *application.Configurator[confi
 	}
 
 	return &uploadResponse{
-		FileUrl:  filePath,
+		FileUrl:  fileUrl,
 		Size:     size,
 		Duration: duration,
 	}, nil
