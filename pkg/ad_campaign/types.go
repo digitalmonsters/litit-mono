@@ -66,3 +66,7 @@ type ListAdCampaignsResponseItem struct {
 	Budget         decimal.Decimal                    `json:"budget"`
 	OriginalBudget decimal.Decimal                    `json:"original_budget"`
 }
+
+type HasAdCampaignsResponse struct {
+	HasAdCampaign bool `json:"has_ad_campaign"`
+}
