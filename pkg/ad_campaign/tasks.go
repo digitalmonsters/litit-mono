@@ -18,7 +18,7 @@ func (s *service) InitTasks() error {
 			ctx := boilerplate.CreateCustomContext(context.Background(), apmTransaction, log.Logger)
 
 			if err := database.GetDbWithContext(database.DbTypeMaster, ctx).
-				Exec("update ad_campaigns set status = ? where ended_at is not null and ended_at >= now() and status = ?",
+				Exec("update ad_campaigns set status = ? where ended_at is not null and now() >= ended_at and status = ?",
 					database.AdCampaignStatusCompleted, database.AdCampaignStatusActive).Error; err != nil {
 				return errors.WithStack(err)
 			}

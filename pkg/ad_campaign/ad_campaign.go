@@ -240,22 +240,22 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 
 		categoryIdsLen := len(userCategoryResp.Response.CategoryIds)
 
-		if categoryIdsLen == 0 {
-			break
-		}
-
 		if categoryIdsLen < limit {
 			pageState = ""
 		}
 
 		var categoryAdCampaignIds []int64
-		if err := db.Table("ad_campaigns").
+		catQuery := db.Table("ad_campaigns").
 			Select("distinct ad_campaigns.id").
 			Joins("left join ad_campaign_categories on ad_campaign_categories.ad_campaign_id = ad_campaigns.id").
 			Where("ad_campaign_categories.category_id is null or ad_campaign_categories.category_id in ?", userCategoryResp.Response.CategoryIds).
-			Where("ad_campaigns.id in ?", adCampaignIds).
-			Limit(respDataLen).
-			Scan(&categoryAdCampaignIds).Error; err != nil {
+			Limit(respDataLen)
+
+		if len(adCampaignIds) > 0 {
+			catQuery = catQuery.Where("ad_campaigns.id in ?", adCampaignIds)
+		}
+
+		if err := catQuery.Scan(&categoryAdCampaignIds).Error; err != nil {
 			apm_helper.LogError(errors.WithStack(err), ctx)
 			break
 		}
