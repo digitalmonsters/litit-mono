@@ -18,6 +18,8 @@ func (a *apiApp) initAdminApi(httpRouter router.IRpcEndpoint) error {
 		a.deleteRejectReasons(),
 		a.listRejectReasons(),
 		a.listActionButtons(),
+		a.listAdCampaignCountryPrices(),
+		a.upsertAdCampaignCountryPrices(),
 	}
 
 	for _, c := range restCommands {
