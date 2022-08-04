@@ -62,7 +62,7 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 		return nil
 	}
 
-	if (adCampaign.EndedAt.Valid && time.Now().UTC().After(adCampaign.EndedAt.Time)) || (adCampaign.Views > 0 && !adCampaign.Paid) || adCampaign.Budget.LessThanOrEqual(decimal.Zero) {
+	if (adCampaign.EndedAt.Valid && time.Now().UTC().After(adCampaign.EndedAt.Time)) || (adCampaign.Views > 0 && !adCampaign.Paid) {
 		adCampaign.Status = database.AdCampaignStatusCompleted
 		if err := tx.Model(&adCampaign).Update("status", adCampaign.Status).Error; err != nil {
 			return errors.WithStack(err)
@@ -128,13 +128,27 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 			return nil
 		}
 
+		adCampaign.Budget = adCampaign.Budget.Sub(adCampaign.Price)
+
+		if adCampaign.Budget.LessThanOrEqual(decimal.Zero) {
+			adCampaign.Status = database.AdCampaignStatusCompleted
+			if err := tx2.Model(&adCampaign).
+				Update("status", adCampaign.Status).
+				Update("budget", adCampaign.Budget).Error; err != nil {
+				return errors.WithStack(err)
+			}
+
+			if err := tx2.Commit().Error; err != nil {
+				return errors.WithStack(err)
+			}
+		}
+
 		writeOffUserTokensForAdResp := <-s.goTokenomicsWrapper.WriteOffUserTokensForAd(adCampaign.UserId, adCampaign.Id, adCampaign.Price, ctx, false)
 		if writeOffUserTokensForAdResp.Error != nil {
 			return errors.WithStack(writeOffUserTokensForAdResp.Error.ToError())
 		}
 
 		adCampaign.Paid = true
-		adCampaign.Budget = adCampaign.Budget.Sub(adCampaign.Price)
 		if err := tx2.Model(&adCampaign).
 			Update("paid", adCampaign.Paid).
 			Update("budget", adCampaign.Budget).Error; err != nil {

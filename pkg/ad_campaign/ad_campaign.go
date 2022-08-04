@@ -447,12 +447,20 @@ func (s *service) StartAdCampaign(userId int64, req StartAdCampaignRequest, tx *
 
 	adCampaign.Status = database.AdCampaignStatusActive
 	adCampaign.StartedAt = null.TimeFrom(time.Now().UTC())
-	adCampaign.EndedAt = null.TimeFrom(adCampaign.StartedAt.Time.Add(time.Duration(adCampaign.DurationMin) * time.Minute))
+
 	if err := tx.Model(&adCampaign).
 		Update("started_at", adCampaign.StartedAt.Time).
-		Update("ended_at", adCampaign.EndedAt.Time).
 		Update("status", adCampaign.Status).Error; err != nil {
 		return errors.WithStack(err)
+	}
+
+	if adCampaign.DurationMin > 0 {
+		adCampaign.EndedAt = null.TimeFrom(adCampaign.StartedAt.Time.Add(time.Duration(adCampaign.DurationMin) * time.Minute))
+
+		if err := tx.Model(&adCampaign).
+			Update("ended_at", adCampaign.EndedAt.Time).Error; err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
