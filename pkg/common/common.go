@@ -226,7 +226,7 @@ func (s *service) ListAdCampaignCountryPrices(request ListAdCampaignCountryPrice
 		q = q.Where("country_code ilike ?", request.CountryCode.ValueOrZero())
 	}
 	if request.IsGlobalPrice.Valid {
-		q = q.Where("is_global_price ilike ?", request.IsGlobalPrice.ValueOrZero())
+		q = q.Where("is_global_price = ?", request.IsGlobalPrice.ValueOrZero())
 	}
 	if request.PriceFrom.Valid {
 		q = q.Where("price >= ?", request.PriceFrom.Decimal)
