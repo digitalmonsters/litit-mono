@@ -105,6 +105,14 @@ const (
 	PointsEarnedTypeAdditionalBonusCreatorVerifyGrandReferrer = PointsEarnedType(46)
 	PointsEarnedTypeSocialMediasAdded                         = PointsEarnedType(47)
 	PointsEarnedTypePointsWriteOffForAd                       = PointsEarnedType(48) // write off money for ad
+	PointsEarnedTypeUserShortListen                           = PointsEarnedType(49)
+	PointsEarnedTypeUserCreatorShortListen                    = PointsEarnedType(50)
+	PointsEarnedTypeCreatorShortListenGuest                   = PointsEarnedType(51)
+	PointsEarnedTypeShortListenBonusPerformance               = PointsEarnedType(52)
+	PointsEarnedTypeUserFullListen                            = PointsEarnedType(53)
+	PointsEarnedTypeUserCreatorFullListen                     = PointsEarnedType(54)
+	PointsEarnedTypeCreatorFullListenGuest                    = PointsEarnedType(55)
+	PointsEarnedTypeFullListenBonusPerformance                = PointsEarnedType(56)
 )
 
 type WithdrawalStatus int16
