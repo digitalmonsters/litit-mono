@@ -6,9 +6,11 @@ import (
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/filters"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/ads_manager"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
 	"github.com/digitalmonsters/go-common/wrappers/user_category"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/shopspring/decimal"
@@ -25,8 +27,9 @@ import (
 var gormDb *gorm.DB
 var adCampaignService IService
 var contentWrapperMock content.IContentWrapper
-var userCategoryWrapper user_category.IUserCategoryWrapper
+var userCategoryWrapper *user_category.UserCategoryWrapperMock
 var userWrapper user_go.IUserGoWrapper
+var goTokenomicsWrapper *go_tokenomics.GoTokenomicsWrapperMock
 
 func TestMain(m *testing.M) {
 	gormDb = database.GetDb(database.DbTypeMaster)
@@ -128,7 +131,32 @@ func TestMain(m *testing.M) {
 		},
 	}
 
-	adCampaignService = NewService(contentWrapperMock, userCategoryWrapper, userWrapper, nil)
+	goTokenomicsWrapper = &go_tokenomics.GoTokenomicsWrapperMock{}
+
+	goTokenomicsWrapper.GetUsersTokenomicsInfoFn = func(userIds []int64, filters []filters.Filter, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]go_tokenomics.UserTokenomicsInfo] {
+		var respCh = make(chan wrappers.GenericResponseChan[map[int64]go_tokenomics.UserTokenomicsInfo], 1)
+		resp := make(map[int64]go_tokenomics.UserTokenomicsInfo, len(userIds))
+		for _, userId := range userIds {
+			resp[userId] = go_tokenomics.UserTokenomicsInfo{
+				TotalPoints:        decimal.NewFromInt(100),
+				CurrentPoints:      decimal.NewFromInt(100),
+				VaultPoints:        decimal.NewFromInt(100),
+				AllTimeVaultPoints: decimal.NewFromInt(100),
+				CurrentTokens:      decimal.NewFromInt(100),
+				CurrentRate:        decimal.NewFromInt(1),
+				WithdrawnTokens:    decimal.NewFromInt(100),
+			}
+		}
+
+		respCh <- wrappers.GenericResponseChan[map[int64]go_tokenomics.UserTokenomicsInfo]{
+			Error:    nil,
+			Response: resp,
+		}
+		close(respCh)
+		return respCh
+	}
+
+	adCampaignService = NewService(contentWrapperMock, userCategoryWrapper, userWrapper, nil, goTokenomicsWrapper)
 
 	os.Exit(m.Run())
 }
@@ -340,6 +368,86 @@ func TestService_GetAdsContentForUser(t *testing.T) {
 	a.Equal(int64(10), resp.MixedContentIdsWithAd[8]) // ad
 	a.Equal(int64(20), resp.MixedContentIdsWithAd[9])
 	a.Equal(int64(11), resp.MixedContentIdsWithAd[10])
+
+	if err = gormDb.Create(&database.AdCampaign{
+		Id:             5,
+		UserId:         1,
+		Name:           "ad5",
+		AdType:         database.AdTypeContent,
+		Status:         database.AdCampaignStatusActive,
+		ContentId:      21,
+		DurationMin:    15,
+		Budget:         decimal.NewFromInt(1),
+		OriginalBudget: decimal.NewFromInt(1),
+		StartedAt:      null.TimeFrom(time.Now().UTC().Add(-5 * time.Minute)),
+		EndedAt:        null.TimeFrom(time.Now().UTC().Add(10 * time.Minute)),
+		Link:           null.StringFrom("link"),
+		LinkButtonId:   null.IntFrom(0),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err = adCampaignService.GetAdsContentForUser(ads_manager.GetAdsContentForUserRequest{
+		UserId:             2,
+		ContentIdsToMix:    []int64{1, 2, 3, 4, 5, 6, 7, 9, 10, 11},
+		ContentIdsToIgnore: []int64{7, 8, 20},
+	}, gormDb, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.NotNil(resp)
+
+	a.Len(resp.MixedContentIdsWithAd, 11)
+	a.Equal(int64(1), resp.MixedContentIdsWithAd[0])
+	a.Equal(int64(2), resp.MixedContentIdsWithAd[1])
+	a.Equal(int64(3), resp.MixedContentIdsWithAd[2])
+	a.Equal(int64(4), resp.MixedContentIdsWithAd[3])
+	a.Equal(int64(5), resp.MixedContentIdsWithAd[4])
+	a.Equal(int64(6), resp.MixedContentIdsWithAd[5])
+	a.Equal(int64(7), resp.MixedContentIdsWithAd[6])
+	a.Equal(int64(9), resp.MixedContentIdsWithAd[7])
+	a.Equal(int64(10), resp.MixedContentIdsWithAd[8]) // ad
+	a.Equal(int64(21), resp.MixedContentIdsWithAd[9])
+	a.Equal(int64(11), resp.MixedContentIdsWithAd[10])
+
+	userCategoryWrapper.GetInternalUserCategorySubscriptionsFn = func(userId int64, limit int, pageState string, ctx context.Context,
+		forceLog bool) chan wrappers.GenericResponseChan[user_category.GetInternalUserCategorySubscriptionsResponse] {
+		ch := make(chan wrappers.GenericResponseChan[user_category.GetInternalUserCategorySubscriptionsResponse], 2)
+		ch <- wrappers.GenericResponseChan[user_category.GetInternalUserCategorySubscriptionsResponse]{
+			Error: nil,
+			Response: user_category.GetInternalUserCategorySubscriptionsResponse{
+				CategoryIds: nil,
+				PageState:   "",
+			},
+		}
+		close(ch)
+		return ch
+	}
+
+	resp, err = adCampaignService.GetAdsContentForUser(ads_manager.GetAdsContentForUserRequest{
+		UserId:             2,
+		ContentIdsToMix:    []int64{1, 2, 3, 4, 5, 6, 7, 9, 10, 11},
+		ContentIdsToIgnore: []int64{7, 8, 20},
+	}, gormDb, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.NotNil(resp)
+
+	a.Len(resp.MixedContentIdsWithAd, 11)
+	a.Equal(int64(1), resp.MixedContentIdsWithAd[0])
+	a.Equal(int64(2), resp.MixedContentIdsWithAd[1])
+	a.Equal(int64(3), resp.MixedContentIdsWithAd[2])
+	a.Equal(int64(4), resp.MixedContentIdsWithAd[3])
+	a.Equal(int64(5), resp.MixedContentIdsWithAd[4])
+	a.Equal(int64(6), resp.MixedContentIdsWithAd[5])
+	a.Equal(int64(7), resp.MixedContentIdsWithAd[6])
+	a.Equal(int64(9), resp.MixedContentIdsWithAd[7])
+	a.Equal(int64(10), resp.MixedContentIdsWithAd[8]) // ad
+	a.Equal(int64(21), resp.MixedContentIdsWithAd[9])
+	a.Equal(int64(11), resp.MixedContentIdsWithAd[10])
 }
 
 func TestService_ClickLink(t *testing.T) {
@@ -426,7 +534,7 @@ func TestService_StartAdCampaign(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := adCampaignService.StartAdCampaign(1, StartAdCampaignRequest{AdCampaignId: 1}, gormDb); err != nil {
+	if err := adCampaignService.StartAdCampaign(1, StartAdCampaignRequest{AdCampaignId: 1}, gormDb, context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -447,7 +555,7 @@ func TestService_ListAdCampaigns(t *testing.T) {
 	if err := gormDb.Create(&database.AdCampaign{
 		Id:        1,
 		UserId:    1,
-		Name:      "1",
+		Name:      "ad1",
 		AdType:    database.AdTypeContent,
 		Status:    database.AdCampaignStatusModerated,
 		ContentId: 1,
@@ -462,7 +570,7 @@ func TestService_ListAdCampaigns(t *testing.T) {
 	if err := gormDb.Create(&database.AdCampaign{
 		Id:        2,
 		UserId:    1,
-		Name:      "2",
+		Name:      "ad2",
 		AdType:    database.AdTypeContent,
 		Status:    database.AdCampaignStatusActive,
 		ContentId: 2,
@@ -501,6 +609,7 @@ func TestService_ListAdCampaigns(t *testing.T) {
 	}
 
 	resp, err := adCampaignService.ListAdCampaigns(1, ListAdCampaignsRequest{
+		Name:   null.StringFrom("ad"),
 		Status: nil,
 		Limit:  10,
 		Offset: 0,

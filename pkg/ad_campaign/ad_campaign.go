@@ -10,6 +10,7 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/ads_manager"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
 	"github.com/digitalmonsters/go-common/wrappers/user_category"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
@@ -28,8 +29,9 @@ type IService interface {
 	GetAdsContentForUser(req ads_manager.GetAdsContentForUserRequest, db *gorm.DB, ctx context.Context) (*ads_manager.GetAdsContentForUserResponse, error)
 	ClickLink(userId int64, req ClickLinkRequest, tx *gorm.DB) error
 	StopAdCampaign(userId int64, req StopAdCampaignRequest, tx *gorm.DB) error
-	StartAdCampaign(userId int64, req StartAdCampaignRequest, tx *gorm.DB) error
+	StartAdCampaign(userId int64, req StartAdCampaignRequest, tx *gorm.DB, ctx context.Context) error
 	ListAdCampaigns(userId int64, req ListAdCampaignsRequest, db *gorm.DB, ctx context.Context) (*ListAdCampaignsResponse, error)
+	InitTasks() error
 }
 
 type service struct {
@@ -37,6 +39,7 @@ type service struct {
 	userCategoryWrapper user_category.IUserCategoryWrapper
 	userWrapper         user_go.IUserGoWrapper
 	jobber              *machinery.Server
+	goTokenomicsWrapper go_tokenomics.IGoTokenomicsWrapper
 }
 
 func NewService(
@@ -44,16 +47,32 @@ func NewService(
 	userCategoryWrapper user_category.IUserCategoryWrapper,
 	userWrapper user_go.IUserGoWrapper,
 	jobber *machinery.Server,
+	goTokenomicsWrapper go_tokenomics.IGoTokenomicsWrapper,
 ) IService {
 	return &service{
 		contentWrapper:      contentWrapper,
 		userCategoryWrapper: userCategoryWrapper,
 		userWrapper:         userWrapper,
 		jobber:              jobber,
+		goTokenomicsWrapper: goTokenomicsWrapper,
 	}
 }
 
 func (s *service) CreateAdCampaign(req CreateAdCampaignRequest, userId int64, tx *gorm.DB, ctx context.Context) error {
+	usersTokenomicsInfoResp := <-s.goTokenomicsWrapper.GetUsersTokenomicsInfo([]int64{userId}, nil, ctx, false)
+	if usersTokenomicsInfoResp.Error != nil {
+		return errors.WithStack(usersTokenomicsInfoResp.Error.ToError())
+	}
+
+	userTokenomicsInfo, ok := usersTokenomicsInfoResp.Response[userId]
+	if !ok {
+		return errors.WithStack(errors.New("user not found"))
+	}
+
+	if userTokenomicsInfo.CurrentTokens.LessThan(req.Budget) {
+		return errors.WithStack(errors.New("user does not have enough tokens"))
+	}
+
 	contentResp := <-s.contentWrapper.GetInternal([]int64{req.ContentId}, false, apm.TransactionFromContext(ctx), false)
 	if contentResp.Error != nil {
 		return errors.WithStack(contentResp.Error.ToError())
@@ -180,7 +199,7 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 	}
 
 	if user.Birthdate.Valid {
-		query = query.Where("? <= now() - interval '1 years' * age_from and ? >= now() - interval '1 years' * age_to",
+		query = query.Where("(age_from is not null or ? <= now() - interval '1 years' * age_from) and (age_to is not null or ? >= now() - interval '1 years' * age_to)",
 			user.Birthdate.Time, user.Birthdate.Time)
 	}
 
@@ -221,22 +240,22 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 
 		categoryIdsLen := len(userCategoryResp.Response.CategoryIds)
 
-		if categoryIdsLen == 0 {
-			break
-		}
-
 		if categoryIdsLen < limit {
 			pageState = ""
 		}
 
 		var categoryAdCampaignIds []int64
-		if err := db.Table("ad_campaigns").
+		catQuery := db.Table("ad_campaigns").
 			Select("distinct ad_campaigns.id").
 			Joins("left join ad_campaign_categories on ad_campaign_categories.ad_campaign_id = ad_campaigns.id").
 			Where("ad_campaign_categories.category_id is null or ad_campaign_categories.category_id in ?", userCategoryResp.Response.CategoryIds).
-			Where("ad_campaigns.id in ?", adCampaignIds).
-			Limit(respDataLen).
-			Scan(&categoryAdCampaignIds).Error; err != nil {
+			Limit(respDataLen)
+
+		if len(adCampaignIds) > 0 {
+			catQuery = catQuery.Where("ad_campaigns.id in ?", adCampaignIds)
+		}
+
+		if err := catQuery.Scan(&categoryAdCampaignIds).Error; err != nil {
 			apm_helper.LogError(errors.WithStack(err), ctx)
 			break
 		}
@@ -396,7 +415,7 @@ func (s *service) StopAdCampaign(userId int64, req StopAdCampaignRequest, tx *go
 	return nil
 }
 
-func (s *service) StartAdCampaign(userId int64, req StartAdCampaignRequest, tx *gorm.DB) error {
+func (s *service) StartAdCampaign(userId int64, req StartAdCampaignRequest, tx *gorm.DB, ctx context.Context) error {
 	var adCampaign database.AdCampaign
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id = ?", req.AdCampaignId).
@@ -410,6 +429,20 @@ func (s *service) StartAdCampaign(userId int64, req StartAdCampaignRequest, tx *
 
 	if adCampaign.Status != database.AdCampaignStatusModerated {
 		return errors.WithStack(errors.New("ad campaign is not moderated"))
+	}
+
+	usersTokenomicsInfoResp := <-s.goTokenomicsWrapper.GetUsersTokenomicsInfo([]int64{userId}, nil, ctx, false)
+	if usersTokenomicsInfoResp.Error != nil {
+		return errors.WithStack(usersTokenomicsInfoResp.Error.ToError())
+	}
+
+	userTokenomicsInfo, ok := usersTokenomicsInfoResp.Response[userId]
+	if !ok {
+		return errors.WithStack(errors.New("user not found"))
+	}
+
+	if userTokenomicsInfo.CurrentTokens.LessThan(adCampaign.Budget) {
+		return errors.WithStack(errors.New("user does not have enough tokens"))
 	}
 
 	adCampaign.Status = database.AdCampaignStatusActive
@@ -435,7 +468,7 @@ func (s *service) ListAdCampaigns(userId int64, req ListAdCampaignsRequest, db *
 	}
 
 	if req.Name.Valid {
-		search := fmt.Sprintf("%%%v%%", req.Name)
+		search := fmt.Sprintf("%%%v%%", req.Name.String)
 		query = query.Where("ad_campaigns.name ilike ?", search)
 	}
 

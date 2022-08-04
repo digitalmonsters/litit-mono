@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+	"time"
 )
 
 type IService interface {
@@ -13,6 +14,7 @@ type IService interface {
 	ListRejectReasons(request ListRejectReasonsRequest, tx *gorm.DB) (*ListRejectReasonsResponse, error)
 	UpsertRejectReasons(req UpsertRejectReasonsRequest, tx *gorm.DB) error
 	DeleteRejectReasons(req DeleteRequest, tx *gorm.DB) error
+	PublicListActionButtons(request PublicListActionButtonsRequest, tx *gorm.DB) (*ListActionButtonsResponse, error)
 }
 
 type service struct {
@@ -22,10 +24,12 @@ func (s service) ListActionButtons(request ListActionButtonsRequest, tx *gorm.DB
 	var count int64
 	var items []database.ActionButton
 
-	if err := tx.Model(items).Count(&count).Error; err != nil {
+	var q = tx.Model(items).Where("deleted_at is null")
+
+	if err := q.Count(&count).Error; err != nil {
 		return nil, err
 	}
-	if err := tx.Limit(request.Limit).Offset(request.Offset).Find(&items).Error; err != nil {
+	if err := q.Limit(request.Limit).Offset(request.Offset).Find(&items).Error; err != nil {
 		return nil, err
 	}
 
@@ -48,10 +52,12 @@ func (s service) ListRejectReasons(request ListRejectReasonsRequest, tx *gorm.DB
 	var count int64
 	var items []database.RejectReason
 
-	if err := tx.Model(items).Count(&count).Error; err != nil {
+	var q = tx.Model(items).Where("deleted_at is null")
+
+	if err := q.Count(&count).Error; err != nil {
 		return nil, err
 	}
-	if err := tx.Limit(request.Limit).Offset(request.Offset).Find(&items).Error; err != nil {
+	if err := q.Limit(request.Limit).Offset(request.Offset).Find(&items).Error; err != nil {
 		return nil, err
 	}
 
@@ -103,7 +109,7 @@ func (s service) DeleteActionButtons(req DeleteRequest, tx *gorm.DB) error {
 	if count > 0 {
 		return errors.WithStack(errors.New("action buttons in use"))
 	}
-	return tx.Where("id in ?", req.Ids).Delete(database.ActionButton{}).Error
+	return tx.Model(database.ActionButton{}).Where("id in ?", req.Ids).Update("deleted_at", time.Now().UTC()).Error
 }
 
 func (s service) UpsertRejectReasons(req UpsertRejectReasonsRequest, tx *gorm.DB) error {
@@ -138,9 +144,42 @@ func (s service) DeleteRejectReasons(req DeleteRequest, tx *gorm.DB) error {
 	if count > 0 {
 		return errors.WithStack(errors.New("reject reasons in use"))
 	}
-	return tx.Where("id in ?", req.Ids).Delete(database.RejectReason{}).Error
+	return tx.Model(database.RejectReason{}).Where("id in ?", req.Ids).Update("deleted_at", time.Now().UTC()).Error
 }
 
 func NewService() IService {
 	return &service{}
+}
+
+func (s service) PublicListActionButtons(request PublicListActionButtonsRequest, tx *gorm.DB) (*ListActionButtonsResponse, error) {
+	var count int64
+	var items []database.ActionButton
+
+	var q = tx.Model(items).Where("deleted_at is null")
+
+	if request.Type.Valid {
+		q = q.Where("type = ?", request.Type.ValueOrZero())
+	}
+	if err := q.Count(&count).Error; err != nil {
+		return nil, err
+	}
+	if request.Limit > 0 {
+		q = q.Limit(request.Limit)
+	}
+	if err := q.Offset(request.Offset).Find(&items).Error; err != nil {
+		return nil, err
+	}
+	var models []ActionButtonModel
+
+	for _, item := range items {
+		models = append(models, ActionButtonModel{
+			Id:   item.Id,
+			Type: item.Type,
+			Name: item.Name,
+		})
+	}
+	return &ListActionButtonsResponse{
+		Items:      models,
+		TotalCount: count,
+	}, nil
 }

@@ -94,7 +94,7 @@ func main() {
 		}
 	}()
 
-	adCampaignService := ad_campaign.NewService(contentWrapper, userCategoryWrapper, userGoWrapper, jobber)
+	adCampaignService := ad_campaign.NewService(contentWrapper, userCategoryWrapper, userGoWrapper, jobber, goTokenomicsWrapper)
 	converter := converter2.NewConverter(userGoWrapper)
 	adModerationService := ad_moderation.NewService(notificationHandler, converter)
 	commonService := commonPkg.NewService()

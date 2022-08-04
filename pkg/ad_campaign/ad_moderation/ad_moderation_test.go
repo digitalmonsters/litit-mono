@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 					}
 				}
 				ch <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
-					Response: nil,
+					Response: userMap,
 				}
 			}()
 			return ch
@@ -152,6 +152,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(resp.Items))
+	assert.True(t, len(resp.Items[0].Username) > 0)
 	assert.Equal(t, int64(1), resp.TotalCount)
 }
 

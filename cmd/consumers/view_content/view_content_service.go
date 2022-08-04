@@ -121,7 +121,7 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 			return nil
 		}
 
-		writeOffUserTokensForAdResp := <-s.goTokenomicsWrapper.WriteOffUserTokensForAd(event.UserId, adCampaign.Id, adCampaign.Price, ctx, false)
+		writeOffUserTokensForAdResp := <-s.goTokenomicsWrapper.WriteOffUserTokensForAd(adCampaign.UserId, adCampaign.Id, adCampaign.Price, ctx, false)
 		if writeOffUserTokensForAdResp.Error != nil {
 			apm_helper.LogError(writeOffUserTokensForAdResp.Error.ToError(), ctx)
 			return nil
