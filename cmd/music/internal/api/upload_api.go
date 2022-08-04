@@ -17,7 +17,7 @@ func (m *musicApp) InitUploadApi() {
 			utils.SetCors(ctx)
 		}()
 
-		resp, err := uploader.FileUpload(m.cfg, uploader.UploadTypeAdminMusic, ctx)
+		resp, err := uploader.FileUpload(m.cfg, m.appConfig, uploader.UploadTypeAdminMusic, ctx)
 		if err != nil {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		} else {

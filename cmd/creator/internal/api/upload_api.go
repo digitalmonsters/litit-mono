@@ -51,7 +51,7 @@ func (c *creatorApp) initUploadApi() {
 			return
 		}
 
-		resp, err := uploader.FileUpload(c.cfg, uploadType, ctx)
+		resp, err := uploader.FileUpload(c.cfg, c.appConfig, uploadType, ctx)
 		if err != nil {
 			errWithCode = error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}

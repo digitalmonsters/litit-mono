@@ -118,7 +118,7 @@ func main() {
 
 	rootApplication.
 		AddApplication(creator.Application(httpRouter, apiDef, creatorsService, userGoWrapper, contentWrapper, cfg.Creators, &cfg, feedService, ctx, cfgService)).
-		AddApplication(music.Application(httpRouter, apiDef, musicStorageService, &cfg)).
+		AddApplication(music.Application(httpRouter, apiDef, musicStorageService, &cfg, cfgService)).
 		MustInit()
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {

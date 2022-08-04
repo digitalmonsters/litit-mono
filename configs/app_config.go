@@ -32,6 +32,8 @@ type AppConfig struct {
 	MUSIC_CALCULATION_TIMING_START_CONF         int
 	MUSIC_CALCULATION_TIMING_DELIMITER          int
 	MUSIC_FEED_UPDATE_SCORE_FREQUENCY_MINUTES   int
+	MUSIC_SHORT_VERSION_MAX_DURATION            int
+	MUSIC_FULL_VERSION_MAX_DURATION             int
 }
 
 func GetConfigsMigration() map[string]application.MigrateConfigModel {
@@ -107,6 +109,22 @@ func GetConfigsMigration() map[string]application.MigrateConfigModel {
 			Description:    "Period per music score update",
 			Category:       application.ConfigMusic,
 			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_SHORT_VERSION_MAX_DURATION": {
+			Key:            "MUSIC_SHORT_VERSION_MAX_DURATION",
+			Value:          "15",
+			Type:           application.ConfigTypeInteger,
+			Description:    "short version of creator song max duration",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "05.05.2022",
+		},
+		"MUSIC_FULL_VERSION_MAX_DURATION": {
+			Key:            "MUSIC_FULL_VERSION_MAX_DURATION",
+			Value:          "600",
+			Type:           application.ConfigTypeInteger,
+			Description:    "full version of creator song max duration",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "05.05.2022",
 		},
 	}
 }

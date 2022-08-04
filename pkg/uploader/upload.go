@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/s3"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/pkg/errors"
@@ -19,7 +20,7 @@ import (
 var extensionsForMusic = []string{"mp3"}
 var extensionsForImage = []string{"jpg", "jpeg", "png"}
 
-func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
+func FileUpload(cfg *configs.Settings, appConfig *application.Configurator[configs.AppConfig], uploadType UploadType, ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
 	m, err := ctx.Request.MultipartForm()
 	if err != nil {
 		return nil, err
@@ -34,13 +35,10 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 		return nil, errors.New("multiple file upload not supported")
 	}
 
-	var fileUrl string
-
 	header := files[0]
 	size := header.Size
 
 	f := strings.Split(header.Filename, ".")
-
 	if len(f) < 2 {
 		return nil, errors.New("invalid file format")
 	}
@@ -74,22 +72,32 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 		filePath = "creator"
 	}
 
+	var duration null.Float
+
+	if fileExtension == "mp3" {
+		duration = null.FloatFrom(getSongDuration(body))
+		if uploadType == UploadTypeCreatorsSongFull {
+			if int(duration.ValueOrZero()) > appConfig.Values.MUSIC_FULL_VERSION_MAX_DURATION {
+				return nil, errors.New("song duration is greater than max song duration")
+			}
+		}
+
+		if uploadType == UploadTypeCreatorsSongShort {
+			if int(duration.ValueOrZero()) > appConfig.Values.MUSIC_SHORT_VERSION_MAX_DURATION {
+				return nil, errors.New("song duration is greater than max song duration")
+			}
+		}
+	}
+
 	filePath = filepath.Join(filePath, uploadType.ToString(), filename)
-	fileUrl = fmt.Sprintf("%v/%v", cfg.S3.CdnUrl, filePath)
 
 	uploader := s3.NewUploader(&cfg.S3)
 	if err := uploader.UploadObject(filePath, body, "application/octet-stream"); err != nil {
 		return nil, err
 	}
 
-	var duration null.Float
-
-	if fileExtension == "mp3" {
-		duration = null.FloatFrom(getSongDuration(body))
-	}
-
 	return &uploadResponse{
-		FileUrl:  fileUrl,
+		FileUrl:  filePath,
 		Size:     size,
 		Duration: duration,
 	}, nil

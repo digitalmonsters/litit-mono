@@ -14,6 +14,7 @@ type musicApp struct {
 	apiDef              map[string]swagger.ApiDescription
 	musicStorageService *music_source.MusicStorageService
 	cfg                 *configs.Settings
+	appConfig           *application.Configurator[configs.AppConfig]
 }
 
 func SubApp(
@@ -21,12 +22,14 @@ func SubApp(
 	apiDef map[string]swagger.ApiDescription,
 	musicStorageService *music_source.MusicStorageService,
 	cfg *configs.Settings,
+	appConfig *application.Configurator[configs.AppConfig],
 ) application.SubApplication {
 	return &musicApp{
 		httpRouter:          httpRouter,
 		apiDef:              apiDef,
 		musicStorageService: musicStorageService,
 		cfg:                 cfg,
+		appConfig:           appConfig,
 	}
 }
 
