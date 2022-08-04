@@ -92,3 +92,29 @@ type AddModerationItem struct {
 	RejectReasonId null.Int                  `json:"reject_reason_id"`
 	SlaExpired     bool                      `json:"sla_expired"`
 }
+
+type UpsertAdCampaignCountryPriceRequest struct {
+	Items []AdCampaignCountryPriceItemModel `json:"items"`
+}
+
+type AdCampaignCountryPriceItemModel struct {
+	CountryCode   string          `json:"country_code"`
+	Price         decimal.Decimal `json:"price"`
+	CountryName   string          `json:"country_name"`
+	IsGlobalPrice bool            `json:"is_global_price"`
+}
+
+type ListAdCampaignCountryPriceRequest struct {
+	CountryCode   null.String         `json:"country_code"`
+	CountryName   null.String         `json:"country_name"`
+	PriceFrom     decimal.NullDecimal `json:"price_from"`
+	PriceTo       decimal.NullDecimal `json:"price_to"`
+	IsGlobalPrice null.Bool           `json:"is_global_price"`
+	Limit         int                 `json:"limit"`
+	Offset        int                 `json:"offset"`
+}
+
+type ListAdCampaignCountryPriceResponse struct {
+	Items      []AdCampaignCountryPriceItemModel `json:"items"`
+	TotalCount int64                             `json:"total_count"`
+}
