@@ -27,15 +27,11 @@ func NewConverter(userWrapper user_go.IUserGoWrapper, contentWrapper content.ICo
 
 func (c *Converter) MapFromDbAddCampaign(dbModels []database.AdCampaign, ctx context.Context) []common.AddModerationItem {
 	var userIds []int64
-	var usersMap = make(map[int64]bool)
-
 	var contentIds []int64
-
 	var items []*common.AddModerationItem
 
 	for _, dbModel := range dbModels {
 		contentIds = append(contentIds, dbModel.ContentId)
-		usersMap[dbModel.UserId] = false
 		items = append(items, &common.AddModerationItem{
 			Id:             dbModel.Id,
 			UserId:         dbModel.UserId,
@@ -59,14 +55,9 @@ func (c *Converter) MapFromDbAddCampaign(dbModels []database.AdCampaign, ctx con
 				time.Now().After(dbModel.CreatedAt.Add(time.Hour*time.Duration(configs.GetAppConfig().ADS_MODERATION_SLA))),
 		})
 	}
-
-	for userId := range usersMap {
-		userIds = append(userIds, userId)
-	}
-
 	routines := []chan error{
-		c.fillContent(items, contentIds, ctx),
 		c.fillUsers(items, userIds, ctx),
+		c.fillContent(items, contentIds, ctx),
 	}
 
 	for _, c := range routines {
