@@ -5,33 +5,27 @@ import (
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/common"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
-	"github.com/digitalmonsters/ads-manager/utils"
 	"github.com/digitalmonsters/go-common/apm_helper"
-	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
-	"go.elastic.co/apm"
 	"time"
 )
 
 type Converter struct {
-	userWrapper    user_go.IUserGoWrapper
-	contentWrapper content.IContentWrapper
+	userWrapper user_go.IUserGoWrapper
 }
 
-func NewConverter(userWrapper user_go.IUserGoWrapper, contentWrapper content.IContentWrapper) *Converter {
+func NewConverter(userWrapper user_go.IUserGoWrapper) *Converter {
 	return &Converter{
-		userWrapper:    userWrapper,
-		contentWrapper: contentWrapper,
+		userWrapper: userWrapper,
 	}
 }
 
 func (c *Converter) MapFromDbAddCampaign(dbModels []database.AdCampaign, ctx context.Context) []common.AddModerationItem {
 	var userIds []int64
-	var contentIds []int64
 	var items []*common.AddModerationItem
 
 	for _, dbModel := range dbModels {
-		contentIds = append(contentIds, dbModel.ContentId)
+		userIds = append(userIds, dbModel.UserId)
 		items = append(items, &common.AddModerationItem{
 			Id:             dbModel.Id,
 			UserId:         dbModel.UserId,
@@ -57,7 +51,6 @@ func (c *Converter) MapFromDbAddCampaign(dbModels []database.AdCampaign, ctx con
 	}
 	routines := []chan error{
 		c.fillUsers(items, userIds, ctx),
-		c.fillContent(items, contentIds, ctx),
 	}
 
 	for _, c := range routines {
@@ -93,33 +86,6 @@ func (c *Converter) fillUsers(items []*common.AddModerationItem, userIds []int64
 				item.FirstName = val.Firstname
 				item.LastName = val.Lastname
 				item.Email = val.Email
-			}
-		}
-
-	}()
-	return ch
-}
-
-func (c *Converter) fillContent(items []*common.AddModerationItem, contentIds []int64, ctx context.Context) chan error {
-	ch := make(chan error, 2)
-
-	go func() {
-		defer func() {
-			close(ch)
-		}()
-		if len(contentIds) == 0 {
-			ch <- nil
-		}
-		contentResp := <-c.contentWrapper.GetInternal(contentIds, false, apm.TransactionFromContext(ctx), false)
-		if contentResp.Error != nil {
-			ch <- contentResp.Error.ToError()
-		}
-
-		for _, item := range items {
-			if val, ok := contentResp.Response[item.ContentId]; ok {
-				item.VideoUrl = utils.GetVideoUrl(val.VideoId)
-				item.Thumbnail = utils.GetThumbnailUrl(val.VideoId)
-				item.AnimUrl = utils.GetAnimUrl(val.VideoId)
 			}
 		}
 

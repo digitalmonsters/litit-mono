@@ -8,11 +8,9 @@ import (
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/wrappers"
-	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
@@ -48,25 +46,7 @@ func TestMain(m *testing.M) {
 			return ch
 		},
 	}
-	contentWrapper := &content.ContentWrapperMock{
-		GetInternalFn: func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction,
-			forceLog bool) chan wrappers.GenericResponseChan[map[int64]content.SimpleContent] {
-			ch := make(chan wrappers.GenericResponseChan[map[int64]content.SimpleContent], 2)
-			defer close(ch)
-			var contentMap = make(map[int64]content.SimpleContent)
-			for _, id := range contentIds {
-				contentMap[id] = content.SimpleContent{
-					Id:      id,
-					VideoId: fmt.Sprint(id),
-				}
-			}
-			ch <- wrappers.GenericResponseChan[map[int64]content.SimpleContent]{
-				Response: contentMap,
-			}
-			return ch
-		},
-	}
-	converter := converter2.NewConverter(userWrapperMock, contentWrapper)
+	converter := converter2.NewConverter(userWrapperMock)
 	adModerationService = NewService(nil, converter)
 
 	os.Exit(m.Run())
