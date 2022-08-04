@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"github.com/shopspring/decimal"
+	"go.elastic.co/apm"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -38,6 +39,11 @@ func (s *service) process(db *gorm.DB, event fullEvent, ctx context.Context) *ka
 }
 
 func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) error {
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", event.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_id", event.ContentId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_author_id", event.ContentAuthorId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "source_view", event.SourceView)
+
 	if event.UserId <= 0 || event.UserId == event.ContentAuthorId || !isSourceViewSupportedForAd(event.SourceView) {
 		return nil
 	}
@@ -56,7 +62,7 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 		return nil
 	}
 
-	if (adCampaign.EndedAt.Valid && time.Now().UTC().After(adCampaign.EndedAt.Time)) || (adCampaign.Views > 0 && !adCampaign.Paid) || adCampaign.Budget.LessThanOrEqual(decimal.Zero) {
+	if (adCampaign.EndedAt.Valid && time.Now().UTC().After(adCampaign.EndedAt.Time)) || (adCampaign.Views > 0 && !adCampaign.Paid) {
 		adCampaign.Status = database.AdCampaignStatusCompleted
 		if err := tx.Model(&adCampaign).Update("status", adCampaign.Status).Error; err != nil {
 			return errors.WithStack(err)
@@ -94,7 +100,7 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 
 	needPay := false
 
-	if !adCampaign.Paid && ((adCampaign.Views-1)%1000 == 0) {
+	if (adCampaign.Views-1)%1000 == 0 {
 		adCampaign.Paid = false
 		if err := tx.Model(&adCampaign).Update("paid", adCampaign.Paid).Error; err != nil {
 			return errors.WithStack(err)
@@ -108,10 +114,11 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 	}
 
 	if needPay {
-		tx = db.Begin()
+		tx2 := db.Begin()
+		defer tx2.Rollback()
 
 		adCampaign = database.AdCampaign{}
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		if err := tx2.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("content_id = ? and status = ?", event.ContentId, database.AdCampaignStatusActive).
 			Find(&adCampaign).Error; err != nil {
 			return errors.WithStack(err)
@@ -121,21 +128,34 @@ func (s *service) handleOne(db *gorm.DB, event fullEvent, ctx context.Context) e
 			return nil
 		}
 
+		adCampaign.Budget = adCampaign.Budget.Sub(adCampaign.Price)
+
+		if adCampaign.Budget.LessThanOrEqual(decimal.Zero) {
+			adCampaign.Status = database.AdCampaignStatusCompleted
+			if err := tx2.Model(&adCampaign).
+				Update("status", adCampaign.Status).
+				Update("budget", adCampaign.Budget).Error; err != nil {
+				return errors.WithStack(err)
+			}
+
+			if err := tx2.Commit().Error; err != nil {
+				return errors.WithStack(err)
+			}
+		}
+
 		writeOffUserTokensForAdResp := <-s.goTokenomicsWrapper.WriteOffUserTokensForAd(adCampaign.UserId, adCampaign.Id, adCampaign.Price, ctx, false)
 		if writeOffUserTokensForAdResp.Error != nil {
-			apm_helper.LogError(writeOffUserTokensForAdResp.Error.ToError(), ctx)
-			return nil
+			return errors.WithStack(writeOffUserTokensForAdResp.Error.ToError())
 		}
 
 		adCampaign.Paid = true
-		adCampaign.Budget = adCampaign.Budget.Sub(adCampaign.Price)
-		if err := tx.Model(&adCampaign).
+		if err := tx2.Model(&adCampaign).
 			Update("paid", adCampaign.Paid).
 			Update("budget", adCampaign.Budget).Error; err != nil {
 			return errors.WithStack(err)
 		}
 
-		if err := tx.Commit().Error; err != nil {
+		if err := tx2.Commit().Error; err != nil {
 			return errors.WithStack(err)
 		}
 	}

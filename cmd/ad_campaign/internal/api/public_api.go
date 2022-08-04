@@ -19,6 +19,7 @@ func (a *apiApp) initPublicApi(httpRouter *router.HttpRouter) error {
 		a.stopAdCampaign(),
 		a.startAdCampaign(),
 		a.listAdCampaigns(),
+		a.hasAdCampaigns(),
 	}
 
 	for _, c := range restCommands {
@@ -207,4 +208,22 @@ func (a *apiApp) listAdCampaigns() *router.RestCommand {
 
 		return resp, nil
 	}, path, router.MethodPost).RequireIdentityValidation().Build()
+}
+
+func (a *apiApp) hasAdCampaigns() *router.RestCommand {
+	path := "/has_ad_campaigns"
+
+	a.apiDef[path] = swagger.ApiDescription{
+		Response: ad_campaign.HasAdCampaignsResponse{},
+		Tags:     []string{"ad_campaign"},
+	}
+
+	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		resp, err := a.adCampaignService.HasAdCampaigns(executionData.UserId, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, path, router.MethodGet).RequireIdentityValidation().Build()
 }

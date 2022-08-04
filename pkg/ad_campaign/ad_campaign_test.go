@@ -652,3 +652,42 @@ func TestService_ListAdCampaigns(t *testing.T) {
 	a.Equal(1, resp.Items[0].Views)
 	a.Equal(0, resp.Items[0].Clicks)
 }
+
+func TestService_HasAdCampaigns(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresAllTables(configs.GetConfig().MasterDb, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := adCampaignService.HasAdCampaigns(1, gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a := assert.New(t)
+
+	a.NotNil(resp)
+	a.False(resp.HasAdCampaign)
+
+	if err = gormDb.Create(&database.AdCampaign{
+		Id:        1,
+		UserId:    1,
+		Name:      "ad1",
+		AdType:    database.AdTypeContent,
+		Status:    database.AdCampaignStatusModerated,
+		ContentId: 1,
+		Country:   null.StringFrom("us"),
+		Budget:    decimal.NewFromInt(30),
+		Price:     decimal.NewFromInt(10),
+		CreatedAt: time.Now().UTC().Add(-1 * time.Hour),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err = adCampaignService.HasAdCampaigns(1, gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.NotNil(resp)
+	a.True(resp.HasAdCampaign)
+}

@@ -5,7 +5,9 @@ import (
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
 	"github.com/shopspring/decimal"
@@ -99,4 +101,125 @@ func Test_handleOne(t *testing.T) {
 	}
 
 	a.Equal(int64(1), adCampaignView.AdCampaignId)
+
+	if err := viewContentService.handleOne(gormDb, fullEvent{
+		ViewEvent: eventsourcing.ViewEvent{
+			UserId:          3,
+			ContentId:       1,
+			ContentType:     eventsourcing.ContentTypeVideo,
+			ContentAuthorId: 1,
+			SourceView:      eventsourcing.SourceViewFeedInterests,
+		},
+	}, context.TODO()); err != nil {
+		t.Fatal(err)
+	}
+
+	adCampaign = database.AdCampaign{}
+	if err := gormDb.Where("id = 1").Find(&adCampaign).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.True(adCampaign.Budget.Equal(decimal.NewFromInt(20)))
+	a.True(adCampaign.Paid)
+	a.Equal(2, adCampaign.Views)
+
+	adCampaignView = database.AdCampaignView{}
+	if err := gormDb.Where("ad_campaign_id = 1 and user_id = 3").Find(&adCampaignView).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.Equal(int64(1), adCampaignView.AdCampaignId)
+
+	if err := viewContentService.handleOne(gormDb, fullEvent{
+		ViewEvent: eventsourcing.ViewEvent{
+			UserId:          3,
+			ContentId:       1,
+			ContentType:     eventsourcing.ContentTypeVideo,
+			ContentAuthorId: 1,
+			SourceView:      eventsourcing.SourceViewFeedInterests,
+		},
+	}, context.TODO()); err != nil {
+		t.Fatal(err)
+	}
+
+	adCampaign = database.AdCampaign{}
+	if err := gormDb.Where("id = 1").Find(&adCampaign).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.True(adCampaign.Budget.Equal(decimal.NewFromInt(20)))
+	a.True(adCampaign.Paid)
+	a.Equal(2, adCampaign.Views)
+
+	goTokenomicsWrapper.WriteOffUserTokensForAdFn = func(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+		var respCh = make(chan wrappers.GenericResponseChan[any], 1)
+		respCh <- wrappers.GenericResponseChan[any]{
+			Error: &rpc.RpcError{
+				Code:    error_codes.GenericServerError,
+				Message: "insufficient tokens amount",
+			},
+			Response: nil,
+		}
+		close(respCh)
+		return respCh
+	}
+
+	adCampaign.Views = 1000
+	if err := gormDb.Model(&adCampaign).Update("views", adCampaign.Views).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	err := viewContentService.handleOne(gormDb, fullEvent{
+		ViewEvent: eventsourcing.ViewEvent{
+			UserId:          4,
+			ContentId:       1,
+			ContentType:     eventsourcing.ContentTypeVideo,
+			ContentAuthorId: 1,
+			SourceView:      eventsourcing.SourceViewFeedInterests,
+		},
+	}, context.TODO())
+
+	a.NotNil(err)
+
+	adCampaign = database.AdCampaign{}
+	if err = gormDb.Where("id = 1").Find(&adCampaign).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.True(adCampaign.Budget.Equal(decimal.NewFromInt(20)))
+	a.False(adCampaign.Paid)
+	a.Equal(1001, adCampaign.Views)
+	a.Equal(database.AdCampaignStatusActive, adCampaign.Status)
+
+	goTokenomicsWrapper.WriteOffUserTokensForAdFn = func(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+		var respCh = make(chan wrappers.GenericResponseChan[any], 1)
+		respCh <- wrappers.GenericResponseChan[any]{
+			Error:    nil,
+			Response: nil,
+		}
+		close(respCh)
+		return respCh
+	}
+
+	if err = viewContentService.handleOne(gormDb, fullEvent{
+		ViewEvent: eventsourcing.ViewEvent{
+			UserId:          5,
+			ContentId:       1,
+			ContentType:     eventsourcing.ContentTypeVideo,
+			ContentAuthorId: 1,
+			SourceView:      eventsourcing.SourceViewFeedInterests,
+		},
+	}, context.TODO()); err != nil {
+		t.Fatal(err)
+	}
+
+	adCampaign = database.AdCampaign{}
+	if err = gormDb.Where("id = 1").Find(&adCampaign).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	a.True(adCampaign.Budget.Equal(decimal.NewFromInt(20)))
+	a.False(adCampaign.Paid)
+	a.Equal(1001, adCampaign.Views)
+	a.Equal(database.AdCampaignStatusCompleted, adCampaign.Status)
 }
