@@ -25,6 +25,11 @@ func newListenCounterService(maxPoolSize int) *listenCounterService {
 
 func (s *listenCounterService) Process(messages map[int64]*listenCount, db *gorm.DB, apmTransaction *apm.Transaction,
 	ctx context.Context) []kafka.Message {
+
+	if len(messages) == 0 {
+		return nil
+	}
+
 	var processed []kafka.Message
 	var processedMut sync.Mutex
 

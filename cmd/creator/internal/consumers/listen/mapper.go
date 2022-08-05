@@ -32,6 +32,7 @@ func mapKafkaMessages(messages []kafka.Message) (map[int64]*listenCount, []error
 		}
 
 		if event.ListensCount == 0 && event.ShortListensCount == 0 {
+			msg = append(msg, message)
 			continue
 		}
 
