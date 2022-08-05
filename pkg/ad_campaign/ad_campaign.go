@@ -167,6 +167,10 @@ func (s *service) CreateAdCampaign(req CreateAdCampaignRequest, userId int64, tx
 }
 
 func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserRequest, db *gorm.DB, ctx context.Context) (*ads_manager.GetAdsContentForUserResponse, error) {
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", req.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_ids_to_mix", req.ContentIdsToMix)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_ids_to_ignore", req.ContentIdsToMix)
+
 	adsPerVideos := configs.GetAppConfig().ADS_CAMPAIGN_VIDEOS_PER_CONTENT_VIDEOS
 
 	if adsPerVideos <= 0 {
@@ -249,7 +253,7 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 		catQuery := db.Table("ad_campaigns").
 			Select("distinct ad_campaigns.id").
 			Joins("left join ad_campaign_categories on ad_campaign_categories.ad_campaign_id = ad_campaigns.id").
-			Joins("left join ad_campaign_views on ad_campaign_views.ad_campaign_id = ad_campaigns.id").
+			Joins("left join ad_campaign_views on ad_campaign_views.ad_campaign_id = ad_campaigns.id and ad_campaign_views.user_id = ?", req.UserId).
 			Where("ad_campaign_categories.category_id is null or ad_campaign_categories.category_id in ?", userCategoryResp.Response.CategoryIds).
 			Where("ad_campaign_views.ad_campaign_id is null or ad_campaign_views.user_id != ?", req.UserId).
 			Limit(respDataLen)
@@ -323,7 +327,7 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 
 	adIter := 0
 	for i := 0; i < respDataLen; i++ {
-		if newAdLen > 0 && i != 0 && adIter == adsPerVideos && adContentIdsIter < adCampaignsDataMapLen {
+		if newAdLen > 0 && i != 0 && adIter == adsPerVideos && adContentIdsIter < newAdLen {
 			respData[i] = adContentIds[adContentIdsIter]
 			adContentIdsIter++
 			adIter = 0
