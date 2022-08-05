@@ -229,10 +229,9 @@ func TestService_SetAdRejectReason(t *testing.T) {
 				t.Fatal(err)
 			}
 			var req = SetAdRejectReasonRequest{
-				Id:     addCampaign.Id,
-				Status: c.setStatus,
+				Id: addCampaign.Id,
 			}
-			if req.Status == database.AdCampaignStatusReject {
+			if c.setStatus == database.AdCampaignStatusReject {
 				req.RejectReasonId = null.IntFrom(rejectReason.Id)
 			}
 
