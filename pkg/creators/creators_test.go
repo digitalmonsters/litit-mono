@@ -7,10 +7,15 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/like"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/feed/feed_converter"
 	"github.com/stretchr/testify/assert"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
@@ -27,7 +32,6 @@ func TestMain(m *testing.M) {
 	config = configs.GetConfig()
 	gormDb = database.GetDb(database.DbTypeMaster)
 	userWrapper = &user_go.UserGoWrapperMock{}
-	service = NewService(nil)
 
 	userWrapper.GetUsersFn = func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord] {
 		ch := make(chan wrappers.GenericResponseChan[map[int64]user_go.UserRecord], 2)
@@ -51,6 +55,38 @@ func TestMain(m *testing.M) {
 
 		return ch
 	}
+
+	followWrapper := &follow.FollowWrapperMock{}
+	followWrapper.GetUserFollowingRelationBulkFn = func(userId int64, requestUserIds []int64, apmTransaction *apm.Transaction,
+		forceLog bool) chan follow.GetUserFollowingRelationBulkResponseChan {
+		ch := make(chan follow.GetUserFollowingRelationBulkResponseChan, 2)
+
+		ch <- follow.GetUserFollowingRelationBulkResponseChan{
+			Error: nil,
+			Data:  map[int64]follow.RelationData{},
+		}
+		close(ch)
+
+		return ch
+	}
+
+	likeWrapper := &like.LikeWrapperMock{}
+
+	likeWrapper.GetInternalSpotReactionsByUserFn = func(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan like.GetInternalSpotReactionsByUserResponseChan {
+		ch := make(chan like.GetInternalSpotReactionsByUserResponseChan, 2)
+
+		ch <- like.GetInternalSpotReactionsByUserResponseChan{
+			Error: nil,
+			Data:  map[int64]like.SpotReaction{},
+		}
+		close(ch)
+
+		return ch
+	}
+
+	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, likeWrapper, context.Background())
+
+	service = NewService(feedConverter, nil)
 
 	os.Exit(m.Run())
 }
@@ -344,4 +380,54 @@ func TestUploadNewSong(t *testing.T) {
 	assert.Greater(t, song.Id, int64(0))
 	assert.Equal(t, song.UserId, userId)
 	assert.Equal(t, song.Name, "test_song")
+}
+
+func TestService_SongsList(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"" +
+		"public.creators", "public.categories", "public.creator_songs", "public.moods"}, nil, t); err != nil {
+		t.Fatal(err)
+	}
+
+	category := addCategory(t, "test_category")
+	mood := addMood(t, "test_mood")
+	userId := int64(1)
+
+	var songs []database.CreatorSong
+
+	for i := 1; i <= 10; i++ {
+		s := database.CreatorSong{
+			Name:       fmt.Sprintf("test song %v", i),
+			Status:     music.CreatorSongStatusApproved,
+			CategoryId: category.Id,
+			MoodId:     mood.Id,
+		}
+
+		if i%2 == 0 {
+			s.UserId = userId
+		} else {
+			s.UserId = 2
+		}
+
+		songs = append(songs, s)
+	}
+
+	if err := gormDb.Create(&songs).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := service.SongsList(SongsListRequest{
+		UserId: 1,
+		Count:  10,
+	}, 0, gormDb, router.MethodExecutionData{
+		Context: context.Background(),
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Len(t, resp.Items, 5)
+	for _, i := range resp.Items {
+		assert.Equal(t, i.UserId, userId)
+	}
 }

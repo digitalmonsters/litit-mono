@@ -32,6 +32,10 @@ type AppConfig struct {
 	MUSIC_CALCULATION_TIMING_START_CONF         int
 	MUSIC_CALCULATION_TIMING_DELIMITER          int
 	MUSIC_FEED_UPDATE_SCORE_FREQUENCY_MINUTES   int
+	MUSIC_SHORT_VERSION_MAX_DURATION            int
+	MUSIC_FULL_VERSION_MAX_DURATION             int
+	MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED       bool
+	MUSIC_SHORT_VERSION_MIN_DURATION            int
 }
 
 func GetConfigsMigration() map[string]application.MigrateConfigModel {
@@ -107,6 +111,38 @@ func GetConfigsMigration() map[string]application.MigrateConfigModel {
 			Description:    "Period per music score update",
 			Category:       application.ConfigMusic,
 			ReleaseVersion: "29.07.2022",
+		},
+		"MUSIC_SHORT_VERSION_MAX_DURATION": {
+			Key:            "MUSIC_SHORT_VERSION_MAX_DURATION",
+			Value:          "15",
+			Type:           application.ConfigTypeInteger,
+			Description:    "short version of creator song max duration",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "05.05.2022",
+		},
+		"MUSIC_FULL_VERSION_MAX_DURATION": {
+			Key:            "MUSIC_FULL_VERSION_MAX_DURATION",
+			Value:          "600",
+			Type:           application.ConfigTypeInteger,
+			Description:    "full version of creator song max duration",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "05.05.2022",
+		},
+		"MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED": {
+			Key:            "MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED",
+			Value:          "true",
+			Type:           "bool",
+			Description:    "Ignore viewed content ids",
+			Category:       "content",
+			ReleaseVersion: "05.08.22",
+		},
+		"MUSIC_SHORT_VERSION_MIN_DURATION": {
+			Key:            "MUSIC_SHORT_VERSION_MIN_DURATION",
+			Value:          "10",
+			Type:           application.ConfigTypeInteger,
+			Description:    "short version of creator song mmin duration",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "05.05.2022",
 		},
 	}
 }

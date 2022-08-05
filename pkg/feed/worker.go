@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/utils"
@@ -76,7 +77,7 @@ func (b *feedBuilder) findCreatorSongs(tx *gorm.DB) ([]database.CreatorSong, err
 
 	var finalRecords []database.CreatorSong
 
-	if err := tx.Where("status != ?", database.CreatorSongStatusRejected).
+	if err := tx.Where("status != ?", music.CreatorSongStatusRejected).
 		Where("reject_reason is null").
 		Limit(b.appConfig.Values.MUSIC_FEED_LIMIT).
 		Order("id desc").
