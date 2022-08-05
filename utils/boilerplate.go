@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/romanyx/polluter"
 	"gorm.io/gorm"
-	"io/ioutil"
+	"os"
 )
 
 func PollutePostgresDatabase(gormDb *gorm.DB, filePaths ...string) error {
@@ -29,7 +29,7 @@ func PollutePostgresDatabase(gormDb *gorm.DB, filePaths ...string) error {
 		New(polluter.JSONParser, polluter.PostgresEngine(db))
 
 	for _, f := range found {
-		data, err := ioutil.ReadFile(f)
+		data, err := os.ReadFile(f)
 		if err != nil {
 			return err
 		}
