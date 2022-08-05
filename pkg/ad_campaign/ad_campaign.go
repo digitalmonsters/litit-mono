@@ -167,6 +167,10 @@ func (s *service) CreateAdCampaign(req CreateAdCampaignRequest, userId int64, tx
 }
 
 func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserRequest, db *gorm.DB, ctx context.Context) (*ads_manager.GetAdsContentForUserResponse, error) {
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", req.UserId)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_ids_to_mix", req.ContentIdsToMix)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "content_ids_to_ignore", req.ContentIdsToMix)
+
 	adsPerVideos := configs.GetAppConfig().ADS_CAMPAIGN_VIDEOS_PER_CONTENT_VIDEOS
 
 	if adsPerVideos <= 0 {
