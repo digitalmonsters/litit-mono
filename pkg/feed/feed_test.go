@@ -2,6 +2,7 @@ package feed
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
@@ -234,4 +235,11 @@ func TestFeedBuilder_LaunchTask(t *testing.T) {
 	assert.Len(t, records, 100)
 	assert.Equal(t, records[0].Id, songs[len(records)-1].Id)
 	assert.Equal(t, records[len(records)-1].Id, songs[0].Id)
+}
+
+func TestNewFeed2(t *testing.T) {
+	var finalRespItems []MusicFeedItem
+
+	b, _ := json.Marshal(finalRespItems)
+	fmt.Println(string(b))
 }
