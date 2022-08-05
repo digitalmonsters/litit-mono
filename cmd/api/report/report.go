@@ -32,7 +32,7 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		tx := db.WithContext(executionData.Context)
+		tx := db.WithContext(executionData.Context).Begin()
 		defer tx.Rollback()
 
 		if _, err := report.ReportComment(commentId, reportRequest.Details, tx,
