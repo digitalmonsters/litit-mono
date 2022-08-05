@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/shirou/gopsutil/v3/cpu"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
@@ -109,7 +108,7 @@ func (p *Profiler) cleanupFolder(folderToCheck string, logger zerolog.Logger) er
 		return nil
 	}
 
-	items, err := ioutil.ReadDir(folderToCheck)
+	items, err := os.ReadDir(folderToCheck)
 
 	if err != nil {
 		return errors.WithStack(err)

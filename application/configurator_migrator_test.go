@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -39,7 +39,7 @@ func TestHttpMigrator(t *testing.T) {
 		http.HandleFunc("/json/migrator", func(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 
-			d, err := ioutil.ReadAll(req.Body)
+			d, err := io.ReadAll(req.Body)
 
 			if err != nil {
 				t.Error(err)
