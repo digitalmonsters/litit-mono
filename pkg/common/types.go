@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/digitalmonsters/ads-manager/pkg/database"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"time"
 )
@@ -32,6 +33,12 @@ type DeleteRequest struct {
 type ListActionButtonsRequest struct {
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
+}
+
+type PublicListActionButtonsRequest struct {
+	Limit  int      `json:"limit"`
+	Offset int      `json:"offset"`
+	Type   null.Int `json:"type"`
 }
 
 type ListActionButtonsResponse struct {
@@ -77,10 +84,40 @@ type AddModerationItem struct {
 	StartedAt      null.Time                 `json:"started_at"`
 	EndedAt        null.Time                 `json:"ended_at"`
 	DurationMin    uint                      `json:"duration_min"`
-	Budget         uint                      `json:"budget"`
+	Budget         decimal.Decimal           `json:"budget"`
+	OriginalBudget decimal.Decimal           `json:"original_budget"`
 	Gender         null.String               `json:"gender"`
 	AgeFrom        uint                      `json:"age_from"`
 	AgeTo          uint                      `json:"age_to"`
 	RejectReasonId null.Int                  `json:"reject_reason_id"`
 	SlaExpired     bool                      `json:"sla_expired"`
+	Thumbnail      string                    `json:"thumbnail"`
+	VideoUrl       string                    `json:"video_url"`
+	AnimUrl        string                    `json:"anim_url"`
+}
+
+type UpsertAdCampaignCountryPriceRequest struct {
+	Items []AdCampaignCountryPriceItemModel `json:"items"`
+}
+
+type AdCampaignCountryPriceItemModel struct {
+	CountryCode   string          `json:"country_code"`
+	Price         decimal.Decimal `json:"price"`
+	CountryName   string          `json:"country_name"`
+	IsGlobalPrice bool            `json:"is_global_price"`
+}
+
+type ListAdCampaignCountryPriceRequest struct {
+	CountryCode   null.String         `json:"country_code"`
+	CountryName   null.String         `json:"country_name"`
+	PriceFrom     decimal.NullDecimal `json:"price_from"`
+	PriceTo       decimal.NullDecimal `json:"price_to"`
+	IsGlobalPrice null.Bool           `json:"is_global_price"`
+	Limit         int                 `json:"limit"`
+	Offset        int                 `json:"offset"`
+}
+
+type ListAdCampaignCountryPriceResponse struct {
+	Items      []AdCampaignCountryPriceItemModel `json:"items"`
+	TotalCount int64                             `json:"total_count"`
 }

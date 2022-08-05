@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/lib/pq"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"time"
@@ -59,24 +60,30 @@ func VerificationStatusFromString(status string) VerificationStatus {
 }
 
 type AdCampaign struct {
-	Id             int64
-	UserId         int64
-	Name           string
-	AdType         AdType
-	Status         AdCampaignStatus
-	ContentId      int64
-	Link           null.String
-	LinkButtonId   null.Int
-	Country        null.String
-	CreatedAt      time.Time
-	StartedAt      null.Time
-	EndedAt        null.Time
-	DurationMin    uint
-	Budget         uint
-	Gender         null.String
-	AgeFrom        uint
-	AgeTo          uint
-	RejectReasonId null.Int
+	Id                   int64
+	UserId               int64
+	Name                 string
+	AdType               AdType
+	Status               AdCampaignStatus
+	ContentId            int64
+	Link                 null.String
+	LinkButtonId         null.Int
+	Country              null.String
+	CreatedAt            time.Time
+	StartedAt            null.Time
+	EndedAt              null.Time
+	DurationMin          uint
+	OriginalBudget       decimal.Decimal
+	Budget               decimal.Decimal
+	Gender               null.String
+	AgeFrom              uint
+	AgeTo                uint
+	RejectReasonId       null.Int
+	AdCampaignCategories []*AdCampaignCategory `gorm:"foreignKey:AdCampaignId"`
+	Views                int
+	Clicks               int
+	Paid                 bool
+	Price                decimal.Decimal
 }
 
 func (AdCampaign) TableName() string {
@@ -99,3 +106,44 @@ const (
 	AdCampaignStatusActive    = AdCampaignStatus(4)
 	AdCampaignStatusCompleted = AdCampaignStatus(5)
 )
+
+type AdCampaignCategory struct {
+	AdCampaignId int64
+	CategoryId   int64
+	CategoryName string
+}
+
+func (AdCampaignCategory) TableName() string {
+	return "ad_campaign_categories"
+}
+
+type AdCampaignView struct {
+	AdCampaignId int64
+	UserId       int64
+	CreatedAt    time.Time
+}
+
+func (AdCampaignView) TableName() string {
+	return "ad_campaign_views"
+}
+
+type AdCampaignClick struct {
+	AdCampaignId int64
+	UserId       int64
+	CreatedAt    time.Time
+}
+
+func (AdCampaignClick) TableName() string {
+	return "ad_campaign_clicks"
+}
+
+type AdCampaignCountriesPrice struct {
+	CountryCode   string
+	Price         decimal.Decimal
+	CountryName   string
+	IsGlobalPrice bool
+}
+
+func (AdCampaignCountriesPrice) TableName() string {
+	return "ad_campaign_countries_prices"
+}

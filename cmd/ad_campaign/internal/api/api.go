@@ -39,6 +39,14 @@ func (a *apiApp) Init(subAppLogger zerolog.Logger) error {
 		return err
 	}
 
+	if err := a.initInternalApi(a.httpRouter.GetRpcServiceEndpoint()); err != nil {
+		return err
+	}
+
+	if err := a.adCampaignService.InitTasks(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

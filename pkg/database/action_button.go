@@ -1,13 +1,16 @@
 package database
 
-import "time"
+import (
+	"gopkg.in/guregu/null.v4"
+	"time"
+)
 
 type ActionButton struct {
 	Id        int64
 	Name      string
 	Type      ButtonType
 	CreatedAt time.Time
-	DeletedAt time.Time
+	DeletedAt null.Time
 }
 
 func (ActionButton) TableName() string {
