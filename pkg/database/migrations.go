@@ -157,5 +157,97 @@ create unique index if not exists action_buttons_name_uq on action_buttons(name)
 				return nil
 			},
 		},
+		{
+			ID: "ads_campaign_categories_280720221820",
+			Migrate: func(db *gorm.DB) error {
+				query := `create table ad_campaign_categories
+					(
+						ad_campaign_id integer
+							constraint ad_campaign_categories_ad_campaigns_id_fk
+								references ad_campaigns,
+						category_id    integer,
+						category_name  varchar(255)
+					);
+
+					create unique index ad_campaign_categories_ad_campaign_id_category_id_uindex
+						on ad_campaign_categories (ad_campaign_id, category_id);
+				`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "ads_campaign_content_id_index_280720221820",
+			Migrate: func(db *gorm.DB) error {
+				query := `create index ad_campaigns_content_id_index on ad_campaigns (content_id);`
+				return db.Exec(query).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "add_views_clicks_ad_campaigns_0208221200",
+			Migrate: func(db *gorm.DB) error {
+				return db.Exec(`
+					alter table ad_campaigns add column if not exists views int not null default 0;
+					alter table ad_campaigns add column if not exists clicks int not null default 0;
+					alter table ad_campaigns add column if not exists paid boolean not null default false;
+
+					create table if not exists ad_campaign_views
+					(
+						ad_campaign_id int
+							constraint ad_campaign_views_ad_campaigns_id_fk
+								references ad_campaigns,
+						user_id        bigint,
+						created_at     timestamp with time zone default current_timestamp
+					);
+
+					create index if not exists ad_campaign_views_ad_campaign_id_user_id_index
+						on ad_campaign_views (ad_campaign_id, user_id);
+
+					create table if not exists ad_campaign_clicks
+					(
+						ad_campaign_id int
+							constraint ad_campaign_clicks_ad_campaigns_id_fk
+								references ad_campaigns,
+						user_id        bigint,
+						created_at     timestamp with time zone default current_timestamp
+					);
+
+					create index if not exists ad_campaign_clicks_ad_campaign_id_user_id_index
+						on ad_campaign_clicks (ad_campaign_id, user_id);
+
+					alter table ad_campaigns alter budget set data type numeric(36, 18);
+				`).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
+		{
+			ID: "ad_campaign_countries_prices_0208221503",
+			Migrate: func(db *gorm.DB) error {
+				return db.Exec(`
+					create table ad_campaign_countries_prices
+					(
+						country_code    varchar(2)
+							constraint ad_campaign_countries_prices_pk
+								primary key,
+						price           numeric(36, 18) not null,
+						country_name    varchar(255)    not null,
+						is_global_price boolean         not null
+					);
+
+					alter table ad_campaigns add column if not exists price numeric(36, 18) not null default '0'::numeric;
+					alter table ad_campaigns add column if not exists original_budget numeric(36, 18) not null default '0'::numeric;
+				`).Error
+			},
+			Rollback: func(db *gorm.DB) error {
+				return nil
+			},
+		},
 	}
 }

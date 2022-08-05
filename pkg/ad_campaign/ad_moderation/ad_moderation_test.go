@@ -8,8 +8,11 @@ import (
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/wrappers"
+	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"os"
@@ -39,13 +42,31 @@ func TestMain(m *testing.M) {
 					}
 				}
 				ch <- wrappers.GenericResponseChan[map[int64]user_go.UserRecord]{
-					Response: nil,
+					Response: userMap,
 				}
 			}()
 			return ch
 		},
 	}
-	converter := converter2.NewConverter(userWrapperMock)
+	contentWrapper := &content.ContentWrapperMock{
+		GetInternalFn: func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction,
+			forceLog bool) chan wrappers.GenericResponseChan[map[int64]content.SimpleContent] {
+			ch := make(chan wrappers.GenericResponseChan[map[int64]content.SimpleContent], 2)
+			defer close(ch)
+			var contentMap = make(map[int64]content.SimpleContent)
+			for _, id := range contentIds {
+				contentMap[id] = content.SimpleContent{
+					Id:      id,
+					VideoId: fmt.Sprint(id),
+				}
+			}
+			ch <- wrappers.GenericResponseChan[map[int64]content.SimpleContent]{
+				Response: contentMap,
+			}
+			return ch
+		},
+	}
+	converter := converter2.NewConverter(userWrapperMock, contentWrapper)
 	adModerationService = NewService(nil, converter)
 
 	os.Exit(m.Run())
@@ -69,7 +90,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 			StartedAt:      null.TimeFrom(time.Now().UTC().Add(-24 * time.Hour)),
 			EndedAt:        null.TimeFrom(time.Now().UTC().Add(24 * time.Hour)),
 			DurationMin:    267,
-			Budget:         198,
+			Budget:         decimal.NewFromInt(198),
 			Gender:         null.StringFrom("male"),
 			AgeFrom:        22,
 			AgeTo:          34,
@@ -88,7 +109,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 			StartedAt:      null.TimeFrom(time.Now().UTC().Add(-5 * time.Hour)),
 			EndedAt:        null.TimeFrom(time.Now().UTC().Add(256 * time.Hour)),
 			DurationMin:    2178,
-			Budget:         1671,
+			Budget:         decimal.NewFromInt(1671),
 			Gender:         null.StringFrom("female"),
 			AgeFrom:        19,
 			AgeTo:          25,
@@ -106,7 +127,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 			StartedAt:      null.TimeFrom(time.Now().UTC().Add(-2 * time.Hour)),
 			EndedAt:        null.TimeFrom(time.Now().UTC().Add(122 * time.Hour)),
 			DurationMin:    22,
-			Budget:         18,
+			Budget:         decimal.NewFromInt(18),
 			Gender:         null.StringFrom("male"),
 			AgeFrom:        34,
 			AgeTo:          56,
@@ -151,6 +172,7 @@ func TestService_GetAdModerationRequests(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(resp.Items))
+	assert.True(t, len(resp.Items[0].Username) > 0)
 	assert.Equal(t, int64(1), resp.TotalCount)
 }
 
@@ -189,7 +211,7 @@ func TestService_SetAdRejectReason(t *testing.T) {
 				StartedAt:      null.TimeFrom(time.Now().UTC().Add(-24 * time.Hour)),
 				EndedAt:        null.TimeFrom(time.Now().UTC().Add(24 * time.Hour)),
 				DurationMin:    267,
-				Budget:         198,
+				Budget:         decimal.NewFromInt(198),
 				Gender:         null.StringFrom("male"),
 				AgeFrom:        22,
 				AgeTo:          34,
@@ -207,10 +229,9 @@ func TestService_SetAdRejectReason(t *testing.T) {
 				t.Fatal(err)
 			}
 			var req = SetAdRejectReasonRequest{
-				Id:     addCampaign.Id,
-				Status: c.setStatus,
+				Id: addCampaign.Id,
 			}
-			if req.Status == database.AdCampaignStatusReject {
+			if c.setStatus == database.AdCampaignStatusReject {
 				req.RejectReasonId = null.IntFrom(rejectReason.Id)
 			}
 

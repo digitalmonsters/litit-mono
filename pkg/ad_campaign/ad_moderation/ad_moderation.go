@@ -73,17 +73,24 @@ func (s service) SetAdRejectReason(req SetAdRejectReasonRequest, tx *gorm.DB, ct
 	if campaign.Status != database.AdCampaignStatusPending {
 		return nil, nil, errors.WithStack(errors.New("ad already moderated"))
 	}
+
+	status := database.AdCampaignStatusModerated
+
+	if req.RejectReasonId.Valid {
+		status = database.AdCampaignStatusReject
+	}
+
 	campaign.RejectReasonId = req.RejectReasonId
-	campaign.Status = req.Status
+	campaign.Status = status
 
 	if err := tx.Model(&campaign).Updates(map[string]interface{}{
 		"reject_reason_id": req.RejectReasonId,
-		"status":           req.Status,
+		"status":           status,
 	}).Error; err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
 	var callbacks []callback.Callback
-	if req.Status == database.AdCampaignStatusModerated {
+	if status == database.AdCampaignStatusModerated {
 		callbacks = append(callbacks, func(ctx context.Context) error {
 			if s.notificationHandler == nil {
 				return nil
@@ -92,7 +99,7 @@ func (s service) SetAdRejectReason(req SetAdRejectReasonRequest, tx *gorm.DB, ct
 			return (<-s.notificationHandler.EnqueueNotificationWithTemplate("ads_campaign_approved", campaign.UserId,
 				map[string]string{}, nil, ctx)).Error
 		})
-	} else if req.Status == database.AdCampaignStatusReject {
+	} else if status == database.AdCampaignStatusReject {
 		callbacks = append(callbacks, func(ctx context.Context) error {
 			if s.notificationHandler == nil {
 				return nil

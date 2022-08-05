@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
@@ -85,7 +86,7 @@ func TestNewService_RejectReasons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := gormDb.Order("id").Find(&reasons).Error; err != nil {
+	if err := gormDb.Order("id").Where("deleted_at is null").Find(&reasons).Error; err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(reasons))
@@ -133,6 +134,17 @@ func TestNewService_ActionButtons(t *testing.T) {
 	assert.Equal(t, int64(3), resp.TotalCount)
 	assert.Equal(t, 3, len(resp.Items))
 
+	publicResp, err := commonService.PublicListActionButtons(PublicListActionButtonsRequest{
+		Type:   null.IntFrom(int64(database.LinkButtonType)),
+		Limit:  10,
+		Offset: 0,
+	}, gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, int64(1), publicResp.TotalCount)
+	assert.Equal(t, 1, len(publicResp.Items))
+
 	req = UpsertActionButtonsRequest{Items: []UpsertButtonItem{
 		{
 			Id:   null.IntFrom(buttons[0].Id),
@@ -158,8 +170,78 @@ func TestNewService_ActionButtons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := gormDb.Order("id").Find(&buttons).Error; err != nil {
+	if err := gormDb.Order("id").Where("deleted_at is null").Find(&buttons).Error; err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 1, len(buttons))
+}
+
+func TestNewService_CountryPrices(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresAllTables(cfg.MasterDb, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := gormDb.Create(&database.AdCampaignCountriesPrice{
+		CountryCode:   "US",
+		Price:         decimal.NewFromInt(35),
+		CountryName:   "United States",
+		IsGlobalPrice: false,
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	var req = UpsertAdCampaignCountryPriceRequest{Items: []AdCampaignCountryPriceItemModel{
+		{
+			CountryCode:   "UA",
+			Price:         decimal.NewFromInt(12),
+			CountryName:   "Ukraine",
+			IsGlobalPrice: false,
+		},
+		{
+			CountryCode:   "CA",
+			Price:         decimal.NewFromInt(1),
+			CountryName:   "Canada",
+			IsGlobalPrice: false,
+		},
+		{
+			CountryCode:   "US",
+			Price:         decimal.NewFromInt(178),
+			CountryName:   "United States",
+			IsGlobalPrice: true,
+		},
+	}}
+
+	err := commonService.UpsertAdCampaignCountryPrice(req, gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var countryPrices []database.AdCampaignCountriesPrice
+	if err := gormDb.Find(&countryPrices).Error; err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 3, len(countryPrices))
+
+	resp, err := commonService.ListAdCampaignCountryPrices(ListAdCampaignCountryPriceRequest{
+		Limit:  10,
+		Offset: 0,
+	}, gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, int64(3), resp.TotalCount)
+	assert.Equal(t, 3, len(resp.Items))
+
+	resp, err = commonService.ListAdCampaignCountryPrices(ListAdCampaignCountryPriceRequest{
+		CountryCode:   null.StringFrom("us"),
+		CountryName:   null.StringFrom("united states"),
+		PriceTo:       decimal.NewNullDecimal(decimal.NewFromInt(200)),
+		PriceFrom:     decimal.NewNullDecimal(decimal.NewFromInt(15)),
+		IsGlobalPrice: null.BoolFrom(true),
+		Limit:         10,
+		Offset:        0,
+	}, gormDb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, int64(1), resp.TotalCount)
+	assert.Equal(t, 1, len(resp.Items))
 }

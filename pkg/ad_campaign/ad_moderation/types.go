@@ -23,7 +23,6 @@ type GetAdModerationResponse struct {
 }
 
 type SetAdRejectReasonRequest struct {
-	Id             int64                     `json:"id"`
-	RejectReasonId null.Int                  `json:"reject_reason_id"`
-	Status         database.AdCampaignStatus `json:"status"`
+	Id             int64    `json:"id"`
+	RejectReasonId null.Int `json:"reject_reason_id"`
 }
