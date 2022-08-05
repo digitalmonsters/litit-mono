@@ -253,7 +253,7 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 		catQuery := db.Table("ad_campaigns").
 			Select("distinct ad_campaigns.id").
 			Joins("left join ad_campaign_categories on ad_campaign_categories.ad_campaign_id = ad_campaigns.id").
-			Joins("left join ad_campaign_views on ad_campaign_views.ad_campaign_id = ad_campaigns.id").
+			Joins("left join ad_campaign_views on ad_campaign_views.ad_campaign_id = ad_campaigns.id and ad_campaign_views.user_id = ?", req.UserId).
 			Where("ad_campaign_categories.category_id is null or ad_campaign_categories.category_id in ?", userCategoryResp.Response.CategoryIds).
 			Where("ad_campaign_views.ad_campaign_id is null or ad_campaign_views.user_id != ?", req.UserId).
 			Limit(respDataLen)
