@@ -16,6 +16,7 @@ type Feed struct {
 	deDuplicator  deduplicator.IDeDuplicator
 	feedConverter *feed_converter.Service
 	feedBuilder   *feedBuilder
+	appConfig     *application.Configurator[configs.AppConfig]
 }
 
 func NewFeed(
@@ -30,11 +31,17 @@ func NewFeed(
 		deDuplicator:  deduplicator,
 		feedConverter: feedConverter,
 		feedBuilder:   builder,
+		appConfig:     appConfig,
 	}
 }
 
 func (f *Feed) GetFeed(db *gorm.DB, userId int64, count int, executionData router.MethodExecutionData) (*ContentFeedResponse, *error_codes.ErrorWithCode) {
-	expirationData, idsToIgnore := f.deDuplicator.GetIdsToIgnore(userId, executionData.Context)
+	var expirationData []deduplicator.SongExpiration
+	var idsToIgnore []int64
+
+	if f.appConfig.Values.MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED {
+		expirationData, idsToIgnore = f.deDuplicator.GetIdsToIgnore(userId, executionData.Context)
+	}
 
 	var songs []*database.CreatorSong
 	query := db.Model(songs).
@@ -55,13 +62,15 @@ func (f *Feed) GetFeed(db *gorm.DB, userId int64, count int, executionData route
 		return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 	}
 
-	go func() {
-		f.deDuplicator.SetIdsToIgnore(songs, userId, expirationData, executionData.Context)
-	}()
+	if f.appConfig.Values.MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED {
+		go func() {
+			f.deDuplicator.SetIdsToIgnore(songs, userId, expirationData, executionData.Context)
+		}()
+	}
 
 	convertedSongs := f.feedConverter.ConvertToSongModel(songs, executionData.UserId, false, executionData.ApmTransaction, executionData.Context)
 
-	var finalRespItems []MusicFeedItem
+	finalRespItems := []MusicFeedItem{}
 	for _, s := range convertedSongs {
 		finalRespItems = append(finalRespItems, MusicFeedItem{
 			Type: "music",
