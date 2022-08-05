@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/digitalmonsters/go-common/http_client"
 	"github.com/pkg/errors"
-	"io/ioutil"
+	"os"
 )
 
 const (
@@ -59,7 +59,7 @@ func NewFileRetriever(filePath string) *FileRetriever {
 }
 
 func (f *FileRetriever) Retrieve(keys []string, ctx context.Context) (map[string]string, error) {
-	data, err := ioutil.ReadFile(f.filePath)
+	data, err := os.ReadFile(f.filePath)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
