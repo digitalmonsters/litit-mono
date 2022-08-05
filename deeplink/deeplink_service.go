@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/http_client"
 	"time"
 )
@@ -58,12 +59,21 @@ func (s *Service) generateDeeplink(link string) (string, error) {
 	return firebaseResp.ShortLink, nil
 }
 
-func (s *Service) GetVideoShareLink(contentId int64, userId int64, referralCode string) (string, error) {
-	link := fmt.Sprintf("%v/video/%v", s.config.URI, contentId)
+func (s *Service) GetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string) (string, error) {
+	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
 	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
 	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v", userId, shareCode)
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
 	return s.generateDeeplink(link)
+}
+
+func (s *Service) getShareType(contentType eventsourcing.ContentType) string {
+	switch contentType {
+	case eventsourcing.ContentTypeMusic:
+		return "music"
+	default:
+		return "video"
+	}
 }
