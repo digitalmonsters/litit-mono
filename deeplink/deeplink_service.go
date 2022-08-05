@@ -16,7 +16,7 @@ type Service struct {
 	url        string
 }
 
-func NewService(config Config, httpClient *http_client.HttpClient, ctx context.Context) *Service {
+func NewService(config Config, httpClient *http_client.HttpClient, ctx context.Context) IService {
 	url := "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + config.Key
 	return &Service{
 		config:     config,
