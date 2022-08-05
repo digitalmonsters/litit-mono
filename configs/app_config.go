@@ -35,6 +35,7 @@ type AppConfig struct {
 	MUSIC_SHORT_VERSION_MAX_DURATION            int
 	MUSIC_FULL_VERSION_MAX_DURATION             int
 	MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED       bool
+	MUSIC_SHORT_VERSION_MIN_DURATION            int
 }
 
 func GetConfigsMigration() map[string]application.MigrateConfigModel {
@@ -134,6 +135,14 @@ func GetConfigsMigration() map[string]application.MigrateConfigModel {
 			Description:    "Ignore viewed content ids",
 			Category:       "content",
 			ReleaseVersion: "05.08.22",
+		},
+		"MUSIC_SHORT_VERSION_MIN_DURATION": {
+			Key:            "MUSIC_SHORT_VERSION_MIN_DURATION",
+			Value:          "10",
+			Type:           application.ConfigTypeInteger,
+			Description:    "short version of creator song mmin duration",
+			Category:       application.ConfigMusic,
+			ReleaseVersion: "05.05.2022",
 		},
 	}
 }
