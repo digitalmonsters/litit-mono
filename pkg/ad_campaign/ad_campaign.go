@@ -323,7 +323,7 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 
 	adIter := 0
 	for i := 0; i < respDataLen; i++ {
-		if newAdLen > 0 && i != 0 && adIter == adsPerVideos && adContentIdsIter < adCampaignsDataMapLen {
+		if newAdLen > 0 && i != 0 && adIter == adsPerVideos && adContentIdsIter < newAdLen {
 			respData[i] = adContentIds[adContentIdsIter]
 			adContentIdsIter++
 			adIter = 0
