@@ -8,7 +8,7 @@ import (
 	"github.com/imroc/req/v3"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -107,7 +107,7 @@ func NewHttpClient() *HttpClient {
 
 				rawBodyResponse := response.Bytes()
 
-				if r, err := ioutil.ReadAll(response.Request.RawRequest.Body); err != nil {
+				if r, err := io.ReadAll(response.Request.RawRequest.Body); err != nil {
 					log.Ctx(ctx).Err(err).Send()
 				} else {
 					rawBodyRequest = r

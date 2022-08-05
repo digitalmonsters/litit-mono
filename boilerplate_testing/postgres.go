@@ -13,7 +13,6 @@ import (
 	"github.com/thoas/go-funk"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"io/ioutil"
 	"os"
 	path2 "path"
 	"strings"
@@ -234,7 +233,7 @@ func PollutePostgresDatabase(gormDb *gorm.DB, filePaths ...string) error {
 		New(polluter.JSONParser, polluter.PostgresEngine(db))
 
 	for _, f := range found {
-		data, err := ioutil.ReadFile(f)
+		data, err := os.ReadFile(f)
 		if err != nil {
 			return err
 		}
