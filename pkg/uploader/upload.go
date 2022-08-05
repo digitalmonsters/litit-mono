@@ -89,6 +89,10 @@ func FileUpload(cfg *configs.Settings, appConfig *application.Configurator[confi
 			if int(duration.ValueOrZero()) > appConfig.Values.MUSIC_SHORT_VERSION_MAX_DURATION {
 				return nil, errors.New("song duration is greater than max song duration")
 			}
+
+			if int(duration.ValueOrZero()) < appConfig.Values.MUSIC_SHORT_VERSION_MIN_DURATION {
+				return nil, errors.New("song duration is less than min song duration")
+			}
 		}
 
 	}
