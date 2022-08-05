@@ -36,7 +36,7 @@ import (
 )
 
 func main() {
-	// trigger build
+	// trigger build1
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	boilerplate.SetupZeroLog()

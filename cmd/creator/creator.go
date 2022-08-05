@@ -15,6 +15,7 @@ import (
 	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/listen"
 	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/listened_music"
 	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/love"
+	"github.com/digitalmonsters/music/cmd/creator/internal/consumers/shares"
 	"github.com/digitalmonsters/music/cmd/creator/internal/feed"
 	"github.com/digitalmonsters/music/cmd/creator/internal/moods"
 	"github.com/digitalmonsters/music/cmd/creator/internal/reject_reasons"
@@ -46,5 +47,6 @@ func Application(
 		AddSubApplication(love.SubApp(ctx, creatorsCfg.Listeners.LoveCounter)).
 		AddSubApplication(listen.SubApp(ctx, creatorsCfg.Listeners.ListenCounter)).
 		AddSubApplication(listened_music.SubApp(ctx, creatorsCfg.Listeners.ListenedMusic)).
-		AddSubApplication(comments_counter.SubApp(ctx, creatorsCfg.Listeners.CommentsCounter))
+		AddSubApplication(comments_counter.SubApp(ctx, creatorsCfg.Listeners.CommentsCounter)).
+		AddSubApplication(shares.SubApp(ctx, creatorsCfg.Listeners.SharesCounter))
 }

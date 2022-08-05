@@ -60,6 +60,7 @@ type CreatorListeners struct {
 	DislikeCounter  CounterListener                        `json:"DislikeCounter"`
 	ListenCounter   CounterListener                        `json:"ListenCounter"`
 	ListenedMusic   CounterListener                        `json:"ListenedMusic"`
+	SharesCounter   CounterListener                        `json:"SharesCounter"`
 	CommentsCounter boilerplate.KafkaListenerConfiguration `json:"CommentsCounter"`
 }
 
