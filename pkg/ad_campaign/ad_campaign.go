@@ -289,11 +289,15 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 	}
 
 	newAd := lo.Filter(adCampaignsData, func(item *ads_manager.ContentAd, _ int) bool {
-		_, ok := lo.Find(req.ContentIdsToMix, func(id int64) bool {
+		_, containsInContentIdsToMix := lo.Find(req.ContentIdsToMix, func(id int64) bool {
 			return item.ContentId == id
 		})
 
-		return !ok
+		_, containsInContentIdsToIgnore := lo.Find(req.ContentIdsToIgnore, func(id int64) bool {
+			return item.ContentId == id
+		})
+
+		return !containsInContentIdsToMix && !containsInContentIdsToIgnore
 	})
 	sort.Slice(newAd, func(i, j int) bool {
 		return newAd[i].ContentId < newAd[j].ContentId
@@ -305,7 +309,8 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 	}
 
 	adCampaignsDataMapLen := len(adCampaignsDataMap)
-	adContentIds := make([]int64, len(newAd))
+	newAdLen := len(newAd)
+	adContentIds := make([]int64, newAdLen)
 	adContentIdsIter := 0
 	for _, item := range newAd {
 		adContentIds[adContentIdsIter] = item.ContentId
@@ -318,7 +323,7 @@ func (s *service) GetAdsContentForUser(req ads_manager.GetAdsContentForUserReque
 
 	adIter := 0
 	for i := 0; i < respDataLen; i++ {
-		if i != 0 && adIter == adsPerVideos && adContentIdsIter < adCampaignsDataMapLen {
+		if newAdLen > 0 && i != 0 && adIter == adsPerVideos && adContentIdsIter < adCampaignsDataMapLen {
 			respData[i] = adContentIds[adContentIdsIter]
 			adContentIdsIter++
 			adIter = 0

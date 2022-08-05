@@ -492,6 +492,29 @@ func TestService_GetAdsContentForUser(t *testing.T) {
 	a.Equal(int64(10), resp.MixedContentIdsWithAd[8]) // ad
 	a.Equal(int64(21), resp.MixedContentIdsWithAd[9])
 	a.Equal(int64(11), resp.MixedContentIdsWithAd[10])
+
+	resp, err = adCampaignService.GetAdsContentForUser(ads_manager.GetAdsContentForUserRequest{
+		UserId:             2,
+		ContentIdsToMix:    []int64{1, 2, 3, 4, 5, 6, 7, 9, 10, 11},
+		ContentIdsToIgnore: []int64{7, 8, 20, 21},
+	}, gormDb, context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.NotNil(resp)
+
+	a.Len(resp.MixedContentIdsWithAd, 10)
+	a.Equal(int64(1), resp.MixedContentIdsWithAd[0])
+	a.Equal(int64(2), resp.MixedContentIdsWithAd[1])
+	a.Equal(int64(3), resp.MixedContentIdsWithAd[2])
+	a.Equal(int64(4), resp.MixedContentIdsWithAd[3])
+	a.Equal(int64(5), resp.MixedContentIdsWithAd[4])
+	a.Equal(int64(6), resp.MixedContentIdsWithAd[5])
+	a.Equal(int64(7), resp.MixedContentIdsWithAd[6])
+	a.Equal(int64(9), resp.MixedContentIdsWithAd[7])
+	a.Equal(int64(10), resp.MixedContentIdsWithAd[8])
+	a.Equal(int64(11), resp.MixedContentIdsWithAd[9])
 }
 
 func TestService_ClickLink(t *testing.T) {
