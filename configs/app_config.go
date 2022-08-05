@@ -34,6 +34,7 @@ type AppConfig struct {
 	MUSIC_FEED_UPDATE_SCORE_FREQUENCY_MINUTES   int
 	MUSIC_SHORT_VERSION_MAX_DURATION            int
 	MUSIC_FULL_VERSION_MAX_DURATION             int
+	MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED       bool
 }
 
 func GetConfigsMigration() map[string]application.MigrateConfigModel {
@@ -125,6 +126,14 @@ func GetConfigsMigration() map[string]application.MigrateConfigModel {
 			Description:    "full version of creator song max duration",
 			Category:       application.ConfigMusic,
 			ReleaseVersion: "05.05.2022",
+		},
+		"MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED": {
+			Key:            "MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED",
+			Value:          "true",
+			Type:           "bool",
+			Description:    "Ignore viewed content ids",
+			Category:       "content",
+			ReleaseVersion: "05.08.22",
 		},
 	}
 }
