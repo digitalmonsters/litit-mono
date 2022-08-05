@@ -1,7 +1,7 @@
 package moderation
 
 import (
-	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -15,13 +15,13 @@ type ApproveMusicRequest struct {
 }
 
 type ListRequest struct {
-	UserId     null.Int                     `json:"user_id"`
-	Status     []database.CreatorSongStatus `json:"status"`
-	Keyword    null.String                  `json:"keyword"`
-	CategoryId null.Int                     `json:"category_id"`
-	MoodId     null.Int                     `json:"mood_id"`
-	Limit      int                          `json:"limit"`
-	Offset     int                          `json:"offset"`
+	UserId     null.Int                  `json:"user_id"`
+	Status     []music.CreatorSongStatus `json:"status"`
+	Keyword    null.String               `json:"keyword"`
+	CategoryId null.Int                  `json:"category_id"`
+	MoodId     null.Int                  `json:"mood_id"`
+	Limit      int                       `json:"limit"`
+	Offset     int                       `json:"offset"`
 }
 
 type ListResponse struct {
@@ -30,18 +30,18 @@ type ListResponse struct {
 }
 
 type listItem struct {
-	SongId            int64                      `json:"song_id"`
-	SongName          string                     `json:"song_name"`
-	Status            database.CreatorSongStatus `json:"status"`
-	LyricAuthor       null.String                `json:"lyric_author"`
-	MusicAuthor       string                     `json:"music_author"`
-	CategoryId        int64                      `json:"category_id"`
-	MoodId            int64                      `json:"mood_id"`
-	FullSongUrl       string                     `json:"full_song_url"`
-	FullSongDuration  float64                    `json:"full_song_duration"`
-	ShortSongUrl      string                     `json:"short_song_url"`
-	ShortSongDuration float64                    `json:"short_song_duration"`
-	ImageUrl          string                     `json:"image_url"`
+	SongId            int64                   `json:"song_id"`
+	SongName          string                  `json:"song_name"`
+	Status            music.CreatorSongStatus `json:"status"`
+	LyricAuthor       null.String             `json:"lyric_author"`
+	MusicAuthor       string                  `json:"music_author"`
+	CategoryId        int64                   `json:"category_id"`
+	MoodId            int64                   `json:"mood_id"`
+	FullSongUrl       string                  `json:"full_song_url"`
+	FullSongDuration  float64                 `json:"full_song_duration"`
+	ShortSongUrl      string                  `json:"short_song_url"`
+	ShortSongDuration float64                 `json:"short_song_duration"`
+	ImageUrl          string                  `json:"image_url"`
 
 	UserId   int64  `json:"user_id"`
 	Username string `json:"username"`

@@ -14,7 +14,8 @@ func Application(
 	apiDef map[string]swagger.ApiDescription,
 	musicStorageService *music_source.MusicStorageService,
 	cfg *configs.Settings,
+	appConfig *application.Configurator[configs.AppConfig],
 ) *application.BaseApplication {
 	return application.NewBaseApplication("music").
-		AddSubApplication(api.SubApp(httpRouter, apiDef, musicStorageService, cfg))
+		AddSubApplication(api.SubApp(httpRouter, apiDef, musicStorageService, cfg, appConfig))
 }

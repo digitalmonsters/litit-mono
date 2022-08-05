@@ -50,7 +50,17 @@ type NotifierConfig struct {
 }
 
 type CreatorsConfig struct {
-	MaxThresholdHours int `json:"MaxThresholdHours"`
+	MaxThresholdHours int              `json:"MaxThresholdHours"`
+	Listeners         CreatorListeners `json:"Listeners"`
+}
+
+type CreatorListeners struct {
+	LikeCounter     CounterListener                        `json:"LikeCounter"`
+	LoveCounter     CounterListener                        `json:"LoveCounter"`
+	DislikeCounter  CounterListener                        `json:"DislikeCounter"`
+	ListenCounter   CounterListener                        `json:"ListenCounter"`
+	ListenedMusic   CounterListener                        `json:"ListenedMusic"`
+	CommentsCounter boilerplate.KafkaListenerConfiguration `json:"CommentsCounter"`
 }
 
 type SoundStripeConfig struct {
@@ -58,6 +68,13 @@ type SoundStripeConfig struct {
 	ApiToken   string `json:"ApiToken"`
 	MaxWorkers int    `json:"MaxWorkers"`
 	MaxTimeout int    `json:"MaxTimeout"`
+}
+
+type CounterListener struct {
+	Kafka          boilerplate.KafkaListenerConfiguration
+	MaxDuration    int `json:"MaxDuration"`
+	MaxBatchSize   int `json:"MaxBatchSize"`
+	WorkerPoolSize int `json:"WorkerPoolSize"`
 }
 
 var settings Settings

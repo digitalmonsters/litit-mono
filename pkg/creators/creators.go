@@ -4,13 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers/content"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/digitalmonsters/music/pkg/feed/feed_converter"
 	"github.com/digitalmonsters/music/pkg/global"
 	"github.com/digitalmonsters/music/utils"
+	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"gopkg.in/guregu/null.v4"
@@ -20,12 +24,14 @@ import (
 )
 
 type Service struct {
-	notifiers []global.INotifier
+	notifiers     []global.INotifier
+	feedConverter *feed_converter.Service
 }
 
-func NewService(notifiers []global.INotifier) *Service {
+func NewService(feedConverter *feed_converter.Service, notifiers []global.INotifier) *Service {
 	return &Service{
-		notifiers: notifiers,
+		feedConverter: feedConverter,
+		notifiers:     notifiers,
 	}
 }
 
@@ -302,9 +308,10 @@ func (s *Service) UploadNewSong(req UploadNewSongRequest, contentWrapper content
 	}
 
 	song := database.CreatorSong{
+		Id:                newContent.Response.Id,
 		UserId:            executionData.UserId,
 		Name:              req.Name,
-		Status:            database.CreatorSongStatusPublished,
+		Status:            music.CreatorSongStatusPublished,
 		LyricAuthor:       req.LyricAuthor,
 		MusicAuthor:       req.MusicAuthor,
 		FullSongDuration:  req.FullSongDuration,
@@ -356,4 +363,51 @@ func (s *Service) CheckRequestStatus(userId int64, db *gorm.DB) (*CheckRequestSt
 		Status:       creator.Status,
 		RejectReason: reason,
 	}, nil
+}
+
+func (s *Service) SongsList(req SongsListRequest, currentUserId int64, db *gorm.DB, executionData router.MethodExecutionData) (*SongsListResponse, *error_codes.ErrorWithCode) {
+	var songs []*database.CreatorSong
+
+	q := db.Where("user_id = ?", req.UserId)
+
+	if req.UserId != currentUserId {
+		q = q.Where("status != ?", music.CreatorSongStatusRejected)
+	}
+
+	paginatorRules := []paginator.Rule{
+		{
+			Key:   "Id",
+			Order: paginator.DESC,
+		},
+	}
+
+	p := paginator.New(
+		&paginator.Config{
+			Rules: paginatorRules,
+			Limit: req.Count,
+		},
+	)
+
+	if len(req.Cursor) > 0 {
+		p.SetAfterCursor(req.Cursor)
+	}
+
+	result, cursor, err := p.Paginate(q, &songs)
+	if err != nil {
+		return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+	}
+
+	if result.Error != nil {
+		return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+	}
+
+	resp := &SongsListResponse{
+		Items: s.feedConverter.ConvertToSongModel(songs, currentUserId, currentUserId == req.UserId, executionData.ApmTransaction, executionData.Context),
+	}
+
+	if cursor.After != nil {
+		resp.Cursor = *cursor.After
+	}
+
+	return resp, nil
 }

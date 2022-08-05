@@ -2,13 +2,14 @@ package feed
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/like"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/digitalmonsters/music/pkg/database"
@@ -47,7 +48,7 @@ func TestNewFeed(t *testing.T) {
 		songs = append(songs, database.CreatorSong{
 			UserId:       userId,
 			Name:         fmt.Sprintf("test song %v", i),
-			Status:       database.CreatorSongStatusApproved,
+			Status:       music.CreatorSongStatusApproved,
 			CreatedAt:    time.Now(),
 			CategoryId:   cat.Id,
 			MoodId:       mood.Id,
@@ -114,7 +115,21 @@ func TestNewFeed(t *testing.T) {
 		return ch
 	}
 
-	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, context.Background())
+	likeWrapper := &like.LikeWrapperMock{}
+
+	likeWrapper.GetInternalSpotReactionsByUserFn = func(contentIds []int64, userId int64, apmTransaction *apm.Transaction, forceLog bool) chan like.GetInternalSpotReactionsByUserResponseChan {
+		ch := make(chan like.GetInternalSpotReactionsByUserResponseChan, 2)
+
+		ch <- like.GetInternalSpotReactionsByUserResponseChan{
+			Error: nil,
+			Data:  map[int64]like.SpotReaction{},
+		}
+		close(ch)
+
+		return ch
+	}
+
+	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, likeWrapper, context.Background())
 	deDuplicator := deduplicator.GetMock()
 	var configurator = &application.Configurator[configs.AppConfig]{}
 	configurator.Values.MUSIC_MAX_HASHTAGS_COUNT = 1000
@@ -137,11 +152,7 @@ func TestNewFeed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Len(t, feedSongs, 8)
-
-	if b, err := json.Marshal(&feedSongs); err == nil {
-		fmt.Println(string(b))
-	}
+	assert.Len(t, feedSongs.Data, 8)
 }
 
 func addCategory(t *testing.T, categoryName string) *database.Category {
@@ -194,7 +205,7 @@ func TestFeedBuilder_LaunchTask(t *testing.T) {
 		songs = append(songs, database.CreatorSong{
 			UserId:       userId,
 			Name:         fmt.Sprintf("test song %v", i),
-			Status:       database.CreatorSongStatusApproved,
+			Status:       music.CreatorSongStatusApproved,
 			CreatedAt:    time.Now(),
 			CategoryId:   cat.Id,
 			MoodId:       mood.Id,

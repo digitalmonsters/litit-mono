@@ -19,6 +19,7 @@ type creatorApp struct {
 	contentWrapper  content.IContentWrapper
 	creatorsCfg     configs.CreatorsConfig
 	cfg             *configs.Settings
+	appConfig       *application.Configurator[configs.AppConfig]
 }
 
 func SubApp(
@@ -26,21 +27,29 @@ func SubApp(
 	apiDef map[string]swagger.ApiDescription,
 	creatorsService *creators.Service,
 	userGoWrapper user_go.IUserGoWrapper,
+	contentWrapper content.IContentWrapper,
 	creatorsCfg configs.CreatorsConfig,
 	cfg *configs.Settings,
+	appConfig *application.Configurator[configs.AppConfig],
 ) application.SubApplication {
 	return &creatorApp{
 		httpRouter:      httpRouter,
 		apiDef:          apiDef,
 		creatorsService: creatorsService,
+		contentWrapper:  contentWrapper,
 		userGoWrapper:   userGoWrapper,
 		creatorsCfg:     creatorsCfg,
 		cfg:             cfg,
+		appConfig:       appConfig,
 	}
 }
 
 func (c creatorApp) Init(subAppLogger zerolog.Logger) error {
 	if err := c.initPublicApi(); err != nil {
+		return err
+	}
+
+	if err := c.initServiceApi(); err != nil {
 		return err
 	}
 

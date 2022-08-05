@@ -1,8 +1,12 @@
 package api
 
 import (
+	"encoding/json"
+	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/music/pkg/uploader"
 	"github.com/digitalmonsters/music/utils"
+	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"strconv"
 )
@@ -17,36 +21,50 @@ func (c *creatorApp) initUploadApi() {
 			utils.SetCors(ctx)
 		}()
 
+		var errWithCode *error_codes.ErrorWithCode
+
 		m, err := ctx.Request.MultipartForm()
 		if err != nil {
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			errWithCode = error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			setResponseBody(ctx, nil, errWithCode)
 			return
 		}
 
 		t := m.Value["type"]
 		if len(t) == 0 {
-			ctx.Error("type is required", fasthttp.StatusInternalServerError)
+			errWithCode = error_codes.NewErrorWithCodeRef(errors.New("type is required"), error_codes.GenericServerError)
+			setResponseBody(ctx, nil, errWithCode)
 			return
 		}
 
 		ut, err := strconv.Atoi(t[0])
 		if err != nil {
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			errWithCode = error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			setResponseBody(ctx, nil, errWithCode)
 			return
 		}
 
 		uploadType := uploader.UploadType(ut)
 		if uploadType < uploader.UploadTypeAdminMusic || uploadType > uploader.UploadTypeCreatorsSongImage {
-			ctx.Error("wrong upload type", fasthttp.StatusInternalServerError)
+			errWithCode = error_codes.NewErrorWithCodeRef(errors.New("wrong upload type"), error_codes.GenericServerError)
+			setResponseBody(ctx, nil, errWithCode)
 			return
 		}
 
-		resp, err := uploader.FileUpload(c.cfg, uploadType, ctx)
+		resp, err := uploader.FileUpload(c.cfg, c.appConfig, uploadType, ctx)
 		if err != nil {
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
-		} else {
-			ctx.Response.Header.Set("Content-Type", "application/json")
-			ctx.Response.SetBody(resp)
+			errWithCode = error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 		}
+
+		setResponseBody(ctx, resp, errWithCode)
 	})
+}
+
+func setResponseBody(ctx *fasthttp.RequestCtx, data interface{}, err *error_codes.ErrorWithCode) {
+	ctx.Response.Header.Set("Content-Type", "application/json")
+	if bytes, err := json.Marshal(router.ToRestResponse(data, err)); err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+	} else {
+		ctx.Response.SetBody(bytes)
+	}
 }

@@ -3,8 +3,8 @@ package uploader
 import (
 	"bytes"
 	"crypto/md5"
-	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/s3"
 	"github.com/digitalmonsters/music/configs"
 	"github.com/pkg/errors"
@@ -20,7 +20,7 @@ import (
 var extensionsForMusic = []string{"mp3"}
 var extensionsForImage = []string{"jpg", "jpeg", "png"}
 
-func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.RequestCtx) ([]byte, error) {
+func FileUpload(cfg *configs.Settings, appConfig *application.Configurator[configs.AppConfig], uploadType UploadType, ctx *fasthttp.RequestCtx) (*uploadResponse, error) {
 	m, err := ctx.Request.MultipartForm()
 	if err != nil {
 		return nil, err
@@ -75,6 +75,24 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 		filePath = "creator"
 	}
 
+	var duration null.Float
+
+	if fileExtension == "mp3" {
+		duration = null.FloatFrom(getSongDuration(body))
+		if uploadType == UploadTypeCreatorsSongFull {
+			if int(duration.ValueOrZero()) > appConfig.Values.MUSIC_FULL_VERSION_MAX_DURATION {
+				return nil, errors.New("song duration is greater than max song duration")
+			}
+		}
+
+		if uploadType == UploadTypeCreatorsSongShort {
+			if int(duration.ValueOrZero()) > appConfig.Values.MUSIC_SHORT_VERSION_MAX_DURATION {
+				return nil, errors.New("song duration is greater than max song duration")
+			}
+		}
+
+	}
+
 	filePath = filepath.Join(filePath, uploadType.ToString(), filename)
 	fileUrl = fmt.Sprintf("%v/%v", cfg.S3.CdnUrl, filePath)
 
@@ -83,21 +101,11 @@ func FileUpload(cfg *configs.Settings, uploadType UploadType, ctx *fasthttp.Requ
 		return nil, err
 	}
 
-	var duration null.Float
-
-	if fileExtension == "mp3" {
-		duration = null.FloatFrom(getSongDuration(body))
-	}
-
-	if respBytes, err := json.Marshal(&uploadResponse{
+	return &uploadResponse{
 		FileUrl:  fileUrl,
 		Size:     size,
 		Duration: duration,
-	}); err != nil {
-		return nil, err
-	} else {
-		return respBytes, nil
-	}
+	}, nil
 }
 
 func checkFileExtension(t UploadType, ext string) bool {

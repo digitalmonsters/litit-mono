@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalmonsters/go-common/error_codes"
+	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/pkg/errors"
@@ -30,7 +31,7 @@ func RejectMusic(req RejectMusicRequest, db *gorm.DB) error {
 	}
 
 	updateMap := map[string]interface{}{
-		"status":        database.CreatorSongStatusRejected,
+		"status":        music.CreatorSongStatusRejected,
 		"reject_reason": null.IntFrom(req.RejectReason),
 	}
 
@@ -60,7 +61,7 @@ func ApproveMusic(req ApproveMusicRequest, db *gorm.DB) error {
 		return errors.WithStack(err)
 	}
 
-	song.Status = database.CreatorSongStatusApproved
+	song.Status = music.CreatorSongStatusApproved
 	song.RejectReason = null.Int{}
 
 	if err := tx.Save(&song).Error; err != nil {
