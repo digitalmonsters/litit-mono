@@ -26,6 +26,7 @@ type AppConfig struct {
 	ADS_MODERATION_SLA                     int
 	ADS_CAMPAIGN_VIDEOS_PER_CONTENT_VIDEOS int
 	ADS_CAMPAIGN_GLOBAL_PRICE              decimal.Decimal
+	ADS_AVAILABLE_FOR_USER_IDS             string
 }
 
 func GetConfigsMigration() map[string]application.MigrateConfigModel {
@@ -53,6 +54,14 @@ func GetConfigsMigration() map[string]application.MigrateConfigModel {
 			Description:    "Ads campaign global price",
 			Category:       application.ConfigCategoryAd,
 			ReleaseVersion: "05.08.22",
+		},
+		"ADS_AVAILABLE_FOR_USER_IDS": {
+			Key:            "ADS_AVAILABLE_FOR_USER_IDS",
+			Value:          "0,1",
+			Type:           application.ConfigTypeString,
+			Description:    "List of user ids for which ads is active",
+			Category:       application.ConfigCategoryAd,
+			ReleaseVersion: "08.08.22",
 		},
 	}
 }
