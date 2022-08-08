@@ -2,6 +2,7 @@ package message
 
 import (
 	"fmt"
+	"github.com/digitalmonsters/ads-manager/configs"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -201,6 +202,17 @@ func MessagesListAdmin(req MessagesListAdminRequest, db *gorm.DB) (*MessagesList
 		Items:      records,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func IsAdsAvailableForUser(userId int64) bool {
+	userIdStr := fmt.Sprint(userId)
+	for _, val := range strings.Split(configs.GetAppConfig().ADS_AVAILABLE_FOR_USER_IDS, ",") {
+		if strings.EqualFold(userIdStr, strings.TrimSpace(val)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func GetMessageForUser(userId int64, messageType database.MessageType, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, executionData router.MethodExecutionData) (*NotificationMessage, error) {
