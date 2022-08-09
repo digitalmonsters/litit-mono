@@ -13,6 +13,7 @@ import (
 func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper) error {
 	getAdsMessagePath := "/ads/message/me"
 	messagePath := "/message/me"
+	adsAvailablePath := "/ads/available"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		messageType := database.MessageType(int(utils.ExtractInt64(executionData.GetUserValue, "type", 1, 50)))
@@ -44,6 +45,19 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		return resp, nil
 	}, messagePath, router.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		return adsAvailableResponse{
+			IsAvailableForUser: message.IsAdsAvailableForUser(executionData.UserId),
+		}, nil
+	}, adsAvailablePath, router.MethodGet).Build()); err != nil {
+		return err
+	}
+
+	apiDef[adsAvailablePath] = swagger.ApiDescription{
+		Response: adsAvailableResponse{},
+		Tags:     []string{"ads", "message"},
 	}
 
 	apiDef[getAdsMessagePath] = swagger.ApiDescription{

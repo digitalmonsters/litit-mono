@@ -54,7 +54,8 @@ func (s service) GetAdModerationRequests(req GetAdModerationRequest, tx *gorm.DB
 	if err := q.Count(&count).Error; err != nil {
 		return nil, err
 	}
-	if err := q.Order("created_at desc").Find(&items).Error; err != nil {
+	
+	if err := q.Limit(req.Limit).Offset(req.Offset).Order("created_at desc").Find(&items).Error; err != nil {
 		return nil, err
 	}
 	models := s.converter.MapFromDbAddCampaign(items, ctx)
