@@ -433,7 +433,7 @@ func (s *Service) fillPointsCount(contentModels map[int64]*frontend.CreatorSongM
 				continue
 			}
 
-			content.PointsEarned, _ = pointsCountResp.Float64()
+			content.PointsEarned = pointsCountResp
 		}
 	}()
 

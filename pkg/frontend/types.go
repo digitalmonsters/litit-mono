@@ -4,6 +4,7 @@ import (
 	"github.com/digitalmonsters/go-common/frontend"
 	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/lib/pq"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"time"
 )
@@ -61,7 +62,7 @@ type CreatorSongModel struct {
 	Likes             int                     `json:"likes"`
 	Loves             int                     `json:"loves"`
 	Dislikes          int                     `json:"dislikes"`
-	PointsEarned      float64                 `json:"points_earned,omitempty"`
+	PointsEarned      decimal.Decimal         `json:"points_earned"`
 	Comments          int                     `json:"comments"`
 	Shares            int                     `json:"shares"`
 	UsedInVideo       int                     `json:"used_in_video"`
