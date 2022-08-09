@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
 	"github.com/digitalmonsters/go-common/wrappers/like"
 	"github.com/digitalmonsters/go-common/wrappers/music"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -16,6 +17,7 @@ import (
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/feed/deduplicator"
 	"github.com/digitalmonsters/music/pkg/feed/feed_converter"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"go.elastic.co/apm"
 	"gorm.io/gorm"
@@ -130,7 +132,21 @@ func TestNewFeed(t *testing.T) {
 		return ch
 	}
 
-	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, likeWrapper, context.Background())
+	goTokenomicsWrapper := &go_tokenomics.GoTokenomicsWrapperMock{}
+
+	goTokenomicsWrapper.GetContentEarningsTotalByContentIdsFn = func(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan go_tokenomics.GetContentEarningsTotalByContentIdsResponseChan {
+		ch := make(chan go_tokenomics.GetContentEarningsTotalByContentIdsResponseChan, 2)
+
+		ch <- go_tokenomics.GetContentEarningsTotalByContentIdsResponseChan{
+			Error: nil,
+			Items: map[int64]decimal.Decimal{},
+		}
+		close(ch)
+
+		return ch
+	}
+
+	feedConverter := feed_converter.NewFeedConverter(userWrapper, followWrapper, likeWrapper, goTokenomicsWrapper, context.Background())
 	deDuplicator := deduplicator.GetMock()
 	var configurator = &application.Configurator[configs.AppConfig]{}
 	configurator.Values.MUSIC_MAX_HASHTAGS_COUNT = 1000

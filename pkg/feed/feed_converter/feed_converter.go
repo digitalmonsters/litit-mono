@@ -6,6 +6,7 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	frontend2 "github.com/digitalmonsters/go-common/frontend"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
 	"github.com/digitalmonsters/go-common/wrappers/like"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/pkg/database"
@@ -15,32 +16,41 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thoas/go-funk"
 	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"sync"
 	"time"
 )
 
 type Service struct {
-	categoryCache     *cache.Cache
-	moodCache         *cache.Cache
-	rejectReasonCache *cache.Cache
-	ctx               context.Context
-	db                *gorm.DB
-	userWrapper       user_go.IUserGoWrapper
-	followWrapper     follow.IFollowWrapper
-	likeWrapper       like.ILikeWrapper
+	categoryCache       *cache.Cache
+	moodCache           *cache.Cache
+	rejectReasonCache   *cache.Cache
+	ctx                 context.Context
+	db                  *gorm.DB
+	userWrapper         user_go.IUserGoWrapper
+	followWrapper       follow.IFollowWrapper
+	likeWrapper         like.ILikeWrapper
+	goTokenomicsWrapper go_tokenomics.IGoTokenomicsWrapper
 }
 
-func NewFeedConverter(userWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, likeWrapper like.ILikeWrapper, ctx context.Context) *Service {
+func NewFeedConverter(
+	userWrapper user_go.IUserGoWrapper,
+	followWrapper follow.IFollowWrapper,
+	likeWrapper like.ILikeWrapper,
+	goTokenomicsWrapper go_tokenomics.IGoTokenomicsWrapper,
+	ctx context.Context,
+) *Service {
 	s := &Service{
-		db:                database.GetDb(database.DbTypeReadonly),
-		userWrapper:       userWrapper,
-		followWrapper:     followWrapper,
-		likeWrapper:       likeWrapper,
-		categoryCache:     cache.New(10*time.Minute, 12*time.Minute),
-		moodCache:         cache.New(10*time.Minute, 12*time.Minute),
-		rejectReasonCache: cache.New(10*time.Minute, 12*time.Minute),
-		ctx:               ctx,
+		db:                  database.GetDb(database.DbTypeReadonly),
+		userWrapper:         userWrapper,
+		followWrapper:       followWrapper,
+		likeWrapper:         likeWrapper,
+		goTokenomicsWrapper: goTokenomicsWrapper,
+		categoryCache:       cache.New(10*time.Minute, 12*time.Minute),
+		moodCache:           cache.New(10*time.Minute, 12*time.Minute),
+		rejectReasonCache:   cache.New(10*time.Minute, 12*time.Minute),
+		ctx:                 ctx,
 	}
 
 	s.runJobs()
@@ -181,6 +191,7 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 			ShortSongDuration: song.ShortSongDuration,
 			ImageUrl:          song.ImageUrl,
 			Hashtags:          song.Hashtags,
+			Shares:            song.Shares,
 			ShortListens:      song.ShortListens,
 			FullListens:       song.FullListens,
 			Likes:             song.Likes,
@@ -192,10 +203,6 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 			CreatedAtTs:       song.CreatedAt.Unix(),
 		}
 
-		if withPrivateInfo {
-			model.PointsEarned = song.PointsEarned
-		}
-
 		if model.CategoryId > 0 {
 			model.Category = s.getCategory(model.CategoryId)
 		}
@@ -205,7 +212,7 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 		}
 
 		if song.RejectReason.Valid {
-			model.RejectReason = s.getRejectReason(song.RejectReason.Int64)
+			model.RejectReason = null.StringFrom(s.getRejectReason(song.RejectReason.Int64).Reason)
 		}
 
 		feedSongsMap[song.Id] = model
@@ -216,6 +223,10 @@ func (s *Service) ConvertToSongModel(songs []*database.CreatorSong, currentUserI
 		s.fillFollowingData(feedSongsMap, currentUserId, authorIds, apmTransaction),
 		s.fillUsersAndApplyUserPrivacySettings(feedSongsMap, ctx),
 		s.fillMyReactions(feedSongsMap, songIds, currentUserId, apmTransaction),
+	}
+
+	if withPrivateInfo {
+		routines = append(routines, s.fillPointsCount(feedSongsMap, apmTransaction))
 	}
 
 	for _, c := range routines {
@@ -369,6 +380,61 @@ func (s *Service) fillMyReactions(contentModels map[int64]*frontend.CreatorSongM
 		}
 
 		ch <- nil
+	}()
+
+	return ch
+}
+
+func (s *Service) fillPointsCount(contentModels map[int64]*frontend.CreatorSongModel, apmTransaction *apm.Transaction) chan error {
+	ch := make(chan error, 2)
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+
+		if len(contentModels) == 0 {
+			return
+		}
+
+		var contentIds []int64
+
+		for _, content := range contentModels {
+			if content.Id <= 0 {
+				continue
+			}
+
+			hasContentId := false
+
+			for _, contentId := range contentIds {
+				if contentId == content.Id {
+					hasContentId = true
+					break
+				}
+			}
+
+			if hasContentId {
+				continue
+			}
+
+			contentIds = append(contentIds, content.Id)
+		}
+
+		resp := <-s.goTokenomicsWrapper.GetContentEarningsTotalByContentIds(contentIds, apmTransaction, false)
+
+		if resp.Error != nil {
+			ch <- errors.Wrap(errors.New(resp.Error.Message), "fill points count failed")
+		}
+
+		for _, content := range contentModels {
+			pointsCountResp, hasPointsCount := resp.Items[content.Id]
+
+			if !hasPointsCount {
+				continue
+			}
+
+			content.PointsEarned, _ = pointsCountResp.Float64()
+		}
 	}()
 
 	return ch

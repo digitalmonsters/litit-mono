@@ -14,6 +14,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
 	"github.com/digitalmonsters/go-common/wrappers/like"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/music/cmd/creator"
@@ -50,6 +51,7 @@ func main() {
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	likeWrapper := like.NewLikeWrapper(cfg.Wrappers.Likes)
+	goTokenomicsWrapper := go_tokenomics.NewGoTokenomicsWrapper(cfg.Wrappers.GoTokenomics)
 
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
@@ -111,7 +113,7 @@ func main() {
 		creatorsNotifier,
 	}
 
-	feedConverter := feed_converter.NewFeedConverter(userGoWrapper, followWrapper, likeWrapper, ctx)
+	feedConverter := feed_converter.NewFeedConverter(userGoWrapper, followWrapper, likeWrapper, goTokenomicsWrapper, ctx)
 	deDuplicator := deduplicator.NewDeDuplicator(redisClient)
 	feedService := feedPkg.NewFeed(deDuplicator, feedConverter, jobber, cfgService)
 	creatorsService := creators.NewService(feedConverter, notifiers)
