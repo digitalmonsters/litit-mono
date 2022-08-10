@@ -262,6 +262,7 @@ type UpdateUserMetaDataRequest struct {
 	EmailMarketingVerified bool                 `json:"email_marketing_verified"`
 	Language               translation.Language `json:"language"`
 	Timezone               string               `json:"timezone"`
+	Phone                  null.String          `json:"phone"`
 }
 
 type ForceResetUserIdentityWithNewGuestRequest struct {
