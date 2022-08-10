@@ -9,6 +9,9 @@ import (
 	"github.com/digitalmonsters/music/pkg/database"
 	"github.com/digitalmonsters/music/pkg/feed/deduplicator"
 	"github.com/digitalmonsters/music/pkg/feed/feed_converter"
+	"github.com/digitalmonsters/music/utils"
+	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
 
@@ -35,38 +38,60 @@ func NewFeed(
 	}
 }
 
-func (f *Feed) GetFeed(db *gorm.DB, userId int64, count int, executionData router.MethodExecutionData) (*ContentFeedResponse, *error_codes.ErrorWithCode) {
+func (f *Feed) GetFeed(db *gorm.DB, userId int64, startContentsIds []int64, count int, executionData router.MethodExecutionData) (*ContentFeedResponse, *error_codes.ErrorWithCode) {
 	var expirationData []deduplicator.SongExpiration
 	var idsToIgnore []int64
-
 	if f.appConfig.Values.MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED {
 		expirationData, idsToIgnore = f.deDuplicator.GetIdsToIgnore(userId, executionData.Context)
 	}
 
+	var startContents []*database.CreatorSong
 	var songs []*database.CreatorSong
-	query := db.Model(songs).
-		Where("short_song_url is not null").
-		Where("full_song_url is not null").
-		Where("reject_reason is null")
+	lenStartContentsIds := len(startContentsIds)
 
-	query = query.Where("creator_songs.id not in (select song_id from listened_music "+
-		" where listened_music.user_id = ?)", userId)
+	if lenStartContentsIds > 0 {
+		for _, id := range startContentsIds {
+			if !lo.Contains(idsToIgnore, id) {
+				idsToIgnore = append(idsToIgnore, id)
+			}
+		}
 
-	if len(idsToIgnore) > 0 {
-		query = query.Where("creator_songs.id not in ?", idsToIgnore)
+		idsToIgnore = append(idsToIgnore, startContentsIds...)
+
+		if err := db.Where("id in ? and reject_reason is null", startContentsIds).Limit(count).Find(&startContents).Error; err != nil {
+			utils.CaptureApmErrorFromTransaction(errors.WithStack(err), executionData.Context)
+		}
+
+		count = count - len(startContents)
 	}
 
-	query = query.Order("score desc")
+	if count != 0 {
+		query := db.Model(songs).
+			Where("short_song_url is not null").
+			Where("full_song_url is not null").
+			Where("reject_reason is null")
 
-	if err := query.Limit(count).Find(&songs).Error; err != nil {
-		return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		query = query.Where("creator_songs.id not in (select song_id from listened_music "+
+			" where listened_music.user_id = ?)", userId)
+
+		if len(idsToIgnore) > 0 {
+			query = query.Where("creator_songs.id not in ?", idsToIgnore)
+		}
+
+		query = query.Order("score desc")
+
+		if err := query.Limit(count).Find(&songs).Error; err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		if f.appConfig.Values.MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED {
+			go func() {
+				f.deDuplicator.SetIdsToIgnore(songs, userId, expirationData, executionData.Context)
+			}()
+		}
 	}
 
-	if f.appConfig.Values.MUSIC_FEATURE_FEED_IGNORE_IDS_ENABLED {
-		go func() {
-			f.deDuplicator.SetIdsToIgnore(songs, userId, expirationData, executionData.Context)
-		}()
-	}
+	songs = append(startContents, songs...)
 
 	convertedSongs := f.feedConverter.ConvertToSongModel(songs, executionData.UserId, false, executionData.ApmTransaction, executionData.Context)
 

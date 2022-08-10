@@ -161,7 +161,7 @@ func TestNewFeed(t *testing.T) {
 
 	musicFeed := NewFeed(deDuplicator, feedConverter, nil, configurator)
 
-	feedSongs, err := musicFeed.GetFeed(gormDb, userId, 10, router.MethodExecutionData{
+	feedSongs, err := musicFeed.GetFeed(gormDb, userId, []int64{}, 10, router.MethodExecutionData{
 		Context: context.Background(),
 		UserId:  userId,
 	})
