@@ -465,6 +465,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 		IsBanned:       isBanned,
 		Language:       language,
 		UserIp:         common.GetRealIp(httpCtx),
+		FullUrl:        httpCtx.URI().String(),
 		getUserValueFn: getUserValue,
 	}
 

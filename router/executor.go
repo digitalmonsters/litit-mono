@@ -17,6 +17,7 @@ type MethodExecutionData struct {
 	UserIp         string
 	DeviceId       string
 	Language       translation.Language
+	FullUrl        string
 	getUserValueFn func(key string) interface{}
 }
 
