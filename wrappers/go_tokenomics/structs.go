@@ -113,6 +113,7 @@ const (
 	PointsEarnedTypeUserCreatorFullListen                     = PointsEarnedType(54)
 	PointsEarnedTypeCreatorFullListenGuest                    = PointsEarnedType(55)
 	PointsEarnedTypeFullListenBonusPerformance                = PointsEarnedType(56)
+	PointsEarnedTypeGoogleAds                                 = PointsEarnedType(57) // google ads
 )
 
 type WithdrawalStatus int16
