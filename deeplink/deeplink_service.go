@@ -73,6 +73,8 @@ func (s *Service) getShareType(contentType eventsourcing.ContentType) string {
 	switch contentType {
 	case eventsourcing.ContentTypeMusic:
 		return "music"
+	case eventsourcing.ContentTypeSpot:
+		return "spot"
 	default:
 		return "video"
 	}
