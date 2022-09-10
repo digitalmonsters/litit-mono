@@ -234,6 +234,14 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 		executionCtx := boilerplate.CreateCustomContext(ctx, apmTransaction, log.Logger)
 
+		var cancelFn context.CancelFunc
+
+		executionCtx, cancelFn = context.WithTimeout(executionCtx, 1*time.Minute)
+
+		defer func() {
+			cancelFn()
+		}()
+
 		defer apmTransaction.End()
 
 		requestBody := ctx.PostBody()
