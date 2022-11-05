@@ -14,7 +14,7 @@ import (
 )
 
 type IBotFactory interface {
-	SetSuperInfluencer(userId int64, ctx context.Context,
+	SetSuperInfluencer(userId int64, contentIds []int64, ctx context.Context,
 		forceLog bool) chan wrappers.GenericResponseChan[SetSuperInfluencerResponse]
 }
 
@@ -47,9 +47,10 @@ func NewAdsManagerWrapper(config boilerplate.WrapperConfig) IBotFactory {
 	}
 }
 
-func (w *BotFactoryWrapper) SetSuperInfluencer(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SetSuperInfluencerResponse] {
-	return wrappers.ExecuteRpcRequestAsync[SetSuperInfluencerResponse](w.baseWrapper, w.apiUrl, "GetAdsContentForUser",
+func (w *BotFactoryWrapper) SetSuperInfluencer(userId int64, contentIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SetSuperInfluencerResponse] {
+	return wrappers.ExecuteRpcRequestAsync[SetSuperInfluencerResponse](w.baseWrapper, w.apiUrl, "SetSuperInfluencer",
 		SetSuperInfluencerRequest{
-			UserId: userId,
+			UserId:     userId,
+			ContentIds: contentIds,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
