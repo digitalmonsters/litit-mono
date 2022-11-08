@@ -1,9 +1,11 @@
 package content
 
 import (
-	"github.com/digitalmonsters/go-common/eventsourcing"
-	"gopkg.in/guregu/null.v4"
 	"time"
+
+	"gopkg.in/guregu/null.v4"
+
+	"github.com/digitalmonsters/go-common/eventsourcing"
 )
 
 type SimpleContent struct {
@@ -159,4 +161,9 @@ type MusicContentRequest struct {
 	Duration    int                       `json:"duration"`
 	AuthorId    int64                     `json:"author_id"`
 	Hashtags    []string                  `json:"hashtags"`
+}
+
+type GetLastContentRequest struct {
+	UserId      int64                     `json:"user_id"`
+	ContentType eventsourcing.ContentType `json:"content_type"`
 }

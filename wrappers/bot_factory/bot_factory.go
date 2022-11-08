@@ -14,8 +14,11 @@ import (
 )
 
 type IBotFactory interface {
-	SetSuperInfluencer(userId int64, contentIds []int64, ctx context.Context,
-		forceLog bool) chan wrappers.GenericResponseChan[SetSuperInfluencerResponse]
+	SetSuperInfluencer(
+		ctx context.Context,
+		userId int64,
+		forceLog bool,
+	) chan wrappers.GenericResponseChan[SetSuperInfluencerResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -26,7 +29,7 @@ type BotFactoryWrapper struct {
 	serviceName    string
 }
 
-func NewAdsManagerWrapper(config boilerplate.WrapperConfig) IBotFactory {
+func NeBotFactoryWrapper(config boilerplate.WrapperConfig) IBotFactory {
 	timeout := 5 * time.Second
 
 	if config.TimeoutSec > 0 {
@@ -47,10 +50,13 @@ func NewAdsManagerWrapper(config boilerplate.WrapperConfig) IBotFactory {
 	}
 }
 
-func (w *BotFactoryWrapper) SetSuperInfluencer(userId int64, contentIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SetSuperInfluencerResponse] {
+func (w *BotFactoryWrapper) SetSuperInfluencer(
+	ctx context.Context,
+	userId int64,
+	forceLog bool,
+) chan wrappers.GenericResponseChan[SetSuperInfluencerResponse] {
 	return wrappers.ExecuteRpcRequestAsync[SetSuperInfluencerResponse](w.baseWrapper, w.apiUrl, "SetSuperInfluencer",
 		SetSuperInfluencerRequest{
-			UserId:     userId,
-			ContentIds: contentIds,
+			UserId: userId,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }

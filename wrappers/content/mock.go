@@ -2,10 +2,12 @@ package content
 
 import (
 	"context"
-	"github.com/digitalmonsters/go-common/frontend"
-	"github.com/digitalmonsters/go-common/wrappers"
+
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
+
+	"github.com/digitalmonsters/go-common/frontend"
+	"github.com/digitalmonsters/go-common/wrappers"
 )
 
 type ContentWrapperMock struct {
@@ -24,6 +26,11 @@ type ContentWrapperMock struct {
 	GetRejectReasonFn              func(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason]
 	GetTopUsersInCategoriesFn      func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64][]int64]
 	InsertMusicContentFn           func(content MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SimpleContent]
+	GetLastContentFn               func(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[[]SimpleContent]
+}
+
+func (w *ContentWrapperMock) GetLastContent(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[[]SimpleContent] {
+	return w.GetLastContentFn(ctx, userId)
 }
 
 func (w *ContentWrapperMock) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent] {

@@ -3,14 +3,16 @@ package content
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/rs/zerolog/log"
+	"go.elastic.co/apm"
+	"gopkg.in/guregu/null.v4"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/frontend"
 	"github.com/digitalmonsters/go-common/wrappers"
-	"github.com/rs/zerolog/log"
-	"go.elastic.co/apm"
-	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type IContentWrapper interface {
@@ -29,6 +31,7 @@ type IContentWrapper interface {
 	GetRejectReason(ids []int64, includeDeleted bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]RejectReason]
 	GetTopUsersInCategories(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64][]int64]
 	InsertMusicContent(content MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SimpleContent]
+	GetLastContent(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[[]SimpleContent]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -58,6 +61,12 @@ func NewContentWrapper(config boilerplate.WrapperConfig) IContentWrapper {
 		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "content",
 	}
+}
+
+func (w *ContentWrapper) GetLastContent(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[[]SimpleContent] {
+	return wrappers.ExecuteRpcRequestAsync[[]SimpleContent](w.baseWrapper, w.apiUrl, "GetLastContentInternal", GetLastContentRequest{
+		UserId: userId,
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, false)
 }
 
 func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction,

@@ -1,8 +1,7 @@
 package bot_factory
 
 type SetSuperInfluencerRequest struct {
-	UserId     int64   `json:"user_id"`
-	ContentIds []int64 `json:"content_ids"`
+	UserId int64 `json:"user_id"`
 }
 
 type SetSuperInfluencerResponse struct {
