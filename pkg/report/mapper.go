@@ -2,6 +2,7 @@ package report
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/frontend"
@@ -22,6 +23,7 @@ func mapDbCommentsToReportedUserProfileCommentModels(dbComments []database.Comme
 			Comment:     dbComment.Comment,
 			CommenterId: dbComment.AuthorId,
 			Reports:     dbComment.NumReports,
+			Active:      dbComment.Active,
 		}
 		if !lo.Contains(userIds, respItems[i].UserId) {
 			userIds = append(userIds, respItems[i].UserId)
@@ -101,6 +103,7 @@ func mapDbCommentsToReportedVideoCommentModels(dbComments []database.Comment, us
 			CommenterId: dbComment.AuthorId,
 			Reports:     dbComment.NumReports,
 			ContentId:   dbComment.ContentId.Int64,
+			Active:      dbComment.Active,
 		}
 		if !lo.Contains(userIds, respItems[i].CommenterId) {
 			userIds = append(userIds, respItems[i].CommenterId)

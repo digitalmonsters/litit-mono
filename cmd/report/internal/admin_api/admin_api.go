@@ -2,6 +2,7 @@ package admin_api
 
 import (
 	"encoding/json"
+
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/comments/pkg/report"
 	"github.com/digitalmonsters/go-common/common"
@@ -15,6 +16,7 @@ func (a *adminApiApp) initAdminApi(endpoint router.IRpcEndpoint) error {
 		a.getReportedUserProfileComments(),
 		a.getReportedVideoComments(),
 		a.GetReportsForComment(),
+		a.ApproveRejectReportedComment(),
 	}
 
 	for _, c := range commands {
@@ -99,4 +101,29 @@ func (a *adminApiApp) GetReportsForComment() router.ICommand {
 
 		return resp, nil
 	}, common.AccessLevelRead, "report:comments:view")
+}
+
+func (a *adminApiApp) ApproveRejectReportedComment() router.ICommand {
+	method := "ApproveRejectReportedComment"
+
+	a.apiDef[method] = swagger.ApiDescription{
+		Request:  report.ApproveRejectReportedCommentRequest{},
+		Response: report.ApproveRejectReportedCommentResponse{},
+		Tags:     []string{"report"},
+	}
+
+	return router.NewAdminCommand(method, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req report.ApproveRejectReportedCommentRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		resp, err := report.ApproveRejectReportedComment(req, database.GetDb(), executionData.Context)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return resp, nil
+	}, common.AccessLevelWrite, "report:comments:approve")
 }

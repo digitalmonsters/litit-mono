@@ -1,8 +1,9 @@
 package database
 
 import (
-	"gopkg.in/guregu/null.v4"
 	"time"
+
+	"gopkg.in/guregu/null.v4"
 )
 
 type Comment struct {
@@ -12,12 +13,12 @@ type Comment struct {
 	NumUpvotes   int64     `json:"num_upvotes"`
 	NumDownvotes int64     `json:"num_downvotes"`
 	CreatedAt    time.Time `json:"created_at"`
-	Active       bool
-	Comment      string   `json:"comment"`
-	ContentId    null.Int `json:"content_id"`
-	ProfileId    null.Int `json:"profile_id"`
-	ParentId     null.Int `json:"parent_id"`
-	NumReports   int64    `json:"num_reports"`
+	Active       bool      `json:"active"`
+	Comment      string    `json:"comment"`
+	ContentId    null.Int  `json:"content_id"`
+	ProfileId    null.Int  `json:"profile_id"`
+	ParentId     null.Int  `json:"parent_id"`
+	NumReports   int64     `json:"num_reports"`
 }
 
 func (Comment) TableName() string {
