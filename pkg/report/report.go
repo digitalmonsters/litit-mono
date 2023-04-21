@@ -2,6 +2,7 @@ package report
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/comments/pkg/database"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -51,6 +52,18 @@ func ReportComment(commentId int64, details string, tx *gorm.DB, currentUserId i
 
 func GetReportedUserProfileComments(req GetReportedUserProfileCommentsRequest, db *gorm.DB, userWrapper user_go.IUserGoWrapper, ctx context.Context) (*GetReportedUserProfileCommentsResponse, error) {
 	query := db.Model(database.Comment{}).Where("num_reports > 0").Where("profile_id is not null")
+
+	if req.Approved.Valid {
+		if req.Approved.ValueOrZero() {
+			query = query.Where("Active = true")
+		}
+	}
+
+	if req.Rejected.Valid {
+		if req.Rejected.ValueOrZero() {
+			query = query.Where("Active = false")
+		}
+	}
 
 	if len(req.CommenterIds) > 0 {
 		query = query.Where("author_id in ?", req.CommenterIds)
@@ -113,6 +126,18 @@ func GetReportsForComment(req GetReportsForCommentRequest, db *gorm.DB, userWrap
 func GetReportedVideoComments(req GetReportedVideoCommentsRequest, db *gorm.DB, userWrapper user_go.IUserGoWrapper, contentWrapper content.IContentWrapper, ctx context.Context, apmTx *apm.Transaction) (*GetReportedVideoCommentsResponse, error) {
 	query := db.Model(database.Comment{}).Where("num_reports > 0").Where("content_id is not null")
 
+	if req.Approved.Valid {
+		if req.Approved.ValueOrZero() {
+			query = query.Where("Active = true")
+		}
+	}
+
+	if req.Rejected.Valid {
+		if req.Rejected.ValueOrZero() {
+			query = query.Where("Active = false")
+		}
+	}
+
 	if len(req.CommenterIds) > 0 {
 		query = query.Where("author_id in ?", req.CommenterIds)
 	}
@@ -134,4 +159,18 @@ func GetReportedVideoComments(req GetReportedVideoCommentsRequest, db *gorm.DB, 
 		TotalCount: totalCount,
 		Items:      mapDbCommentsToReportedVideoCommentModels(comments, userWrapper, contentWrapper, ctx, apmTx),
 	}, nil
+}
+
+func ApproveRejectReportedComment(req ApproveRejectReportedCommentRequest, db *gorm.DB, ctx context.Context) (*ApproveRejectReportedCommentResponse, error) {
+
+	var comment database.Comment
+
+	if err := db.Model(&comment).Where("Id = ?", req.Id).Updates(map[string]interface{}{"Active": req.Approve}).Error; err != nil {
+		return nil, err
+	}
+
+	return &ApproveRejectReportedCommentResponse{
+		Success: true,
+	}, nil
+
 }

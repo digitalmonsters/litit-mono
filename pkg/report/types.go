@@ -1,16 +1,19 @@
 package report
 
 import (
+	"time"
+
 	"github.com/digitalmonsters/go-common/frontend"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type GetReportedUserProfileCommentsRequest struct {
-	Limit        int     `json:"limit"`
-	Offset       int     `json:"offset"`
-	CommenterIds []int64 `json:"commenter_ids"`
-	UserIds      []int64 `json:"user_ids"`
+	Limit        int       `json:"limit"`
+	Offset       int       `json:"offset"`
+	CommenterIds []int64   `json:"commenter_ids"`
+	UserIds      []int64   `json:"user_ids"`
+	Approved     null.Bool `json:"approved"`
+	Rejected     null.Bool `json:"rejected"`
 }
 
 type GetReportedUserProfileCommentsResponse struct {
@@ -28,6 +31,7 @@ type ReportedUserProfileCommentModel struct {
 	CommenterUsername string      `json:"commenter_username"`
 	CommenterId       int64       `json:"commenter_id"`
 	Reports           int64       `json:"reports"`
+	Active            bool        `json:"active"`
 }
 
 type GetReportsForCommentRequest struct {
@@ -44,10 +48,12 @@ type GetReportsForCommentResponse struct {
 }
 
 type GetReportedVideoCommentsRequest struct {
-	Limit        int     `json:"limit"`
-	Offset       int     `json:"offset"`
-	CommenterIds []int64 `json:"commenter_ids"`
-	ContentIds   []int64 `json:"content_ids"`
+	Limit        int       `json:"limit"`
+	Offset       int       `json:"offset"`
+	CommenterIds []int64   `json:"commenter_ids"`
+	ContentIds   []int64   `json:"content_ids"`
+	Approved     null.Bool `json:"approved"`
+	Rejected     null.Bool `json:"rejected"`
 }
 
 type GetReportedVideoCommentsResponse struct {
@@ -64,6 +70,7 @@ type ReportedVideoCommentModel struct {
 	CommenterUsername string                `json:"commenter_username"`
 	CommenterId       int64                 `json:"commenter_id"`
 	Reports           int64                 `json:"reports"`
+	Active            bool                  `json:"active"`
 }
 
 type ReportForCommentModel struct {
@@ -86,3 +93,12 @@ type ReportsSorting struct {
 const (
 	ReportsSortFieldDate ReportsSortField = "created_at"
 )
+
+type ApproveRejectReportedCommentRequest struct {
+	Id      int  `json:"id"`
+	Approve bool `json:"approve"`
+}
+
+type ApproveRejectReportedCommentResponse struct {
+	Success bool `json:"success"`
+}
