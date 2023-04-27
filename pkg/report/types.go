@@ -95,8 +95,8 @@ const (
 )
 
 type ApproveRejectReportedCommentRequest struct {
-	Id      int  `json:"id"`
-	Approve bool `json:"approve"`
+	CommentID int  `json:"comment_id"`
+	Approve   bool `json:"approve"`
 }
 
 type ApproveRejectReportedCommentResponse struct {

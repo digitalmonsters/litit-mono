@@ -165,7 +165,7 @@ func ApproveRejectReportedComment(req ApproveRejectReportedCommentRequest, db *g
 
 	var comment database.Comment
 
-	if err := db.Model(&comment).Where("Id = ?", req.Id).Updates(map[string]interface{}{"Active": req.Approve}).Error; err != nil {
+	if err := db.Model(&comment).Where("Id = ?", req.CommentID).Updates(map[string]interface{}{"Active": req.Approve}).Error; err != nil {
 		return nil, err
 	}
 
