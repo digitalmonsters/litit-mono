@@ -95,6 +95,7 @@ const (
 	ContentTypeSpot  = ContentType(1)
 	ContentTypeBio   = ContentType(2)
 	ContentTypeMusic = ContentType(3)
+	ContentTypeDogs  = ContentType(4)
 )
 
 type UploadStatus int
