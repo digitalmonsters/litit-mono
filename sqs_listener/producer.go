@@ -13,8 +13,8 @@ type Publisher struct {
 	Svc  *sqs.SQS
 }
 
-func (c *Publisher) SendMessage(obj map[string]interface{}) (*sqs.SendMessageOutput, error) {
-	message, err := marshalMessage(obj)
+func SendMessage[T any](c *Publisher, data T) (*sqs.SendMessageOutput, error) {
+	message, err := marshalMessage(data)
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +30,8 @@ func (c *Publisher) SendMessage(obj map[string]interface{}) (*sqs.SendMessageOut
 	return result, nil
 }
 
-func marshalMessage(o map[string]interface{}) (string, error) {
-	s, err := json.Marshal(o)
+func marshalMessage[T any](data T) (string, error) {
+	s, err := json.Marshal(data)
 	if err != nil {
 		return "", err
 	}
