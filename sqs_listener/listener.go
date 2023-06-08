@@ -12,7 +12,7 @@ import (
 type SQSListener struct {
 	Conf     boilerplate.SQSConfiguration
 	Svc      *sqs.SQS
-	Callback func(m map[string]interface{}) error
+	Callback func(m string) error
 }
 
 func (i *SQSListener) StartListener() {
@@ -31,13 +31,7 @@ func (i *SQSListener) StartListener() {
 
 		// Process each received message
 		for _, msg := range result.Messages {
-			resp, err := unMarshalMessage(*msg.Body)
-			if err != nil {
-				log.Printf("\nError unmarshalling message : %s ;", err.Error())
-			} else {
-				// Process the message
-				i.Callback(resp)
-			}
+			i.Callback(*msg.Body)
 
 			if err == nil {
 				// Delete the message from the queue
