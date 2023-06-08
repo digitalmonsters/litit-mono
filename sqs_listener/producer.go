@@ -8,14 +8,13 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
-type Command struct {
-	Conf    boilerplate.SQSConfiguration
-	Message map[string]interface{}
-	Svc     *sqs.SQS
+type Publisher struct {
+	Conf boilerplate.SQSConfiguration
+	Svc  *sqs.SQS
 }
 
-func (c *Command) SendMessage() (*sqs.SendMessageOutput, error) {
-	message, err := marshalMessage(c.Message)
+func (c *Publisher) SendMessage(obj map[string]interface{}) (*sqs.SendMessageOutput, error) {
+	message, err := marshalMessage(obj)
 	if err != nil {
 		return nil, err
 	}
