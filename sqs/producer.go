@@ -38,3 +38,12 @@ func marshalMessage(o map[string]interface{}) (string, error) {
 	}
 	return string(s), nil
 }
+
+func unMarshalMessage(s string) (map[string]interface{}, error) {
+	var o map[string]interface{}
+	err := json.Unmarshal([]byte(s), &o)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
+}
