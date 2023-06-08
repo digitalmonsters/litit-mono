@@ -1,4 +1,4 @@
-package sqs
+package sqs_listener
 
 import (
 	"log"
