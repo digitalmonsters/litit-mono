@@ -3,6 +3,10 @@ package boilerplate
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -10,9 +14,6 @@ import (
 	"github.com/skynet2/go-config/source"
 	"github.com/skynet2/go-config/source/env"
 	"github.com/skynet2/go-config/source/file"
-	"os"
-	"path"
-	"strings"
 )
 
 type Environment int32
@@ -179,6 +180,12 @@ func GetCurrentEnvironment() Environment {
 	default:
 		return Local
 	}
+}
+
+type SQSConfiguration struct {
+	Region      string `json:"Region"`
+	Url         string `json:"Url"`
+	MaxMessages int64  `json:"MaxMessages"`
 }
 
 type ScyllaConfiguration struct {
