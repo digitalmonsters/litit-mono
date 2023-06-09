@@ -18,6 +18,9 @@ type SQSListener struct {
 
 func (i *SQSListener) StartListener() {
 	// Continuously poll the SQS queue for messages
+
+	defer i.StopListener()
+
 	for {
 		select {
 		case <-i.stopCh:
