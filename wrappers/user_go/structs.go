@@ -107,6 +107,7 @@ type UserDetailRecord struct {
 	Language            translation.Language `json:"language"`
 	Timezone            string               `json:"timezone"`
 	SpotsUploadBanned   bool                 `json:"spots_upload_banned"`
+	DogsUploadBanned    bool                 `json:"dogs_upload_banned"`
 	BioVideoId          null.Int             `json:"bio_video_id"`
 }
 
