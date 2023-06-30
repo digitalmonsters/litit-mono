@@ -1,8 +1,6 @@
 package sqs_listener
 
 import (
-	"log"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -11,12 +9,12 @@ import (
 
 func InitSQS(conf boilerplate.SQSConfiguration) *sqs.SQS {
 	// Create a new AWS session
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(conf.Region), // Replace with your desired region
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Config: aws.Config{
+			Region: aws.String(conf.Region),
+		},
+	}))
 
 	return sqs.New(sess)
 }
