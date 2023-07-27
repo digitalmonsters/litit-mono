@@ -3,6 +3,10 @@ package boilerplate
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -10,9 +14,6 @@ import (
 	"github.com/skynet2/go-config/source"
 	"github.com/skynet2/go-config/source/env"
 	"github.com/skynet2/go-config/source/file"
-	"os"
-	"path"
-	"strings"
 )
 
 type Environment int32
@@ -118,6 +119,12 @@ type S3Config struct {
 	CdnDirectory string `json:"CdnDirectory"`
 	Bucket       string `json:"Bucket"`
 	Region       string `json:"Region"`
+}
+
+type AzureBlobConfig struct {
+	UseCliAuth         bool   `json:"UseCliAuth"`
+	StorageAccountName string `json:"AccountName"`
+	StorageAccountKey  string `json:"AccountKey"`
 }
 
 type KafkaListenerConfiguration struct {
