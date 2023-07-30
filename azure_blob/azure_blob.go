@@ -5,14 +5,19 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
 type IAzureBlobObject interface {
-	Upload(fileName, containerName string) error
+	GetObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error)
+	PutObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error)
+	Upload(fileName, containerName string) (string, error)
 	ListBlobs(containerName string) error
 	Download(blobName string, destination string, containerName string) error
 	DeleteBlob(blobName string, containerName string) error
@@ -30,20 +35,77 @@ func NewAzureBlobObject(cfg *boilerplate.AzureBlobConfig) IAzureBlobObject {
 	return u
 }
 
-func (u *AzureBlobObject) Upload(fileName, containerName string) error {
+func (u *AzureBlobObject) GetObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error) {
+
+	cred, _ := azblob.NewSharedKeyCredential(u.config.StorageAccountName, u.config.StorageAccountKey)
+
+	sasQueryParams, err := sas.BlobSignatureValues{
+		Protocol:      sas.ProtocolHTTPS,
+		StartTime:     time.Now().UTC(),
+		ExpiryTime:    time.Now().UTC().Add(urlExpiration),
+		Permissions:   to.Ptr(sas.BlobPermissions{Read: true, Create: false, Write: false, Tag: false}).String(),
+		ContainerName: containerName,
+		BlobName:      fileName,
+	}.SignWithSharedKey(cred)
+
+	if err != nil {
+		return "", err
+	}
+
+	signedUrl := fmt.Sprintf("https://%s.blob.core.windows.net/?%s", u.config.StorageAccountName, sasQueryParams.Encode())
+
+	return signedUrl, nil
+}
+
+func (u *AzureBlobObject) PutObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error) {
+
+	cred, _ := azblob.NewSharedKeyCredential(u.config.StorageAccountName, u.config.StorageAccountKey)
+
+	sasQueryParams, err := sas.BlobSignatureValues{
+		Protocol:      sas.ProtocolHTTPS,
+		StartTime:     time.Now().UTC(),
+		ExpiryTime:    time.Now().UTC().Add(urlExpiration),
+		Permissions:   to.Ptr(sas.BlobPermissions{Read: true, Create: true, Write: true, Tag: true}).String(),
+		ContainerName: containerName,
+		BlobName:      fileName,
+	}.SignWithSharedKey(cred)
+
+	if err != nil {
+		return "", err
+	}
+
+	signedUrl := fmt.Sprintf("https://%s.blob.core.windows.net/?%s", u.config.StorageAccountName, sasQueryParams.Encode())
+
+	return signedUrl, nil
+}
+
+func (u *AzureBlobObject) Upload(fileName, containerName string) (string, error) {
 	client, err := u.getClient()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	file, err := os.OpenFile(fileName, os.O_RDONLY, 0)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
-	_, err = client.UploadFile(context.Background(), containerName, fileName, file, nil)
-	return err
+	blobClient := client.ServiceClient().NewContainerClient(containerName).NewBlockBlobClient(fileName)
+	_, err = blobClient.UploadFile(context.Background(), file, &azblob.UploadFileOptions{
+		BlockSize:   int64(1024),
+		Concurrency: uint16(3),
+		// If Progress is non-nil, this function is called periodically as bytes are uploaded.
+		Progress: func(bytesTransferred int64) {
+			fmt.Println(bytesTransferred)
+		},
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return blobClient.URL(), err
 }
 
 func (u *AzureBlobObject) ListBlobs(containerName string) error {
