@@ -17,7 +17,8 @@ import (
 type IAzureBlobObject interface {
 	GetObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error)
 	PutObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error)
-	Upload(fileName, containerName string) (string, error)
+	GetObjectSize(fileName, containerName string) (int64, error)
+	UploadObject(fileName, containerName string, data []byte, contentType string) error
 	ListBlobs(containerName string) error
 	Download(blobName string, destination string, containerName string) error
 	DeleteBlob(blobName string, containerName string) error
@@ -79,21 +80,30 @@ func (u *AzureBlobObject) PutObjectSignedUrl(fileName, containerName string, url
 	return signedUrl, nil
 }
 
-func (u *AzureBlobObject) Upload(fileName, containerName string) (string, error) {
+func (u *AzureBlobObject) GetObjectSize(fileName, containerName string) (int64, error) {
 	client, err := u.getClient()
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-
-	file, err := os.OpenFile(fileName, os.O_RDONLY, 0)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
 
 	blobClient := client.ServiceClient().NewContainerClient(containerName).NewBlockBlobClient(fileName)
-	_, err = blobClient.UploadFile(context.Background(), file, &azblob.UploadFileOptions{
-		BlockSize:   int64(1024),
+	p, err := blobClient.GetProperties(context.Background(), nil)
+	if err != nil {
+		return 0, err
+	}
+
+	return *p.ContentLength, nil
+}
+
+func (u *AzureBlobObject) UploadObject(fileName, containerName string, data []byte, contentType string) error {
+	client, err := u.getClient()
+	if err != nil {
+		return err
+	}
+
+	blobClient := client.ServiceClient().NewContainerClient(containerName).NewBlockBlobClient(fileName)
+	_, err = blobClient.UploadBuffer(context.Background(), data, &azblob.UploadBufferOptions{
+		BlockSize:   int64(4 * 1024),
 		Concurrency: uint16(3),
 		// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 		Progress: func(bytesTransferred int64) {
@@ -102,10 +112,10 @@ func (u *AzureBlobObject) Upload(fileName, containerName string) (string, error)
 	})
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return blobClient.URL(), err
+	return err
 }
 
 func (u *AzureBlobObject) ListBlobs(containerName string) error {
