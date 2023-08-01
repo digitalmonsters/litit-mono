@@ -125,6 +125,7 @@ type AzureBlobConfig struct {
 	UseCliAuth         bool   `json:"UseCliAuth"`
 	StorageAccountName string `json:"AccountName"`
 	StorageAccountKey  string `json:"AccountKey"`
+	Container          string `json:"Container"`
 }
 
 type KafkaListenerConfiguration struct {

@@ -15,10 +15,10 @@ import (
 )
 
 type IAzureBlobObject interface {
-	GetObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error)
-	PutObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error)
-	GetObjectSize(fileName, containerName string) (int64, error)
-	UploadObject(fileName, containerName string, data []byte, contentType string) error
+	GetObjectSignedUrl(path string, urlExpiration time.Duration) (string, error)
+	PutObjectSignedUrl(path string, urlExpiration time.Duration, acl string) (string, error)
+	GetObjectSize(path string) (int64, error)
+	UploadObject(path string, data []byte, contentType string) error
 	ListBlobs(containerName string) error
 	Download(blobName string, destination string, containerName string) error
 	DeleteBlob(blobName string, containerName string) error
@@ -36,7 +36,7 @@ func NewAzureBlobObject(cfg *boilerplate.AzureBlobConfig) IAzureBlobObject {
 	return u
 }
 
-func (u *AzureBlobObject) GetObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error) {
+func (u *AzureBlobObject) GetObjectSignedUrl(path string, urlExpiration time.Duration) (string, error) {
 
 	cred, _ := azblob.NewSharedKeyCredential(u.config.StorageAccountName, u.config.StorageAccountKey)
 
@@ -45,8 +45,8 @@ func (u *AzureBlobObject) GetObjectSignedUrl(fileName, containerName string, url
 		StartTime:     time.Now().UTC(),
 		ExpiryTime:    time.Now().UTC().Add(urlExpiration),
 		Permissions:   to.Ptr(sas.BlobPermissions{Read: true, Create: false, Write: false, Tag: false}).String(),
-		ContainerName: containerName,
-		BlobName:      fileName,
+		ContainerName: u.config.Container,
+		BlobName:      path,
 	}.SignWithSharedKey(cred)
 
 	if err != nil {
@@ -58,7 +58,7 @@ func (u *AzureBlobObject) GetObjectSignedUrl(fileName, containerName string, url
 	return signedUrl, nil
 }
 
-func (u *AzureBlobObject) PutObjectSignedUrl(fileName, containerName string, urlExpiration time.Duration) (string, error) {
+func (u *AzureBlobObject) PutObjectSignedUrl(path string, urlExpiration time.Duration, acl string) (string, error) {
 
 	cred, _ := azblob.NewSharedKeyCredential(u.config.StorageAccountName, u.config.StorageAccountKey)
 
@@ -67,8 +67,8 @@ func (u *AzureBlobObject) PutObjectSignedUrl(fileName, containerName string, url
 		StartTime:     time.Now().UTC(),
 		ExpiryTime:    time.Now().UTC().Add(urlExpiration),
 		Permissions:   to.Ptr(sas.BlobPermissions{Read: true, Create: true, Write: true, Tag: true}).String(),
-		ContainerName: containerName,
-		BlobName:      fileName,
+		ContainerName: u.config.Container,
+		BlobName:      path,
 	}.SignWithSharedKey(cred)
 
 	if err != nil {
@@ -80,13 +80,13 @@ func (u *AzureBlobObject) PutObjectSignedUrl(fileName, containerName string, url
 	return signedUrl, nil
 }
 
-func (u *AzureBlobObject) GetObjectSize(fileName, containerName string) (int64, error) {
+func (u *AzureBlobObject) GetObjectSize(path string) (int64, error) {
 	client, err := u.getClient()
 	if err != nil {
 		return 0, err
 	}
 
-	blobClient := client.ServiceClient().NewContainerClient(containerName).NewBlockBlobClient(fileName)
+	blobClient := client.ServiceClient().NewContainerClient(u.config.Container).NewBlockBlobClient(path)
 	p, err := blobClient.GetProperties(context.Background(), nil)
 	if err != nil {
 		return 0, err
@@ -95,13 +95,13 @@ func (u *AzureBlobObject) GetObjectSize(fileName, containerName string) (int64, 
 	return *p.ContentLength, nil
 }
 
-func (u *AzureBlobObject) UploadObject(fileName, containerName string, data []byte, contentType string) error {
+func (u *AzureBlobObject) UploadObject(path string, data []byte, contentType string) error {
 	client, err := u.getClient()
 	if err != nil {
 		return err
 	}
 
-	blobClient := client.ServiceClient().NewContainerClient(containerName).NewBlockBlobClient(fileName)
+	blobClient := client.ServiceClient().NewContainerClient(u.config.Container).NewBlockBlobClient(path)
 	_, err = blobClient.UploadBuffer(context.Background(), data, &azblob.UploadBufferOptions{
 		BlockSize:   int64(4 * 1024),
 		Concurrency: uint16(3),
