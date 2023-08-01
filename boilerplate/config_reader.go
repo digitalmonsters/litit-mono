@@ -126,6 +126,8 @@ type AzureBlobConfig struct {
 	StorageAccountName string `json:"AccountName"`
 	StorageAccountKey  string `json:"AccountKey"`
 	Container          string `json:"Container"`
+	CdnUrl             string `json:"CdnUrl"`
+	CdnDirectory       string `json:"CdnDirectory"`
 }
 
 type KafkaListenerConfiguration struct {
