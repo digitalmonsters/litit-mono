@@ -19,7 +19,7 @@ type IAzureBlobObject interface {
 	PutObjectSignedUrl(path string, urlExpiration time.Duration, acl string) (string, error)
 	GetObjectSize(path string) (int64, error)
 	UploadObject(path string, data []byte, contentType string) error
-	ListBlobs(containerName string) error
+	ListBlobs(containerName string) ([]string, error)
 	Download(blobName string, destination string, containerName string) error
 	DeleteBlob(blobName string, containerName string) error
 }
@@ -118,23 +118,26 @@ func (u *AzureBlobObject) UploadObject(path string, data []byte, contentType str
 	return err
 }
 
-func (u *AzureBlobObject) ListBlobs(containerName string) error {
+func (u *AzureBlobObject) ListBlobs(containerName string) ([]string, error) {
+
+	blobs := make([]string, 0)
 
 	client, err := u.getClient()
 	if err != nil {
-		return err
+		return blobs, err
 	}
 	pager := client.NewListBlobsFlatPager(containerName, nil)
 	for pager.More() {
 		page, err := pager.NextPage(context.Background())
 		if err != nil {
-			return err
+			return blobs, err
 		}
 		for _, blob := range page.Segment.BlobItems {
-			fmt.Println(*blob.Name)
+			blobs = append(blobs, *blob.Name)
 		}
 	}
-	return nil
+
+	return blobs, nil
 }
 
 func (u *AzureBlobObject) Download(blobName string, destination string, containerName string) error {
