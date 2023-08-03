@@ -53,14 +53,17 @@ func (u *AzureBlobObject) GetObjectSignedUrl(path string, urlExpiration time.Dur
 		return "", err
 	}
 
-	signedUrl := fmt.Sprintf("https://%s.blob.core.windows.net/?%s", u.config.StorageAccountName, sasQueryParams.Encode())
+	signedUrl := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s?%s", u.config.StorageAccountName, u.config.Container, path, sasQueryParams.Encode())
 
 	return signedUrl, nil
 }
 
 func (u *AzureBlobObject) PutObjectSignedUrl(path string, urlExpiration time.Duration, acl string) (string, error) {
 
-	cred, _ := azblob.NewSharedKeyCredential(u.config.StorageAccountName, u.config.StorageAccountKey)
+	cred, err := azblob.NewSharedKeyCredential(u.config.StorageAccountName, u.config.StorageAccountKey)
+	if err != nil {
+		return "", err
+	}
 
 	sasQueryParams, err := sas.BlobSignatureValues{
 		Protocol:      sas.ProtocolHTTPS,
@@ -75,7 +78,7 @@ func (u *AzureBlobObject) PutObjectSignedUrl(path string, urlExpiration time.Dur
 		return "", err
 	}
 
-	signedUrl := fmt.Sprintf("https://%s.blob.core.windows.net/?%s", u.config.StorageAccountName, sasQueryParams.Encode())
+	signedUrl := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s?%s", u.config.StorageAccountName, u.config.Container, path, sasQueryParams.Encode())
 
 	return signedUrl, nil
 }
@@ -107,7 +110,7 @@ func (u *AzureBlobObject) UploadObject(path string, data []byte, contentType str
 		Concurrency: uint16(3),
 		// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 		Progress: func(bytesTransferred int64) {
-			fmt.Println(bytesTransferred)
+			fmt.Println("progress: file-"+path+", bytes transferred >>", bytesTransferred)
 		},
 	})
 
