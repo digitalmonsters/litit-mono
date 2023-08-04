@@ -191,12 +191,6 @@ func GetCurrentEnvironment() Environment {
 	}
 }
 
-type SQSConfiguration struct {
-	Region      string `json:"Region"`
-	Url         string `json:"Url"`
-	MaxMessages int64  `json:"MaxMessages"`
-}
-
 type ScyllaConfiguration struct {
 	Hosts             string `json:"Hosts"`
 	UserName          string `json:"UserName"`
