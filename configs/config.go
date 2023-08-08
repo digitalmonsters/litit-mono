@@ -3,6 +3,7 @@ package configs
 import (
 	"crypto/tls"
 	"fmt"
+
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/digitalmonsters/go-common/application"
@@ -47,8 +48,8 @@ func init() {
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Ci && boilerplate.GetCurrentEnvironment() != boilerplate.Local {
 		cfgService = application.NewConfigurator[AppConfig]().
-			WithRetriever(application.NewHttpRetriever(application.HttpRetrieverDefaultUrl)).
-			WithMigrator(application.NewHttpMigrator(application.HttpMigratorDefaultUrl), GetConfigsMigration()).
+			WithRetriever(application.NewHttpRetriever(fmt.Sprintf("%s/internal/json", settings.Wrappers.Configurator.ApiUrl))).
+			WithMigrator(application.NewHttpMigrator(fmt.Sprintf("%s/internal/json/migrator", settings.Wrappers.Configurator.ApiUrl)), GetConfigsMigration()).
 			MustInit()
 	}
 }

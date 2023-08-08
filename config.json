@@ -55,6 +55,9 @@
     },
     "PointsCount": {
       "ApiUrl": ""
+    },
+    "Configurator": {
+      "ApiUrl": "http://configurator"
     }
   },
   "Jobber": {
