@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	_ "embed"
 	"fmt"
+
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -46,7 +47,7 @@ type Settings struct {
 	UserUpdateListener             boilerplate.KafkaListenerConfiguration `json:"UserUpdateListener"`
 	EmailLinks                     EmailLinks                             `json:"EmailLinks"`
 	Scylla                         boilerplate.ScyllaConfiguration        `json:"Scylla"`
-	S3                             boilerplate.S3Config                   `json:"S3"`
+	AzureBlob                      boilerplate.AzureBlobConfig            `json:"AzureBlob"`
 	Jobber                         JobberConfig                           `json:"Jobber"`
 	MusicCreatorListener           boilerplate.KafkaListenerConfiguration `json:"MusicCreatorListener"`
 }

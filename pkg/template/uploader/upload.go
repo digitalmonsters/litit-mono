@@ -4,7 +4,11 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"github.com/digitalmonsters/go-common/s3"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/digitalmonsters/go-common/azure_blob"
 	"github.com/digitalmonsters/go-common/wrappers/content_uploader"
 	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/utils"
@@ -12,15 +16,12 @@ import (
 	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 var extensionsForImage = []string{"jpg", "jpeg", "png", "bmp"}
 
-func GetSignedUrl(path string, s3Uploader s3.IUploader) (string, error) {
-	if url, err := s3Uploader.PutObjectSignedUrl(path, 10*time.Minute, ""); err != nil {
+func GetSignedUrl(path string, azureUploader azure_blob.IAzureBlobObject) (string, error) {
+	if url, err := azureUploader.PutObjectSignedUrl(path, 10*time.Minute, ""); err != nil {
 		return "", err
 	} else {
 		return url, nil
@@ -78,8 +79,8 @@ func FileUpload(ctx *fasthttp.RequestCtx, uploaderWrapper content_uploader.ICont
 	filename := fmt.Sprintf("%s.%s", fileId, f[len(f)-1])
 
 	cfg := configs.GetConfig()
-	filePath := filepath.Join(cfg.S3.CdnDirectory, filename)
-	uploader := s3.NewUploader(&cfg.S3)
+	filePath := filepath.Join(cfg.AzureBlob.CdnDirectory, filename)
+	uploader := azure_blob.NewAzureBlobObject(&cfg.AzureBlob)
 
 	signedUrl, err := GetSignedUrl(filePath, uploader)
 	if err != nil {

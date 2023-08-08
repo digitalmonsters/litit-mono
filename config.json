@@ -151,11 +151,13 @@
     "VerifyPath": "",
     "MarketingSite": ""
   },
-  "S3": {
-    "CdnUrl": "",
+  "AzureBlob": {
+    "UseCliAuth": false,
+    "AccountName": "",
+    "AccountKey": "",
+    "Container": "lit-video-cdn-dev",
     "CdnDirectory": "",
-    "Bucket": "",
-    "Region": ""
+    "CdnUrl": "https://video-cdn-digitalmonster-2.akamaized.net"
   },
   "Jobber": {
     "DefaultQueue": "local_machinery_tasks",
