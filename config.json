@@ -73,7 +73,7 @@
     "Hosts": "",
     "MinBytes": 100,
     "MaxBytes": 10000000,
-    "Tls": true,
+    "Tls": false,
     "MaxDuration": 2,
     "MaxBatchSize": 1000,
     "GroupId": "local_ads_view_content_listener",
