@@ -6,7 +6,6 @@ import (
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
-	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
@@ -46,12 +45,12 @@ func init() {
 
 	CDN_BASE = settings.CdnBase
 
-	if boilerplate.GetCurrentEnvironment() != boilerplate.Ci && boilerplate.GetCurrentEnvironment() != boilerplate.Local {
-		cfgService = application.NewConfigurator[AppConfig]().
-			WithRetriever(application.NewHttpRetriever(fmt.Sprintf("%s/internal/json", settings.Wrappers.Configurator.ApiUrl))).
-			WithMigrator(application.NewHttpMigrator(fmt.Sprintf("%s/internal/json/migrator", settings.Wrappers.Configurator.ApiUrl)), GetConfigsMigration()).
-			MustInit()
-	}
+	// if boilerplate.GetCurrentEnvironment() != boilerplate.Ci && boilerplate.GetCurrentEnvironment() != boilerplate.Local {
+	// 	cfgService = application.NewConfigurator[AppConfig]().
+	// 		WithRetriever(application.NewHttpRetriever(fmt.Sprintf("%s/internal/json", settings.Wrappers.Configurator.ApiUrl))).
+	// 		WithMigrator(application.NewHttpMigrator(fmt.Sprintf("%s/internal/json/migrator", settings.Wrappers.Configurator.ApiUrl)), GetConfigsMigration()).
+	// 		MustInit()
+	// }
 }
 
 func GetConfig() Settings {
