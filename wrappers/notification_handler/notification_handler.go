@@ -40,7 +40,7 @@ func NewNotificationHandlerWrapper(config boilerplate.WrapperConfig) INotificati
 	w.publisher = eventsourcing.NewKafkaEventPublisher(
 		boilerplate.KafkaWriterConfiguration{
 			Hosts: "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092",
-			Tls:   true,
+			Tls:   false,
 		}, boilerplate.KafkaTopicConfig{
 			Name:              fmt.Sprintf("%v.notifications.handler_sending_queue", env),
 			NumPartitions:     24,
@@ -50,7 +50,7 @@ func NewNotificationHandlerWrapper(config boilerplate.WrapperConfig) INotificati
 	w.customPublisher = eventsourcing.NewKafkaEventPublisher(
 		boilerplate.KafkaWriterConfiguration{
 			Hosts: "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092",
-			Tls:   true,
+			Tls:   false,
 		}, boilerplate.KafkaTopicConfig{
 			Name:              fmt.Sprintf("%v.notifications.handler_sending_queue_custom", env),
 			NumPartitions:     24,
