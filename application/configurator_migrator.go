@@ -3,6 +3,8 @@ package application
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
 	"github.com/digitalmonsters/go-common/http_client"
 	"github.com/pkg/errors"
 )
@@ -41,13 +43,13 @@ func (h *HttpMigrator) Migrate(ctx context.Context) (map[string]ConfigModel, err
 		Post(h.apiUrl)
 
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.WithStack(fmt.Errorf("request err: %s", err.Error()))
 	}
 
 	result := map[string]ConfigModel{}
 
 	if err = json.Unmarshal(resp.Bytes(), &result); err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.WithStack(fmt.Errorf("resp:%v, unmarshal err: %s", string(resp.Bytes()), err.Error()))
 	}
 
 	return result, nil
