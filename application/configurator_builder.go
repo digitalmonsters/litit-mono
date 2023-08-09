@@ -2,11 +2,12 @@ package application
 
 import (
 	"context"
+	"time"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"time"
 )
 
 type ConfiguratorBuilder[T any] struct {
@@ -52,13 +53,13 @@ func (c ConfiguratorBuilder[T]) MustInit() *Configurator[T] {
 	result := Configurator[T]{builder: c}
 
 	if _, err := c.migrator.Migrate(context.Background()); err != nil {
-		panic("cannot migrate config values")
+		panic("cannot migrate config values - " + err.Error())
 	}
 
 	result.init()
 
 	if err := result.Refresh(context.Background()); err != nil {
-		panic(err)
+		panic("result refresh error - " + err.Error())
 	}
 
 	if c.interval > 0 {
