@@ -46,7 +46,7 @@ func getMigrations() []*gormigrate.Migration {
 							deleted_at  timestamp
 						);
 						
-						create unique index playlists_name_uindex
+						create unique index IF NOT EXISTS playlists_name_uindex
 							on playlists (name);`
 				return db.Exec(query).Error
 			},
@@ -75,7 +75,7 @@ func getMigrations() []*gormigrate.Migration {
 							deleted_at timestamp default null
 						);
 						
-						create unique index songs_external_id_source_uindex
+						create unique index IF NOT EXISTS songs_external_id_source_uindex
 							on songs (external_id, source);
 						
 						`
@@ -184,7 +184,7 @@ func getMigrations() []*gormigrate.Migration {
 							deleted_at timestamp default null
 						);
 				
-						create unique index music_storage_hash_uindex
+						create unique index IF NOT EXISTS music_storage_hash_uindex
 							on music_storage (hash);`
 				return db.Exec(query).Error
 			},
@@ -198,7 +198,7 @@ func getMigrations() []*gormigrate.Migration {
 				query := `
 						drop index music_storage_hash_uindex;
 						alter table music_storage drop column hash;
-						create unique index music_storage_url_uindex on music_storage (url);`
+						create unique index IF NOT EXISTS music_storage_url_uindex on music_storage (url);`
 				return db.Exec(query).Error
 			},
 			Rollback: func(db *gorm.DB) error {
@@ -261,7 +261,7 @@ func getMigrations() []*gormigrate.Migration {
 							deleted_at timestamp
 						);
 					
-							create unique index creator_reject_reasons_reason_uindex
+							create unique index IF NOT EXISTS creator_reject_reasons_reason_uindex
 							on creator_reject_reasons (reason);`
 				return db.Exec(query).Error
 			},
@@ -297,7 +297,7 @@ func getMigrations() []*gormigrate.Migration {
 							deleted_at timestamp
 						);
 					
-							create unique index categories_name_uindex
+							create unique index IF NOT EXISTS categories_name_uindex
 							on categories (name);`
 				return db.Exec(query).Error
 			},
@@ -379,7 +379,7 @@ func getMigrations() []*gormigrate.Migration {
 							deleted_at timestamp
 						);
 					
-							create unique index moods_name_uindex
+							create unique index IF NOT EXISTS moods_name_uindex
 							on moods (name);`
 				return db.Exec(query).Error
 			},
@@ -493,7 +493,7 @@ func getMigrations() []*gormigrate.Migration {
 							primary key (user_id, song_id)
 						);
 				
-						create index listened_by_user_inx
+						create index IF NOT EXISTS listened_by_user_inx
 							on listened_music (user_id) include (song_id);`
 				return db.Exec(query).Error
 			},
