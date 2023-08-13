@@ -31,7 +31,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "feat_playlists_init_050120221603",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table playlists
+				query := `create table IF NOT EXISTS playlists
 						(
 							id          serial
 								constraint playlists_pk
@@ -57,7 +57,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "feat_songs_init_050120221603",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table songs
+				query := `create table IF NOT EXISTS songs
 						(
 							id serial
 								constraint songs_pk
@@ -88,7 +88,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "feat_playlist_song_relations_init_050120221603",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table playlist_song_relations
+				query := `create table IF NOT EXISTS playlist_song_relations
 						(
 							playlist_id bigint not null
 								constraint playlist_song_relations_playlists_id_fk
@@ -148,7 +148,7 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "feat_favorites_init_060120221134",
 			Migrate: func(db *gorm.DB) error {
 				query := `
-						create table if not exists favorites
+						create table IF NOT EXISTS favorites
 					(
 						user_id    bigint not null,
 						song_id    bigint not null,
@@ -166,7 +166,7 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "feat_music_storage_init_180120221913",
 			Migrate: func(db *gorm.DB) error {
 				query := `
-						create table if not exists music_storage
+						create table IF NOT EXISTS music_storage
 						(
 							id serial
 								constraint music_storage_pk
@@ -229,7 +229,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "creator_init_080220221909",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table if not exists creators
+				query := `create table IF NOT EXISTS creators
 							(
 								id serial
 								constraint creators_pk
@@ -251,7 +251,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "reject_reasons_init_10022022",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table if not exists creator_reject_reasons
+				query := `create table IF NOT EXISTS creator_reject_reasons
 						(
 							id serial
 							constraint reject_reasons_pk
@@ -284,7 +284,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "categories_init_11022022",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table if not exists categories
+				query := `create table IF NOT EXISTS categories
 						(
 							id serial
 							constraint categories_pk
@@ -308,7 +308,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "creator_songs_init_11022022",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table if not exists creator_songs
+				query := `create table IF NOT EXISTS creator_songs
 						(
 							id serial
 								constraint creator_songs_pk
@@ -365,7 +365,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "moods_init_210320221903",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table if not exists moods
+				query := `create table IF NOT EXISTS moods
 						(
 							id serial
 							constraint moods_pk
@@ -486,7 +486,7 @@ func getMigrations() []*gormigrate.Migration {
 		{
 			ID: "feat_listened_music_21072022",
 			Migrate: func(db *gorm.DB) error {
-				query := `create table if not exists listened_music
+				query := `create table IF NOT EXISTS listened_music
 						(
 							user_id    bigint not null,
 							song_id    bigint not null,
