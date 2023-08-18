@@ -2,11 +2,7 @@ package azure_blob
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 	"strings"
-
-	"github.com/digitalmonsters/go-common/apm_helper"
 )
 
 func UseContentUploaderProxy(ctx context.Context, inputUrl string, proxyUrl string) string {
@@ -20,15 +16,8 @@ func UseContentUploaderProxy(ctx context.Context, inputUrl string, proxyUrl stri
 		return inputUrl
 	}
 
-	parsedUri, err := url.Parse(inputUrl)
+	parsedUrl := strings.Split(inputUrl, "/")
+	parsedUrl = append(parsedUrl[:3], parsedUrl[4:]...)
 
-	if err != nil {
-		apm_helper.LogError(err, ctx)
-
-		return inputUrl
-	}
-
-	repl := fmt.Sprintf("%v://%v", parsedUri.Scheme, parsedUri.Host)
-
-	return strings.ReplaceAll(inputUrl, repl, proxyUrl)
+	return strings.Join(parsedUrl, "/")
 }
