@@ -17,7 +17,7 @@ func UseContentUploaderProxy(ctx context.Context, inputUrl string, proxyUrl stri
 	}
 
 	parsedUrl := strings.Split(inputUrl, "/")
-	parsedUrl = append(parsedUrl[:3], parsedUrl[4:]...)
+	parsedUrl = parsedUrl[4:]
 
-	return strings.Join(parsedUrl, "/")
+	return proxyUrl + strings.Join(parsedUrl, "/")
 }
