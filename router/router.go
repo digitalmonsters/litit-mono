@@ -515,10 +515,32 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 	defer r.endpointRegistratorMutex.Unlock()
 
 	r.realRouter.OPTIONS(rpcEndpointPath, func(ctx *fasthttp.RequestCtx) {
+		headers := make(map[string]string)
+		ctx.Request.Header.VisitAll(
+			func(key, value []byte) {
+				headers[string(key)] = string(value)
+			})
+		log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", rpcEndpointPath).Interface("header", headers).Msg("request input")
+
 		r.setCors(ctx)
+
+		headers = make(map[string]string)
+		ctx.Response.Header.VisitAll(
+			func(key, value []byte) {
+				headers[string(key)] = string(value)
+			})
+		log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", rpcEndpointPath).Interface("header", headers).Msg("response successful")
 	})
 
 	r.realRouter.POST(rpcEndpointPath, func(httpCtx *fasthttp.RequestCtx) {
+
+		headers := make(map[string]string)
+		httpCtx.Request.Header.VisitAll(
+			func(key, value []byte) {
+				headers[string(key)] = string(value)
+			})
+		log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("request middleware")
+
 		var rpcRequest rpc.RpcRequest
 		var rpcResponse rpc.RpcResponse
 		var shouldLog bool
@@ -538,6 +560,15 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			if apmTransaction != nil {
 				apmTransaction.End()
 			}
+		}()
+
+		defer func() {
+			headers = make(map[string]string)
+			httpCtx.Response.Header.VisitAll(
+				func(key, value []byte) {
+					headers[string(key)] = string(value)
+				})
+			log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("response middleware")
 		}()
 
 		defer func() {
