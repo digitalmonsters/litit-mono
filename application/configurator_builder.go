@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -23,7 +24,7 @@ func NewConfigurator[T any]() *ConfiguratorBuilder[T] {
 
 	return &ConfiguratorBuilder[T]{
 		logger:   logger,
-		interval: 10 * time.Second,
+		interval: 1 * time.Minute,
 	}
 }
 
@@ -46,21 +47,29 @@ func (c ConfiguratorBuilder[T]) WithMigrator(migrator Migrator, configsMap map[s
 }
 
 func (c ConfiguratorBuilder[T]) MustInit() *Configurator[T] {
+
+	c.logger.Info().Msg("[SERVICE] : configurator initialized")
+
 	if c.initialized {
-		panic("configuration client already initialized")
+		c.logger.Panic().Err(errors.New("configuration client already initialized")).Msg("[SERVICE] : configurator failed")
 	}
 
 	result := Configurator[T]{builder: c}
 
-	if _, err := c.migrator.Migrate(context.Background()); err != nil {
-		panic("cannot migrate config values - " + err.Error())
+	resp, err := c.migrator.Migrate(context.Background())
+	if err != nil {
+		c.logger.Panic().Err(errors.New("migrate failed - " + err.Error())).Msg("[SERVICE] : configurator failed")
+	} else {
+		c.logger.Info().Interface("value", resp).Msg("[SERVICE] : configurator migration successful")
 	}
 
 	result.init()
 
 	if err := result.Refresh(context.Background()); err != nil {
-		panic("result refresh error - " + err.Error())
+		c.logger.Panic().Err(errors.New("result failed - " + err.Error())).Msg("[SERVICE] : configurator failed")
 	}
+
+	c.logger.Info().Interface("value", result.Values).Msg("[SERVICE] : configurator successful")
 
 	if c.interval > 0 {
 		c.logger.Info().Msgf("starting configuration watcher with interval [%v]", c.interval)
@@ -76,11 +85,12 @@ func (c ConfiguratorBuilder[T]) MustInit() *Configurator[T] {
 					apmTx, log.Logger)
 
 				if err := result.Refresh(ctx); err != nil {
+					c.logger.Panic().Err(errors.New("result failed - " + err.Error())).Msg("[SERVICE] : configurator periodic failed")
 					apm_helper.LogError(err, ctx)
-
 					apmTx.End()
-
 					continue
+				} else {
+					c.logger.Info().Interface("value", result.Values).Msg("[SERVICE] : configurator periodic successful")
 				}
 
 				apmTx.Discard()

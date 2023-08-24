@@ -207,14 +207,29 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 	go func() {
 		defer func() {
 			r.endpointRegistratorMutex.Unlock()
-
-			_ = recover()
+			if err := recover(); err != nil {
+				log.Error().Str("method", targetCmd.method).Str("path", targetCmd.path).Interface("recovery", err).Stack().Msg("[API] : request middleware recovery")
+			}
 		}()
 
 		r.endpointRegistratorMutex.Lock()
 
 		r.realRouter.OPTIONS(targetCmd.path, func(ctx *fasthttp.RequestCtx) {
+			headers := make(map[string]string)
+			ctx.Request.Header.VisitAll(
+				func(key, value []byte) {
+					headers[string(key)] = string(value)
+				})
+			log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : request input")
+
 			r.setCors(ctx)
+
+			headers = make(map[string]string)
+			ctx.Response.Header.VisitAll(
+				func(key, value []byte) {
+					headers[string(key)] = string(value)
+				})
+			log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : response successful")
 		})
 	}()
 
@@ -222,6 +237,13 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 	defer r.endpointRegistratorMutex.Unlock()
 
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
+		headers := make(map[string]string)
+		ctx.Request.Header.VisitAll(
+			func(key, value []byte) {
+				headers[string(key)] = string(value)
+			})
+		log.Ctx(ctx).Info().Str("method", targetCmd.method).Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : request middleware")
+
 		var apmTransaction *apm.Transaction
 
 		if traceHeader := ctx.Request.Header.Peek(apmhttp.W3CTraceparentHeader); len(traceHeader) > 0 {
@@ -241,6 +263,15 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 		defer func() {
 			cancelFn()
+		}()
+
+		defer func() {
+			headers = make(map[string]string)
+			ctx.Response.Header.VisitAll(
+				func(key, value []byte) {
+					headers[string(key)] = string(value)
+				})
+			log.Ctx(ctx).Info().Str("method", targetCmd.method).Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : response middleware")
 		}()
 
 		defer apmTransaction.End()
@@ -520,7 +551,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			func(key, value []byte) {
 				headers[string(key)] = string(value)
 			})
-		log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", rpcEndpointPath).Interface("header", headers).Msg("request input")
+		log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : request input")
 
 		r.setCors(ctx)
 
@@ -529,7 +560,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			func(key, value []byte) {
 				headers[string(key)] = string(value)
 			})
-		log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", rpcEndpointPath).Interface("header", headers).Msg("response successful")
+		log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : response successful")
 	})
 
 	r.realRouter.POST(rpcEndpointPath, func(httpCtx *fasthttp.RequestCtx) {
@@ -539,7 +570,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			func(key, value []byte) {
 				headers[string(key)] = string(value)
 			})
-		log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("request middleware")
+		log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : request middleware")
 
 		var rpcRequest rpc.RpcRequest
 		var rpcResponse rpc.RpcResponse
@@ -568,7 +599,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 				func(key, value []byte) {
 					headers[string(key)] = string(value)
 				})
-			log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("response middleware")
+			log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : response middleware")
 		}()
 
 		defer func() {

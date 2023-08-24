@@ -3,11 +3,12 @@ package application
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strconv"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
-	"reflect"
-	"strconv"
 )
 
 type Configurator[T any] struct {
@@ -126,9 +127,8 @@ func (c Configurator[T]) parseValue(fieldData reflect.StructField, value string)
 
 func (c *Configurator[T]) Refresh(ctx context.Context) error {
 	values, err := c.builder.retriever.Retrieve(c.keys, ctx)
-
 	if err != nil {
-		return err
+		return fmt.Errorf("refresh err: %s", err.Error())
 	}
 
 	return c.setValues(values)
