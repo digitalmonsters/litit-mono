@@ -4,6 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/pprof"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
@@ -18,11 +24,6 @@ import (
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"net/http/pprof"
-	"os"
-	"strings"
-	"sync"
-	"time"
 )
 
 type HttpRouter struct {
@@ -123,7 +124,7 @@ func (r *HttpRouter) setCors(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
 	ctx.Response.Header.SetBytesV("Access-Control-Allow-Origin", ctx.Request.Header.Peek("Origin"))
 	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
-	ctx.Response.Header.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PATCH, DELETE")
+	ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
 }
 
 func (r *HttpRouter) RegisterProfiler() {
