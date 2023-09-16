@@ -1,0 +1,30 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- staging
+
+pool:
+  vmImage: ubuntu-latest
+
+
+steps:
+- task: Docker@2
+  displayName: Build Docker Image
+  inputs:
+    command: build
+    repository: $(CONTAINER_NAME)
+    dockerfile: '**/Dockerfile'
+    containerRegistry: $(CONTAINER_REGISTRY_SC)
+    tags: |
+      $(Build.BuildId)
+- task: Docker@2
+  displayName: Push Docker Image
+  inputs:
+    command: push
+    repository: $(CONTAINER_NAME)
+    containerRegistry: $(CONTAINER_REGISTRY_SC)
+    tags: |
+      $(Build.BuildId)
