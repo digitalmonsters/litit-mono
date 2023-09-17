@@ -11,10 +11,11 @@ import (
 )
 
 type ContentWrapperMock struct {
-	GetInternalFn             func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent]
-	GetInternalAdminModelsFn  func(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]frontend.ContentModel]
-	GetTopNotFollowingUsersFn func(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetTopNotFollowingUsersResponse]
-	GetHashtagsInternalFn     func(hashtags []string, omitHashtags []string, limit int, offset int, withViews null.Bool, apmTransaction *apm.Transaction,
+	GetInternalFn              func(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent]
+	GetContentIdListInternalFn func(pageNo int64, pageSize int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[ContentListIdPaginationResponse]
+	GetInternalAdminModelsFn   func(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]frontend.ContentModel]
+	GetTopNotFollowingUsersFn  func(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetTopNotFollowingUsersResponse]
+	GetHashtagsInternalFn      func(hashtags []string, omitHashtags []string, limit int, offset int, withViews null.Bool, apmTransaction *apm.Transaction,
 		shouldHaveValidContent bool, forceLog bool) chan wrappers.GenericResponseChan[HashtagResponseData]
 
 	GetCategoryInternalFn func(categoryIds []int64, omitCategoryIds []int64, limit int, offset int, onlyParent null.Bool, withViews null.Bool, apmTransaction *apm.Transaction,
@@ -35,6 +36,10 @@ func (w *ContentWrapperMock) GetLastContent(ctx context.Context, userId int64) c
 
 func (w *ContentWrapperMock) GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent] {
 	return w.GetInternalFn(contentIds, includeDeleted, apmTransaction, forceLog)
+}
+
+func (w *ContentWrapperMock) GetContentIdListInternal(pageNo int64, pageSize int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[ContentListIdPaginationResponse] {
+	return w.GetContentIdListInternalFn(pageNo, pageSize, apmTransaction, forceLog)
 }
 
 func (w *ContentWrapperMock) GetInternalAdminModels(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]frontend.ContentModel] {

@@ -208,7 +208,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		defer func() {
 			r.endpointRegistratorMutex.Unlock()
 			if err := recover(); err != nil {
-				log.Error().Str("method", targetCmd.method).Str("path", targetCmd.path).Interface("recovery", err).Stack().Msg("[API] : request middleware recovery")
+				log.Error().Str("method", targetCmd.method).Str("path", targetCmd.path).Interface("recovery", err).Stack().Msg("[API] : request middleware panic recovery")
 			}
 		}()
 
@@ -220,7 +220,6 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 				func(key, value []byte) {
 					headers[string(key)] = string(value)
 				})
-			log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : request input")
 
 			r.setCors(ctx)
 
@@ -229,7 +228,6 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 				func(key, value []byte) {
 					headers[string(key)] = string(value)
 				})
-			log.Ctx(ctx).Info().Str("method", "OPTIONS").Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : response successful")
 		})
 	}()
 
@@ -242,7 +240,6 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			func(key, value []byte) {
 				headers[string(key)] = string(value)
 			})
-		log.Ctx(ctx).Info().Str("method", targetCmd.method).Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : request middleware")
 
 		var apmTransaction *apm.Transaction
 
@@ -271,7 +268,6 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 				func(key, value []byte) {
 					headers[string(key)] = string(value)
 				})
-			log.Ctx(ctx).Info().Str("method", targetCmd.method).Str("path", targetCmd.path).Interface("header", headers).Msg("[API] : response middleware")
 		}()
 
 		defer apmTransaction.End()

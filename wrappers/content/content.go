@@ -17,6 +17,7 @@ import (
 
 type IContentWrapper interface {
 	GetInternal(contentIds []int64, includeDeleted bool, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SimpleContent]
+	GetContentIdListInternal(pageNo int64, pageSize int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[ContentListIdPaginationResponse]
 	GetInternalAdminModels(contentIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]frontend.ContentModel]
 	GetTopNotFollowingUsers(userId int64, limit int, offset int, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetTopNotFollowingUsersResponse]
 	GetHashtagsInternal(hashtags []string, omitHashtags []string, limit int, offset int, withViews null.Bool, apmTransaction *apm.Transaction,
@@ -74,6 +75,14 @@ func (w *ContentWrapper) GetInternal(contentIds []int64, includeDeleted bool, ap
 	return wrappers.ExecuteRpcRequestAsync[map[int64]SimpleContent](w.baseWrapper, w.apiUrl, "ContentGetInternal", ContentGetInternalRequest{
 		ContentIds:     contentIds,
 		IncludeDeleted: includeDeleted,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w *ContentWrapper) GetContentIdListInternal(pageNo int64, pageSize int64, apmTransaction *apm.Transaction,
+	forceLog bool) chan wrappers.GenericResponseChan[ContentListIdPaginationResponse] {
+	return wrappers.ExecuteRpcRequestAsync[ContentListIdPaginationResponse](w.baseWrapper, w.apiUrl, "ListContentIdInternal", ContentListIdPagination{
+		PageNo:   pageNo,
+		PageSize: pageSize,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }
 

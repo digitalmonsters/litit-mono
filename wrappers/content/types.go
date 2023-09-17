@@ -43,6 +43,17 @@ type ContentGetInternalRequest struct {
 	ContentIds     []int64 `json:"content_ids"`
 }
 
+type ContentListIdPagination struct {
+	PageNo   int64 `json:"page_no"`
+	PageSize int64 `json:"page_size"`
+}
+
+type ContentListIdPaginationResponse struct {
+	ContentId []string `json:"id"`
+	PageNo    int64    `json:"page_no"`
+	PageSize  int64    `json:"page_size"`
+}
+
 type ContentGetInternalAdminModelsRequest struct {
 	ContentIds []int64 `json:"content_ids"`
 }
