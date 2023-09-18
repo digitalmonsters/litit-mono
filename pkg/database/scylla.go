@@ -1,16 +1,12 @@
 package database
 
 import (
-	"context"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
-	"github.com/digitalmonsters/go-common/scylla_migrator"
 	"github.com/digitalmonsters/notification-handler/configs"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla_migrations"
 	"github.com/gocql/gocql"
 	"github.com/rs/zerolog/log"
-	"github.com/scylladb/gocqlx/v2"
-	"time"
 )
 
 var session *gocql.Session
@@ -33,19 +29,19 @@ func initNonCi() {
 		log.Panic().Err(err).Send()
 	}
 
-	if migrationSession, err := gocqlx.WrapSession(cluster.CreateSession()); err != nil {
-		log.Panic().Err(err).Msg("cannot create scylla session")
-	} else {
-		if err := scylla_migrator.FromFS(context.Background(), migrationSession, scylla_migrations.Files); err != nil {
-			log.Err(err).Msg("failed to run migrations")
-			panic(err)
-		}
+	// if migrationSession, err := gocqlx.WrapSession(cluster.CreateSession()); err != nil {
+	// 	log.Panic().Err(err).Msg("cannot create scylla session")
+	// } else {
+	// 	if err := scylla_migrator.FromFS(context.Background(), migrationSession, scylla_migrations.Files); err != nil {
+	// 		log.Err(err).Msg("failed to run migrations")
+	// 		panic(err)
+	// 	}
 
-		go func() {
-			time.Sleep(10 * time.Second)
-			migrationSession.Close()
-		}()
-	}
+	// 	go func() {
+	// 		time.Sleep(10 * time.Second)
+	// 		migrationSession.Close()
+	// 	}()
+	// }
 }
 
 func initCi() {

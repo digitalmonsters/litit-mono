@@ -15,7 +15,6 @@ require (
 	github.com/romanyx/polluter v1.2.2
 	github.com/rs/zerolog v1.26.1
 	github.com/samber/lo v1.21.0
-	github.com/scylladb/gocqlx/v2 v2.7.0
 	github.com/segmentio/kafka-go v0.4.31
 	github.com/stretchr/testify v1.7.1
 	github.com/thoas/go-funk v0.9.2
@@ -107,6 +106,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
 	github.com/savsgio/gotils v0.0.0-20220401102855-e56b59f40436 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
+	github.com/scylladb/gocqlx/v2 v2.7.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skynet2/go-config v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
