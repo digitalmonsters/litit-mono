@@ -2,10 +2,10 @@ package database
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/music/configs"
-	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
@@ -56,13 +56,13 @@ func init() {
 		readonlyGormDb = readDb
 	}
 
-	m := gormigrate.New(mainDb, gormigrate.DefaultOptions, getMigrations())
+	// m := gormigrate.New(mainDb, gormigrate.DefaultOptions, getMigrations())
 
 	log.Info().Msg("[Db] start migrations")
 
-	if err = m.Migrate(); err != nil {
-		panic(err)
-	}
+	// if err = m.Migrate(); err != nil {
+	// 	panic(err)
+	// }
 }
 
 func GetDb(t DbType) *gorm.DB {

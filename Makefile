@@ -3,7 +3,7 @@
 # Set your Azure Container Registry details
 ACR_NAME = lititakscontainer
 IMAGE_NAME = music
-TAG = v2
+TAG = v3
 
 # Build and push the Docker image to ACR
 prod: login
