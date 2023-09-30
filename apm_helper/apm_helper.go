@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/digitalmonsters/go-common/boilerplate"
-	"github.com/rs/zerolog/log"
-	"github.com/valyala/fasthttp"
-	"go.elastic.co/apm"
-	"go.elastic.co/apm/module/apmhttp"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/valyala/fasthttp"
+	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
 )
 
 func init() {
@@ -107,7 +107,7 @@ func LogError(err error, ctx context.Context) {
 		_ = recover()
 	}()
 
-	log.Ctx(ctx).Err(err).Send()
+	//log.Ctx(ctx).Err(err).Send()
 
 	apmError := apm.CaptureError(ctx, err)
 

@@ -2,16 +2,18 @@ package http_client
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/digitalmonsters/go-common/apm_helper"
-	"github.com/imroc/req/v3"
-	"github.com/rs/zerolog/log"
-	"go.elastic.co/apm"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/digitalmonsters/go-common/apm_helper"
+	"github.com/imroc/req/v3"
+	"github.com/rs/zerolog/log"
+	"go.elastic.co/apm"
 )
 
 type HttpClient struct {
@@ -29,12 +31,22 @@ type AsyncChan struct {
 }
 
 var DefaultHttpClient = NewHttpClient()
+var DefaultHttpsClient = NewHttpsClient()
 
 type forceLogKey struct {
 }
 
-func NewHttpClient() *HttpClient {
-	client := req.C().SetTimeout(30 * time.Second)
+func NewHttpsClient() *HttpClient {
+	return NewHttpClient(true)
+}
+
+func NewHttpClient(setTlsConfig ...bool) *HttpClient {
+	var client *req.Client
+	if setTlsConfig != nil {
+		client = req.C().SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).SetTimeout(30 * time.Second)
+	} else {
+		client = req.C().SetTimeout(30 * time.Second)
+	}
 
 	h := &HttpClient{
 		cl: client,
