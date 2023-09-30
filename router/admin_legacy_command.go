@@ -2,6 +2,8 @@ package router
 
 import (
 	"context"
+	"strings"
+
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -10,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
-	"strings"
 )
 
 type LegacyAdminCommand struct {
@@ -39,6 +40,11 @@ func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context
 	if err != nil {
 		return 0, isGuest, isBanned, language, err
 	}
+
+	httpCtx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
+	httpCtx.Response.Header.SetBytesV("Access-Control-Allow-Origin", httpCtx.Request.Header.Peek("Origin"))
+	httpCtx.Response.Header.Set("Access-Control-Allow-Headers", "*")
+	httpCtx.Response.Header.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PATCH, DELETE")
 
 	if userId <= 0 {
 		err := errors.New("legacy admin method requires identity validation")

@@ -2,6 +2,9 @@ package router
 
 import (
 	"context"
+	"strconv"
+	"strings"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -12,8 +15,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
-	"strconv"
-	"strings"
 )
 
 type AdminCommand struct {
@@ -41,6 +42,10 @@ func NewAdminCommand(methodName string, fn CommandFunc, accessLevel common.Acces
 func (a AdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, authWrapper auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, translation.Language, *rpc.ExtendedLocalRpcError) {
 	currentUserId := int64(0)
 	language := translation.DefaultUserLanguage
+	httpCtx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
+	httpCtx.Response.Header.SetBytesV("Access-Control-Allow-Origin", httpCtx.Request.Header.Peek("Origin"))
+	httpCtx.Response.Header.Set("Access-Control-Allow-Headers", "*")
+	httpCtx.Response.Header.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PATCH, DELETE")
 
 	if externalAuthValue := httpCtx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") { // external auth
 		if userIdHead := httpCtx.Request.Header.Peek("Admin-Id"); len(userIdHead) > 0 {

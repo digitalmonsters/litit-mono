@@ -2,6 +2,9 @@ package router
 
 import (
 	"context"
+	"strconv"
+	"strings"
+
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -9,8 +12,6 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
-	"strconv"
-	"strings"
 )
 
 type ICommand interface {
@@ -194,6 +195,11 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 			LocalHandlingError: err,
 		}
 	}
+
+	ctx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
+	ctx.Response.Header.SetBytesV("Access-Control-Allow-Origin", ctx.Request.Header.Peek("Origin"))
+	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
+	ctx.Response.Header.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PATCH, DELETE")
 
 	return userId, isGuest, isBanned, language, nil
 }
