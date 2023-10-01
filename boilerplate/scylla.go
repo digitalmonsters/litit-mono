@@ -2,10 +2,12 @@ package boilerplate
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gocql/gocql"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm/module/apmgocql/v2"
-	"time"
 )
 
 func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
@@ -13,7 +15,8 @@ func GetScyllaCluster(config ScyllaConfiguration) *gocql.ClusterConfig {
 
 	if oldKeyspace != "system" {
 		if err := EnsureKeyspaceExists(config, oldKeyspace); err != nil {
-			panic(errors.WithStack(err))
+			log.Panic().Err(errors.WithStack(err)).Str("host", config.Hosts).Str("keyspace", config.Keyspace).
+				Msg("[Scylla Cluster] : create 'system' keyspace failed")
 		}
 	}
 
@@ -33,7 +36,7 @@ func EnsureKeyspaceExists(config ScyllaConfiguration, targetKeyspace string) err
 
 	ses, err := cluster.CreateSession()
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(errors.WithStack(err), "create session")
 	}
 
 	defer ses.Close()
@@ -47,7 +50,7 @@ func EnsureKeyspaceExists(config ScyllaConfiguration, targetKeyspace string) err
 	}
 
 	if err := iter.Close(); err != nil {
-		return err
+		return errors.Wrap(errors.WithStack(err), "close iterator")
 	}
 
 	if keyspaceName == targetKeyspace {
@@ -58,7 +61,7 @@ func EnsureKeyspaceExists(config ScyllaConfiguration, targetKeyspace string) err
 			'class' : 'SimpleStrategy',
 			'replication_factor' : 1
 		}`, targetKeyspace)).Exec(); err != nil {
-		return err
+		return errors.Wrap(errors.WithStack(err), "query exec")
 	}
 
 	return err

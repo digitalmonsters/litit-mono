@@ -89,8 +89,6 @@ func (c ConfiguratorBuilder[T]) MustInit() *Configurator[T] {
 					apm_helper.LogError(err, ctx)
 					apmTx.End()
 					continue
-				} else {
-					c.logger.Info().Interface("value", result.Values).Msg("[SERVICE] : configurator periodic successful")
 				}
 
 				apmTx.Discard()
