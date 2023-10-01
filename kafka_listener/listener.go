@@ -166,7 +166,7 @@ func (k *kafkaListener) checkIfTopicExists(topic string, createTopicIfNotFound b
 		}
 	}
 
-	if createTopicIfNotFound {
+	if createTopicIfNotFound && !exists {
 		_, err = client.CreateTopics(ctx, &kafka.CreateTopicsRequest{
 			Addr: tcp,
 			Topics: []kafka.TopicConfig{
@@ -194,6 +194,11 @@ func (k *kafkaListener) checkIfTopicExists(topic string, createTopicIfNotFound b
 				exists = true
 				break
 			}
+		}
+
+		if exists {
+			log.Info().Str("host", k.cfg.Hosts).Str("topic", k.cfg.Topic).Str("group", k.cfg.GroupId).Str("listener", k.listenerName).
+				Msg("[Kafka Listener] : topic created successfully.")
 		}
 	}
 
