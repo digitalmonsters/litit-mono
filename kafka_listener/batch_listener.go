@@ -2,9 +2,10 @@ package kafka_listener
 
 import (
 	"context"
+	"time"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/rs/zerolog/log"
-	"time"
 )
 
 type BatchListener struct {
@@ -35,13 +36,13 @@ func (b BatchListener) GetTopic() string {
 	return b.innerListener.GetTopic()
 }
 
-func (b *BatchListener) Listen() {
-	b.innerListener.ListenInBatches(b.maxBatchSize, b.maxDuration)
+func (b *BatchListener) Listen(createTopicIfNotFound bool) {
+	b.innerListener.ListenInBatches(b.maxBatchSize, b.maxDuration, createTopicIfNotFound)
 }
 
-func (b *BatchListener) ListenAsync() IKafkaListener {
+func (b *BatchListener) ListenAsync(createTopicIfNotFound bool) IKafkaListener {
 	go func() {
-		b.Listen()
+		b.Listen(createTopicIfNotFound)
 	}()
 
 	return b

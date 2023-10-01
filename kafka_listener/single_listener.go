@@ -2,6 +2,7 @@ package kafka_listener
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 )
 
@@ -27,13 +28,13 @@ func (s *SingleListener) Close() error {
 	return nil
 }
 
-func (s *SingleListener) Listen() {
-	s.listener.ListenInBatches(1, 0)
+func (s *SingleListener) Listen(createTopicIfNotFound bool) {
+	s.listener.ListenInBatches(1, 0, createTopicIfNotFound)
 }
 
-func (s *SingleListener) ListenAsync() IKafkaListener {
+func (s *SingleListener) ListenAsync(createTopicIfNotFound bool) IKafkaListener {
 	go func() {
-		s.Listen()
+		s.Listen(createTopicIfNotFound)
 	}()
 
 	return s

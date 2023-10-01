@@ -4,6 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
+	"sync"
+	"time"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -12,9 +16,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"io"
-	"sync"
-	"time"
 )
 
 var readerMutex sync.Mutex
@@ -87,16 +88,16 @@ func (k *kafkaListener) getPartitionsForTopic() ([]int, error) {
 
 	for _, host := range boilerplate.SplitHostsToSlice(k.cfg.Hosts) {
 		con, err := k.dialer.Dial("tcp", host)
-
 		if err != nil {
-			log.Err(err).Msgf("can not get connection to calculate partitions for topic %v", k.cfg.Topic)
+			log.Error().Err(err).Str("host", k.cfg.Hosts).Str("topic", k.cfg.Topic).Str("group", k.cfg.GroupId).Str("listener", k.listenerName).
+				Msg("[Kafka Listener] : dial conn failed to calculate partitions for topic.")
 			continue
 		}
 
 		partitions, err := con.ReadPartitions(k.cfg.Topic)
-
 		if err != nil {
-			log.Err(err).Msgf("can not get partitions for topic %v", k.cfg.Topic)
+			log.Error().Err(err).Str("host", k.cfg.Hosts).Str("topic", k.cfg.Topic).Str("group", k.cfg.GroupId).Str("listener", k.listenerName).
+				Msg("[Kafka Listener] : failed to read partitions for topic.")
 			_ = con.Close()
 			continue
 		}
@@ -115,7 +116,7 @@ func (k *kafkaListener) getPartitionsForTopic() ([]int, error) {
 	return finalPartitions, nil
 }
 
-func (k *kafkaListener) checkIfTopicExists(topic string) error {
+func (k *kafkaListener) checkIfTopicExists(topic string, createTopicIfNotFound bool) error {
 	transport := kafka.DefaultTransport
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -165,6 +166,37 @@ func (k *kafkaListener) checkIfTopicExists(topic string) error {
 		}
 	}
 
+	if createTopicIfNotFound {
+		_, err = client.CreateTopics(ctx, &kafka.CreateTopicsRequest{
+			Addr: tcp,
+			Topics: []kafka.TopicConfig{
+				{
+					Topic:             topic,
+					NumPartitions:     12,
+					ReplicationFactor: 2,
+				},
+			},
+		})
+		if err != nil {
+			return errors.New(fmt.Sprintf("topic [%v] creation failed - %s", topic, err.Error()))
+		}
+
+		meta, err := client.Metadata(ctx, &kafka.MetadataRequest{
+			Addr: tcp,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, t := range meta.Topics {
+			if t.Name == topic {
+				exists = true
+				break
+			}
+		}
+	}
+
 	if !exists {
 		return errors.New(fmt.Sprintf("topic [%v] doesn't exist", topic))
 	}
@@ -210,14 +242,14 @@ func (k *kafkaListener) getReaderForPartition(partition int) (*kafka.Reader, err
 	return r, nil
 }
 
-func (k *kafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Duration) {
+func (k *kafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Duration, createTopicIfNotFound bool) {
 	var partitions []int
 	var err error
 
 	for k.ctx.Err() == nil {
-		if err := k.checkIfTopicExists(k.targetTopic); err != nil {
-			log.Err(err).Msgf("listener [%v]. Topic [%v] does not exists. waiting for topic to be available with interval 10s",
-				k.listenerName, k.targetTopic)
+		if err := k.checkIfTopicExists(k.targetTopic, createTopicIfNotFound); err != nil {
+			log.Error().Err(err).Str("host", k.cfg.Hosts).Str("topic", k.targetTopic).Str("group", k.cfg.GroupId).Str("listener", k.listenerName).
+				Msg("[Kafka Listener] : topic does not exists. waiting for topic to be available with interval 10s.")
 
 			transaction := apm_helper.StartNewApmTransaction("start-kafka-listener", "kafka", nil, nil)
 			apm_helper.AddApmLabel(transaction, "topic", k.targetTopic)
@@ -273,9 +305,9 @@ func (k *kafkaListener) ListenInBatches(maxBatchSize int, maxDuration time.Durat
 					//if len(k.cfg.GroupId) > 0 {
 					//	k.closeReader(p) // reset to last position
 					//}
-
 					tx := apm_helper.StartNewApmTransaction(k.listenerName, "kafka_listener", nil, nil)
-
+					log.Error().Err(err).Str("host", k.cfg.Hosts).Str("topic", k.targetTopic).Str("group", k.cfg.GroupId).Str("listener", k.listenerName).
+						Msg("[Kafka Listener] : listen to message failed")
 					apm_helper.LogError(err, apm.ContextWithTransaction(context.TODO(), tx))
 
 					tx.End()
@@ -517,6 +549,8 @@ func (k *kafkaListener) listen(maxBatchSize int, maxDuration time.Duration, read
 
 		if requestProcessingErrors != nil { // it`s a permanent error, we should try to commit all messages which we had
 			if err = k.commitMessages(messagePool[:messageIndex], reader, rootCtx); err != nil { // we have no power here
+				log.Error().Err(err).Str("host", k.cfg.Hosts).Str("topic", k.targetTopic).Str("group", k.cfg.GroupId).Str("listener", k.listenerName).
+					Msg("[Kafka Listener] : commit message failed")
 				apm_helper.LogError(errors.Wrap(err, "can not commit messages after retry policy"),
 					rootCtx)
 			}

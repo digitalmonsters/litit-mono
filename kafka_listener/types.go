@@ -2,14 +2,15 @@ package kafka_listener
 
 import (
 	"context"
+
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 )
 
 type IKafkaListener interface {
 	Close() error
-	Listen()
-	ListenAsync() IKafkaListener
+	Listen(createTopicIfNotFound bool)
+	ListenAsync(createTopicIfNotFound bool) IKafkaListener
 	GetTopic() string
 }
 
