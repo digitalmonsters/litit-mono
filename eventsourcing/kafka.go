@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -12,7 +14,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"time"
 )
 
 type KafkaEventPublisher struct {
@@ -125,6 +126,14 @@ func (s *KafkaEventPublisher) GetPublisherType() PublisherType {
 	return s.publisherType
 }
 
+func (s *KafkaEventPublisher) GetHosts() string {
+	return s.cfg.Hosts
+}
+
+func (s *KafkaEventPublisher) GetTopic() string {
+	return s.topic
+}
+
 func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTopicConfig) {
 	client := &kafka.Client{
 		Transport: s.writer.Transport,
@@ -134,7 +143,7 @@ func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTop
 	})
 
 	if err != nil {
-		s.logger.Fatal().Err(err).Msgf("can not ensure that topic exists [%v]", topicConfig.Name)
+		s.logger.Fatal().Err(err).Str("host", s.cfg.Hosts).Str("topic", s.topic).Msg("[Kafka Publisher] : can not ensure that topic exists")
 	}
 
 	var exists bool
@@ -142,7 +151,7 @@ func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTop
 		if t.Name == topicConfig.Name {
 			exists = true
 			if len(t.Partitions) != topicConfig.NumPartitions {
-				s.logger.Warn().Msgf("partition count mismatch for topic [%v] expected [%v] got [%v] partitions",
+				s.logger.Warn().Str("host", s.cfg.Hosts).Str("topic", s.topic).Msgf("[Kafka Publisher] : partition count mismatch for topic [%v] expected [%v] got [%v] partitions",
 					topicConfig.Name, topicConfig.NumPartitions, len(t.Partitions))
 			}
 			break
@@ -151,14 +160,14 @@ func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTop
 
 	if !exists {
 		if topicConfig.NumPartitions <= 0 {
-			s.logger.Panic().Msgf("NumPartitions should be greater then 0 for topic [%v]", topicConfig.Name)
+			s.logger.Panic().Str("host", s.cfg.Hosts).Str("topic", s.topic).Msg("[Kafka Publisher] : NumPartitions should be greater then 0")
 		}
 		if topicConfig.ReplicationFactor <= 0 {
-			s.logger.Panic().Msgf("ReplicationFactor should be greater then 0 for topic [%v]", topicConfig.Name)
+			s.logger.Panic().Str("host", s.cfg.Hosts).Str("topic", s.topic).Msg("[Kafka Publisher] : ReplicationFactor should be greater then 0")
 		}
 
-		s.logger.Info().Msgf("topic [%v] does not exist on kafka. Creating a new one with partitions count [%v] and replication factor [%v]",
-			topicConfig.Name, topicConfig.NumPartitions, topicConfig.ReplicationFactor)
+		s.logger.Info().Str("host", s.cfg.Hosts).Str("topic", s.topic).Int("partition", topicConfig.NumPartitions).
+			Int("replicationFactor", topicConfig.ReplicationFactor).Msg("[Kafka Publisher] : topic does not exist on kafka. Creating a new one.")
 
 		res, err := client.CreateTopics(context.TODO(), &kafka.CreateTopicsRequest{
 			Addr: s.writer.Addr,
@@ -173,12 +182,12 @@ func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTop
 		})
 
 		if err != nil {
-			s.logger.Fatal().Err(err).Msgf("can not create topic [%v]", topicConfig.Name)
+			s.logger.Fatal().Err(err).Str("host", s.cfg.Hosts).Str("topic", s.topic).Msg("[Kafka Publisher] : can not create topic")
 		}
 
 		for _, respErr := range res.Errors {
 			if respErr != nil {
-				s.logger.Fatal().Err(respErr).Msgf("can not create topic [%v]", topicConfig.Name)
+				s.logger.Fatal().Err(respErr).Str("host", s.cfg.Hosts).Str("topic", s.topic).Msg("[Kafka Publisher] : create topic failed")
 			}
 		}
 	}

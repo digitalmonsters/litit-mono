@@ -9,6 +9,8 @@ type IEventData interface {
 type IEventPublisher interface {
 	Publish(apmTransaction *apm.Transaction, events ...IEventData) []error
 	GetPublisherType() PublisherType
+	GetHosts() string
+	GetTopic() string
 }
 
 type PublisherType int
