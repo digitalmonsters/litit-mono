@@ -5,6 +5,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/boilerplate"
@@ -16,8 +19,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"sync"
-	"time"
 )
 
 type kafkaRecord struct {
@@ -62,18 +63,30 @@ type KafkaEventPublisherV2[T IEventData] struct {
 type Publisher[T IEventData] interface {
 	Publish(ctx context.Context, messages ...T) chan error
 	PublishImmediate(ctx context.Context, messages ...T) chan error
+	GetHosts() string
+	GetTopic() string
 	Close() error
 }
 
 type PublisherMock[T IEventData] struct {
 	PublishFn          func(ctx context.Context, messages ...T) chan error
 	PublishImmediateFn func(ctx context.Context, messages ...T) chan error
+	GetHostsFn         func() string
+	GetTopicFn         func() string
 	CloseFn            func() error
 }
 
 func (p *PublisherMock[T]) PublishImmediate(ctx context.Context, messages ...T) chan error {
 	return p.PublishImmediateFn(ctx, messages...)
 
+}
+
+func (p *PublisherMock[T]) GetHosts() string {
+	return p.GetHostsFn()
+}
+
+func (p *PublisherMock[T]) GetTopic() string {
+	return p.GetTopicFn()
 }
 
 func (p *PublisherMock[T]) Close() error {
@@ -248,6 +261,14 @@ func (p *KafkaEventPublisherV2[T]) PublishImmediate(ctx context.Context, message
 	return ch
 }
 
+func (p *KafkaEventPublisherV2[T]) GetHosts() string {
+	return p.cfg.Hosts
+}
+
+func (p *KafkaEventPublisherV2[T]) GetTopic() string {
+	return p.topicConfig.Name
+}
+
 func (p *KafkaEventPublisherV2[T]) Close() error {
 	p.isClosed = true
 
@@ -365,7 +386,7 @@ func (p *KafkaEventPublisherV2[T]) flush(calculateAsRetry bool) error {
 	return err
 }
 
-//nolint
+// nolint
 func (p *KafkaEventPublisherV2[T]) fancyServiceMapAsync() {
 	go func() {
 		for !p.isClosed {
