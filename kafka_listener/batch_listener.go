@@ -36,6 +36,10 @@ func (b BatchListener) GetTopic() string {
 	return b.innerListener.GetTopic()
 }
 
+func (b BatchListener) GetHosts() string {
+	return b.innerListener.GetHosts()
+}
+
 func (b *BatchListener) Listen(createTopicIfNotFound bool) {
 	b.innerListener.ListenInBatches(b.maxBatchSize, b.maxDuration, createTopicIfNotFound)
 }

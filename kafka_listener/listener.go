@@ -79,6 +79,10 @@ func (k kafkaListener) GetTopic() string {
 	return k.targetTopic
 }
 
+func (k kafkaListener) GetHosts() string {
+	return k.cfg.Hosts
+}
+
 func (k *kafkaListener) getPartitionsForTopic() ([]int, error) {
 	if k.isConsumerGroupMode {
 		return []int{0}, nil // 0 means that we dont care as we have GroupId

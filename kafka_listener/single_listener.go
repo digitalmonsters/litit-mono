@@ -43,3 +43,7 @@ func (s *SingleListener) ListenAsync(createTopicIfNotFound bool) IKafkaListener 
 func (s SingleListener) GetTopic() string {
 	return s.listener.GetTopic()
 }
+
+func (s SingleListener) GetHosts() string {
+	return s.listener.GetHosts()
+}

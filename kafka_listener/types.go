@@ -12,6 +12,7 @@ type IKafkaListener interface {
 	Listen(createTopicIfNotFound bool)
 	ListenAsync(createTopicIfNotFound bool) IKafkaListener
 	GetTopic() string
+	GetHosts() string
 }
 
 type ICommand interface {
