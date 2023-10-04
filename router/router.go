@@ -566,7 +566,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 			func(key, value []byte) {
 				headers[string(key)] = string(value)
 			})
-		log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : request middleware")
+		//log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : request middleware")
 
 		var rpcRequest rpc.RpcRequest
 		var rpcResponse rpc.RpcResponse
@@ -595,7 +595,7 @@ func (r *HttpRouter) prepareRpcEndpoint(rpcEndpointPath string, endpoint IRpcEnd
 				func(key, value []byte) {
 					headers[string(key)] = string(value)
 				})
-			log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : response middleware")
+			//log.Ctx(httpCtx).Info().Str("method", "POST").Str("path", rpcEndpointPath).Interface("header", headers).Msg("[RPC] : response middleware")
 		}()
 
 		defer func() {
