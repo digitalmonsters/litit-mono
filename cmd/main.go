@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/RichardKnop/machinery/v1"
 	adCampaignApp "github.com/digitalmonsters/ads-manager/cmd/ad_campaign"
 	"github.com/digitalmonsters/ads-manager/cmd/api"
@@ -26,9 +30,6 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_category"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -106,7 +107,7 @@ func main() {
 
 	viewContentListener := view_content.InitListener(healthContext, database.GetDb(database.DbTypeMaster),
 		cfg.ViewContentListener, goTokenomicsWrapper).
-		ListenAsync()
+		ListenAsync(true)
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
 		httpRouter.RegisterDocs(apiDef, nil)

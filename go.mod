@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/RichardKnop/machinery v1.10.6
-	github.com/digitalmonsters/go-common v1.33.3-alpha15
+	github.com/digitalmonsters/go-common v1.33.3-alpha31
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/lib/pq v1.10.5
 	github.com/pkg/errors v0.9.1
