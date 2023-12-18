@@ -35,27 +35,21 @@ func NewNotificationHandlerWrapper(config boilerplate.WrapperConfig) INotificati
 		serviceName:    "notification-handler",
 	}
 
-	env := boilerplate.GetCurrentEnvironment().ToString()
-
+	pushPublisher := config.PushPublisher
 	w.publisher = eventsourcing.NewKafkaEventPublisher(
 		boilerplate.KafkaWriterConfiguration{
-			Hosts: "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092",
-			Tls:   false,
-		}, boilerplate.KafkaTopicConfig{
-			Name:              fmt.Sprintf("%v.notifications.handler_sending_queue", env),
-			NumPartitions:     24,
-			ReplicationFactor: 2,
-		})
+			Hosts:     pushPublisher.Hosts,
+			Tls:       pushPublisher.Tls,
+			KafkaAuth: pushPublisher.KafkaAuth,
+		}, pushPublisher.Topic)
 
+	emailPublisher := config.EmailPublisher
 	w.customPublisher = eventsourcing.NewKafkaEventPublisher(
 		boilerplate.KafkaWriterConfiguration{
-			Hosts: "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092",
-			Tls:   false,
-		}, boilerplate.KafkaTopicConfig{
-			Name:              fmt.Sprintf("%v.notifications.handler_sending_queue_custom", env),
-			NumPartitions:     24,
-			ReplicationFactor: 2,
-		})
+			Hosts:     emailPublisher.Hosts,
+			Tls:       emailPublisher.Tls,
+			KafkaAuth: emailPublisher.KafkaAuth,
+		}, emailPublisher.Topic)
 
 	return w
 }

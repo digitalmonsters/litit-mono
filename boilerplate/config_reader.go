@@ -87,6 +87,9 @@ type Wrappers struct {
 type WrapperConfig struct {
 	ApiUrl     string `json:"ApiUrl"`
 	TimeoutSec int    `json:"TimeoutSec"`
+
+	PushPublisher  KafkaBatchWriterV2Configuration `json:"PushPublisher"`
+	EmailPublisher KafkaBatchWriterV2Configuration `json:"EmailPublisher"`
 }
 
 type ApmConfig struct {
