@@ -44,9 +44,17 @@ func (b *BatchListener) Listen(createTopicIfNotFound bool) {
 	b.innerListener.ListenInBatches(b.maxBatchSize, b.maxDuration, createTopicIfNotFound)
 }
 
-func (b *BatchListener) ListenAsync(createTopicIfNotFound bool) IKafkaListener {
+func (b *BatchListener) ListenAsync(createTopicIfNotFound ...bool) IKafkaListener {
+	if len(createTopicIfNotFound) > 1 {
+		panic("createTopicIfNotFound can be only one value")
+	}
+
+	if len(createTopicIfNotFound) == 0 {
+		createTopicIfNotFound = []bool{boilerplate.GetCurrentEnvironment() == boilerplate.Local}
+	}
+
 	go func() {
-		b.Listen(createTopicIfNotFound)
+		b.Listen(createTopicIfNotFound[0])
 	}()
 
 	return b

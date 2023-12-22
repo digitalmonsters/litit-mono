@@ -10,7 +10,7 @@ import (
 type IKafkaListener interface {
 	Close() error
 	Listen(createTopicIfNotFound bool)
-	ListenAsync(createTopicIfNotFound bool) IKafkaListener
+	ListenAsync(createTopicIfNotFound ...bool) IKafkaListener
 	GetTopic() string
 	GetHosts() string
 }
