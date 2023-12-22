@@ -20,7 +20,8 @@ const (
 var masterGormDb *gorm.DB
 var readonlyGormDb *gorm.DB
 
-func Migrate() {
+// TODO: remove the init function and use the db connection as a dependency
+func init() {
 	config := configs.GetConfig()
 
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
@@ -55,12 +56,14 @@ func Migrate() {
 	} else {
 		readonlyGormDb = readDb
 	}
+}
 
-	m := gormigrate.New(mainDb, gormigrate.DefaultOptions, getMigrations())
+func Migrate() {
+	m := gormigrate.New(masterGormDb, gormigrate.DefaultOptions, getMigrations())
 
 	log.Info().Msg("[Db] start migrations")
 
-	if err = m.Migrate(); err != nil {
+	if err := m.Migrate(); err != nil {
 		panic(err)
 	}
 }
