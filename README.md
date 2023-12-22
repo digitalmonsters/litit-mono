@@ -37,11 +37,3 @@ Run the migrations to create the tables in the database.
 ```shell
 make migrations
 ```
-
-## Kafka
-
-Create the topics in the kafka server.
-
-```shell
-make topics
-```
