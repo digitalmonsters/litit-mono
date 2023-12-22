@@ -50,7 +50,7 @@ func (b *BatchListener) ListenAsync(createTopicIfNotFound ...bool) IKafkaListene
 	}
 
 	if len(createTopicIfNotFound) == 0 {
-		createTopicIfNotFound = []bool{boilerplate.GetCurrentEnvironment() == boilerplate.Local}
+		createTopicIfNotFound = []bool{boilerplate.InLocal()}
 	}
 
 	go func() {
