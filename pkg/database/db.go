@@ -20,7 +20,7 @@ const (
 var masterGormDb *gorm.DB
 var readonlyGormDb *gorm.DB
 
-func init() {
+func Migrate() {
 	config := configs.GetConfig()
 
 	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci {
