@@ -175,6 +175,10 @@ type KafkaAuth struct {
 	Password string `json:"Password"`
 }
 
+func InLocal() bool {
+	return GetCurrentEnvironment() == Local
+}
+
 func GetCurrentEnvironment() Environment {
 	val := os.Getenv("ENVIRONMENT")
 	val = strings.ToLower(val)
@@ -190,6 +194,7 @@ func GetCurrentEnvironment() Environment {
 	case "ci":
 		return Ci
 	default:
+		// TODO: default environment should be production
 		return Local
 	}
 }
