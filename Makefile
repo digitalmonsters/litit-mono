@@ -8,7 +8,7 @@ migrations:
 	@echo Makefile: $@ target finished
 
 .PHONE: setup
-setup: migrations
+setup:
 	@docker compose -f docker-compose.dev.yml up -d
 	@echo Makefile: $@ target finished
 
@@ -24,4 +24,5 @@ build:
 
 .PHONY: docker-run
 docker-run:
+	@docker compose up -d
 	@echo Makefile: $@ target finished
