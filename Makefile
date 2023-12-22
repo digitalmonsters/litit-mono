@@ -1,7 +1,5 @@
 IMAGE_URL := "lititacr.azurecr.io/configurator:v2"
 
-export ENVIRONMENT=dev
-
 .PHONE: migrations
 migrations:
 	@go run cmd/migrate/main.go

@@ -106,8 +106,8 @@ update configs set last_changed_by_id = (select related_user_id from config_logs
 		{
 			ID: "seed_the_config_20231222",
 			Migrate: func(db *gorm.DB) error {
-				if boilerplate.GetCurrentEnvironment() != boilerplate.Dev {
-					log.Warn().Msg("skipping seeding the config table in non-dev environment")
+				if !boilerplate.InLocal() {
+					log.Warn().Msg("skipping seeding the config table in non-local environment")
 					return nil
 				}
 
