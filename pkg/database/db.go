@@ -63,12 +63,14 @@ func init() {
 	} else {
 		readonlyGormDb = readDb
 	}
+}
 
-	m := gormigrate.New(mainDb, gormigrate.DefaultOptions, getMigrations())
+func Migrate() {
+	m := gormigrate.New(masterGormDb, gormigrate.DefaultOptions, getMigrations())
 
 	log.Info().Msg("[Db] start migrations")
 
-	if err = m.Migrate(); err != nil {
+	if err := m.Migrate(); err != nil {
 		panic(err)
 	}
 }
