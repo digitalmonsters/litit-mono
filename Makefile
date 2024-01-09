@@ -1,15 +1,26 @@
-# Makefile for Azure Container Registry
+IMAGE_URL := "lititacr.azurecr.io/configurator:v2"
 
-# Set your Azure Container Registry details
-ACR_NAME = lititakscontainer
-IMAGE_NAME = configurator
-TAG = v2
+.PHONE: migrations
+migrations:
+	@go run cmd/migrate/main.go
+	@echo Makefile: $@ target finished
 
-# Build and push the Docker image to ACR
-prod: login
-	docker build --platform linux/amd64 -t $(ACR_NAME).azurecr.io/$(IMAGE_NAME):$(TAG) .
-	docker push $(ACR_NAME).azurecr.io/$(IMAGE_NAME):$(TAG)
+.PHONE: setup
+setup:
+	@docker compose -f docker-compose.dev.yml up -d
+	@echo Makefile: $@ target finished
 
-# Log in to ACR using Azure CLI
-login:
-	az acr login --name $(ACR_NAME)
+.PHONY: run
+run: migrations
+	@go run cmd/main.go
+	@echo Makefile: $@ target finished
+
+.PHONY: build
+build:
+	@go build -o bin/configurator cmd/main.go
+	@echo Makefile: $@ target finished
+
+.PHONY: docker-run
+docker-run:
+	@docker compose up -d
+	@echo Makefile: $@ target finished

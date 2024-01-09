@@ -1,81 +1,81 @@
 {
-  "HttpPort": 5215,
-  "PrivateHttpPort": 5211,
+  "HttpPort": 5001,
+  "PrivateHttpPort": 5002,
   "MasterDb": {
     "Host": "localhost",
     "Port": 5432,
-    "Db": "local_configurator",
+    "Db": "configurator",
     "User": "postgres",
     "Password": "qwerty"
   },
   "ReadonlyDb": {
     "Host": "localhost",
     "Port": 5432,
-    "Db": "local_configurator",
+    "Db": "configurator",
     "User": "postgres",
     "Password": "qwerty"
   },
   "Wrappers": {
     "Content": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5003"
     },
     "UserInfo": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5005"
     },
     "UserBlock": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5007"
     },
     "AuthGo": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5009"
     },
     "Auth": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5011"
     },
     "Likes": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5013"
     },
     "Follows": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5015"
     },
     "Views": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5017"
     },
     "UserCategories": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5019"
     },
     "UserHashtags": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5021"
     },
     "UserLikes": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5023"
     },
     "Categories": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5025"
     },
     "Hashtags": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5027"
     },
     "PointsCount": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5029"
     },
     "BaseApi": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5031"
     },
     "UserGo": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5033"
     }
   },
   "ConfigNotifier": {
     "Hosts": "127.0.0.1",
     "KafkaAuth": {},
-    "Tls": true,
+    "Tls": false,
     "MaxRetryCount": 3,
     "FlushTimeMilliseconds": 100,
     "FlushAtSize": 20,
     "Topic": {
       "Name": "local.new_config",
-      "NumPartitions": 12,
-      "ReplicationFactor": 2
+      "NumPartitions": 1,
+      "ReplicationFactor": 1
     }
   }
 }
