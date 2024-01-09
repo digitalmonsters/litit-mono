@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
@@ -30,9 +34,6 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	settingsPkg "github.com/digitalmonsters/notification-handler/pkg/settings"
 	templatePkg "github.com/digitalmonsters/notification-handler/pkg/template"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/ops"
