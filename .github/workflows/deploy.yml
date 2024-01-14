@@ -33,7 +33,7 @@ jobs:
         run: echo "IMAGE_TAG=$(git rev-parse --short=8 HEAD)" >> $GITHUB_ENV
 
       - name: 🐋 Build Docker Image
-        run: make docker-image tag="${{ env.IMAGE_TAG }}" github_token="${{ secrets.GITHUB_TOKEN }}"
+        run: make docker-image tag="${{ env.IMAGE_TAG }}" github_token="${{ secrets.GH_TOKEN }}"
 
       - name: 🚢 Deploy to Azure Container Registry
         run: make docker-push tag="${{ env.IMAGE_TAG }}"
