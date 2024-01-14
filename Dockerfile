@@ -8,10 +8,10 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # Set private repo access (if necessary)
-#ARG GITHUB_TOKEN
-#RUN if [ -n "$GITHUB_TOKEN" ]; then \
-#        git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
-#    fi
+ARG GITHUB_TOKEN
+RUN if [ -n "$GITHUB_TOKEN" ]; then \
+        git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    fi
 
 # Download dependencies
 RUN go mod download
