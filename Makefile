@@ -1,4 +1,4 @@
-IMAGE_URL := "lititacr.azurecr.io/configurator:v2"
+IMAGE_URL := "lititacr.azurecr.io/configurator"
 
 .PHONE: migrations
 migrations:
