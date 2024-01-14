@@ -10,7 +10,6 @@ on:
 env:
   ACR_LOGIN_SERVER: lititacr.azurecr.io
   KUBERNETES_CLUSTER: litit-aks
-  CONTAINER_IMAGE: ${{ env.ACR_LOGIN_SERVER }}/configurator:${{ env.IMAGE_TAG }}
 
 jobs:
   verify:
