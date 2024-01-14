@@ -10,7 +10,6 @@ on:
 env:
   ACR_LOGIN_SERVER: lititacr.azurecr.io
   KUBERNETES_CLUSTER: litit-aks
-  IMAGE_TAG: ${{ github.ref == 'refs/heads/master' && 'master' || 'stage' }}-${{ github.sha }}
   CONTAINER_IMAGE: ${{ env.ACR_LOGIN_SERVER }}/configurator:${{ env.IMAGE_TAG }}
 
 jobs:
@@ -29,6 +28,10 @@ jobs:
           login-server: ${{ env.ACR_LOGIN_SERVER }}
           username: ${{ secrets.AZURE_CONTAINER_REGISTRY_USERNAME }}
           password: ${{ secrets.AZURE_CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Get short SHA
+        id: short-sha
+        run: echo "IMAGE_TAG=$(git rev-parse --short=8 HEAD)" >> $GITHUB_ENV
 
       - name: 🐋 Build Docker Image
         run: make docker-image tag="${{ env.IMAGE_TAG }}" github_token="${{ secrets.GH_TOKEN }}"
