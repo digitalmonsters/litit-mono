@@ -5,7 +5,10 @@ on:
     branches:
       - master
       - staging
-      - github-ci
+  pull_request:
+    branches:
+      - master
+      - staging
 
 env:
   ACR_LOGIN_SERVER: lititacr.azurecr.io

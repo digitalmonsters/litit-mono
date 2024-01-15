@@ -23,7 +23,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o main cmd/main.go
 
 # Final stage
-FROM alpine:3.14
+FROM alpine:latest
 
 # Add CA certificates
 RUN apk --no-cache add ca-certificates
