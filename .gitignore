@@ -58,5 +58,6 @@ kubeconfig*
 
 config.qwerty.json
 
+/tmp/
 
 priv/
