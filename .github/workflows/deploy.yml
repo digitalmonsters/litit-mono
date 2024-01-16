@@ -1,0 +1,38 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - staging
+
+env:
+  ACR_LOGIN_SERVER: lititacr.azurecr.io
+  KUBERNETES_CLUSTER: litit-aks
+
+jobs:
+  verify:
+    name: 🚢 Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🌍 Setup Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔓 Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.AZURE_CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Get short SHA
+        id: short-sha
+        run: echo "IMAGE_TAG=$(git rev-parse --short=8 HEAD)" >> $GITHUB_ENV
+
+      - name: 🐋 Build Docker Image
+        run: make docker-image tag="${{ env.IMAGE_TAG }}" github_token="${{ secrets.GH_TOKEN }}"
+
+      - name: 🚢 Deploy to Azure Container Registry
+        run: make docker-push tag="${{ env.IMAGE_TAG }}"
