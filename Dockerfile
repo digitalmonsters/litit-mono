@@ -1,48 +1,41 @@
-############################
-# STEP 1: Build the executable binary
-############################
-FROM golang:1.18-buster AS builder
+FROM golang:1.21 as builder
 
-# Create a non-root user for running the application
-ENV USER=appuser
-ENV UID=10001
+ARG GITHUB_TOKEN
 
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
-    "${USER}"
+RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
-# Configure the working directory and copy files
+# Create and set the working directory
 WORKDIR /app
+
+# Copy go.mod and go.sum for dependency caching
+COPY go.mod go.sum ./
+
+ENV GOPRIVATE=github.com/digitalmonsters*
+
+RUN go mod download
+
+COPY ./config.json ./config.json
+
+# Copy source files
 COPY . .
 
-ADD priv/.netrc /root/.netrc
-ENV GOPRIVATE=github.com/digitalmonsters/*
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags='-w -s -extldflags "-static"' -a -o main cmd/main.go
 
+FROM alpine:latest
 
-# Build the binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o /app/main cmd/main.go
+USER root
 
-############################
-# STEP 2: Create the final lightweight image
-############################
-FROM scratch
+RUN apk --no-cache add ca-certificates
 
-# Copy the binary from the builder stage
+#Set the working directory
+WORKDIR /app/
+
+#Copy the binary and configuration file from the builder stage
 COPY --from=builder /app/main /app/main
+COPY --from=builder /app/config.json /app/config.json
 
-# Copy the config file
-COPY ./config.json /app/config.json
+RUN chmod +x /app/main
 
-# Use the non-root user
-USER ${USER}
-
-# Set the working directory
-WORKDIR /app
-
-# Run the binary
+#Command to run the application
 CMD ["/app/main"]
