@@ -1,82 +1,112 @@
 {
-  "HttpPort": 5212,
-  "PrivateHttpPort": 5211,
-  "CdnBase": "https://awesomecdn.com",
+  "HttpPort": 5044,
+  "PrivateHttpPort": 5046,
+  "CdnBase": "",
   "MasterDb": {
     "Host": "localhost",
     "Port": 5432,
-    "Db": "local_ads",
+    "Db": "ads_manager",
     "User": "postgres",
     "Password": "qwerty"
   },
   "ReadonlyDb": {
     "Host": "localhost",
     "Port": 5432,
-    "Db": "local_ads",
+    "Db": "ads_manager",
     "User": "postgres",
     "Password": "qwerty"
   },
-  "Wrappers": {
+  "Wrappers": {"NotificationHandler": {
+      "PushPublisher": {
+        "Hosts": "localhost",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "local.notifications.handler_sending_queue",
+          "NumPartitions": 1,
+          "ReplicationFactor": 1
+        }
+      },
+      "EmailPublisher": {
+        "Hosts": "localhost",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "local.notifications.handler_sending_queue_custom",
+          "NumPartitions": 1,
+          "ReplicationFactor": 1
+        }
+      }
+    },
     "Content": {
-      "ApiUrl": ""
-    },
-    "UserInfo": {
-      "ApiUrl": ""
-    },
-    "UserBlock": {
-      "ApiUrl": ""
-    },
-    "Auth": {
-      "ApiUrl": ""
-    },
-    "Likes": {
-      "ApiUrl": ""
-    },
-    "Follows": {
-      "ApiUrl": ""
-    },
-    "Views": {
-      "ApiUrl": ""
-    },
-    "UserCategories": {
-      "ApiUrl": ""
-    },
-    "UserHashtags": {
-      "ApiUrl": ""
-    },
-    "UserLikes": {
-      "ApiUrl": ""
-    },
-    "Categories": {
-      "ApiUrl": ""
-    },
-    "Hashtags": {
-      "ApiUrl": ""
-    },
-    "PointsCount": {
-      "ApiUrl": ""
+      "ApiUrl": "http://localhost:5003"
     },
     "Configurator": {
-      "ApiUrl": "http://configurator"
+      "ApiUrl": "http://localhost:5001"
+    },
+    "UserInfo": {
+      "ApiUrl": "http://localhost:5005"
+    },
+    "UserBlock": {
+      "ApiUrl": "http://localhost:5007"
+    },
+    "AuthGo": {
+      "ApiUrl": "http://localhost:5009"
+    },
+    "Auth": {
+      "ApiUrl": "http://localhost:5011"
+    },
+    "Likes": {
+      "ApiUrl": "http://localhost:5013"
+    },
+    "Follows": {
+      "ApiUrl": "http://localhost:5015"
+    },
+    "Views": {
+      "ApiUrl": "http://localhost:5017"
+    },
+    "UserCategories": {
+      "ApiUrl": "http://localhost:5019"
+    },
+    "UserHashtags": {
+      "ApiUrl": "http://localhost:5021"
+    },
+    "UserLikes": {
+      "ApiUrl": "http://localhost:5023"
+    },
+    "Categories": {
+      "ApiUrl": "http://localhost:5025"
+    },
+    "Hashtags": {
+      "ApiUrl": "http://localhost:5027"
+    },
+    "PointsCount": {
+      "ApiUrl": "http://localhost:5029"
+    },
+    "BaseApi": {
+      "ApiUrl": "http://localhost:5031"
+    },
+    "UserGo": {
+      "ApiUrl": "http://localhost:5033"
     }
   },
   "Jobber": {
-    "DefaultQueue": "local_machinery_tasks",
+    "DefaultQueue": "local_ads_manager_tasks",
     "ResultExpire": 3600,
-    "Broker": "",
-    "ResultBackend": "",
-    "Lock": "",
+    "Broker": "rediss://localhost:6379/6",
+    "ResultBackend": "rediss://localhost:6379/7",
+    "Lock": "redis://localhost:6379",
     "Concurrency": 40,
-    "Tls": true
+    "Tls": false
   },
   "ViewContentListener": {
-    "Hosts": "",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
     "MaxDuration": 2,
     "MaxBatchSize": 1000,
-    "GroupId": "local_ads_view_content_listener",
-    "Topic": "local.view_content"
+    "GroupId": "local_views_ads_manager_view_content_listener",
+    "Topic": "local.views.view_content"
   }
 }
