@@ -167,15 +167,7 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 			if parsedIsGuest, err := strconv.ParseBool(string(isGuestHeader)); err != nil {
 				err = errors.Wrapf(err, "can not parse str to int for is-guest. input string %v", isGuestHeader)
 
-				return 0, usersResp.Guest, isBanned, language, &rpc.ExtendedLocalRpcError{
-					RpcError: rpc.RpcError{
-						Code:        error_codes.InvalidJwtToken,
-						Message:     err.Error(),
-						Hostname:    hostName,
-						ServiceName: hostName,
-					},
-					LocalHandlingError: err,
-				}
+				return 0, usersResp.Guest, isBanned, language, nil
 			} else {
 				isGuest = parsedIsGuest
 			}
