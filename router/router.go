@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/digitalmonsters/go-common/wrappers/auth"
 	"net/http/pprof"
 	"os"
 	"strings"
@@ -26,12 +27,15 @@ import (
 	"go.elastic.co/apm/module/apmhttp"
 )
 
+var AuthWrapperInstance auth.IAuthWrapper
+
 type HttpRouter struct {
 	realRouter               *fastRouter.Router
 	hostname                 string
 	restCommands             map[string]*RestCommand
 	isProd                   bool
 	authGoWrapper            auth_go.IAuthGoWrapper
+	authWrapper              auth.IAuthWrapper
 	userExecutorValidator    UserExecutorValidator
 	srv                      *fasthttp.Server
 	rpcEndpointPublic        IRpcEndpoint
@@ -59,6 +63,7 @@ func NewRouter(rpcEndpointPath string, auth auth_go.IAuthGoWrapper) *HttpRouter 
 		realRouter:               fastRouter.New(),
 		endpointRegistratorMutex: sync.Mutex{},
 		authGoWrapper:            auth,
+		authWrapper:              AuthWrapperInstance,
 		restCommands:             map[string]*RestCommand{},
 		userExecutorValidator:    NewDefaultUserExecutorValidator(auth),
 	}
@@ -455,16 +460,30 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 	shouldLog = forceLog
 
 	userId, isGuest, isBanned, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
+	if userId == 0 {
+		if authHeaderValue := httpCtx.Request.Header.Peek("Authorization"); len(authHeaderValue) > 0 {
+			jwtStr := string(authHeaderValue)
 
-	if rpcError != nil {
-		rpcResponse.Error = rpcError
+			if len(jwtStr) > 0 {
+				jwtStr = strings.TrimSpace(strings.ReplaceAll(jwtStr, "Bearer", ""))
+			}
 
-		return
+			apmTransaction := apm.TransactionFromContext(ctx)
+			resp := <-r.authWrapper.ParseToken(jwtStr, false, apmTransaction, true)
+
+			if resp.Error != nil {
+				rpcResponse.Error = &rpc.ExtendedLocalRpcError{
+					RpcError: *resp.Error,
+				}
+				return
+			}
+
+			userId = resp.Resp.UserId
+		}
 	}
 
 	if userId <= 0 && (cmd.RequireIdentityValidation() || cmd.AccessLevel() > common.AccessLevelPublic) {
 		err := errors.New("missing jwt token for auth")
-
 		rpcError = &rpc.ExtendedLocalRpcError{
 			RpcError: rpc.RpcError{
 				Code:     error_codes.MissingJwtToken,
