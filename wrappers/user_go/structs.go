@@ -1,11 +1,12 @@
 package user_go
 
 import (
+	"time"
+
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/translation"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type CreatorStatus int
@@ -108,6 +109,7 @@ type UserDetailRecord struct {
 	Timezone            string               `json:"timezone"`
 	SpotsUploadBanned   bool                 `json:"spots_upload_banned"`
 	DogsUploadBanned    bool                 `json:"dogs_upload_banned"`
+	PetsUploadBanned    bool                 `json:"pets_upload_banned"`
 	BioVideoId          null.Int             `json:"bio_video_id"`
 }
 
