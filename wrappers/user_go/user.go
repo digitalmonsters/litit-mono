@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -12,14 +14,16 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type IUserGoWrapper interface {
 	GetUsers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord]
-
 	GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
 	GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
+
+	GetPets(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetRecord]
+	GetPetsDetails(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord]
+	GetPetDetails(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord]
 
 	GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 	GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
@@ -110,6 +114,52 @@ func (w UserGoWrapper) GetUserDetails(userId int64, ctx context.Context, forceLo
 			}
 		} else {
 			ch <- wrappers.GenericResponseChan[UserDetailRecord]{
+				Error: &rpc.RpcError{Code: error_codes.GenericNotFoundError, Message: "item not found in dictionary"},
+			}
+		}
+	}()
+
+	return ch
+}
+
+func (w UserGoWrapper) GetPets(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetRecord] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]PetRecord](w.baseWrapper, w.serviceApiUrl,
+		"GetPetsInternal", GetPetsRequest{
+			PetIds: petIds,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GetPetsDetails(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]PetDetailRecord](w.baseWrapper, w.serviceApiUrl,
+		"GetPetsDetailsInternal", GetPetsDetailRequest{
+			PetIds: petIds,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GetPetDetails(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord] {
+	ch := make(chan wrappers.GenericResponseChan[PetDetailRecord], 2)
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+
+		resp := <-w.GetPetsDetails([]int64{petId}, ctx, forceLog)
+
+		if resp.Error != nil {
+			ch <- wrappers.GenericResponseChan[PetDetailRecord]{
+				Error: resp.Error,
+			}
+
+			return
+		}
+
+		if v, ok := resp.Response[petId]; ok {
+			ch <- wrappers.GenericResponseChan[PetDetailRecord]{
+				Response: v,
+			}
+		} else {
+			ch <- wrappers.GenericResponseChan[PetDetailRecord]{
 				Error: &rpc.RpcError{Code: error_codes.GenericNotFoundError, Message: "item not found in dictionary"},
 			}
 		}

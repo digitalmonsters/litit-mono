@@ -49,6 +49,25 @@ type UserRecord struct {
 	Birthdate                    null.Time            `json:"birthdate"`
 }
 
+type PetRecord struct {
+	PetId       int64       `json:"pet_id"`
+	UserID      int64       `json:"user_id"`
+	Avatar      null.String `json:"avatar"`
+	PetType     null.String `json:"pet_type"`
+	Name        null.String `json:"name"`
+	Breed       null.String `json:"breed"`
+	Gender      null.String `json:"gender"`
+	BirthDate   null.Time   `json:"birth_date"`
+	Colors      []string    `gorm:"type:string[]" json:"colors"`
+	Height      float32     `json:"height"`
+	HeightUnit  null.String `json:"height_unit"`
+	Weight      float32     `json:"weight"`
+	WeightUnit  null.String `json:"weight_unit"`
+	Description string      `json:"description"`
+	BannedTill  null.Time   `json:"banned_till"`
+	Verified    bool        `json:"verified"`
+}
+
 func (u UserRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
 	return getFirstAndLastNameWithPrivacy(u.NamePrivacyStatus, u.Firstname, u.Lastname, u.Username)
 }
@@ -59,6 +78,10 @@ func (u UserRecord) FormatUserName() string {
 
 type GetUsersRequest struct {
 	UserIds []int64 `json:"user_ids"`
+}
+
+type GetPetsRequest struct {
+	PetIds []int64 `json:"pet_ids"`
 }
 
 type GetProfileBulkRequest struct {
@@ -117,6 +140,45 @@ func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
 	return getFirstAndLastNameWithPrivacy(u.NamePrivacyStatus, u.Firstname, u.Lastname, u.Username.ValueOrZero())
 }
 
+type PetDetailRecord struct {
+	Id                  int64         `json:"id"`
+	UserID              int64         `json:"user_id"`
+	PetType             null.String   `json:"pet_type"`
+	Name                null.String   `json:"name"`
+	Breed               null.String   `json:"breed"`
+	Gender              null.String   `json:"gender"`
+	BirthDate           null.Time     `json:"birth_date"`
+	Colors              []string      `gorm:"type:string[]" json:"colors"`
+	Height              float32       `json:"height"`
+	HeightUnit          null.String   `json:"height_unit"`
+	Weight              float32       `json:"weight"`
+	WeightUnit          null.String   `json:"weight_unit"`
+	Description         string        `json:"description"`
+	Behaviors           []string      `gorm:"type:string[]" json:"behaviors"`
+	Vaccines            []string      `gorm:"type:string[]" json:"vaccines"`
+	Breader             null.String   `json:"breader"`
+	DoctorName          null.String   `json:"doctor_name"`
+	DoctorCountryCode   null.String   `json:"doctors_country_code"`
+	DoctorPhone         null.String   `json:"doctors_phone"`
+	RfID                null.String   `json:"rf_id"`
+	Following           int           `json:"following"`
+	Followers           int           `json:"followers"`
+	VideosCount         int           `json:"videos_count"`
+	Avatar              null.String   `json:"avatar"`
+	BannedTill          null.Time     `json:"banned_till"`
+	Deleted             bool          `json:"deleted"`
+	Uploads             int           `json:"uploads"`
+	Views               int           `json:"views"`
+	Shares              int           `json:"shares"`
+	Likes               int           `json:"likes"`
+	Comments            int           `json:"comments"`
+	CreatorStatus       CreatorStatus `json:"creator_status"`
+	CreatorRejectReason null.String   `json:"creator_reject_reason"`
+	AdDisabled          bool          `json:"ad_disabled"`
+	UploadBanned        bool          `json:"upload_banned"`
+	CreatedAt           time.Time     `json:"created_at"`
+}
+
 type UserProfileDetailRecord struct {
 	UserDetailRecord
 	IsFollowing bool `json:"is_following"`
@@ -157,6 +219,10 @@ type UserProfile struct {
 
 type GetUsersDetailRequest struct {
 	UserIds []int64 `json:"user_ids"`
+}
+
+type GetPetsDetailRequest struct {
+	PetIds []int64 `json:"pet_ids"`
 }
 
 type GetUsersActiveThresholdsRequest struct {

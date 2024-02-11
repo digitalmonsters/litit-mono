@@ -2,6 +2,7 @@ package user_go
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
@@ -13,6 +14,9 @@ type UserGoWrapperMock struct {
 
 	GetUsersDetailFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
 	GetUserDetailsFn func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
+
+	GetPetsDetailFn func(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord]
+	GetPetDetailsFn func(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord]
 
 	GetProfileBulkFn                      func(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 	GetUsersActiveThresholdsFn            func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
@@ -56,6 +60,13 @@ func (m *UserGoWrapperMock) GetUsers(userIds []int64, ctx context.Context, force
 
 func (m *UserGoWrapperMock) GetUsersDetails(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord] {
 	return m.GetUsersDetailFn(userIds, ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) GetPetDetails(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord] {
+	return m.GetPetDetailsFn(petId, ctx, forceLog)
+}
+func (m *UserGoWrapperMock) GetPetsDetails(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord] {
+	return m.GetPetsDetailFn(petIds, ctx, forceLog)
 }
 
 func (m *UserGoWrapperMock) GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan {
