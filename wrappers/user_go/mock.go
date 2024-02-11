@@ -10,11 +10,11 @@ import (
 
 //goland:noinspection ALL
 type UserGoWrapperMock struct {
-	GetUsersFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord]
-
+	GetUsersFn       func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserRecord]
 	GetUsersDetailFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserDetailRecord]
 	GetUserDetailsFn func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord]
 
+	GetPetsFn       func(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetRecord]
 	GetPetsDetailFn func(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord]
 	GetPetDetailsFn func(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord]
 
@@ -42,6 +42,10 @@ func (m *UserGoWrapperMock) GetUserDetails(userId int64, ctx context.Context, fo
 	return m.GetUserDetailsFn(userId, ctx, forceLog)
 }
 
+func (m *UserGoWrapperMock) GetPetDetails(petIds int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord] {
+	return m.GetPetDetailsFn(petIds, ctx, forceLog)
+}
+
 func (m *UserGoWrapperMock) VerifyUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRecord] {
 	return m.VerifyUserFn(userId, ctx, forceLog)
 }
@@ -62,9 +66,10 @@ func (m *UserGoWrapperMock) GetUsersDetails(userIds []int64, ctx context.Context
 	return m.GetUsersDetailFn(userIds, ctx, forceLog)
 }
 
-func (m *UserGoWrapperMock) GetPetDetails(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord] {
-	return m.GetPetDetailsFn(petId, ctx, forceLog)
+func (m *UserGoWrapperMock) GetPets(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetRecord] {
+	return m.GetPetsFn(petIds, ctx, forceLog)
 }
+
 func (m *UserGoWrapperMock) GetPetsDetails(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord] {
 	return m.GetPetsDetailFn(petIds, ctx, forceLog)
 }
