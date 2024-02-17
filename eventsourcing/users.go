@@ -2,11 +2,12 @@ package eventsourcing
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/digitalmonsters/go-common/translation"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type UserEvent struct {
@@ -67,6 +68,7 @@ type UserEvent struct {
 	Timezone               string                    `json:"timezone"`
 	SpotsUploadBanned      bool                      `json:"spots_upload_banned"`
 	DogsUploadBanned       bool                      `json:"dogs_upload_banned"`
+	PetsUploadBanned       bool                      `json:"pets_upload_banned"`
 	BaseChangeEvent
 }
 

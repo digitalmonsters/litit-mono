@@ -3,9 +3,10 @@ package eventsourcing
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type LikeEvent struct {
@@ -96,6 +97,7 @@ const (
 	ContentTypeBio   = ContentType(2)
 	ContentTypeMusic = ContentType(3)
 	ContentTypeDogs  = ContentType(4)
+	ContentTypePets  = ContentType(5)
 )
 
 type UploadStatus int
