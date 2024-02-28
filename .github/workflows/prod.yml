@@ -37,14 +37,14 @@ jobs:
       - name: Authenticate with Azure ACR
         uses: azure/docker-login@v1
         with:
-          login-server: lititakscontainer.azurecr.io
+          login-server: lititacr.azurecr.io
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and push Docker image
         run: |
-          docker build -t lititakscontainer.azurecr.io/notification-handler:${{ steps.get-image-tag.outputs.image_tag }} .
-          docker push lititakscontainer.azurecr.io/notification-handler:${{ steps.get-image-tag.outputs.image_tag }}
+          docker build -t lititacr.azurecr.io/notification-handler:${{ steps.get-image-tag.outputs.image_tag }} .
+          docker push lititacr.azurecr.io/notification-handler:${{ steps.get-image-tag.outputs.image_tag }}
 
       - name: Update version tag using API
         run: |
