@@ -1,39 +1,48 @@
-# Builder stage
-FROM golang:1.21 AS builder
+############################
+# STEP 1: Build the executable binary
+############################
+FROM golang:1.18-buster AS builder
 
-# Create and set the working directory
+# Create a non-root user for running the application
+ENV USER=appuser
+ENV UID=10001
+
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    "${USER}"
+
+# Configure the working directory and copy files
 WORKDIR /app
-
-# Copy go.mod and go.sum for dependency caching
-COPY go.mod go.sum ./
-
-# Set private repo access (if necessary)
-ARG GITHUB_TOKEN
-RUN if [ -n "$GITHUB_TOKEN" ]; then \
-        git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
-    fi
-
-# Download dependencies
-RUN go mod download
-
-# Copy source files
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o main cmd/main.go
+ADD priv/.netrc /root/.netrc
+ENV GOPRIVATE=github.com/digitalmonsters/*
 
-# Final stage
-FROM alpine:latest
 
-# Add CA certificates
-RUN apk --no-cache add ca-certificates
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o /app/main cmd/main.go
 
-#Set the working directory
+############################
+# STEP 2: Create the final lightweight image
+############################
+FROM scratch
+
+# Copy the binary from the builder stage
+COPY --from=builder /app/main /app/main
+
+# Copy the config file
+COPY ./config.json /app/config.json
+
+# Use the non-root user
+USER ${USER}
+
+# Set the working directory
 WORKDIR /app
 
-#Copy the binary and configuration file from the builder stage
-COPY --from=builder /app/main .
-COPY --from=builder /app/config.json .
-
-#Command to run the application
+# Run the binary
 CMD ["/app/main"]
