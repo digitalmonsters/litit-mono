@@ -2,6 +2,7 @@ package go_tokenomics
 
 import (
 	"fmt"
+
 	"github.com/digitalmonsters/go-common/filters"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/shopspring/decimal"
@@ -115,6 +116,8 @@ const (
 	PointsEarnedTypeFullListenBonusPerformance                = PointsEarnedType(56)
 	PointsEarnedTypeGoogleAds                                 = PointsEarnedType(57) // google ads
 	PointsEarnedTypeSurvey                                    = PointsEarnedType(58) // survey
+	PointsEarnedTypeBonusVerifyReferrerWatchedVideo           = PointsEarnedType(59) // "bonus verify referer watched video"
+	PointsEarnedTypeBonusReferFriendsWithinWeeklyPeriod       = PointsEarnedType(60) // "bonus refer x friends within the week period"
 )
 
 type WithdrawalStatus int16

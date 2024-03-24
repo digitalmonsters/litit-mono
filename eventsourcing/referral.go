@@ -2,6 +2,7 @@ package eventsourcing
 
 import (
 	"fmt"
+
 	"github.com/digitalmonsters/go-common/common"
 )
 
@@ -19,4 +20,13 @@ type ReferrerVerifiedEvent struct {
 
 func (c ReferrerVerifiedEvent) GetPublishKey() string {
 	return fmt.Sprintf("%v_%v", c.UserId, c.ReferrerId)
+}
+
+type UserWatchedPublisher struct {
+	UserId int64 `json:"user_id"`
+	Period int64 `json:"period"`
+}
+
+func (t UserWatchedPublisher) GetPublishKey() string {
+	return fmt.Sprintf("%v", t.UserId)
 }

@@ -2,9 +2,10 @@ package eventsourcing
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type UserBalanceChangeEvent struct {
@@ -79,5 +80,26 @@ type UserPaidSession struct {
 }
 
 func (t UserPaidSession) GetPublishKey() string {
+	return fmt.Sprintf("%v", t.UserId)
+}
+
+type UserSessionStats struct {
+	PartitionKey int   `json:"partition_key"`
+	UserId       int64 `json:"user_id"`
+	PaidSessions int64 `json:"paid_sessions"`
+}
+
+func (t UserSessionStats) GetPublishKey() string {
+	return fmt.Sprintf("%v", t.UserId)
+}
+
+type UserWatchedSessionStats struct {
+	UserId      int64     `json:"user_id"`
+	ReferrerId  int64     `json:"referrer_id"`
+	Period      int       `json:"period"`
+	UpdatedTime time.Time `json:"updated_time"`
+}
+
+func (t UserWatchedSessionStats) GetPublishKey() string {
 	return fmt.Sprintf("%v", t.UserId)
 }
