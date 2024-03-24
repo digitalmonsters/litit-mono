@@ -5,10 +5,6 @@ on:
     branches:
       - master
       - staging
-  pull_request:
-    branches:
-      - master
-      - staging
 
 env:
   ACR_LOGIN_SERVER: lititacr.azurecr.io
