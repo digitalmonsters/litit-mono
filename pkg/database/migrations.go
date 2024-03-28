@@ -311,5 +311,22 @@ INSERT INTO configs (key, value, type, description, admin_only, created_at, upda
 INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('AUTH_FEATURE_ONE_ACCOUNT_PER_DEVICE_ENABLED', 'false', 'bool', 'One Account Per Device', false, '2022-05-16 07:31:16.696989 +00:00', '2022-05-16 07:31:16.696989 +00:00', 'auth', '06.05.22', null);`)
 			},
 		},
+		{
+			ID: "seed_the_config_20240318",
+			Migrate: func(db *gorm.DB) error {
+				if !boilerplate.InLocal() {
+					log.Warn().Msg("skipping seeding the config table in non-local environment")
+					return nil
+				}
+
+				return boilerplate_testing.ExecutePostgresSql(db, `
+UPDATE configs SET value = 5 where key = 'POINT_BONUS_REFERRER_VERIFY';
+INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('TOTAL_HOURS_REFERRED_WATCH_VIDEO', '10', 'integer', 'total hours referred watch video', false, '2024-03-18 14:04:16.694834 +00:00', '2024-03-18 14:04:16.694834 +00:00', 'tokenomics', '18.03.24', null);
+INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('POINTS_BONUS_REFERRED_WATCH_VIDEO', '1000', 'decimal', 'points bonus referred watch video', false, '2024-03-18 14:04:16.694834 +00:00', '2024-03-18 14:04:16.694834 +00:00', 'tokenomics', '18.03.24', null);
+INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('MAX_POINTS_BONUS_REFERRED_WATCH_VIDEO', '5000', 'decimal', 'max points bonus referred watch video', false, '2024-03-18 14:04:16.694834 +00:00', '2024-03-18 14:04:16.694834 +00:00', 'tokenomics', '18.03.24', null);
+INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('TOTAL_FRIENDS_REFERRED_IN_7_DAYS', '100', 'integer', 'total friends referred in 7 days', false, '2024-03-18 14:04:16.694834 +00:00', '2024-03-18 14:04:16.694834 +00:00', 'tokenomics', '18.03.24', null);
+INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('POINTS_BONUS_FRIENDS_REFERRED_IN_7_DAYS', '20000', 'decimal', 'points bonus friends referred in 7 days', false, '2024-03-18 14:04:16.694834 +00:00', '2024-03-18 14:04:16.694834 +00:00', 'tokenomics', '18.03.24', null);`)
+			},
+		},
 	}
 }
