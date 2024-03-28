@@ -29,7 +29,7 @@
       "ApiUrl": "http://localhost:5009"
     },
     "Auth": {
-      "ApiUrl": "http://localhost:5011"
+      "ApiUrl": "http://localhost:5039"
     },
     "Likes": {
       "ApiUrl": "http://localhost:5013"
