@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
+
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -23,14 +28,14 @@ jobs:
       - name: Authenticate with Azure ACR
         uses: azure/docker-login@v1
         with:
-          login-server: lititstaging.azurecr.io
+          login-server: lititacr.azurecr.io
           username: ${{ secrets.ACR_USERNAME_STAGING }}
           password: ${{ secrets.ACR_PASSWORD_STAGING }}
 
       - name: Build and push Docker image
         run: |
-          docker build -t lititstaging.azurecr.io/ads-manager:v1 .
-          docker push lititstaging.azurecr.io/ads-manager:v1
+          docker build -t lititacr.azurecr.io/ads-manager:stg .
+          docker push lititacr.azurecr.io/ads-manager:stg
 
       - name: Update version tag using API
         run: |
