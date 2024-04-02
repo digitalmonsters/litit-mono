@@ -24,6 +24,9 @@ COPY . .
 ADD priv/.netrc /root/.netrc
 ENV GOPRIVATE=github.com/digitalmonsters/*
 
+# Download the specific module and tidy up the go.mod and go.sum files
+RUN go mod tidy
+
 COPY ./config.json /go/bin/
 
 # Build the binary.
