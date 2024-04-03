@@ -17,35 +17,11 @@
     "Password": "7V4DNDqn5t"
   },
   "Wrappers": {
-    "NotificationGateway": {
-      "ApiUrl": "",
-      "TimeoutSec": 10,
-      "PushPublisher": {
-        "Hosts": "localhost",
-        "Tls": false,
-        "KafkaAuth": {},
-        "Topic": {
-          "Name": "dev.notifications.push_messages",
-          "NumPartitions": 12,
-          "ReplicationFactor": 2
-        }
-      },
-      "EmailPublisher": {
-        "Hosts": "localhost",
-        "Tls": false,
-        "KafkaAuth": {},
-        "Topic": {
-          "Name": "dev.notifications.email",
-          "NumPartitions": 12,
-          "ReplicationFactor": 2
-        }
-      }
-    },
     "NotificationHandler": {
       "ApiUrl": "https://notification-handler.api.litit1.com",
       "TimeoutSec": 10,
       "PushPublisher": {
-        "Hosts": "localhost",
+        "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092",
         "Tls": false,
         "KafkaAuth": {},
         "Topic": {
@@ -55,7 +31,7 @@
         }
       },
       "EmailPublisher": {
-        "Hosts": "localhost",
+        "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092",
         "Tls": false,
         "KafkaAuth": {},
         "Topic": {
@@ -127,7 +103,7 @@
     "Concurrency": 15
   },
   "ViewContentListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
