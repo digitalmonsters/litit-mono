@@ -16,97 +16,76 @@
     "User": "postgres",
     "Password": "qwerty"
   },
-  "Wrappers": {"NotificationHandler": {
-      "PushPublisher": {
-        "Hosts": "localhost",
-        "Tls": false,
-        "KafkaAuth": {},
-        "Topic": {
-          "Name": "local.notifications.handler_sending_queue",
-          "NumPartitions": 1,
-          "ReplicationFactor": 1
-        }
-      },
-      "EmailPublisher": {
-        "Hosts": "localhost",
-        "Tls": false,
-        "KafkaAuth": {},
-        "Topic": {
-          "Name": "local.notifications.handler_sending_queue_custom",
-          "NumPartitions": 1,
-          "ReplicationFactor": 1
-        }
-      }
-    },
+  "Wrappers": {
     "Content": {
-      "ApiUrl": "http://localhost:5003"
+      "ApiUrl": ""
     },
     "Configurator": {
-      "ApiUrl": "http://localhost:5001"
+      "ApiUrl": "https://configurator.api.litit1.com"
     },
     "UserInfo": {
-      "ApiUrl": "http://localhost:5005"
+      "ApiUrl": ""
     },
     "UserBlock": {
-      "ApiUrl": "http://localhost:5007"
+      "ApiUrl": ""
     },
     "AuthGo": {
-      "ApiUrl": "http://localhost:5009"
+      "ApiUrl": ""
     },
     "Auth": {
-      "ApiUrl": "http://localhost:5011"
+      "ApiUrl": ""
     },
     "Likes": {
-      "ApiUrl": "http://localhost:5013"
+      "ApiUrl": ""
     },
     "Follows": {
-      "ApiUrl": "http://localhost:5015"
+      "ApiUrl": ""
     },
     "Views": {
-      "ApiUrl": "http://localhost:5017"
+      "ApiUrl": ""
     },
     "UserCategories": {
-      "ApiUrl": "http://localhost:5019"
+      "ApiUrl": ""
     },
     "UserHashtags": {
-      "ApiUrl": "http://localhost:5021"
+      "ApiUrl": ""
     },
     "UserLikes": {
-      "ApiUrl": "http://localhost:5023"
+      "ApiUrl": ""
     },
     "Categories": {
-      "ApiUrl": "http://localhost:5025"
+      "ApiUrl": ""
     },
     "Hashtags": {
-      "ApiUrl": "http://localhost:5027"
+      "ApiUrl": ""
     },
     "PointsCount": {
-      "ApiUrl": "http://localhost:5029"
+      "ApiUrl": ""
     },
     "BaseApi": {
-      "ApiUrl": "http://localhost:5031"
+      "ApiUrl": ""
     },
     "UserGo": {
-      "ApiUrl": "http://localhost:5033"
+      "ApiUrl": ""
     }
   },
   "Jobber": {
-    "DefaultQueue": "local_ads_manager_tasks",
+    "DefaultQueue": "local_machinery_tasks",
     "ResultExpire": 3600,
-    "Broker": "rediss://localhost:6379/6",
-    "ResultBackend": "rediss://localhost:6379/7",
-    "Lock": "redis://localhost:6379",
+    "Broker": "",
+    "ResultBackend": "",
+    "Lock": "",
     "Concurrency": 40,
-    "Tls": false
+    "Tls": true
   },
   "ViewContentListener": {
-    "Hosts": "localhost",
+    "Hosts": "",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
     "MaxDuration": 2,
     "MaxBatchSize": 1000,
-    "GroupId": "local_views_ads_manager_view_content_listener",
-    "Topic": "local.views.view_content"
+    "GroupId": "local_ads_view_content_listener",
+    "Topic": "local.view_content"
   }
 }
