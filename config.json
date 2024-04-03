@@ -3,20 +3,68 @@
   "PrivateHttpPort": 5046,
   "CdnBase": "",
   "MasterDb": {
-    "Host": "localhost",
+    "Host": "litit-staging.postgres.database.azure.com",
     "Port": 5432,
-    "Db": "ads_manager",
-    "User": "postgres",
-    "Password": "qwerty"
+    "Db": "users",
+    "User": "litit",
+    "Password": "7V4DNDqn5t"
   },
   "ReadonlyDb": {
-    "Host": "localhost",
+    "Host": "litit-staging.postgres.database.azure.com",
     "Port": 5432,
-    "Db": "ads_manager",
-    "User": "postgres",
-    "Password": "qwerty"
+    "Db": "users",
+    "User": "litit",
+    "Password": "7V4DNDqn5t"
   },
   "Wrappers": {
+    "NotificationGateway": {
+      "ApiUrl": "",
+      "TimeoutSec": 10,
+      "PushPublisher": {
+        "Hosts": "localhost",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "dev.notifications.push_messages",
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
+        }
+      },
+      "EmailPublisher": {
+        "Hosts": "localhost",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "dev.notifications.email",
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
+        }
+      }
+    },
+    "NotificationHandler": {
+      "ApiUrl": "",
+      "TimeoutSec": 10,
+      "PushPublisher": {
+        "Hosts": "localhost",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "dev.notifications.handler_sending_queue",
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
+        }
+      },
+      "EmailPublisher": {
+        "Hosts": "localhost",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "dev.notifications.handler_sending_queue_custom",
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
+        }
+      }
+    },
     "Content": {
       "ApiUrl": ""
     },
@@ -70,22 +118,22 @@
     }
   },
   "Jobber": {
-    "DefaultQueue": "local_machinery_tasks",
+    "Tls": false,
+    "DefaultQueue": "local_content_tasks",
     "ResultExpire": 3600,
-    "Broker": "",
-    "ResultBackend": "",
-    "Lock": "",
-    "Concurrency": 40,
-    "Tls": true
+    "Broker": "redis://localhost:6379",
+    "ResultBackend": "redis://localhost:6379",
+    "Lock": "redis://localhost:6379",
+    "Concurrency": 15
   },
   "ViewContentListener": {
-    "Hosts": "",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
     "MaxDuration": 2,
     "MaxBatchSize": 1000,
-    "GroupId": "local_ads_view_content_listener",
-    "Topic": "local.view_content"
+    "GroupId": "local_views_ads_manager_view_content_listener",
+    "Topic": "local.views.view_content"
   }
 }
