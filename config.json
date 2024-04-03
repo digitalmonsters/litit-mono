@@ -42,7 +42,7 @@
       }
     },
     "NotificationHandler": {
-      "ApiUrl": "",
+      "ApiUrl": "https://notification-handler.api.litit1.com",
       "TimeoutSec": 10,
       "PushPublisher": {
         "Hosts": "localhost",
