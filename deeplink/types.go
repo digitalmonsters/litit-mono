@@ -4,6 +4,7 @@ import "github.com/digitalmonsters/go-common/eventsourcing"
 
 type IService interface {
 	GetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string) (string, error)
+	GetPreviewShareLink(contentId int64, contentType eventsourcing.ContentType, uri string, userId int64, referralCode string) (string, error)
 }
 
 type firebaseCreateDeeplinkRequest struct {

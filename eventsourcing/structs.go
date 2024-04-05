@@ -92,12 +92,13 @@ func (l FollowEvent) GetPublishKey() string {
 type ContentType int
 
 const (
-	ContentTypeVideo = ContentType(0)
-	ContentTypeSpot  = ContentType(1)
-	ContentTypeBio   = ContentType(2)
-	ContentTypeMusic = ContentType(3)
-	ContentTypeDogs  = ContentType(4)
-	ContentTypePets  = ContentType(5)
+	ContentTypeVideo   = ContentType(0)
+	ContentTypeSpot    = ContentType(1)
+	ContentTypeBio     = ContentType(2)
+	ContentTypeMusic   = ContentType(3)
+	ContentTypeDogs    = ContentType(4)
+	ContentTypePets    = ContentType(5)
+	ContentTypePreview = ContentType(6)
 )
 
 type UploadStatus int
