@@ -14,7 +14,7 @@ import (
 )
 
 type IBscGatewayWrapper interface {
-	CreateSignature(amount string, withdrawalTransactionId, userId, adminId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureResponseData]
+	CreateSignature(from, amount string, withdrawalTransactionId, userId, adminId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureResponseData]
 	GetSignatures(withdrawalIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SignatureResponseData]
 }
 
@@ -48,11 +48,13 @@ func NewBscGatewayWrapper(config boilerplate.WrapperConfig) IBscGatewayWrapper {
 	}
 }
 
-func (w BscGatewayWrapper) CreateSignature(amount string,
+func (w BscGatewayWrapper) CreateSignature(
+	from, amount string,
 	withdrawalTransactionId, userId, adminId int64,
 	ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureResponseData] {
 
-	return wrappers.ExecuteRpcRequestAsync[SignatureResponseData](w.baseWrapper, w.apiUrl, "CreateSignature", SignatureRequest{
+	return wrappers.ExecuteRpcRequestAsync[SignatureResponseData](w.baseWrapper, w.apiUrl, "CreateSignature", CreateSignatureRequest{
+		From:                    from,
 		Amount:                  amount,
 		WithdrawalTransactionId: withdrawalTransactionId,
 		UserId:                  userId,

@@ -1,18 +1,20 @@
 package bsc_gateway
 
 type SignatureResponseData struct {
-	TransferredAmount string `json:"transferred_amount"`
-	Sender            string `json:"sender"`
-	ATA               string `json:"ata"`
-	Recipient         string `json:"recipient"`
-	FundingSpent      string `json:"funding_spent"`
-	Signature         string `json:"signature"`
-}
-
-type SignatureRequest struct {
-	WithdrawalTransactionId int64  `json:"withdrawal_transaction_id"`
 	From                    string `json:"from"`
 	Amount                  string `json:"amount"`
+	Signature               string `json:"signature"`
+	CommunityPoolSMC        string `json:"community_pool_smc"`
+	WithdrawalTransactionId int64  `json:"withdrawal_transaction_id"`
+	UserId                  int64  `json:"user_id"`
+	AdminId                 int64  `json:"admin_id"`
+	ExpiredTime             int64  `json:"expired_time"`
+}
+
+type CreateSignatureRequest struct {
+	From                    string `json:"from"`
+	Amount                  string `json:"amount"`
+	WithdrawalTransactionId int64  `json:"withdrawal_transaction_id"`
 	UserId                  int64  `json:"user_id"`
 	AdminId                 int64  `json:"admin_id"`
 }
