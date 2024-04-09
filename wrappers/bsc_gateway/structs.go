@@ -8,7 +8,7 @@ type SignatureResponseData struct {
 	WithdrawalTransactionId int64  `json:"withdrawal_transaction_id"`
 	UserId                  int64  `json:"user_id"`
 	AdminId                 int64  `json:"admin_id"`
-	ExpiredTime             int64  `json:"expired_time"`
+	ExpiredAt               int64  `json:"expired_at"`
 }
 
 type CreateSignatureRequest struct {
