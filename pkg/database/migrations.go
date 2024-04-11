@@ -389,7 +389,7 @@ INSERT INTO configs (key, value, type, description, admin_only, created_at, upda
 				}
 
 				return boilerplate_testing.ExecutePostgresSql(db, `
-				INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('WITHDRAWAL_RATE', '0.2', 'decimal', 'withdrawal rate', false, '2024-03-20 07:31:16.696989 +00:00', '2024-03-20 07:31:16.696989 +00:00', 'tokenomics', '20.03.24', null);`)
+				INSERT INTO configs (key, value, type, description, admin_only, created_at, updated_at, category, release_version, last_changed_by_id) VALUES ('WITHDRAWAL_RATE', '1', 'decimal', 'withdrawal rate', false, '2024-03-20 07:31:16.696989 +00:00', '2024-03-20 07:31:16.696989 +00:00', 'tokenomics', '20.03.24', null);`)
 			},
 		},
 		{
