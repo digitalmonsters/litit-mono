@@ -118,6 +118,8 @@ const (
 	PointsEarnedTypeSurvey                                    = PointsEarnedType(58) // survey
 	PointsEarnedTypeBonusVerifyReferrerWatchedVideo           = PointsEarnedType(59) // "bonus verify referer watched video"
 	PointsEarnedTypeBonusReferFriendsWithinWeeklyPeriod       = PointsEarnedType(60) // "bonus refer x friends within the week period"
+	PointsEarnedTypeUserDeductPointWeeklyLogin                = PointsEarnedType(61)
+	PointsEarnedTypeUserDeductPointWeeklySpendTime            = PointsEarnedType(62)
 )
 
 type WithdrawalStatus int16
