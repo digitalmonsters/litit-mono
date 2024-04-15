@@ -74,7 +74,7 @@ type Wrappers struct {
 	IndecentContentChecker WrapperConfig `json:"IndecentContentChecker"`
 	BaseApi                WrapperConfig `json:"BaseApi"`
 	GoTokenomics           WrapperConfig `json:"GoTokenomics"`
-	SolanaApiGate          WrapperConfig `json:"SolanaApiGate"`
+	SolanaApiGate          WrapperConfig `json:"SolanaApiGate"` // [DEPRECATED] not use anymore
 	AdminWs                WrapperConfig `json:"AdminWs"`
 	Comment                WrapperConfig `json:"Comment"`
 	TesseractOcrApi        WrapperConfig `json:"TesseractOcrApi"`
