@@ -92,14 +92,23 @@ func (l FollowEvent) GetPublishKey() string {
 type ContentType int
 
 const (
-	ContentTypeVideo   = ContentType(0)
-	ContentTypeSpot    = ContentType(1)
-	ContentTypeBio     = ContentType(2)
-	ContentTypeMusic   = ContentType(3)
-	ContentTypeDogs    = ContentType(4)
-	ContentTypePets    = ContentType(5)
-	ContentTypePreview = ContentType(6)
+	ContentTypeVideo    = ContentType(0)
+	ContentTypeSpot     = ContentType(1)
+	ContentTypeBio      = ContentType(2)
+	ContentTypeMusic    = ContentType(3)
+	ContentTypeDogs     = ContentType(4)
+	ContentTypePets     = ContentType(5)
+	ContentTypePreview  = ContentType(6)
+	ContentTypeDogsSpot = ContentType(7)
+	ContentTypeCatsSpot = ContentType(8)
 )
+
+func (c ContentType) IsPetProfileRequired(value ContentType) bool {
+	if value == ContentTypeDogsSpot || value == ContentTypeCatsSpot {
+		return true
+	}
+	return false
+}
 
 type UploadStatus int
 
