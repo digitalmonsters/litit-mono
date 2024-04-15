@@ -5,8 +5,10 @@ import (
 
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/translation"
+	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
+	"gorm.io/gorm"
 )
 
 type CreatorStatus int
@@ -136,6 +138,7 @@ type UserDetailRecord struct {
 	BioVideoId          null.Int             `json:"bio_video_id"`
 	ReferredById        null.Int             `json:"referred_by_id"`
 	Tier                int                  `json:"tier"`
+	PetsInfo            []Pet                `json:"pets_info"`
 }
 
 func (u UserDetailRecord) GetFirstAndLastNameWithPrivacy() (string, string) {
@@ -410,4 +413,57 @@ type FinalizeExportResponse struct {
 type SetUserSpotsUploadBanned struct {
 	Banned bool  `json:"banned"`
 	UserId int64 `json:"user_id"`
+}
+
+type Pet struct {
+	Id                 int64           `json:"id"`
+	UserID             int64           `json:"user_id"`
+	PetType            null.String     `json:"pet_type"`
+	AvatarKey          null.String     `json:"avatar_key"`
+	Name               null.String     `json:"name"`
+	Breed              null.String     `json:"breed"`
+	Gender             null.String     `json:"gender"`
+	BirthDate          null.Time       `json:"birth_date"`
+	Colors             pq.StringArray  `gorm:"type:string[]" json:"colors"`
+	Height             float32         `json:"height"`
+	HeightUnit         null.String     `json:"height_unit"`
+	Weight             float32         `json:"weight"`
+	WeightUnit         null.String     `json:"weight_unit"`
+	Description        string          `json:"description"`
+	Behaviors          pq.StringArray  `gorm:"type:string[]" json:"behaviors"`
+	Vaccines           pq.StringArray  `gorm:"type:string[]" json:"vaccines"`
+	Breader            null.String     `json:"breader"`
+	DoctorName         null.String     `json:"doctor_name"`
+	DoctorCountryCode  null.String     `json:"doctors_country_code"`
+	DoctorPhone        null.String     `json:"doctors_phone"`
+	RfID               null.String     `json:"rf_id"`
+	Following          int             `json:"following"`
+	Followers          int             `json:"followers"`
+	VideosCount        int             `json:"videos_count"`
+	BannedTill         null.Time       `json:"banned_till"`
+	BannedStartAt      null.Time       `json:"banned_start_at"`
+	BannedById         null.Int        `json:"banned_by_id"`
+	Deleted            bool            `json:"deleted"`
+	Uploads            int             `json:"uploads"`
+	Views              int             `json:"views"`
+	Shares             int             `json:"shares"`
+	Likes              int             `json:"likes"`
+	Comments           int             `json:"comments"`
+	CreatorStatus      CreatorStatus   `json:"creator_status"`
+	AdDisabled         bool            `json:"ad_disabled"`
+	UploadBanned       bool            `json:"upload_banned"`
+	CreatedAt          time.Time       `json:"created_at"`
+	UpdatedAt          time.Time       `json:"updated_at"`
+	DeletedAt          gorm.DeletedAt  `json:"deleted_at"`
+	Verified           bool            `json:"verified"`
+	TotalPoints        decimal.Decimal `json:"total_points"`
+	CurrentPoints      decimal.Decimal `json:"current_points"`
+	CollectedPoints    decimal.Decimal `json:"collected_points"`
+	VaultPoints        decimal.Decimal `json:"vault_points"`
+	AllTimeVaultPoints decimal.Decimal `json:"all_time_vault_points"`
+	LikeReactions      int             `json:"like_reactions"`
+	DislikeReactions   int             `json:"dislike_reactions"`
+	LoveReactions      int             `json:"love_reactions"`
+	UploadBanExpiresAt null.Time       `json:"upload_ban_expires_at"`
+	PetTypeID          int             `json:"pet_type_id"`
 }
