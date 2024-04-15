@@ -110,13 +110,6 @@ func (c ContentType) IsPetProfileRequired(value ContentType) bool {
 	return false
 }
 
-func (c ContentType) IsPetSpotFeed(value ContentType) bool {
-	if value == ContentTypeDogsSpot || value == ContentTypeCatsSpot {
-		return true
-	}
-	return false
-}
-
 type UploadStatus int
 
 const (
