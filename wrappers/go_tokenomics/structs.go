@@ -118,6 +118,8 @@ const (
 	PointsEarnedTypeSurvey                                    = PointsEarnedType(58) // survey
 	PointsEarnedTypeBonusVerifyReferrerWatchedVideo           = PointsEarnedType(59) // "bonus verify referer watched video"
 	PointsEarnedTypeBonusReferFriendsWithinWeeklyPeriod       = PointsEarnedType(60) // "bonus refer x friends within the week period"
+	PointsEarnedTypeUserDeductPointWeeklyLogin                = PointsEarnedType(61)
+	PointsEarnedTypeUserDeductPointWeeklySpendTime            = PointsEarnedType(62)
 )
 
 type WithdrawalStatus int16
@@ -126,11 +128,14 @@ const (
 	WithdrawalStatusNone                         WithdrawalStatus = 0
 	WithdrawalStatusPending                      WithdrawalStatus = 1
 	WithdrawalStatusApproved                     WithdrawalStatus = 2
-	WithdrawalStatusRejected                     WithdrawalStatus = 3 // final
-	WithdrawalStatusFailed                       WithdrawalStatus = 4 // final
-	WithdrawalStatusPaymentPending               WithdrawalStatus = 5
-	WithdrawalStatusPaid                         WithdrawalStatus = 6 // final
-	WithdrawalStatusPaymentInvestigationRequired WithdrawalStatus = 7
+	WithdrawalStatusRejected                     WithdrawalStatus = 3
+	WithdrawalStatusFailed                       WithdrawalStatus = 4
+	WithdrawalStatusPaymentPending               WithdrawalStatus = 5 // [DEPRECATED] not use anymore
+	WithdrawalStatusPaid                         WithdrawalStatus = 6 // [DEPRECATED] not use anymore
+	WithdrawalStatusPaymentInvestigationRequired WithdrawalStatus = 7 // [DEPRECATED] not use anymore
+	WithdrawalStatusInitialClaim                 WithdrawalStatus = 8
+	WithdrawalStatusExpired                      WithdrawalStatus = 9
+	WithdrawalStatusClaimed                      WithdrawalStatus = 10
 )
 
 func (s WithdrawalStatus) ToString() string {
@@ -149,6 +154,12 @@ func (s WithdrawalStatus) ToString() string {
 		return "paid"
 	case WithdrawalStatusPaymentInvestigationRequired:
 		return "payment investigation required"
+	case WithdrawalStatusInitialClaim:
+		return "initial claim"
+	case WithdrawalStatusExpired:
+		return "expired"
+	case WithdrawalStatusClaimed:
+		return "claimed"
 	default:
 		return fmt.Sprint(s)
 	}

@@ -88,3 +88,40 @@ type SocialSubsEvent struct {
 func (e SocialSubsEvent) GetPublishKey() string {
 	return fmt.Sprint(e.UserId)
 }
+
+type TrackingTierTaskEvent struct {
+	Users []struct {
+		Id   int64
+		Tier int
+	}
+}
+
+func (e TrackingTierTaskEvent) GetPublishKey() string {
+	if len(e.Users) > 0 {
+		return fmt.Sprint(e.Users[0].Id)
+	}
+	return ""
+}
+
+type DeductedPointEvent struct {
+	UserId             int64     `json:"user_id"`
+	Tier               int       `json:"tier"`
+	ActualAction       int64     `json:"actual_action"`
+	ActionRequirement  int       `json:"action_requirement"`
+	PercentDeduction   int       `json:"percent_deduction"`
+	BeginningOfTheWeek time.Time `json:"beginning_of_the_week"`
+	EndOfTheWeek       time.Time `json:"end_of_the_week"`
+}
+
+func (e DeductedPointEvent) GetPublishKey() string {
+	return fmt.Sprint(e.UserId)
+}
+
+type UserUpdatedTierEvent struct {
+	UserId int64 `json:"user_id"`
+	Tier   int   `json:"tier"`
+}
+
+func (e UserUpdatedTierEvent) GetPublishKey() string {
+	return fmt.Sprint(e.UserId)
+}
