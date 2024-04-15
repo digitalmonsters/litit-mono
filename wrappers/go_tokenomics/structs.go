@@ -133,6 +133,10 @@ const (
 	WithdrawalStatusPaymentPending               WithdrawalStatus = 5
 	WithdrawalStatusPaid                         WithdrawalStatus = 6 // final
 	WithdrawalStatusPaymentInvestigationRequired WithdrawalStatus = 7
+
+	WithdrawalStatusInitialClaim WithdrawalStatus = 8
+	WithdrawalStatusExpired      WithdrawalStatus = 9
+	WithdrawalStatusClaimed      WithdrawalStatus = 10
 )
 
 func (s WithdrawalStatus) ToString() string {
@@ -151,6 +155,12 @@ func (s WithdrawalStatus) ToString() string {
 		return "paid"
 	case WithdrawalStatusPaymentInvestigationRequired:
 		return "payment investigation required"
+	case WithdrawalStatusInitialClaim:
+		return "initial claim"
+	case WithdrawalStatusExpired:
+		return "expired"
+	case WithdrawalStatusClaimed:
+		return "claimed"
 	default:
 		return fmt.Sprint(s)
 	}

@@ -10,12 +10,13 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 	"go.elastic.co/apm"
 )
 
 type IBscGatewayWrapper interface {
-	CreateSignature(from, amount string, withdrawalTransactionId, userId, adminId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureResponseData]
-	GetSignatures(withdrawalIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SignatureResponseData]
+	CreateSignature(from string, amount decimal.Decimal, withdrawalTransactionId, userId, adminId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureResponseData]
+	GetSignatureStatus(withdrawalId int64, signature string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureStatusResponseData]
 }
 
 type BscGatewayWrapper struct {
@@ -49,7 +50,7 @@ func NewBscGatewayWrapper(config boilerplate.WrapperConfig) IBscGatewayWrapper {
 }
 
 func (w BscGatewayWrapper) CreateSignature(
-	from, amount string,
+	from string, amount decimal.Decimal,
 	withdrawalTransactionId, userId, adminId int64,
 	ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureResponseData] {
 
@@ -62,7 +63,7 @@ func (w BscGatewayWrapper) CreateSignature(
 	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w BscGatewayWrapper) GetSignatures(withdrawalIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SignatureResponseData] {
-	return wrappers.ExecuteRpcRequestAsync[map[int64]SignatureResponseData](w.baseWrapper, w.apiUrl, "GetSignatures",
-		GetSignaturesRequest{WithdrawalIds: withdrawalIds}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+func (w BscGatewayWrapper) GetSignatureStatus(withdrawalId int64, signature string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SignatureStatusResponseData] {
+	return wrappers.ExecuteRpcRequestAsync[SignatureStatusResponseData](w.baseWrapper, w.apiUrl, "GetSignatureStatus",
+		GetSignatureStatusRequest{withdrawalId, signature}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
