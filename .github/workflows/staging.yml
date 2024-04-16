@@ -1,4 +1,4 @@
-name: CI/CD for Staging
+name: staging cicd
 
 on:
   push:

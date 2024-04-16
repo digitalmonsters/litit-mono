@@ -1,48 +1,36 @@
 ############################
-# STEP 1: Build the executable binary
+# STEP 1 build executable binary
 ############################
 FROM golang:1.18-buster AS builder
 
-# Create a non-root user for running the application
+# Create appuser.
 ENV USER=appuser
-ENV UID=10001
+ENV UID=10001 
 
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
+RUN adduser \    
+    --disabled-password \    
+    --gecos "" \    
+    --home "/nonexistent" \    
+    --shell "/sbin/nologin" \    
+    --no-create-home \    
+    --uid "${UID}" \    
     "${USER}"
 
-# Configure the working directory and copy files
+# Configure work dir and copy files
 WORKDIR /app
 COPY . .
 
+# Configure private module access
 ADD priv/.netrc /root/.netrc
 ENV GOPRIVATE=github.com/digitalmonsters/*
 
+# Before building, tidy up the go.mod and go.sum files
+RUN go mod tidy -e
 
-# Build the binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o /app/main cmd/main.go
+COPY ./config.json /go/bin/
 
-############################
-# STEP 2: Create the final lightweight image
-############################
-FROM scratch
+# Build the binary.
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags='-w -s -extldflags "-static"' -a -o /go/bin/main cmd/main.go
 
-# Copy the binary from the builder stage
-COPY --from=builder /app/main /app/main
-
-# Copy the config file
-COPY ./config.json /app/config.json
-
-# Use the non-root user
-USER ${USER}
-
-# Set the working directory
-WORKDIR /app
-
-# Run the binary
-CMD ["/app/main"]
+# Run the binary.
+CMD ["/go/bin/main"]
