@@ -131,7 +131,7 @@
     "MaxBytes": 10000000,
     "Tls": false,
     "GroupId": "dev_user_notification_handler_user_banned_listener",
-    "Topic": "dev.user.user"
+    "Topic": "dev.users.user"
   },
   "UserUpdateListener": {
     "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
@@ -139,7 +139,7 @@
     "MaxBytes": 10000000,
     "Tls": false,
     "GroupId": "dev_user_notification_handler_user_update_listener",
-    "Topic": "dev.user.user"
+    "Topic": "dev.users.user"
   },
   "Wrappers": {
     "NotificationGateway": {
