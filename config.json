@@ -167,28 +167,28 @@
       }
     },
     "Content": {
-      "ApiUrl": "http://localhost:5003"
+      "ApiUrl": "https://content.api.litit1.com"
     },
     "Configurator": {
-      "ApiUrl": "http://localhost:5001"
+      "ApiUrl": "https://configurator.api.litit1.com"
     },
     "UserInfo": {
-      "ApiUrl": "http://localhost:5005"
+      "ApiUrl": "https://user-info.api.litit1.com"
     },
     "UserBlock": {
       "ApiUrl": "http://localhost:5007"
     },
     "AuthGo": {
-      "ApiUrl": "http://localhost:5009"
+      "ApiUrl": "https://auth-go.api.litit1.com"
     },
     "Auth": {
-      "ApiUrl": "http://localhost:5011"
+      "ApiUrl": "https://auth.api.litit1.com"
     },
     "Likes": {
       "ApiUrl": "http://localhost:5013"
     },
     "Follows": {
-      "ApiUrl": "http://localhost:5015"
+      "ApiUrl": "https://follows.api.litit1.com"
     },
     "Views": {
       "ApiUrl": "http://localhost:5017"
@@ -212,10 +212,10 @@
       "ApiUrl": "http://localhost:5029"
     },
     "BaseApi": {
-      "ApiUrl": "http://localhost:5031"
+      "ApiUrl": "https://base-api.api.litit1.com"
     },
     "UserGo": {
-      "ApiUrl": "http://localhost:5033"
+      "ApiUrl": "https://user-go.api.litit1.com"
     }
   },
   "EmailLinks": {
