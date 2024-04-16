@@ -2,18 +2,18 @@
   "HttpPort": 5046,
   "PrivateHttpPort": 5047,
   "MasterDb": {
-    "Host": "localhost",
+    "Host": "litit-staging.postgres.database.azure.com",
     "Port": 5432,
     "Db": "notifications",
-    "User": "postgres",
-    "Password": "qwerty"
+    "User": "litit",
+    "Password": "7V4DNDqn5t"
   },
   "ReadonlyDb": {
-    "Host": "localhost",
+    "Host": "litit-staging.postgres.database.azure.com",
     "Port": 5432,
     "Db": "notifications",
-    "User": "postgres",
-    "Password": "qwerty"
+    "User": "litit",
+    "Password": "7V4DNDqn5t"
   },
   "Scylla": {
     "Hosts": "localhost:9042",
@@ -59,7 +59,7 @@
     "MaxBytes": 10000000,
     "Tls": false,
     "GroupId": "dev_comments_notification_handler_vote_listener",
-    "Topic": "dev.comments.comment_votes"
+    "Topic": "dev.comment_votes"
   },
   "LikeListener": {
     "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
