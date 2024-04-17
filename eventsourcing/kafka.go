@@ -172,7 +172,7 @@ func (s *KafkaEventPublisher) ensureTopicExists(topicConfig boilerplate.KafkaTop
 		res, err := client.CreateTopics(context.TODO(), &kafka.CreateTopicsRequest{
 			Addr: s.writer.Addr,
 			Topics: []kafka.TopicConfig{
-				kafka.TopicConfig{
+				{
 					Topic:             topicConfig.Name,
 					NumPartitions:     topicConfig.NumPartitions,
 					ReplicationFactor: topicConfig.ReplicationFactor,
