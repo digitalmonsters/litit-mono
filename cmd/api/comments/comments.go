@@ -2,6 +2,9 @@ package comments
 
 import (
 	"encoding/json"
+	"net/http"
+	"strings"
+
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/content_comments_counter"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/user_comments_counter"
@@ -15,14 +18,12 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"net/http"
-	"strings"
 )
 
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserGoWrapper, contentWrapper content.IContentWrapper,
 	apiDef map[string]swagger.ApiDescription, commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) error {
-
+	// Initiation
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
