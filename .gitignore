@@ -57,3 +57,6 @@ Session.vim
 kubeconfig*
 
 config.qwerty.json
+
+
+priv/
