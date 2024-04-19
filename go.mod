@@ -3,7 +3,7 @@ module github.com/digitalmonsters/configurator
 go 1.18
 
 require (
-	github.com/digitalmonsters/go-common v1.35.2
+	github.com/digitalmonsters/go-common v1.35.5
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
