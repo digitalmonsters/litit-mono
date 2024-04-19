@@ -137,6 +137,7 @@ type UserDetailRecord struct {
 	PetsUploadBanned    bool                 `json:"pets_upload_banned"`
 	BioVideoId          null.Int             `json:"bio_video_id"`
 	ReferredById        null.Int             `json:"referred_by_id"`
+	Tier                int                  `json:"tier"`
 	PetsInfo            []Pet                `json:"pets_info"`
 }
 
