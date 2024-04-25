@@ -2,6 +2,7 @@ package go_tokenomics
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/filters"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/shopspring/decimal"
@@ -18,6 +19,8 @@ type GoTokenomicsWrapperMock struct {
 	GetActivitiesInfoFn                   func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse]
 	CreateBotViewsFn                      func(botViews map[int64][]int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	WriteOffUserTokensForAdFn             func(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	GetReferralsProgressInfoFn            func(referrerId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralProgressInfoResponse]
+	GetMyReferredUsersWatchedVideoInfoFn  func(referrerId, page, count int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetMyReferredUsersWatchedVideoInfoResponse]
 }
 
 func (w *GoTokenomicsWrapperMock) GetUsersTokenomicsInfo(userIds []int64, filters []filters.Filter, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserTokenomicsInfo] {
@@ -52,6 +55,14 @@ func (w *GoTokenomicsWrapperMock) CreateBotViews(botViews map[int64][]int64, ctx
 
 func (w *GoTokenomicsWrapperMock) WriteOffUserTokensForAd(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
 	return w.WriteOffUserTokensForAdFn(userId, adCampaignId, amount, ctx, forceLog)
+}
+
+func (w *GoTokenomicsWrapperMock) GetReferralsProgressInfo(referrerId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralProgressInfoResponse] {
+	return w.GetReferralsProgressInfoFn(referrerId, apmTransaction, forceLog)
+}
+
+func (w *GoTokenomicsWrapperMock) GetMyReferredUsersWatchedVideoInfo(referrerId, page, count int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetMyReferredUsersWatchedVideoInfoResponse] {
+	return w.GetMyReferredUsersWatchedVideoInfoFn(referrerId, page, count, apmTransaction, forceLog)
 }
 
 func GetMock() IGoTokenomicsWrapper {
