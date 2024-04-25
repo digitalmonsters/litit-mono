@@ -2,6 +2,7 @@ package go_tokenomics
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/digitalmonsters/go-common/filters"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -186,10 +187,53 @@ type GetReferralInfoRequest struct {
 	ReferrerId  int64   `json:"referrer_id"`
 	ReferralIds []int64 `json:"referral_ids"`
 }
+
+type GetReferralProgressInfoRequest struct {
+	ReferrerId int64 `json:"referrer_id"`
+}
+
+type GetMyReferredUsersWatchedVideoInfoRequest struct {
+	ReferrerId int64 `json:"referrer_id"`
+	Page       int64 `json:"page"`
+	Count      int64 `json:"count"`
+}
+
 type GetReferralInfoResponse struct {
 	TotalCollectedPoints      decimal.Decimal           `json:"total_collected_points"`
 	Referrals                 map[int64]decimal.Decimal `json:"referrals"`
 	TotalGrandCollectedPoints decimal.Decimal           `json:"total_grand_collected_points"`
+}
+
+type ReferralInfo struct {
+	CollectedPoints  decimal.Decimal `json:"collected_points"`
+	CurrentReferrals int             `json:"current_referrals"`
+	TargetReferrals  int64           `json:"target_referrals"`
+	PointRate        decimal.Decimal `json:"point_rate"`
+	TargetRate       int             `json:"target_rate"`
+}
+type ReferralGroup struct {
+	Type     PointsEarnedType `json:"type"`
+	TypeName string           `json:"type_name"`
+	Data     ReferralInfo     `json:"data"`
+}
+type GetReferralProgressInfoResponse struct {
+	ListProgress []ReferralGroup `json:"list_progress"`
+}
+
+type GetMyReferredUsersWatchedVideoInfoResponse struct {
+	ReferredUsersWatchTime []ReferredUsersWatchTimeInfo `json:"referred_users_watch_time"`
+	TotalCount             int64                        `json:"total_count"`
+}
+
+type ReferredUsersWatchTimeInfo struct {
+	Id          int64     `json:"id"`
+	UserId      int64     `json:"user_id"`
+	ReferrerId  int64     `json:"referrer_id"`
+	Hours       int32     `json:"hours"`
+	IsBonus     bool      `json:"is_bonus"`
+	PointEarned int32     `json:"point_earned"`
+	TargetHours int32     `json:"target_hours"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type GetActivitiesInfoRequest struct {
