@@ -1,1 +1,2 @@
-truncate table push_notification_group_queue;
+truncate table notification;
+truncate table notification_relation;
