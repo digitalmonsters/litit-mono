@@ -14,6 +14,7 @@ type SignatureResponseData struct {
 	UserId                  int64  `json:"user_id"`
 	AdminId                 int64  `json:"admin_id"`
 	ExpiredAt               int64  `json:"expired_at"`
+	TnxHash                 string `json:"tnx_hash"`
 }
 
 type CreateSignatureRequest struct {
