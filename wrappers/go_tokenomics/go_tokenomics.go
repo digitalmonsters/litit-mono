@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -13,7 +15,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 	"go.elastic.co/apm"
-	"time"
 )
 
 type Wrapper struct {
@@ -33,6 +34,8 @@ type IGoTokenomicsWrapper interface {
 	GetActivitiesInfo(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetActivitiesInfoResponse]
 	CreateBotViews(botViews map[int64][]int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	WriteOffUserTokensForAd(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	GetReferralsProgressInfo(referrerId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralProgressInfoResponse]
+	GetMyReferredUsersWatchedVideoInfo(referrerId, page, count int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetMyReferredUsersWatchedVideoInfoResponse]
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
@@ -211,4 +214,18 @@ func (w *Wrapper) WriteOffUserTokensForAd(userId int64, adCampaignId int64, amou
 		AdCampaignId: adCampaignId,
 		Amount:       amount,
 	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w *Wrapper) GetReferralsProgressInfo(referrerId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralProgressInfoResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetReferralProgressInfoResponse](w.baseWrapper, w.apiUrl, "GetReferralsProgressInfo", GetReferralProgressInfoRequest{
+		ReferrerId: referrerId,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w *Wrapper) GetMyReferredUsersWatchedVideoInfo(referrerId, page, count int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetMyReferredUsersWatchedVideoInfoResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetMyReferredUsersWatchedVideoInfoResponse](w.baseWrapper, w.apiUrl, "GetMyReferredUsersWatchedVideoInfo", GetMyReferredUsersWatchedVideoInfoRequest{
+		ReferrerId: referrerId,
+		Count:      count,
+		Page:       page,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }
