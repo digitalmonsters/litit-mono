@@ -26,11 +26,11 @@
     "MaxPreparedStmts": 3000
   },
   "KafkaWriter": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "Tls": false
   },
   "CreatorsListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -38,7 +38,7 @@
     "Topic": "dev.users.creators"
   },
   "SendingQueueListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -46,7 +46,7 @@
     "Topic": "dev.notifications.handler_sending_queue"
   },
   "CommentListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -54,7 +54,7 @@
     "Topic": "dev.comments"
   },
   "VoteListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -62,7 +62,7 @@
     "Topic": "dev.comment_votes"
   },
   "LikeListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -70,7 +70,7 @@
     "Topic": "dev.likes.likes"
   },
   "ContentListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -78,7 +78,7 @@
     "Topic": "dev.content.content"
   },
   "KysStatusListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -86,7 +86,7 @@
     "Topic": "dev.users.user"
   },
   "FollowListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -94,7 +94,7 @@
     "Topic": "dev.follows.follows"
   },
   "TokenomicsNotificationListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -102,7 +102,7 @@
     "Topic": "dev.notifications.notification_created"
   },
   "EmailNotificationListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -110,7 +110,7 @@
     "Topic": "dev.notifications.notification_created"
   },
   "PushAdminMessageListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -118,7 +118,7 @@
     "Topic": "dev.notifications.push_admin_messages"
   },
   "UserDeleteListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -126,7 +126,7 @@
     "Topic": "dev.users.user"
   },
   "UserBannedListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -134,7 +134,7 @@
     "Topic": "dev.users.user"
   },
   "UserUpdateListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -156,7 +156,7 @@
         }
       },
       "EmailPublisher": {
-        "Hosts": "localhost",
+        "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
         "Tls": false,
         "KafkaAuth": {},
         "Topic": {
@@ -242,7 +242,7 @@
     "Tls": false
   },
   "MusicCreatorListener": {
-    "Hosts": "localhost",
+    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
     "MaxBytes": 1000000,
     "Tls": false,
