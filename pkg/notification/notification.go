@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
+	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/database/scylla"
@@ -375,4 +376,12 @@ func GetNotificationsReadCount(req GetNotificationsReadCountRequest, ctx context
 	}
 
 	return notificationsReadCountMap, nil
+}
+
+func DisableUnregisteredTokens(req notification_handler.DisableUnregisteredTokensRequest, db *gorm.DB) ([]string, error) {
+	if err := db.Exec(`delete from "devices" where "pushToken" in ?`, req.Tokens).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return req.Tokens, nil
 }
