@@ -2,18 +2,18 @@
   "HttpPort": 5046,
   "PrivateHttpPort": 5047,
   "MasterDb": {
-    "Host": "litit-staging.postgres.database.azure.com",
+    "Host": "localhost",
     "Port": 5432,
     "Db": "notifications",
-    "User": "litit",
-    "Password": "7V4DNDqn5t"
+    "User": "postgres",
+    "Password": "qwerty"
   },
   "ReadonlyDb": {
-    "Host": "litit-staging.postgres.database.azure.com",
+    "Host": "localhost",
     "Port": 5432,
     "Db": "notifications",
-    "User": "litit",
-    "Password": "7V4DNDqn5t"
+    "User": "postgres",
+    "Password": "qwerty"
   },
   "Scylla": {
     "Hosts": "localhost:9042",
@@ -26,11 +26,11 @@
     "MaxPreparedStmts": 3000
   },
   "KafkaWriter": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "Tls": false
   },
   "CreatorsListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -38,7 +38,7 @@
     "Topic": "dev.users.creators"
   },
   "SendingQueueListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -46,7 +46,7 @@
     "Topic": "dev.notifications.handler_sending_queue"
   },
   "CommentListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -54,7 +54,7 @@
     "Topic": "dev.comments"
   },
   "VoteListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -62,7 +62,7 @@
     "Topic": "dev.comment_votes"
   },
   "LikeListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -70,7 +70,7 @@
     "Topic": "dev.likes.likes"
   },
   "ContentListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -78,7 +78,7 @@
     "Topic": "dev.content.content"
   },
   "KysStatusListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -86,7 +86,7 @@
     "Topic": "dev.users.user"
   },
   "FollowListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -94,7 +94,7 @@
     "Topic": "dev.follows.follows"
   },
   "TokenomicsNotificationListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -102,7 +102,7 @@
     "Topic": "dev.notifications.notification_created"
   },
   "EmailNotificationListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -110,7 +110,7 @@
     "Topic": "dev.notifications.notification_created"
   },
   "PushAdminMessageListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -118,7 +118,7 @@
     "Topic": "dev.notifications.push_admin_messages"
   },
   "UserDeleteListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -126,7 +126,7 @@
     "Topic": "dev.users.user"
   },
   "UserBannedListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -134,7 +134,7 @@
     "Topic": "dev.users.user"
   },
   "UserUpdateListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 10000000,
     "Tls": false,
@@ -156,7 +156,7 @@
         }
       },
       "EmailPublisher": {
-        "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+        "Hosts": "localhost",
         "Tls": false,
         "KafkaAuth": {},
         "Topic": {
@@ -242,7 +242,7 @@
     "Tls": false
   },
   "MusicCreatorListener": {
-    "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+    "Hosts": "localhost",
     "MinBytes": 100,
     "MaxBytes": 1000000,
     "Tls": false,
