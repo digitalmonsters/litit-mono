@@ -219,8 +219,5 @@ func main() {
 		func() error {
 			return userUpdateListener.Close()
 		},
-		func() error {
-			return musicCreatorsListener.Close()
-		},
 	})
 }
