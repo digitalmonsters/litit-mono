@@ -37,6 +37,14 @@
     "GroupId": "dev_users_notification_handler_creators_listener",
     "Topic": "dev.users.creators"
   },
+  "MusicCreatorsListener": {
+    "Hosts": "127.0.0.1",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "local_notification_handler_music_creators_listener",
+    "Topic": "local.creators"
+  },
   "SendingQueueListener": {
     "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
     "MinBytes": 100,
