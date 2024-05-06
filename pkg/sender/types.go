@@ -1,17 +1,15 @@
 package sender
 
-import "context"
-
-type NotificationChannel byte
-
-const (
-	NotificationChannelPush = NotificationChannel(1)
+import (
+	"context"
+	"github.com/digitalmonsters/go-common/translation"
+	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
+	"github.com/digitalmonsters/notification-handler/pkg/database"
 )
 
 type ISender interface {
-	SendTemplateToUser(channel NotificationChannel,
-		templateName string, userId int64, renderingData map[string]string,
-		ctx context.Context) (interface{}, error)
-
-	SendCustomTemplateToUser(channel NotificationChannel, userId int64, title, body, headline string, ctx context.Context) (interface{}, error)
+	SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error
+	PushNotification(notification database.Notification, entityId int64, relatedEntityId int64,
+		templateName string, language translation.Language, customKind string, ctx context.Context) (shouldRetry bool, innerErr error)
+	UnapplyEvent(userId int64, eventType string, entityId int64, relatedEntityId int64, ctx context.Context) error
 }
