@@ -140,7 +140,7 @@ func (w UserGoWrapper) GetPetsDetails(petIds []int64, ctx context.Context, force
 func (w UserGoWrapper) GetPetsSearch(keywords string, page, count int, ctx context.Context, forceLog bool) chan SearchPetDetailRecordResponseChan {
 	respCh := make(chan SearchPetDetailRecordResponseChan, 2)
 
-	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetPetsSearch", GetPetsSearchRequest{
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetPetsSearchInternal", GetPetsSearchRequest{
 		Keywords: keywords,
 		Page:     page,
 		Count:    count,
@@ -158,7 +158,7 @@ func (w UserGoWrapper) GetPetsSearch(keywords string, page, count int, ctx conte
 		}
 
 		if len(resp.Result) > 0 {
-			var data []PetDetailRecord
+			var data SearchPetDetails
 
 			if err := json.Unmarshal(resp.Result, &data); err != nil {
 				result.Error = &rpc.RpcError{

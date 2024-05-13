@@ -280,7 +280,7 @@ type GetUserIdsFilterByUsernameResponseChan struct {
 
 type SearchPetDetailRecordResponseChan struct {
 	Error *rpc.RpcError
-	Pets  []PetDetailRecord `json:"user_ids"`
+	Pets  SearchPetDetails `json:"user_ids"`
 }
 
 type GetUsersTagsRequest struct {
@@ -477,4 +477,9 @@ type Pet struct {
 	LoveReactions      int             `json:"love_reactions"`
 	UploadBanExpiresAt null.Time       `json:"upload_ban_expires_at"`
 	PetTypeID          int             `json:"pet_type_id"`
+}
+
+type SearchPetDetails struct {
+	Pets       []PetDetailRecord `json:"pets"`
+	TotalCount int               `json:"total_count"`
 }
