@@ -17,6 +17,7 @@ type UserGoWrapperMock struct {
 	GetPetsFn       func(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetRecord]
 	GetPetsDetailFn func(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord]
 	GetPetDetailsFn func(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord]
+	GetPetsSearchFn func(keywords string, page, count int, ctx context.Context, forceLog bool) chan SearchPetDetailRecordResponseChan
 
 	GetProfileBulkFn                      func(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 	GetUsersActiveThresholdsFn            func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
@@ -133,6 +134,10 @@ func (m *UserGoWrapperMock) GetGrandReferrerIds(ctx context.Context, forceLog bo
 
 func (m *UserGoWrapperMock) SetSpotsUploadBanned(userId int64, banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
 	return m.SetSpotsUploadBannedFn(userId, banned, ctx, forceLog)
+}
+
+func (m *UserGoWrapperMock) GetPetsSearch(keywords string, page, count int, ctx context.Context, forceLog bool) chan SearchPetDetailRecordResponseChan {
+	return m.GetPetsSearchFn(keywords, page, count, ctx, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors
