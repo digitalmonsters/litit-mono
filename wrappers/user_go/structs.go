@@ -230,6 +230,12 @@ type GetPetsDetailRequest struct {
 	PetIds []int64 `json:"pet_ids"`
 }
 
+type GetPetsSearchRequest struct {
+	Keywords string `json:"keyword"`
+	Page     int    `json:"page"`
+	Count    int    `json:"count"`
+}
+
 type GetUsersActiveThresholdsRequest struct {
 	UserIds []int64 `json:"user_ids"`
 }
@@ -270,6 +276,11 @@ type GetUserIdsFilterByUsernameRequest struct {
 type GetUserIdsFilterByUsernameResponseChan struct {
 	Error   *rpc.RpcError
 	UserIds []int64 `json:"user_ids"`
+}
+
+type SearchPetDetailRecordResponseChan struct {
+	Error *rpc.RpcError
+	Pets  []PetDetailRecord `json:"user_ids"`
 }
 
 type GetUsersTagsRequest struct {

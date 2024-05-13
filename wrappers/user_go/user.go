@@ -24,6 +24,7 @@ type IUserGoWrapper interface {
 	GetPets(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetRecord]
 	GetPetsDetails(petIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]PetDetailRecord]
 	GetPetDetails(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord]
+	GetPetsSearch(keywords string, page, count int, ctx context.Context, forceLog bool) chan SearchPetDetailRecordResponseChan
 
 	GetProfileBulk(currentUserId int64, userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetProfileBulkResponseChan
 	GetUsersActiveThresholds(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan GetUsersActiveThresholdsResponseChan
@@ -134,6 +135,48 @@ func (w UserGoWrapper) GetPetsDetails(petIds []int64, ctx context.Context, force
 		"GetPetsDetailsInternal", GetPetsDetailRequest{
 			PetIds: petIds,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GetPetsSearch(keywords string, page, count int, ctx context.Context, forceLog bool) chan SearchPetDetailRecordResponseChan {
+	respCh := make(chan SearchPetDetailRecordResponseChan, 2)
+
+	respChan := w.baseWrapper.SendRpcRequest(w.serviceApiUrl, "GetPetsSearch", GetPetsSearchRequest{
+		Keywords: keywords,
+		Page:     page,
+		Count:    count,
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+
+	go func() {
+		defer func() {
+			close(respCh)
+		}()
+
+		resp := <-respChan
+
+		result := SearchPetDetailRecordResponseChan{
+			Error: resp.Error,
+		}
+
+		if len(resp.Result) > 0 {
+			var data []PetDetailRecord
+
+			if err := json.Unmarshal(resp.Result, &data); err != nil {
+				result.Error = &rpc.RpcError{
+					Code:        error_codes.GenericMappingError,
+					Message:     err.Error(),
+					Data:        nil,
+					Hostname:    w.baseWrapper.GetHostName(),
+					ServiceName: w.serviceName,
+				}
+			} else {
+				result.Pets = data
+			}
+		}
+
+		respCh <- result
+	}()
+
+	return respCh
 }
 
 func (w UserGoWrapper) GetPetDetails(petId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[PetDetailRecord] {
