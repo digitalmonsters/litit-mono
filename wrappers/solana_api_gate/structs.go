@@ -1,3 +1,4 @@
+// [DEPRECATED] not use anymore
 package solana_api_gate
 
 import "fmt"
