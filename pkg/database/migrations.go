@@ -581,7 +581,7 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "notification_templates_280720221401",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db,
-					"update public.notifications set title = 'Real Video Uploaded' and message = 'Your real video video was successfully uploaded' where type = 'push.spot.successful-upload' ",
+					"update public.notifications set title = 'Real Video Uploaded', message = 'Your real video video was successfully uploaded' where type = 'push.spot.successful-upload' ",
 				)
 			},
 		},
