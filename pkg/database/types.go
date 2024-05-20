@@ -3,11 +3,12 @@ package database
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"time"
+
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type Notification struct {
@@ -244,6 +245,10 @@ func GetNotificationTypeForAll(templateId string) string {
 		return "push.content.successful-upload"
 	case "spot_upload":
 		return "push.spot.successful-upload"
+	case "spot_upload_cat":
+		return "push.spot_cat.successful-upload"
+	case "spot_upload_dog":
+		return "push.spot_dog.successful-upload"
 	case "content_reject":
 		return "push.content.rejected"
 	case "kyc_status_verified":
@@ -353,6 +358,10 @@ func GetNotificationTemplates(notificationType string) []string {
 		return []string{"content_upload"}
 	case "push.spot.successful-upload":
 		return []string{"spot_upload"}
+	case "push.spot_cat.successful-upload":
+		return []string{"spot_upload_cat"}
+	case "push.spot_dog.successful-upload":
+		return []string{"spot_upload_dog"}
 	case "push.content.rejected":
 		return []string{"content_reject"}
 	case "push.kyc.status":

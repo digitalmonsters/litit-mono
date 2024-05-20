@@ -3,6 +3,8 @@ package content
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/translation"
@@ -17,7 +19,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
-	"hash/fnv"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender,
@@ -88,6 +89,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		} else if event.ContentType == eventsourcing.ContentTypeSpot {
 			templateName = "spot_upload"
 			notificationType = "push.spot.successful-upload"
+		} else if event.ContentType == eventsourcing.ContentTypeCatsSpot {
+			templateName = "spot_upload_cat"
+			notificationType = "push.spot_cat.successful-upload"
+		} else if event.ContentType == eventsourcing.ContentTypeDogsSpot {
+			templateName = "spot_upload"
+			notificationType = "push.spot_dog.successful-upload"
 		}
 	} else if event.CrudOperation == eventsourcing.ChangeEventTypeUpdated {
 		if string(event.CrudOperationReason) == "rejected" {
