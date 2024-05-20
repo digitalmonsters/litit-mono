@@ -101,6 +101,7 @@ const (
 	ContentTypePreview  = ContentType(6)
 	ContentTypeDogsSpot = ContentType(7)
 	ContentTypeCatsSpot = ContentType(8)
+	ContentTypeCats     = ContentType(9)
 )
 
 func (c ContentType) IsPetProfileRequired(value ContentType) bool {
