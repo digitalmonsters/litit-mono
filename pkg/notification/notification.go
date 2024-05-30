@@ -5,6 +5,8 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -18,7 +20,6 @@ import (
 	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func GetNotifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, pushAdminSupported bool, limit int,
@@ -222,7 +223,7 @@ func getNotificationsTemplatesByTypeGroup(typeGroup TypeGroup) []string {
 	case TypeGroupAll:
 		return []string{"comment_reply", "comment_vote_like", "comment_vote_dislike", "comment_profile_resource_create",
 			"comment_content_resource_create", "follow", "content_posted", "tip", "content_like",
-			"bonus_followers", "bonus_time", "content_upload", "spot_upload", "content_reject",
+			"bonus_followers", "bonus_time", "content_upload", "spot_upload", "spot_upload_cat", "spot_upload_dog", "content_reject",
 			"kyc_status_verified", "kyc_status_rejected", "creator_status_rejected", "creator_status_approved",
 			"creator_status_pending", "first_daily_followers_bonus", "first_daily_time_bonus",
 			"first_guest_x_earned_points", "first_guest_x_paid_views", "first_x_paid_views",
