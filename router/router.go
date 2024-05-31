@@ -461,6 +461,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 	shouldLog = forceLog
 
 	userId, isGuest, isBanned, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
+	log.Printf("\nUSERID: %d | isGuest: %v | isBanned: %v | language: %v | rpcError: %v\n", userId, isGuest, isBanned, language, rpcError)
 	if userId == 0 {
 		if authHeaderValue := httpCtx.Request.Header.Peek("Authorization"); len(authHeaderValue) > 0 {
 			jwtStr := string(authHeaderValue)
@@ -470,8 +471,10 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 			}
 
 			apmTransaction := apm.TransactionFromContext(ctx)
+			log.Print("Trying to parse token...")
 			resp := <-r.authWrapper.ParseToken(jwtStr, false, apmTransaction, true)
 
+			log.Printf("\nRESP: %v\n", resp)
 			if resp.Error != nil {
 				rpcResponse.Error = &rpc.ExtendedLocalRpcError{
 					RpcError: *resp.Error,
