@@ -95,13 +95,6 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 	var isBanned bool
 	language := translation.DefaultUserLanguage
 
-	ctx.Request.Header.VisitAll(
-		func(key, value []byte) {
-			log.Println(string(key), string(value))
-
-		},
-	)
-
 	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
 		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
@@ -124,6 +117,8 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 
 	if userId > 0 {
 		usersResp, err := userValidator.Validate(userId, ctx)
+
+		log.Printf("\nUSERID: %d | usersResp: %v, %s\n", userId, usersResp, err.Error())
 
 		if err != nil {
 			err = errors.Wrap(err, "can not get user info from auth service")
@@ -172,6 +167,7 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 		}
 
 		if isGuestHeader := ctx.Request.Header.Peek("Is-Guest"); len(isGuestHeader) > 0 {
+
 			if parsedIsGuest, err := strconv.ParseBool(string(isGuestHeader)); err != nil {
 				err = errors.Wrapf(err, "can not parse str to int for is-guest. input string %v", isGuestHeader)
 
@@ -183,6 +179,8 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 	}
 
 	if requireIdentityValidation && userId <= 0 {
+
+		log.Printf("Missing User ID, USERID: %d\n", userId)
 		err := errors.New("public method requires identity validation")
 
 		return 0, isGuest, isBanned, language, &rpc.ExtendedLocalRpcError{
