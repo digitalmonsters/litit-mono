@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"strings"
 
@@ -93,6 +94,13 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 	var isGuest bool
 	var isBanned bool
 	language := translation.DefaultUserLanguage
+
+	ctx.Request.Header.VisitAll(
+		func(key, value []byte) {
+			log.Println(string(key), string(value))
+
+		},
+	)
 
 	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
 		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
