@@ -173,57 +173,6 @@
           "ReplicationFactor": 1
         }
       }
-    },
-    "Content": {
-      "ApiUrl": "https://content.api.litit1.com"
-    },
-    "Configurator": {
-      "ApiUrl": "https://configurator.api.litit1.com"
-    },
-    "UserInfo": {
-      "ApiUrl": "https://user-info.api.litit1.com"
-    },
-    "UserBlock": {
-      "ApiUrl": "http://localhost:5007"
-    },
-    "AuthGo": {
-      "ApiUrl": "https://auth-go.api.litit1.com"
-    },
-    "Auth": {
-      "ApiUrl": "https://auth.api.litit1.com"
-    },
-    "Likes": {
-      "ApiUrl": "http://localhost:5013"
-    },
-    "Follows": {
-      "ApiUrl": "https://follows.api.litit1.com"
-    },
-    "Views": {
-      "ApiUrl": "http://localhost:5017"
-    },
-    "UserCategories": {
-      "ApiUrl": "http://localhost:5019"
-    },
-    "UserHashtags": {
-      "ApiUrl": "http://localhost:5021"
-    },
-    "UserLikes": {
-      "ApiUrl": "http://localhost:5023"
-    },
-    "Categories": {
-      "ApiUrl": "http://localhost:5025"
-    },
-    "Hashtags": {
-      "ApiUrl": "http://localhost:5027"
-    },
-    "PointsCount": {
-      "ApiUrl": "http://localhost:5029"
-    },
-    "BaseApi": {
-      "ApiUrl": "https://base-api.api.litit1.com"
-    },
-    "UserGo": {
-      "ApiUrl": "https://user-go.api.litit1.com"
     }
   },
   "EmailLinks": {
