@@ -204,11 +204,14 @@ func (r *HttpRouter) RegisterDocs(apiDef map[string]swagger.ApiDescription,
 func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 	key := fmt.Sprintf("%v_%v", targetCmd.method, targetCmd.path)
 
+	log.Printf(key)
 	if _, ok := r.restCommands[key]; ok {
 		return errors.New(fmt.Sprintf("rest command [%v] already registered", key))
 	}
 
 	r.restCommands[key] = targetCmd
+
+	log.Printf("Start")
 
 	go func() {
 		defer func() {
@@ -239,7 +242,7 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 
 	r.endpointRegistratorMutex.Lock()
 	defer r.endpointRegistratorMutex.Unlock()
-
+	log.Printf("SUCCESS-1")
 	r.realRouter.Handle(targetCmd.method, targetCmd.path, func(ctx *fasthttp.RequestCtx) {
 		headers := make(map[string]string)
 		ctx.Request.Header.VisitAll(
@@ -290,9 +293,9 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		defer func() {
 			r.setCors(ctx)
 		}()
-
+		log.Printf("SUCCESS-2")
 		apm_helper.AddApmDataWithContext(executionCtx, "full_url", string(ctx.URI().FullURI()))
-
+		log.Printf("Execute function")
 		rpcResponse, shouldLog := r.executeAction(rpcRequest, targetCmd, ctx, executionCtx, targetCmd.forceLog,
 			func(key string) interface{} {
 				if v := ctx.UserValue(key); v != nil {
@@ -327,6 +330,10 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 			r.logResponseBody(responseBody, executionCtx)
 			r.logRpcResponseError(rpcResponse, executionCtx)
 		}()
+
+		log.Printf("RPC- %v", rpcResponse)
+
+		log.Printf("RPC- %v", shouldLog)
 
 		finalStatusCode := int(error_codes.None)
 
@@ -408,6 +415,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 
 	r.logRequestHeaders(httpCtx, ctx) // in future filter for specific routes
 	r.logUserValues(httpCtx, ctx)
+	log.Printf("YAHA1")
 
 	var panicErr error
 
