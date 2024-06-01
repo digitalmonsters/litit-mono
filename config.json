@@ -173,6 +173,60 @@
           "ReplicationFactor": 1
         }
       }
+    },
+    "Content": {
+      "ApiUrl": "https://content.lit.it"
+    },
+    "Configurator": {
+      "ApiUrl": "https://configurator.lit.it"
+    },
+    "UserInfo": {
+      "ApiUrl": "https://user-info.lit.it"
+    },
+    "UserBlock": {
+      "ApiUrl": "https://user-go.lit.it"
+    },
+    "AuthGo": {
+      "ApiUrl": "https://auth-go.lit.it"
+    },
+    "Auth": {
+      "ApiUrl": "https://auth.lit.it"
+    },
+    "Likes": {
+      "ApiUrl": "https://event-api.lit.it"
+    },
+    "Follows": {
+      "ApiUrl": "https://follows.lit.it"
+    },
+    "Views": {
+      "ApiUrl": "https://event-api.lit.it"
+    },
+    "UserCategories": {
+      "ApiUrl": "https://event-api.lit.it"
+    },
+    "UserHashtags": {
+      "ApiUrl": "https://event-api.lit.it"
+    },
+    "UserLikes": {
+      "ApiUrl": "https://event-api.lit.it"
+    },
+    "Categories": {
+      "ApiUrl": "https://content.lit.it"
+    },
+    "Hashtags": {
+      "ApiUrl": "https://content.lit.it"
+    },
+    "PointsCount": {
+      "ApiUrl": ""
+    },
+    "BaseApi": {
+      "ApiUrl": "https://base-api.lit.it"
+    },
+    "UserGo": {
+      "ApiUrl": "https://user-go.lit.it"
+    },
+    "BscGateWay":{
+      "ApiUrl": "https://bsc-gateway.lit.it"
     }
   },
   "EmailLinks": {
