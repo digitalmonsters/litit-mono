@@ -66,14 +66,14 @@
     }
   },
   "ConfigNotifier": {
-    "Hosts": "127.0.0.1",
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
     "KafkaAuth": {},
     "Tls": false,
     "MaxRetryCount": 3,
     "FlushTimeMilliseconds": 100,
     "FlushAtSize": 20,
     "Topic": {
-      "Name": "local.new_config",
+      "Name": "prodv2.new_config",
       "NumPartitions": 1,
       "ReplicationFactor": 1
     }
