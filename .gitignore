@@ -6,7 +6,7 @@ crash.log
 # Bundler
 bin/*
 .bundle/*
-
+config.json
 .kitchen/
 .kitchen.local.yml
 
