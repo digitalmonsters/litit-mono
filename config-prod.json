@@ -1,0 +1,82 @@
+{
+    "HttpPort": 5001,
+    "PrivateHttpPort": 5002,
+    "MasterDb": {
+      "Host": "localhost",
+      "Port": 5432,
+      "Db": "configurator",
+      "User": "postgres",
+      "Password": "qwerty"
+    },
+    "ReadonlyDb": {
+      "Host": "localhost",
+      "Port": 5432,
+      "Db": "configurator",
+      "User": "postgres",
+      "Password": "qwerty"
+    },
+    "Wrappers": {
+      "Content": {
+        "ApiUrl": "http://localhost:5003"
+      },
+      "UserInfo": {
+        "ApiUrl": "http://localhost:5005"
+      },
+      "UserBlock": {
+        "ApiUrl": "http://localhost:5007"
+      },
+      "AuthGo": {
+        "ApiUrl": "http://localhost:5009"
+      },
+      "Auth": {
+        "ApiUrl": "http://localhost:5039"
+      },
+      "Likes": {
+        "ApiUrl": "http://localhost:5013"
+      },
+      "Follows": {
+        "ApiUrl": "http://localhost:5015"
+      },
+      "Views": {
+        "ApiUrl": "http://localhost:5017"
+      },
+      "UserCategories": {
+        "ApiUrl": "http://localhost:5019"
+      },
+      "UserHashtags": {
+        "ApiUrl": "http://localhost:5021"
+      },
+      "UserLikes": {
+        "ApiUrl": "http://localhost:5023"
+      },
+      "Categories": {
+        "ApiUrl": "http://localhost:5025"
+      },
+      "Hashtags": {
+        "ApiUrl": "http://localhost:5027"
+      },
+      "PointsCount": {
+        "ApiUrl": "http://localhost:5029"
+      },
+      "BaseApi": {
+        "ApiUrl": "http://localhost:5031"
+      },
+      "UserGo": {
+        "ApiUrl": "http://localhost:5033"
+      }
+    },
+    "ConfigNotifier": {
+      "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+      "KafkaAuth": {},
+      "Tls": false,
+      "MaxRetryCount": 3,
+      "FlushTimeMilliseconds": 100,
+      "FlushAtSize": 20,
+      "Topic": {
+        "Name": "prodv2.new_config",
+        "NumPartitions": 1,
+        "ReplicationFactor": 1
+      }
+    }
+  }
+  
