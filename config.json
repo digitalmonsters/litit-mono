@@ -159,8 +159,8 @@
         "KafkaAuth": {},
         "Topic": {
           "Name": "prodv2.notifications.push_messages",
-          "NumPartitions": 1,
-          "ReplicationFactor": 1
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
         }
       },
       "EmailPublisher": {
@@ -169,8 +169,8 @@
         "KafkaAuth": {},
         "Topic": {
           "Name": "prodv2.notifications.email",
-          "NumPartitions": 1,
-          "ReplicationFactor": 1
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
         }
       }
     }
