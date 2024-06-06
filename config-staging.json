@@ -1,0 +1,261 @@
+{
+    "HttpPort": 5046,
+    "PrivateHttpPort": 5047,
+    "MasterDb": {
+      "Host": "localhost",
+      "Port": 5432,
+      "Db": "notifications",
+      "User": "postgres",
+      "Password": "qwerty"
+    },
+    "ReadonlyDb": {
+      "Host": "localhost",
+      "Port": 5432,
+      "Db": "notifications",
+      "User": "postgres",
+      "Password": "qwerty"
+    },
+    "Scylla": {
+      "Hosts": "localhost:9042",
+      "UserName": "",
+      "Password": "",
+      "Keyspace": "notifications",
+      "PageSize": 0,
+      "NumConns": 12,
+      "MaxRoutingKeyInfo": 3000,
+      "MaxPreparedStmts": 3000
+    },
+    "KafkaWriter": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "Tls": false
+    },
+    "CreatorsListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_users_notification_handler_creators_listener",
+      "Topic": "dev.users.creators"
+    },
+    "MusicCreatorsListener": {
+      "Hosts": "127.0.0.1",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": true,
+      "GroupId": "local_notification_handler_music_creators_listener",
+      "Topic": "local.creators"
+    },
+    "SendingQueueListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_notifications_notification_handler_sending_queue_listener",
+      "Topic": "dev.notifications.handler_sending_queue"
+    },
+    "CommentListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_comments_notification_handler_comment_listener",
+      "Topic": "dev.comments"
+    },
+    "VoteListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_comments_notification_handler_vote_listener",
+      "Topic": "dev.comment_votes"
+    },
+    "LikeListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_likes_notification_handler_like_listener",
+      "Topic": "dev.likes.likes"
+    },
+    "ContentListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_content_notification_handler_content_listener",
+      "Topic": "dev.content.content"
+    },
+    "KysStatusListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_users_notification_handler_kyc_status_listener",
+      "Topic": "dev.users.user"
+    },
+    "FollowListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_follows_notification_handler_follow_listener",
+      "Topic": "dev.follows.follows"
+    },
+    "TokenomicsNotificationListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_notifications_notification_handler_tokenomics_notification_listener",
+      "Topic": "dev.notifications.notification_created"
+    },
+    "EmailNotificationListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_notifications_notification_handler_email_notification_listener",
+      "Topic": "dev.notifications.notification_created"
+    },
+    "PushAdminMessageListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_notifications_notification_handler_push_admin_messages_listener",
+      "Topic": "dev.notifications.push_admin_messages"
+    },
+    "UserDeleteListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_users_notification_handler_user_delete_listener",
+      "Topic": "dev.users.user"
+    },
+    "UserBannedListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_user_notification_handler_user_banned_listener",
+      "Topic": "dev.users.user"
+    },
+    "UserUpdateListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 10000000,
+      "Tls": false,
+      "GroupId": "dev_user_notification_handler_user_update_listener",
+      "Topic": "dev.users.user"
+    },
+    "Wrappers": {
+      "NotificationGateway": {
+        "ApiUrl": "http://localhost:5035",
+        "TimeoutSec": 10,
+        "PushPublisher": {
+          "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+          "Tls": false,
+          "KafkaAuth": {},
+          "Topic": {
+            "Name": "dev.notifications.push_messages",
+            "NumPartitions": 1,
+            "ReplicationFactor": 1
+          }
+        },
+        "EmailPublisher": {
+          "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+          "Tls": false,
+          "KafkaAuth": {},
+          "Topic": {
+            "Name": "dev.notifications.email",
+            "NumPartitions": 1,
+            "ReplicationFactor": 1
+          }
+        }
+      },
+      "Content": {
+        "ApiUrl": "https://content.api.litit1.com"
+      },
+      "Configurator": {
+        "ApiUrl": "https://configurator.api.litit1.com"
+      },
+      "UserInfo": {
+        "ApiUrl": "https://user-info.api.litit1.com"
+      },
+      "UserBlock": {
+        "ApiUrl": "http://localhost:5007"
+      },
+      "AuthGo": {
+        "ApiUrl": "https://auth-go.api.litit1.com"
+      },
+      "Auth": {
+        "ApiUrl": "https://auth.api.litit1.com"
+      },
+      "Likes": {
+        "ApiUrl": "http://localhost:5013"
+      },
+      "Follows": {
+        "ApiUrl": "https://follows.api.litit1.com"
+      },
+      "Views": {
+        "ApiUrl": "http://localhost:5017"
+      },
+      "UserCategories": {
+        "ApiUrl": "http://localhost:5019"
+      },
+      "UserHashtags": {
+        "ApiUrl": "http://localhost:5021"
+      },
+      "UserLikes": {
+        "ApiUrl": "http://localhost:5023"
+      },
+      "Categories": {
+        "ApiUrl": "http://localhost:5025"
+      },
+      "Hashtags": {
+        "ApiUrl": "http://localhost:5027"
+      },
+      "PointsCount": {
+        "ApiUrl": "http://localhost:5029"
+      },
+      "BaseApi": {
+        "ApiUrl": "https://base-api.api.litit1.com"
+      },
+      "UserGo": {
+        "ApiUrl": "https://user-go.api.litit1.com"
+      }
+    },
+    "EmailLinks": {
+      "VerifyHost": "lit.it",
+      "VerifyPath": "pages/verify",
+      "MarketingSite": "https://lit.it",
+      "VerifyEmailMarketingPath": "pages/verify_profile"
+    },
+    "AzureBlob": {
+      "UseCliAuth": false,
+      "AccountName": "",
+      "AccountKey": "",
+      "Container": "lit-video-cdn-dev",
+      "CdnDirectory": "",
+      "CdnUrl": ""
+    },
+    "Jobber": {
+      "DefaultQueue": "dev_notification_handler_tasks",
+      "ResultExpire": 3600,
+      "Broker": "rediss://localhost:6379/6",
+      "ResultBackend": "rediss://localhost:6379/7",
+      "Lock": "rediss://localhost:6379",
+      "Concurrency": 40,
+      "Tls": false
+    },
+    "MusicCreatorListener": {
+      "Hosts": "kafka.kafka-sg.svc.cluster.local:9092",
+      "MinBytes": 100,
+      "MaxBytes": 1000000,
+      "Tls": false,
+      "GroupId": "dev_music_notification_handler_music_creator_listener",
+      "Topic": "dev.music.creators"
+    }
+  }
+  
