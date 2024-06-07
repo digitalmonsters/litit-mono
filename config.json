@@ -180,23 +180,11 @@
     "Configurator": {
       "ApiUrl": "https://configurator.lit.it"
     },
-    "UserInfo": {
-      "ApiUrl": "https://user-info.lit.it"
-    },
     "AuthGo": {
       "ApiUrl": "https://auth-go.lit.it"
     },
-    "Auth": {
-      "ApiUrl": "https://auth.lit.it"
-    },
     "Follows": {
       "ApiUrl": "https://follows.lit.it"
-    },
-    "BaseApi": {
-      "ApiUrl": "https://base-api.lit.it"
-    },
-    "UserGo": {
-      "ApiUrl": "https://user-go.lit.it"
     }
   },
   "EmailLinks": {
