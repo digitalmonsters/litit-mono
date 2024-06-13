@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/go-redis/redis/v8"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
-	"time"
 )
 
 type Service struct {
@@ -93,10 +94,10 @@ func (s *Service) BulkSet(mapped map[string]interface{}, exp time.Duration, ctx 
 		s.cache.Set(k, v, exp)
 	}
 
-	return s.saveToRedisInternal(keys, values, exp, ctx, apmTransaction)
+	return s.saveToRedisInternal(keys, values, exp, ctx)
 }
 
-func (s *Service) saveToRedisInternal(keys []string, values []interface{}, exp time.Duration, ctx context.Context, apmTransaction *apm.Transaction) error {
+func (s *Service) saveToRedisInternal(keys []string, values []interface{}, exp time.Duration, ctx context.Context) error {
 	var toCache []interface{}
 	pipe := s.redis.TxPipeline()
 
