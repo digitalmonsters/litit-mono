@@ -469,3 +469,8 @@ func (w UserGoWrapper) SetSpotsUploadBanned(userId int64, banned bool, ctx conte
 	return wrappers.ExecuteRpcRequestAsync[any](w.baseWrapper, w.serviceApiUrl,
 		"SetUserSpotsUploadBanned", SetUserSpotsUploadBanned{Banned: banned, UserId: userId}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
+
+func (w UserGoWrapper) UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+	return wrappers.ExecuteRpcRequestAsync[any](w.baseWrapper, w.serviceApiUrl,
+		"UpdatePetAlbum", UpdatePetAlbum{PetId: petId, VideoId: videoId, UserId: userId}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}

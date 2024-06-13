@@ -426,6 +426,12 @@ type SetUserSpotsUploadBanned struct {
 	UserId int64 `json:"user_id"`
 }
 
+type UpdatePetAlbum struct {
+	PetId   int64  `json:"pet_id"`
+	VideoId string `json:"video_id"`
+	UserId  int64  `json:"user_id"`
+}
+
 type Pet struct {
 	Id                 int64           `json:"id"`
 	UserID             int64           `json:"user_id"`
