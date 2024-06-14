@@ -175,16 +175,16 @@
       }
     },
     "Content": {
-      "ApiUrl": "https://content.lit.it"
+      "ApiUrl": ""
     },
     "Configurator": {
-      "ApiUrl": "https://configurator.lit.it"
+      "ApiUrl": ""
     },
     "AuthGo": {
-      "ApiUrl": "https://auth-go.lit.it"
+      "ApiUrl": ""
     },
     "Follows": {
-      "ApiUrl": "https://follows.lit.it"
+      "ApiUrl": ""
     }
   },
   "EmailLinks": {

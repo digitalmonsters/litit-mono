@@ -2,6 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"log"
+	"net/http"
+
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/extract"
 	"github.com/digitalmonsters/go-common/router"
@@ -13,7 +16,6 @@ import (
 	"github.com/google/uuid"
 	ua "github.com/mileusna/useragent"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper,
@@ -25,9 +27,9 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		log.Println("Started")
 		page := extract.String(executionData.GetUserValue, "page", "")
 		typeGroup := notificationPkg.TypeGroup(extract.String(executionData.GetUserValue, "notification_type", string(notificationPkg.TypeGroupAll)))
-
 		userId := executionData.UserId
 
 		if userId <= 0 {
