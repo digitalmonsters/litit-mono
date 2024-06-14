@@ -37,6 +37,7 @@ type UserGoWrapperMock struct {
 	FinalizeExportFn                      func(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse]
 	GetGrandReferrerIdsFn                 func(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64]
 	SetSpotsUploadBannedFn                func(userId int64, banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	UpdatePetAlbumFn                      func(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 }
 
 func (m *UserGoWrapperMock) GetUserDetails(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserDetailRecord] {
@@ -138,6 +139,9 @@ func (m *UserGoWrapperMock) SetSpotsUploadBanned(userId int64, banned bool, ctx 
 
 func (m *UserGoWrapperMock) GetPetsSearch(keywords string, page, count int, ctx context.Context, forceLog bool) chan SearchPetDetailRecordResponseChan {
 	return m.GetPetsSearchFn(keywords, page, count, ctx, forceLog)
+}
+func (m *UserGoWrapperMock) UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+	return m.UpdatePetAlbumFn(petId, videoId, userId, ctx, forceLog)
 }
 
 func GetMock() IUserGoWrapper { // for compiler errors
