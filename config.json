@@ -173,18 +173,6 @@
           "ReplicationFactor": 2
         }
       }
-    },
-    "Content": {
-      "ApiUrl": ""
-    },
-    "Configurator": {
-      "ApiUrl": ""
-    },
-    "AuthGo": {
-      "ApiUrl": ""
-    },
-    "Follows": {
-      "ApiUrl": ""
     }
   },
   "EmailLinks": {
