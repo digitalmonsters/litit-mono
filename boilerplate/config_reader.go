@@ -1,8 +1,19 @@
 package boilerplate
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
+	"path"
 	"strings"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
+	"github.com/skynet2/go-config"
+	"github.com/skynet2/go-config/source"
+	"github.com/skynet2/go-config/source/env"
+	"github.com/skynet2/go-config/source/file"
 )
 
 type Environment int32
@@ -81,6 +92,13 @@ type WrapperConfig struct {
 	PushPublisher  KafkaBatchWriterV2Configuration `json:"PushPublisher"`
 	EmailPublisher KafkaBatchWriterV2Configuration `json:"EmailPublisher"`
 }
+
+type ApmConfig struct {
+	LogLevel    string `json:"LogLevel"`
+	ServiceName string `json:"ServiceName"`
+	ServerUrls  string `json:"ServerUrls"`
+}
+
 type DbConfig struct {
 	Host                     string `json:"Host"`
 	Port                     int    `json:"Port"`
@@ -126,6 +144,12 @@ type KafkaListenerConfiguration struct {
 	Tls                             bool       `json:"Tls"`
 	MaxBackOffTimeMilliseconds      int        `json:"MaxBackOffTimeMilliseconds"`
 	BackOffTimeIntervalMilliseconds int        `json:"BackOffTimeIntervalMilliseconds"`
+}
+
+type KafkaBatchListenerConfiguration struct {
+	KafkaListenerConfiguration
+	MaxDuration  int `json:"MaxDuration"`
+	MaxBatchSize int `json:"MaxBatchSize"`
 }
 
 type KafkaWriterConfiguration struct {
@@ -189,6 +213,12 @@ type ScyllaConfiguration struct {
 	TimeoutSeconds    int    `json:"TimeoutSeconds"`
 }
 
+var configuration interface{}
+
+func ReadConfigFile(input interface{}) (interface{}, error) {
+	return ReadConfigByFilePaths([]string{"config.json"}, input)
+}
+
 func SplitHostsToSlice(currentString string) []string {
 	var results []string
 
@@ -199,4 +229,112 @@ func SplitHostsToSlice(currentString string) []string {
 	}
 
 	return results
+}
+
+func ReadConfigByFilePaths(filePath []string, input interface{}) (interface{}, error) {
+	if configuration != nil {
+		return configuration, nil
+	}
+
+	if len(filePath) == 0 {
+		return nil, errors.New("no config path specified")
+	}
+
+	var options []source.Option
+
+	conf, err := config.NewConfig()
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	for _, val := range filePath {
+		options = addFile(val, options)
+	}
+
+	if len(options) == 0 {
+		return nil, errors.New("no configuration provided")
+	}
+
+	switch GetCurrentEnvironment() {
+	case Local:
+		if devFilePath, err := RecursiveFindFile("config.qwerty.json", "./", 30); err == nil {
+			options = addFile(devFilePath, options)
+		}
+	case Ci:
+		if ciFilePath, err := RecursiveFindFile("config.ci.json", "./", 30); err != nil {
+			return nil, err
+		} else {
+			options = addFile(ciFilePath, options)
+		}
+	}
+
+	var sources []source.Source
+
+	for _, option := range options {
+		sources = append(sources, file.NewSource(option))
+	}
+
+	sources = append(sources, env.NewSource(input))
+
+	if err := conf.Load(sources...); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	tempConfig := map[string]interface{}{}
+
+	if err = json.Unmarshal(conf.Get().Bytes(), &tempConfig); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		Result:           input,
+		TagName:          "json",
+		Squash:           true,
+	})
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err = d.Decode(tempConfig); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	configuration = input
+
+	return configuration, nil
+}
+
+func RecursiveFindFile(fileName string, startDirectory string, maxDepth int) (string, error) {
+	if len(startDirectory) == 0 {
+		startDirectory = "./"
+	}
+
+	var checked []string
+	for i := 0; i < maxDepth; i++ {
+		pathToCheck := path.Join(startDirectory, fileName)
+
+		if _, err := os.Stat(pathToCheck); err == nil {
+			return pathToCheck, nil
+		}
+
+		checked = append(checked, pathToCheck)
+
+		if startDirectory == "./" {
+			startDirectory = "../"
+		} else {
+			startDirectory = path.Join("../", startDirectory)
+		}
+	}
+
+	return "", errors.New(fmt.Sprintf("can not find file %v, checked paths : %v", fileName, spew.Sdump(checked)))
+}
+
+func addFile(path string, sources []source.Option) []source.Option {
+	if _, err := os.Stat(path); err == nil {
+		sources = append(sources, file.WithPath(path))
+	}
+	return sources
 }
