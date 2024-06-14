@@ -44,6 +44,7 @@ type IUserGoWrapper interface {
 	FinalizeExport(exportId int64, file null.String, err error, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[FinalizeExportResponse]
 	GetGrandReferrerIds(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64]
 	SetSpotsUploadBanned(userId int64, banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
+	UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
