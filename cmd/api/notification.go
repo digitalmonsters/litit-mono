@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/extract"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
+	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -18,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper,
+func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper, authWrapper auth_go.IAuthGoWrapper,
 	followWrapper follow.IFollowWrapper) error {
 	notificationsPath := "/mobile/v1/notifications"
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
