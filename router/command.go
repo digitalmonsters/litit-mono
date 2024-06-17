@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"log"
 	"strconv"
 	"strings"
 
@@ -118,8 +117,6 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 	if userId > 0 {
 		usersResp, err := userValidator.Validate(userId, ctx)
 
-		log.Printf("\nUSERID: %d | usersResp: %v, %s\n", userId, usersResp, err.Error())
-
 		if err != nil {
 			err = errors.Wrap(err, "can not get user info from auth service")
 
@@ -180,7 +177,6 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 
 	if requireIdentityValidation && userId <= 0 {
 
-		log.Printf("Missing User ID, USERID: %d\n", userId)
 		err := errors.New("public method requires identity validation")
 
 		return 0, isGuest, isBanned, language, &rpc.ExtendedLocalRpcError{
