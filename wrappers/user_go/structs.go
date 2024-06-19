@@ -427,9 +427,10 @@ type SetUserSpotsUploadBanned struct {
 }
 
 type UpdatePetAlbum struct {
-	PetId   int64  `json:"pet_id"`
-	VideoId string `json:"video_id"`
-	UserId  int64  `json:"user_id"`
+	PetId    int64  `json:"pet_id"`
+	VideoId  string `json:"video_id"`
+	UserId   int64  `json:"user_id"`
+	VideoURL string `json:"video_url"`
 }
 
 type Pet struct {

@@ -140,7 +140,7 @@ func (m *UserGoWrapperMock) SetSpotsUploadBanned(userId int64, banned bool, ctx 
 func (m *UserGoWrapperMock) GetPetsSearch(keywords string, page, count int, ctx context.Context, forceLog bool) chan SearchPetDetailRecordResponseChan {
 	return m.GetPetsSearchFn(keywords, page, count, ctx, forceLog)
 }
-func (m *UserGoWrapperMock) UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
+func (m *UserGoWrapperMock) UpdatePetAlbum(petId int64, videoId string, userId int64, videoURL string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any] {
 	return m.UpdatePetAlbumFn(petId, videoId, userId, ctx, forceLog)
 }
 
