@@ -73,7 +73,7 @@ func (s *Service) GetVideoShareLink(contentId int64, contentType eventsourcing.C
 func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error) {
 	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
 	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
-	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&petType=%vpetId=%v&petName=%s", userId, shareCode, petType, petId, petName)
+	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&petType=%v&petId=%v&petName=%s", userId, shareCode, petType, petId, petName)
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
