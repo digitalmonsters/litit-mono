@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
-	"log"
 
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
@@ -83,7 +82,6 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, err
 	}
 
-	log.Println(event.ContentType)
 	if event.CrudOperation == eventsourcing.ChangeEventTypeCreated && !event.Unlisted && !event.Draft && !event.Deleted {
 		if event.ContentType == eventsourcing.ContentTypeVideo {
 			templateName = "content_upload"
@@ -95,7 +93,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			templateName = "spot_upload_cat"
 			notificationType = "push.spot_cat.successful-upload"
 		} else if event.ContentType == eventsourcing.ContentTypeDogsSpot {
-			templateName = "spot_upload"
+			templateName = "spot_upload_dog"
 			notificationType = "push.spot_dog.successful-upload"
 		}
 	} else if event.CrudOperation == eventsourcing.ChangeEventTypeUpdated {
