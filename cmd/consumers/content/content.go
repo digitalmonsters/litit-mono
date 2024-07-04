@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
+	"log"
 
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
@@ -82,6 +83,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, err
 	}
 
+	log.Println(event)
 	if event.CrudOperation == eventsourcing.ChangeEventTypeCreated && !event.Unlisted && !event.Draft && !event.Deleted {
 		if event.ContentType == eventsourcing.ContentTypeVideo {
 			templateName = "content_upload"
