@@ -83,7 +83,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		return &event.Messages, err
 	}
 
-	log.Println(event)
+	log.Println(event.ContentType)
 	if event.CrudOperation == eventsourcing.ChangeEventTypeCreated && !event.Unlisted && !event.Draft && !event.Deleted {
 		if event.ContentType == eventsourcing.ContentTypeVideo {
 			templateName = "content_upload"
