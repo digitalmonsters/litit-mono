@@ -225,8 +225,22 @@ type ReferralGroup struct {
 	TypeName string           `json:"type_name"`
 	Data     ReferralInfo     `json:"data"`
 }
+
 type GetReferralProgressInfoResponse struct {
-	ListProgress []ReferralGroup `json:"list_progress"`
+	ListProgress     []ReferralGroup          `json:"list_progress"`
+	ReferralUserInfo []ReferredUsersWatchTime `json:"referral_user_info"`
+}
+
+type ReferredUsersWatchTime struct {
+	Id          int64     `gorm:"primary_key;column:id"`
+	CreatedAt   time.Time `gorm:"column:created_at"`
+	UpdatedAt   time.Time `gorm:"column:updated_at"`
+	UserId      int64     `gorm:"column:user_id"`
+	ReferrerId  int64     `gorm:"column:referrer_id"`
+	Hours       int32     `gorm:"column:hours"`
+	IsBonus     bool      `gorm:"column:is_bonus"`
+	PointEarned int32     `gorm:"column:point_earned"`
+	TargetHours int32     `gorm:"column:target_hours"`
 }
 
 type GetMyReferredUsersWatchedVideoInfoResponse struct {
