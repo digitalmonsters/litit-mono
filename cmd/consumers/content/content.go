@@ -95,7 +95,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			templateName = "spot_upload_cat"
 			notificationType = "push.spot_cat.successful-upload"
 		} else if event.ContentType == eventsourcing.ContentTypeDogsSpot {
-			templateName = "spot_upload"
+			templateName = "spot_upload_dog"
 			notificationType = "push.spot_dog.successful-upload"
 		}
 	} else if event.CrudOperation == eventsourcing.ChangeEventTypeUpdated {
