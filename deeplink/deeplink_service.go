@@ -63,7 +63,7 @@ func (s *Service) generateDeeplink(link string) (string, error) {
 func (s *Service) GetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string) (string, error) {
 	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
 	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
-	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v", userId, shareCode)
+	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&selectedtype=%v", userId, shareCode, contentType)
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}

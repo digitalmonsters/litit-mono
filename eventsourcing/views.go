@@ -65,8 +65,6 @@ const (
 	SourceViewPushContentUpload            = SourceView(30) // content_upload
 	SourceViewNotificationSpotUpload       = SourceView(31) // push.spot.successful-upload
 	SourceViewPushSpotUpload               = SourceView(32) // spot_upload
-	SourceViewPushSpotUploadCat            = SourceView(32) // spot_upload_cat
-	SourceViewPushSpotUploadDog            = SourceView(32) // spot_upload_dog
 	SourceViewNotificationContentRejected  = SourceView(33) // push.content.rejected
 	SourceViewPushContentRejected          = SourceView(34) // content_reject
 	SourceViewNotificationContentNewPosted = SourceView(35) // push.content.new-posted
@@ -77,4 +75,6 @@ const (
 
 	SourceViewNotificationAdmin = SourceView(39) // push.admin.bulk
 	SourceViewPushAdmin         = SourceView(40) // push_admin
+	SourceViewPushSpotUploadCat = SourceView(41) // spot_upload_cat
+	SourceViewPushSpotUploadDog = SourceView(42) // spot_upload_dog
 )
