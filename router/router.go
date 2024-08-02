@@ -201,7 +201,7 @@ func (r *HttpRouter) RegisterDocs(apiDef map[string]swagger.ApiDescription,
 	}
 }
 
-func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
+func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand, static ...bool) error {
 	key := fmt.Sprintf("%v_%v", targetCmd.method, targetCmd.path)
 
 	if _, ok := r.restCommands[key]; ok {
@@ -389,6 +389,16 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand) error {
 		} else {
 			if responseBody, err = json.Marshal(restResponse); err != nil {
 				log.Err(err).Send()
+			}
+		}
+		if len(static) > 0 {
+			if static[0] {
+				json, err := json.Marshal(rpcResponse.Result)
+				if err != nil {
+					log.Err(err).Send()
+				}
+				responseBody = json
+
 			}
 		}
 

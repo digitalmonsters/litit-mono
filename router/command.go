@@ -166,7 +166,7 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 		if isGuestHeader := ctx.Request.Header.Peek("Is-Guest"); len(isGuestHeader) > 0 {
 
 			if parsedIsGuest, err := strconv.ParseBool(string(isGuestHeader)); err != nil {
-				err = errors.Wrapf(err, "can not parse str to int for is-guest. input string %v", isGuestHeader)
+				_ = errors.Wrapf(err, "can not parse str to int for is-guest. input string %v", isGuestHeader)
 
 				return 0, usersResp.Guest, isBanned, language, nil
 			} else {
