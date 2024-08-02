@@ -391,15 +391,16 @@ func (r *HttpRouter) RegisterRestCmd(targetCmd *RestCommand, static ...bool) err
 				log.Err(err).Send()
 			}
 		}
-		if len(static) > 0 {
-			if static[0] {
-				json, err := json.Marshal(rpcResponse.Result)
-				if err != nil {
-					log.Err(err).Send()
-				}
+		if len(static) > 0 && static[0] {
+			json, err := json.Marshal(rpcResponse.Result)
+			if err != nil {
+				log.Err(err).Send()
+			} else {
 				responseBody = json
-
+				// for now hardcode change later
+				ctx.Response.Header.SetContentType("application/json")
 			}
+
 		}
 
 		ctx.Response.SetBodyRaw(responseBody)
