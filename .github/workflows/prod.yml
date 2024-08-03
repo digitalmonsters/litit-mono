@@ -34,12 +34,14 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t lititacr.azurecr.io/configurator:${{ steps.get-image-tag.outputs.image_tag }} .
-          docker push lititacr.azurecr.io/configurator:${{ steps.get-image-tag.outputs.image_tag }} 
+          image_tag="v10"
+          echo "Using hardcoded image tag: $image_tag"
+          docker build -t lititacr.azurecr.io/configurator:$image_tag .
+          docker push lititacr.azurecr.io/configurator:$image_tag
 
       - name: Update version tag using API
         run: |
-          curl --location --request POST 'https://cicd.lit.it/api/v1/update_version_tag/configurator/${{ steps.get-image-tag.outputs.image_tag }}' \
+          curl --location --request POST 'https://cicd.lit.it/api/v1/update_version_tag/configurator/v10' \
                --header "access_token: ${{ secrets.ACCESS_TOKEN }}"
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
