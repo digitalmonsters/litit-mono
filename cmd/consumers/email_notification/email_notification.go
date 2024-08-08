@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/notification_gateway"
@@ -13,12 +15,13 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	"github.com/digitalmonsters/notification-handler/pkg/utils"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
-	"strconv"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, emailLinks configs.EmailLinks) (*kafka.Message, error) {
+	logger := log.Ctx(ctx).With().Str("event_type", string(event.Type)).Logger()
 	var err error
 	var template string
 	var email string
@@ -27,19 +30,24 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "event_type", string(event.Type))
 
+	logger.Info().Interface("event.Type", event.Type)
+
 	switch event.Type {
 	case eventsourcing.EmailNotificationPasswordForgot:
 		var payload eventsourcing.EmailNotificationPasswordForgotPayload
 
 		if err = json.Unmarshal(event.Payload, &payload); err != nil {
+			logger.Error().Err(err).Msg("Failed to unmarshal EmailNotificationPasswordForgot payload")
 			return &event.Messages, err
 		}
 
+		logger = logger.With().Str("user_id", strconv.FormatInt(payload.UserId, 10)).Logger()
 		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
 
 		var user *scylla.User
 		user, err = utils.GetUser(payload.UserId, ctx)
 		if err != nil {
+			logger.Error().Err(err).Msg("Failed to get user")
 			return nil, errors.WithStack(err)
 		}
 
@@ -63,9 +71,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		var payload eventsourcing.EmailNotificationConfirmAddressPayload
 
 		if err = json.Unmarshal(event.Payload, &payload); err != nil {
+			logger.Error().Err(err).Msg("Failed to unmarshal EmailNotificationConfirmAddress payload")
 			return &event.Messages, err
 		}
 
+		logger = logger.With().Str("user_id", strconv.FormatInt(payload.UserId, 10)).Logger()
 		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
 
 		email = payload.Email
@@ -83,9 +93,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		var payload eventsourcing.EmailMarketingNotificationConfirmAddressPayload
 
 		if err = json.Unmarshal(event.Payload, &payload); err != nil {
+			logger.Error().Err(err).Msg("Failed to unmarshal EmailMarketingConfirmAddress payload")
 			return &event.Messages, err
 		}
 
+		logger = logger.With().Str("user_id", strconv.FormatInt(payload.UserId, 10)).Logger()
 		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
 
 		email = payload.Email
@@ -103,9 +115,11 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		var payload eventsourcing.EmailNotificationTempGuestInfoPayload
 
 		if err = json.Unmarshal(event.Payload, &payload); err != nil {
+			logger.Error().Err(err).Msg("Failed to unmarshal EmailGuestTempInfo payload")
 			return &event.Messages, err
 		}
 
+		logger = logger.With().Str("user_id", strconv.FormatInt(payload.UserId, 10)).Logger()
 		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
 
 		email = payload.Email
@@ -116,42 +130,14 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		publishKey = strconv.FormatInt(payload.UserId, 10)
 		templateData["username"] = payload.Username
 		templateData["deeplink"] = payload.DeepLink
-	//case eventsourcing.EmailNotificationReferral:
-	//	var payload eventsourcing.EmailNotificationReferralPayload
-	//
-	//	if err = json.Unmarshal(event.Payload, &payload); err != nil {
-	//		return &event.Messages, err
-	//	}
-	//
-	//	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx, "user_id", payload.UserId)
-	//
-	//	var userData user_go.UserRecord
-	//
-	//	resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, ctx, false)
-	//	if resp.Error != nil {
-	//		return nil, resp.Error.ToError()
-	//	}
-	//
-	//	var ok bool
-	//	if userData, ok = resp.Response[payload.UserId]; !ok {
-	//		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
-	//	}
-	//
-	//	email = userData.Email
-	//	template = "referal_sign_up"
-	//	publishKey = strconv.FormatInt(payload.UserId, 10)
-	//
-	//	firstName, _ := userData.GetFirstAndLastNameWithPrivacy()
-	//
-	//	templateData["name"] = firstName
-	//	templateData["referred"] = payload.UserName
-	//	templateData["nth_referral"] = strconv.FormatInt(payload.NumReferrals, 10)
 	default:
+		logger.Warn().Msg("Unknown event type")
 		return &event.Messages, nil
 	}
 
 	templateDataMarshalled, err := json.Marshal(&templateData)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to marshal template data")
 		return nil, err
 	}
 
@@ -163,8 +149,10 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	}
 
 	if err = notifySender.SendEmail([]notification_gateway.SendEmailMessageRequest{emailRequest}, ctx); err != nil {
+		logger.Error().Err(err).Msg("Failed to send email")
 		return nil, err
 	}
 
+	logger.Info().Msg("Email sent successfully")
 	return &event.Messages, nil
 }
