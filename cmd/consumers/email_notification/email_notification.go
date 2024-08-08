@@ -130,6 +130,36 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		publishKey = strconv.FormatInt(payload.UserId, 10)
 		templateData["username"] = payload.Username
 		templateData["deeplink"] = payload.DeepLink
+	//case eventsourcing.EmailNotificationReferral:
+	//	var payload eventsourcing.EmailNotificationReferralPayload
+	//
+	//	if err = json.Unmarshal(event.Payload, &payload); err != nil {
+	//		return &event.Messages, err
+	//	}
+	//
+	//	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx, "user_id", payload.UserId)
+	//
+	//	var userData user_go.UserRecord
+	//
+	//	resp := <-userGoWrapper.GetUsers([]int64{payload.UserId}, ctx, false)
+	//	if resp.Error != nil {
+	//		return nil, resp.Error.ToError()
+	//	}
+	//
+	//	var ok bool
+	//	if userData, ok = resp.Response[payload.UserId]; !ok {
+	//		return &event.Messages, errors.WithStack(errors.New("user not found")) // we should continue, no need to retry
+	//	}
+	//
+	//	email = userData.Email
+	//	template = "referal_sign_up"
+	//	publishKey = strconv.FormatInt(payload.UserId, 10)
+	//
+	//	firstName, _ := userData.GetFirstAndLastNameWithPrivacy()
+	//
+	//	templateData["name"] = firstName
+	//	templateData["referred"] = payload.UserName
+	//	templateData["nth_referral"] = strconv.FormatInt(payload.NumReferrals, 10)
 	default:
 		logger.Warn().Msg("Unknown event type")
 		return &event.Messages, nil
