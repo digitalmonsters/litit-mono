@@ -1,9 +1,10 @@
 package frontend
 
 import (
+	"time"
+
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type VideoSubcategoryModel struct {
@@ -86,6 +87,9 @@ type ContentModel struct {
 	Link           null.String `json:"link"`
 	LinkButtonId   null.Int    `json:"link_button_id"`
 	LinkButtonName null.String `json:"link_button_name"`
+
+	MediaType null.Int  `json:"media_type"`
+	IsGallery null.Bool `json:"is_gallery"`
 }
 
 type ContentWithPointsCount struct {
