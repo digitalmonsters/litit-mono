@@ -27,10 +27,12 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 	var email string
 	templateData := map[string]string{}
 	var publishKey string
+	var subject string
+	var textBody string
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "event_type", string(event.Type))
 
-	logger.Info().Interface("event.Type", event.Type)
+	logger.Info().Msgf("event.Type : %v", event.Type)
 
 	switch event.Type {
 	case eventsourcing.EmailNotificationPasswordForgot:
@@ -60,13 +62,13 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		}
 
 		email = user.Email
-		template = "forgot_password_link"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
 
 		firstName, lastName := userRecord.GetFirstAndLastNameWithPrivacy()
 
-		templateData["name"] = fmt.Sprintf("%v %v", firstName, lastName)
-		templateData["code"] = strconv.Itoa(payload.Code)
+		subject = "Password Reset Request"
+		textBody = fmt.Sprintf("Hello %s %s,\n\nWe received a request to reset your password. Your reset code is: %d.\n\nIf you didn't request this, please ignore this email.", firstName, lastName, payload.Code)
+
 	case eventsourcing.EmailNotificationConfirmAddress:
 		var payload eventsourcing.EmailNotificationConfirmAddressPayload
 
@@ -176,6 +178,8 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Template:     template,
 		TemplateData: string(templateDataMarshalled),
 		PublishKey:   publishKey,
+		Subject:      subject,
+		TextBody:     textBody,
 	}
 
 	if err = notifySender.SendEmail([]notification_gateway.SendEmailMessageRequest{emailRequest}, ctx); err != nil {
