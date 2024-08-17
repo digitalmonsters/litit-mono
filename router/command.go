@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"strings"
 
@@ -94,11 +95,15 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 	var isBanned bool
 	language := translation.DefaultUserLanguage
 
+	log.Println("Start")
+
 	if externalAuthValue := ctx.Request.Header.Peek("X-Ext-Authz-Check-Result"); strings.EqualFold(string(externalAuthValue), "allowed") {
+		log.Println("First-In")
 		if userIdHead := ctx.Request.Header.Peek("User-Id"); len(userIdHead) > 0 {
+			log.Println(userIdHead)
 			if userIdParsed, err := strconv.ParseInt(string(userIdHead), 10, 64); err != nil {
 				err = errors.Wrapf(err, "can not parse str to int for user-id. input string %v", userIdHead)
-
+				log.Println(userIdParsed)
 				return 0, isGuest, isBanned, language, &rpc.ExtendedLocalRpcError{
 					RpcError: rpc.RpcError{
 						Code:        error_codes.InvalidJwtToken,
@@ -113,10 +118,17 @@ func publicCanExecuteLogic(ctx *fasthttp.RequestCtx, requireIdentityValidation b
 			}
 		}
 	}
+	log.Println("Out of IF")
 
 	if userId > 0 {
+		log.Println("In of IF")
+		log.Println(userId)
+		log.Println("Going inside Validate")
 		usersResp, err := userValidator.Validate(userId, ctx)
+		log.Println("Going outside Validate")
 
+		log.Println(usersResp)
+		log.Println(err)
 		if err != nil {
 			err = errors.Wrap(err, "can not get user info from auth service")
 

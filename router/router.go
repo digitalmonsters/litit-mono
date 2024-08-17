@@ -467,7 +467,14 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 
 	shouldLog = forceLog
 
+	log.Info().Str("Yaha Aagaya", "")
+
 	userId, isGuest, isBanned, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
+	log.Info().Interface("User: - ", userId)
+	log.Info().Interface("Guest: - ", isGuest)
+	log.Info().Interface("Banned: - ", isBanned)
+	log.Info().Interface("RPCError: - ", rpcError)
+
 	if userId == 0 {
 		if authHeaderValue := httpCtx.Request.Header.Peek("Authorization"); len(authHeaderValue) > 0 {
 			jwtStr := string(authHeaderValue)
