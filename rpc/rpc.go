@@ -3,9 +3,10 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 //goland:noinspection ALL
@@ -55,7 +56,7 @@ type RpcError struct {
 	Data        map[string]interface{} `json:"data"`
 	Stack       string                 `json:"stack"`
 	Hostname    string                 `json:"hostname"`
-	ServiceName string                 `json:"-"`
+	ServiceName string                 `json:"ServiceName"`
 }
 
 func (r *RpcError) ToError() error {
