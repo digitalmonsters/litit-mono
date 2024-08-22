@@ -25,6 +25,21 @@ jobs:
         env:
           NETRC_FILE_CONTENT: ${{ secrets.NETRC_FILE_CONTENT }}
 
+      - name: Install kubectl
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group lititRG --name litit-aks
+
       - name: Authenticate with Azure ACR
         uses: azure/docker-login@v1
         with:
@@ -43,6 +58,10 @@ jobs:
                --header "access_token: ${{ secrets.ACCESS_TOKEN_STAGING }}"
         env:
           ACCESS_TOKEN_STAGING: ${{ secrets.ACCESS_TOKEN_STAGING }}
+
+      - name: Restart Kubernetes deployment
+        run: |
+          kubectl rollout restart deployment content -n dev
 
       - name: Send Slack notification
         run: |
