@@ -348,6 +348,7 @@ type UpdateUserMetaDataRequest struct {
 	Language               translation.Language `json:"language"`
 	Timezone               string               `json:"timezone"`
 	Phone                  null.String          `json:"phone"`
+	IsPet2User             string               `json:"is_pet2_user"`
 }
 
 type ForceResetUserIdentityWithNewGuestRequest struct {
