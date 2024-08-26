@@ -69,6 +69,7 @@ type UserEvent struct {
 	SpotsUploadBanned      bool                      `json:"spots_upload_banned"`
 	DogsUploadBanned       bool                      `json:"dogs_upload_banned"`
 	PetsUploadBanned       bool                      `json:"pets_upload_banned"`
+	IsPet2User             string                    `json:"is_pet2_user"`
 	BaseChangeEvent
 }
 
