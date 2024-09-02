@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"fmt"
+
 	"github.com/digitalmonsters/go-common/translation"
 	"github.com/pkg/errors"
 	"go.elastic.co/apm"
@@ -18,6 +19,7 @@ type MethodExecutionData struct {
 	DeviceId       string
 	Language       translation.Language
 	FullUrl        string
+	IsPet2User     bool
 	getUserValueFn func(key string) interface{}
 }
 
