@@ -470,7 +470,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 
 	l.Println("Yaha Aagaya")
 
-	userId, isGuest, isBanned, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
+	userId, isGuest, isBanned, isPet2User, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
 	l.Println(userId)
 	l.Println(isGuest)
 	l.Println(isBanned)
@@ -539,6 +539,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 		UserIp:         common.GetRealIp(httpCtx),
 		FullUrl:        httpCtx.URI().String(),
 		getUserValueFn: getUserValue,
+		IsPet2User:     isPet2User,
 	}
 
 	if deviceId := httpCtx.Request.Header.Peek("device-id"); len(deviceId) > 0 {

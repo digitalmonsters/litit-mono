@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/rpc"
@@ -90,7 +91,7 @@ func NewRestCommand(commandFn CommandFunc, path string, httpMethod HttpMethodTyp
 	return RestCommandBuilder{cmd: c}
 }
 
-func (r RestCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, translation.Language, *rpc.ExtendedLocalRpcError) {
+func (r RestCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, bool, translation.Language, *rpc.ExtendedLocalRpcError) {
 	return publicCanExecuteLogic(httpCtx, r.requireIdentityValidation, r.allowBanned, userValidator)
 }
 
