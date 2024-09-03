@@ -10,6 +10,13 @@ import (
 	"github.com/digitalmonsters/go-common/http_client"
 )
 
+type Provider string
+
+const (
+	ProviderBranch   Provider = "branch"
+	ProviderFirebase Provider = "firebase"
+)
+
 type Service struct {
 	httpClient *http_client.HttpClient
 	ctx        context.Context
@@ -27,7 +34,45 @@ func NewService(config Config, httpClient *http_client.HttpClient, ctx context.C
 	}
 }
 
-func (s *Service) generateDeeplink(link string) (string, error) {
+func (s *Service) generateDeeplink(link string, provider Provider) (string, error) {
+	switch provider {
+	case ProviderFirebase:
+		return s.generateFirebaseDeeplink(link)
+	case ProviderBranch:
+		return s.generateBranchDeeplink(link)
+	default:
+		return "", fmt.Errorf("unsupported provider:")
+	}
+}
+
+func (s *Service) generateBranchDeeplink(link string) (string, error) {
+	requestBody := BranchLinkRequest{
+		BranchKey: s.config.Key,
+		Data: map[string]string{
+			"$deeplink_path": link,
+			"$canonical_url": link,
+		},
+	}
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling JSON: %v", err)
+	}
+
+	resp, err := s.httpClient.NewRequest(s.ctx).SetContentType("application/json").SetBody(jsonData).Post("https://api.branch.io/v1/url")
+	if err != nil {
+		return "", fmt.Errorf("error making POST request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var branchResponse BranchLinkResponse
+	err = json.NewDecoder(resp.Body).Decode(&branchResponse)
+	if err != nil {
+		return "", fmt.Errorf("error decoding response: %v", err)
+	}
+	return branchResponse.URL, nil
+}
+
+func (s *Service) generateFirebaseDeeplink(link string) (string, error) {
 	requestBody := firebaseCreateDeeplinkRequest{
 		DynamicLinkInfo: dynamicLinkInfo{
 			DomainUriPrefix: s.config.DomainURIPrefix,
@@ -67,7 +112,7 @@ func (s *Service) GetVideoShareLink(contentId int64, contentType eventsourcing.C
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
-	return s.generateDeeplink(link)
+	return s.generateDeeplink(link, ProviderBranch)
 }
 
 func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error) {
@@ -77,7 +122,7 @@ func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcin
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
-	return s.generateDeeplink(link)
+	return s.generateDeeplink(link, ProviderBranch)
 }
 
 func (s *Service) GetPreviewShareLink(contentId int64, contentType eventsourcing.ContentType, uri string, userId int64, referralCode string) (string, error) {
@@ -87,7 +132,7 @@ func (s *Service) GetPreviewShareLink(contentId int64, contentType eventsourcing
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
-	return s.generateDeeplink(link)
+	return s.generateDeeplink(link, ProviderBranch)
 }
 
 func (s *Service) getShareType(contentType eventsourcing.ContentType) string {

@@ -16,7 +16,7 @@ func (m ServiceMock) GetPreviewShareLink(contentId int64, contentType eventsourc
 }
 
 func (m ServiceMock) GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error) {
-	panic("implement me")
+	return m.GetPetVideoShareLink(contentId, contentType, userId, referralCode, petType, petId, petName)
 }
 
 func GetMock() IService {
