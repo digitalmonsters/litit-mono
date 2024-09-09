@@ -90,6 +90,7 @@ type ContentModel struct {
 
 	MediaType null.Int  `json:"media_type"`
 	IsGallery null.Bool `json:"is_gallery"`
+	PetID     null.Int  `json:"pet_id"`
 }
 
 type ContentWithPointsCount struct {
