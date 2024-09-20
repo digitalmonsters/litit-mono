@@ -1,10 +1,12 @@
 package deeplink
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/digitalmonsters/go-common/eventsourcing"
@@ -59,24 +61,51 @@ func (s *Service) generateBranchDeeplink(link string) (string, error) {
 		return "", fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
-	resp, err := s.httpClient.NewRequest(s.ctx).SetContentType("application/json").SetBody(jsonData).Post("https://api.branch.io/v1/url")
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			ForceAttemptHTTP2: false, // Disable HTTP/2 and use HTTP/1.1
+		},
+	}
+
+	// Send the POST request
+	req, err := http.NewRequest("POST", "https://api.branch.io/v1/url", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", fmt.Errorf("error creating HTTP request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("error making POST request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	var branchResponse BranchLinkResponse
+	// Check for a valid response and ensure body exists
+	if resp.Body == nil {
+		return "", fmt.Errorf("response body is nil")
+	}
 
+	// Read the body only once
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading body: %v\n", err)
+		return "", fmt.Errorf("error reading response body: %v", err)
 	}
-	fmt.Println("bodyBytes ", string(bodyBytes), resp.StatusCode)
 
-	err = json.NewDecoder(resp.Body).Decode(&branchResponse)
+	// Print the response body for debugging
+	fmt.Println("Response body: ", string(bodyBytes), "Status code:", resp.StatusCode)
+
+	// Check for non-200 response status codes
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("non-200 status code: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Decode the response into the BranchLinkResponse struct
+	var branchResponse BranchLinkResponse
+	err = json.Unmarshal(bodyBytes, &branchResponse)
 	if err != nil {
 		return "", fmt.Errorf("error decoding response: %v", err)
 	}
+
 	return branchResponse.URL, nil
 }
 
