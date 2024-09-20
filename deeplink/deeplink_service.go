@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/digitalmonsters/go-common/eventsourcing"
@@ -65,6 +66,13 @@ func (s *Service) generateBranchDeeplink(link string) (string, error) {
 	defer resp.Body.Close()
 
 	var branchResponse BranchLinkResponse
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading body: %v\n", err)
+	}
+	fmt.Println("bodyBytes ", string(bodyBytes), resp.StatusCode)
+
 	err = json.NewDecoder(resp.Body).Decode(&branchResponse)
 	if err != nil {
 		return "", fmt.Errorf("error decoding response: %v", err)
