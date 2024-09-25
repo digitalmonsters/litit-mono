@@ -44,18 +44,19 @@ type ContentModel struct {
 	Subcategory VideoSubcategoryModel `json:"subcategory"`
 	User        VideoUserModel        `json:"user"`
 
-	UserId           int64       `json:"user_id"`
-	VideoId          string      `json:"video_id"`
-	Thumbnail        string      `json:"thumbnail"`
-	VideoUrl         string      `json:"video_url"`
-	PageUrl          string      `json:"page_url"`
-	Title            null.String `json:"title"`
-	Artist           null.String `json:"artist"`
-	Description      string      `json:"description"`
-	CategoryId       null.Int    `json:"category_id"`
-	SubcategoryId    null.Int    `json:"subcategory_id"`
-	Duration         float64     `json:"duration"`
-	AgeRestricted    bool        `json:"age_restricted"`
+	UserId        int64       `json:"user_id"`
+	VideoId       string      `json:"video_id"`
+	Thumbnail     string      `json:"thumbnail"`
+	VideoUrl      string      `json:"video_url"`
+	PageUrl       string      `json:"page_url"`
+	Title         null.String `json:"title"`
+	Artist        null.String `json:"artist"`
+	Description   string      `json:"description"`
+	CategoryId    null.Int    `json:"category_id"`
+	SubcategoryId null.Int    `json:"subcategory_id"`
+	Duration      float64     `json:"duration"`
+	AgeRestricted bool        `json:"age_restricted"`
+
 	LiveAt           null.Time   `json:"live_at"`
 	LiveAtTs         int64       `json:"live_at_ts"`
 	Flagged          bool        `json:"flagged"`
@@ -91,6 +92,7 @@ type ContentModel struct {
 	MediaType null.Int  `json:"media_type"`
 	IsGallery null.Bool `json:"is_gallery"`
 	PetID     null.Int  `json:"pet_id"`
+	SpotType  null.Int  `json:"spot_type"`
 }
 
 type ContentWithPointsCount struct {
