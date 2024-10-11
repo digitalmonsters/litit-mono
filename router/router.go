@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	l "log"
 	"net/http/pprof"
 	"os"
 	"strings"
@@ -468,14 +467,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 
 	shouldLog = forceLog
 
-	l.Println("Yaha Aagaya")
-
 	userId, isGuest, isBanned, isPet2User, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
-	l.Println(userId)
-	l.Println(isGuest)
-	l.Println(isBanned)
-	l.Println(rpcError)
-
 	if userId == 0 {
 		if authHeaderValue := httpCtx.Request.Header.Peek("Authorization"); len(authHeaderValue) > 0 {
 			jwtStr := string(authHeaderValue)
