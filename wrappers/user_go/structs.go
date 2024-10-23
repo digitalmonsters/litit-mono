@@ -495,7 +495,7 @@ type GetSuggestedUsersRequest struct {
 	UserID int64 `json:"user_id"`
 }
 
-type GetSuggestedUsersResponse struct {
+type GetFriendListDataResponse struct {
 	Users []UserDetails `json:"users"`
 }
 

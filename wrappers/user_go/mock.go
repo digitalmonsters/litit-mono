@@ -144,6 +144,10 @@ func (m *UserGoWrapperMock) UpdatePetAlbum(petId int64, videoId string, userId i
 	return m.UpdatePetAlbumFn(petId, videoId, userId, ctx, forceLog)
 }
 
+func (m *UserGoWrapperMock) GetFriendListData(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse] {
+	panic("implement me")
+}
+
 func GetMock() IUserGoWrapper { // for compiler errors
 	return &UserGoWrapperMock{}
 }
