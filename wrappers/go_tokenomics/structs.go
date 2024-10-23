@@ -248,6 +248,14 @@ type GetMyReferredUsersWatchedVideoInfoResponse struct {
 	TotalCount             int64                        `json:"total_count"`
 }
 
+type DeductVaultPointsForIntroFeedResponse struct {
+	Status bool `json:"status"`
+}
+
+type DeductVaultPointsForIntroFeedRequest struct {
+	UserId int64 `json:"user_id"`
+}
+
 type ReferredUsersWatchTimeInfo struct {
 	Id          int64     `json:"id"`
 	UserId      int64     `json:"user_id"`

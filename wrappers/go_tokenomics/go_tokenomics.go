@@ -229,3 +229,9 @@ func (w *Wrapper) GetMyReferredUsersWatchedVideoInfo(referrerId, page, count int
 		Page:       page,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }
+
+func (w *Wrapper) DeductVaultPointsForIntroFeed(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[DeductVaultPointsForIntroFeedResponse] {
+	return wrappers.ExecuteRpcRequestAsync[DeductVaultPointsForIntroFeedResponse](w.baseWrapper, w.apiUrl, "DeductVaultPointsForIntroFeed", DeductVaultPointsForIntroFeedRequest{
+		UserId: userId,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
