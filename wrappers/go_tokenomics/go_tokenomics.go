@@ -36,6 +36,7 @@ type IGoTokenomicsWrapper interface {
 	WriteOffUserTokensForAd(userId int64, adCampaignId int64, amount decimal.Decimal, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	GetReferralsProgressInfo(referrerId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralProgressInfoResponse]
 	GetMyReferredUsersWatchedVideoInfo(referrerId, page, count int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetMyReferredUsersWatchedVideoInfoResponse]
+	DeductVaultPointsForIntroFeed(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[DeductVaultPointsForIntroFeedResponse]
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
