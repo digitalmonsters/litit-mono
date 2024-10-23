@@ -490,3 +490,18 @@ type SearchPetDetails struct {
 	Pets       []PetDetailRecord `json:"pets"`
 	TotalCount int               `json:"total_count"`
 }
+
+type GetSuggestedUsersRequest struct {
+	UserID int64 `json:"user_id"`
+}
+
+type GetSuggestedUsersResponse struct {
+	Users []UserDetails `json:"users"`
+}
+
+type UserDetails struct {
+	Id        int64       `json:"id"`
+	Name      string      `json:"name"`
+	Avatar    null.String `json:"avatar"`
+	Followers int         `json:"followers"`
+}
