@@ -505,3 +505,7 @@ type UserDetails struct {
 	Avatar    null.String `json:"avatar"`
 	Followers int         `json:"followers"`
 }
+
+type GetUserDataRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}

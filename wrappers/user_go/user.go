@@ -46,6 +46,7 @@ type IUserGoWrapper interface {
 	SetSpotsUploadBanned(userId int64, banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	GetFriendListData(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
+	GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -483,4 +484,12 @@ func (w UserGoWrapper) GetFriendListData(userId int64, ctx context.Context, forc
 		"GetFriendListData", GetSuggestedUsersRequest{
 			UserID: userId,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetFriendListDataResponse](w.baseWrapper, w.serviceApiUrl,
+		"GetUsersWithFollowers", GetUserDataRequest{
+			UserIds: userIds,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+
 }

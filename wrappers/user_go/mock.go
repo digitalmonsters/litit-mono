@@ -148,6 +148,10 @@ func (m *UserGoWrapperMock) GetFriendListData(userId int64, ctx context.Context,
 	panic("implement me")
 }
 
+func (m *UserGoWrapperMock) GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse] {
+	panic("implement me")
+}
+
 func GetMock() IUserGoWrapper { // for compiler errors
 	return &UserGoWrapperMock{}
 }
