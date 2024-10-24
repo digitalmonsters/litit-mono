@@ -100,3 +100,12 @@ type UserForValidator struct {
 	Verified   bool                 `json:"verified"`
 	Language   translation.Language `json:"language"`
 }
+
+type UpdateEmailForUserRequest struct {
+	UserId  int64  `json:"user_id"`
+	EmailId string `json:"email_id"`
+}
+
+type UpdateEmailForUserResponse struct {
+	Status int64 `json:"status"`
+}

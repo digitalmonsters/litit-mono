@@ -2,6 +2,7 @@ package auth_go
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers"
 	"go.elastic.co/apm"
@@ -16,6 +17,7 @@ type AuthGoWrapperMock struct {
 	IsGuestFn                       func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
 	GetUsersRegistrationTypeFn      func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
 	InternalGetUsersForValidationFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
+	UpdateEmailForUserFn            func(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
 }
 
 func (w *AuthGoWrapperMock) InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator] {
@@ -24,6 +26,10 @@ func (w *AuthGoWrapperMock) InternalGetUsersForValidation(userIds []int64, ctx c
 
 func (w *AuthGoWrapperMock) IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse] {
 	return w.IsGuestFn(userId, apmTransaction, forceLog)
+}
+
+func (w *AuthGoWrapperMock) UpdateEmailForUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse] {
+	return w.UpdateEmailForUserFn(userId, ctx, forceLog)
 }
 
 func (w *AuthGoWrapperMock) AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan {

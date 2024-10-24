@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -12,7 +14,6 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
-	"time"
 )
 
 type IAuthGoWrapper interface {
@@ -24,6 +25,7 @@ type IAuthGoWrapper interface {
 	IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
 	GetUsersRegistrationType(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
 	InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
+	UpdateEmailForUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
 }
 
 type AuthGoWrapper struct {
@@ -58,6 +60,13 @@ func (u AuthGoWrapper) IsGuest(userId int64, apmTransaction *apm.Transaction, fo
 	return wrappers.ExecuteRpcRequestAsync[IsGuestResponse](u.baseWrapper, u.apiUrl, "IsGuest", IsGuestRequest{
 		UserId: userId,
 	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+}
+
+func (u AuthGoWrapper) UpdateEmailForUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse] {
+	return wrappers.ExecuteRpcRequestAsync[map[int64]UpdateEmailForUserResponse](u.baseWrapper,
+		u.apiUrl, "UpdateEmailForUser", UpdateEmailForUserRequest{
+			UserId: userId,
+		}, map[string]string{}, 5*time.Second, apm.TransactionFromContext(ctx), u.serviceName, forceLog)
 }
 
 func (u AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *apm.Transaction, forceLog bool) chan AddUserResponseChan {
