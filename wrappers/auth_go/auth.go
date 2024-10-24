@@ -25,7 +25,7 @@ type IAuthGoWrapper interface {
 	IsGuest(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[IsGuestResponse]
 	GetUsersRegistrationType(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
 	InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
-	UpdateEmailForUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
+	UpdateEmailForUser(userId int64, email string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
 }
 
 type AuthGoWrapper struct {
@@ -62,10 +62,11 @@ func (u AuthGoWrapper) IsGuest(userId int64, apmTransaction *apm.Transaction, fo
 	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 }
 
-func (u AuthGoWrapper) UpdateEmailForUser(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse] {
+func (u AuthGoWrapper) UpdateEmailForUser(userId int64, email string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse] {
 	return wrappers.ExecuteRpcRequestAsync[map[int64]UpdateEmailForUserResponse](u.baseWrapper,
 		u.apiUrl, "UpdateEmailForUser", UpdateEmailForUserRequest{
-			UserId: userId,
+			UserId:  userId,
+			EmailId: email,
 		}, map[string]string{}, 5*time.Second, apm.TransactionFromContext(ctx), u.serviceName, forceLog)
 }
 
