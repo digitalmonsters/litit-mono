@@ -81,16 +81,16 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "user_id", payload.UserId)
 
 		email = payload.Email
-
 		apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "email", email)
-
-		template = "email_verify"
 		publishKey = strconv.FormatInt(payload.UserId, 10)
-		templateData["token"] = payload.Token
-		templateData["username"] = payload.Username
-		templateData["verifyMarketingSiteHost"] = emailLinks.VerifyHost
-		templateData["verify_url_path"] = emailLinks.VerifyPath
-		templateData["marketingSiteHost"] = emailLinks.MarketingSite
+
+		// Prepare a well-formatted text body
+		subject = "Email Address Confirmation"
+		textBody = fmt.Sprintf(
+			"Hello %s,\n\nThank you for registering! Please confirm your email address by entering the following confirmation code: %s.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\n Litit",
+			payload.Firstname, payload.Token,
+		)
+
 	case eventsourcing.EmailMarketingConfirmAddress:
 		var payload eventsourcing.EmailMarketingNotificationConfirmAddressPayload
 
