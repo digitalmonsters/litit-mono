@@ -178,3 +178,7 @@ type GetLastContentRequest struct {
 	UserId      int64                     `json:"user_id"`
 	ContentType eventsourcing.ContentType `json:"content_type"`
 }
+
+type GetIfIntroExistsRequest struct {
+	UserId int64 `json:"user_id"`
+}
