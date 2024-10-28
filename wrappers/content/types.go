@@ -182,3 +182,7 @@ type GetLastContentRequest struct {
 type GetIfIntroExistsRequest struct {
 	UserId int64 `json:"user_id"`
 }
+
+type IntroExists struct {
+	Exists bool `json:"exists"`
+}

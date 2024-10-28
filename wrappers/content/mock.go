@@ -88,6 +88,10 @@ func (w *ContentWrapperMock) InsertMusicContent(content MusicContentRequest, ctx
 	return w.InsertMusicContentFn(content, ctx, forceLog)
 }
 
+func (w *ContentWrapperMock) GetIfIntroExists(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[IntroExists] {
+	panic("implement me")
+}
+
 func GetMock() IContentWrapper { // for compiler errors
 	return &ContentWrapperMock{}
 }
