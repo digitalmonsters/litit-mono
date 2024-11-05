@@ -47,6 +47,7 @@ type IUserGoWrapper interface {
 	UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	GetFriendListData(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
+	GetIsRequested(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[IsRequestedResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName

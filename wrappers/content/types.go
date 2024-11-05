@@ -186,12 +186,3 @@ type GetIfIntroExistsRequest struct {
 type IntroExists struct {
 	Exists bool `json:"exists"`
 }
-
-type IsRequestedRequest struct {
-	UserId   int64 `json:"user_id"`
-	FriendId int64 `json:"friend_id"`
-}
-
-type IsRequestedResponse struct {
-	IsRequested bool `json:"is_requested"`
-}
