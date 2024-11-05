@@ -47,7 +47,7 @@ type IUserGoWrapper interface {
 	UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	GetFriendListData(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
-	GetIsRequested(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[IsRequestedResponse]
+	GetIsRequested(userId int64, friendId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[IsRequestedResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -495,9 +495,10 @@ func (w UserGoWrapper) GetUsersWithFollowers(userIds []int64, ctx context.Contex
 
 }
 
-func (w UserGoWrapper) GetIsRequested(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[IsRequestedResponse] {
+func (w UserGoWrapper) GetIsRequested(userId int64, friendId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[IsRequestedResponse] {
 	return wrappers.ExecuteRpcRequestAsync[IsRequestedResponse](w.baseWrapper, w.serviceApiUrl,
 		"GetIsRequested", IsRequestedRequest{
-			UserId: userId,
+			UserId:   userId,
+			FriendId: friendId,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
