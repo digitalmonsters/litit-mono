@@ -509,3 +509,12 @@ type UserDetails struct {
 type GetUserDataRequest struct {
 	UserIds []int64 `json:"user_ids"`
 }
+
+type IsRequestedRequest struct {
+	UserId   int64 `json:"user_id"`
+	FriendId int64 `json:"friend_id"`
+}
+
+type IsRequestedResponse struct {
+	IsRequested bool `json:"is_requested"`
+}

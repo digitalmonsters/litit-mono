@@ -493,3 +493,10 @@ func (w UserGoWrapper) GetUsersWithFollowers(userIds []int64, ctx context.Contex
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 
 }
+
+func (w UserGoWrapper) GetIsRequested(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[IsRequestedResponse] {
+	return wrappers.ExecuteRpcRequestAsync[IsRequestedResponse](w.baseWrapper, w.serviceApiUrl,
+		"GetIsRequested", IsRequestedRequest{
+			UserId: userId,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
