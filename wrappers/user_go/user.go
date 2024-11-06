@@ -45,7 +45,7 @@ type IUserGoWrapper interface {
 	GetGrandReferrerIds(ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]int64]
 	SetSpotsUploadBanned(userId int64, banned bool, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
 	UpdatePetAlbum(petId int64, videoId string, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[any]
-	GetFriendListData(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
+	GetFriendListData(suggested bool, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetIsRequested(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 }
@@ -480,10 +480,11 @@ func (w UserGoWrapper) UpdatePetAlbum(petId int64, videoId string, userId int64,
 		"UpdatePetAlbum", UpdatePetAlbum{PetId: petId, VideoId: videoId, UserId: userId}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 
-func (w UserGoWrapper) GetFriendListData(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse] {
+func (w UserGoWrapper) GetFriendListData(suggested bool, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse] {
 	return wrappers.ExecuteRpcRequestAsync[GetFriendListDataResponse](w.baseWrapper, w.serviceApiUrl,
 		"GetFriendListData", GetSuggestedUsersRequest{
-			UserID: userId,
+			UserID:    userId,
+			Suggested: suggested,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
 

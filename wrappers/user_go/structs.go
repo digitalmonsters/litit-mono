@@ -492,7 +492,8 @@ type SearchPetDetails struct {
 }
 
 type GetSuggestedUsersRequest struct {
-	UserID int64 `json:"user_id"`
+	UserID    int64 `json:"user_id"`
+	Suggested bool  `json:"suggested"`
 }
 
 type GetFriendListDataResponse struct {
