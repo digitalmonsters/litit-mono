@@ -89,10 +89,11 @@ type ContentModel struct {
 	LinkButtonId   null.Int    `json:"link_button_id"`
 	LinkButtonName null.String `json:"link_button_name"`
 
-	MediaType null.Int  `json:"media_type"`
-	IsGallery null.Bool `json:"is_gallery"`
-	PetID     null.Int  `json:"pet_id"`
-	SpotType  null.Int  `json:"spot_type"`
+	MediaType   null.Int    `json:"media_type"`
+	IsGallery   null.Bool   `json:"is_gallery"`
+	PetID       null.Int    `json:"pet_id"`
+	SpotType    null.Int    `json:"spot_type"`
+	GeoLocation null.String `json:"geo_location"`
 }
 
 type ContentWithPointsCount struct {
