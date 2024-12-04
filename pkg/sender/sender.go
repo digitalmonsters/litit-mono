@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -26,10 +31,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"math"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type Sender struct {
@@ -417,8 +418,17 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 	return resp
 }
 
+// -
 func (s *Sender) PushNotification(notification database.Notification, entityId int64, relatedEntityId int64,
 	templateName string, language translation.Language, customKind string, ctx context.Context) (shouldRetry bool, innerErr error) {
+
+	log.Ctx(ctx).Info().
+		Str("template_name", templateName).
+		Int64("user_id", notification.UserId).
+		Int64("entity_id", entityId).
+		Int64("related_entity_id", relatedEntityId).
+		Msg("[PushNotification] Starting notification processing")
+
 	var template database.RenderTemplate
 	var title string
 	var body string
@@ -426,20 +436,25 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	isCustomPush := strings.Contains(templateName, "push_admin")
 
 	if !isCustomPush {
-		db := database.GetDbWithContext(database.DbTypeMaster, ctx)
+		log.Ctx(ctx).Info().Str("template_name", templateName).Msg("[PushNotification] Fetching template from database")
 
+		db := database.GetDbWithContext(database.DbTypeMaster, ctx)
 		if err = db.Where("id = ?", templateName).Find(&template).Error; err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to fetch template")
 			return true, errors.WithStack(err)
 		}
 
 		if template.Id != templateName {
+			log.Ctx(ctx).Error().Msg("[PushNotification] Template not found")
 			return false, errors.WithStack(errors.New("template not found"))
 		}
 
 		if template.Muted {
+			log.Ctx(ctx).Warn().Msg("[PushNotification] Template is muted, skipping")
 			return false, nil
 		}
 	} else {
+		log.Ctx(ctx).Info().Msg("[PushNotification] Using custom push notification")
 		title = notification.Title
 		body = notification.Message
 	}
@@ -450,6 +465,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	notification.CreatedAt = time.Now().UTC()
 
 	if notification.CustomData == nil {
+		log.Ctx(ctx).Info().Msg("[PushNotification] Initializing custom data")
 		notification.CustomData = make(database.CustomData)
 	}
 
@@ -457,26 +473,30 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		if len(template.ImageUrl) > 0 {
 			notification.CustomData["image_url"] = template.ImageUrl
 		}
-
 		if len(template.Route) > 0 {
 			notification.CustomData["route"] = template.Route
 		}
 	}
 
+	log.Ctx(ctx).Debug().Interface("custom_data", notification.CustomData).Msg("[PushNotification] Prepared custom data")
+
 	customDataMarshalled, err := json.Marshal(notification.CustomData)
 	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to marshal custom data")
 		return false, errors.WithStack(err)
 	}
 
 	var notificationInfoMarshalled []byte
 	notificationInfoMarshalled, err = json.Marshal(notification)
 	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to marshal notification info")
 		return false, errors.WithStack(err)
 	}
 
 	var renderingVariablesMarshalled []byte
 	renderingVariablesMarshalled, err = json.Marshal(notification.RenderingVariables)
 	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to marshal rendering variables")
 		return false, errors.WithStack(err)
 	}
 
@@ -486,18 +506,18 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	} else {
 		kind = customKind
 	}
+	log.Ctx(ctx).Info().Str("kind", kind).Msg("[PushNotification] Notification kind determined")
 
 	session := database.GetScyllaSession()
-
 	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
 
 	notificationsCount := int64(1)
 	alreadySend := false
 
 	if template.IsGrouped {
-		query := "select user_id, entity_id, related_entity_id from notification_relation where user_id = ? and " +
-			"event_type = ?"
+		log.Ctx(ctx).Info().Msg("[PushNotification] Processing grouped notifications")
 
+		query := "select user_id, entity_id, related_entity_id from notification_relation where user_id = ? and event_type = ?"
 		if relatedEntityId != 0 {
 			query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
 		}
@@ -516,6 +536,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 
 		if err = notificationRelationIter.Close(); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to close notification relation iterator")
 			return true, errors.WithStack(err)
 		}
 
@@ -539,14 +560,20 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 
 		if err = notificationIter.Close(); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to close notification iterator")
 			return true, errors.WithStack(err)
 		}
 
 		if found {
+			log.Ctx(ctx).Info().
+				Int64("entity_id", entityIdSelected).
+				Int64("related_entity_id", relatedEntityIdSelected).
+				Msg("[PushNotification] Found duplicate notification, deleting")
 			batch.Query("delete from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
 				notification.UserId, template.Id, createdAt, entityIdSelected, relatedEntityIdSelected)
 			if err = s.UpdateCreatedAtInGroupQueue(notification.UserId, template.Id, entityIdSelected,
 				relatedEntityIdSelected, notification.CreatedAt, ctx); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to update createdAt in group queue")
 				return true, errors.WithStack(err)
 			}
 		}
@@ -605,25 +632,37 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	defer tx.Rollback()
 
 	if err = tx.Create(&notification).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
 		return true, err
 	}
 
 	if err = notificationPkg.IncrementUnreadNotificationsCounter(tx, notification.UserId); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to increment unread notifications counter")
 		return true, err
 	}
 
 	if err = tx.Commit().Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to commit transaction")
 		return true, errors.WithStack(err)
 	}
 
 	if !alreadySend {
-		if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, headline, notification.UserId, notification.CustomData, template.IsGrouped,
+		log.Ctx(ctx).Info().
+			Int64("user_id", notification.UserId).
+			Str("template_id", template.Id).
+			Msg("[PushNotification] Sending custom push notification")
+		if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, "", notification.UserId, notification.CustomData, template.IsGrouped,
 			entityId, relatedEntityId, notification.CreatedAt, ctx); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to send custom push notification")
 			return true, errors.WithStack(err)
 		}
 	}
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
+
+	log.Ctx(ctx).Info().
+		Str("notification_id", notification.Id.String()).
+		Msg("[PushNotification] Notification sent successfully")
 
 	return false, nil
 }
@@ -979,4 +1018,540 @@ func (s *Sender) UnapplyEvent(userId int64, eventType string, entityId int64, re
 	}
 
 	return nil
+}
+
+func (s *Sender) PushPet2Notification(notification database.Notification, entityId int64, relatedEntityId int64,
+	templateName string, language translation.Language, customKind string, ctx context.Context) (shouldRetry bool, innerErr error) {
+
+	log.Ctx(ctx).Info().
+		Str("template_name", templateName).
+		Int64("user_id", notification.UserId).
+		Int64("entity_id", entityId).
+		Int64("related_entity_id", relatedEntityId).
+		Msg("[PushNotification] Starting notification processing")
+
+	var template database.RenderTemplate
+	var title string
+	var body string
+	var err error
+	isCustomPush := strings.Contains(templateName, "push_admin")
+
+	if !isCustomPush {
+		log.Ctx(ctx).Info().Str("template_name", templateName).Msg("[PushNotification] Fetching template from database")
+
+		db := database.GetDbWithContext(database.DbTypeMaster, ctx)
+		if err = db.Where("id = ?", templateName).Find(&template).Error; err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to fetch template")
+			return true, errors.WithStack(err)
+		}
+
+		if template.Id != templateName {
+			log.Ctx(ctx).Error().Msg("[PushNotification] Template not found")
+			return false, errors.WithStack(errors.New("template not found"))
+		}
+
+		if template.Muted {
+			log.Ctx(ctx).Warn().Msg("[PushNotification] Template is muted, skipping")
+			return false, nil
+		}
+	} else {
+		log.Ctx(ctx).Info().Msg("[PushNotification] Using custom push notification")
+		title = notification.Title
+		body = notification.Message
+	}
+
+	template.Id = templateName
+
+	notification.Id = uuid.New()
+	notification.CreatedAt = time.Now().UTC()
+
+	if notification.CustomData == nil {
+		log.Ctx(ctx).Info().Msg("[PushNotification] Initializing custom data")
+		notification.CustomData = make(database.CustomData)
+	}
+
+	if !isCustomPush {
+		if len(template.ImageUrl) > 0 {
+			notification.CustomData["image_url"] = template.ImageUrl
+		}
+		if len(template.Route) > 0 {
+			notification.CustomData["route"] = template.Route
+		}
+	}
+
+	log.Ctx(ctx).Debug().Interface("custom_data", notification.CustomData).Msg("[PushNotification] Prepared custom data")
+
+	customDataMarshalled, err := json.Marshal(notification.CustomData)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to marshal custom data")
+		return false, errors.WithStack(err)
+	}
+
+	var notificationInfoMarshalled []byte
+	notificationInfoMarshalled, err = json.Marshal(notification)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to marshal notification info")
+		return false, errors.WithStack(err)
+	}
+
+	var renderingVariablesMarshalled []byte
+	renderingVariablesMarshalled, err = json.Marshal(notification.RenderingVariables)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to marshal rendering variables")
+		return false, errors.WithStack(err)
+	}
+
+	kind := ""
+	if len(customKind) == 0 {
+		kind = template.Kind
+	} else {
+		kind = customKind
+	}
+	log.Ctx(ctx).Info().Str("kind", kind).Msg("[PushNotification] Notification kind determined")
+
+	session := database.GetScyllaSession()
+	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
+
+	notificationsCount := int64(1)
+	alreadySend := false
+
+	if template.IsGrouped {
+		log.Ctx(ctx).Info().Msg("[PushNotification] Processing grouped notifications")
+
+		query := "select user_id, entity_id, related_entity_id from notification_relation where user_id = ? and event_type = ?"
+		if relatedEntityId != 0 {
+			query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+		}
+
+		notificationRelationIter := session.Query(query, notification.UserId, template.Id).WithContext(ctx).Iter()
+
+		var userIdSelected int64
+		var entityIdSelected int64
+		var relatedEntityIdSelected int64
+		for notificationRelationIter.Scan(&userIdSelected, &entityIdSelected, &relatedEntityIdSelected) {
+			if entityIdSelected == entityId && relatedEntityIdSelected == relatedEntityId {
+				alreadySend = true
+			} else {
+				notificationsCount++
+			}
+		}
+
+		if err = notificationRelationIter.Close(); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to close notification relation iterator")
+			return true, errors.WithStack(err)
+		}
+
+		batch.Query("update notification_relation set event_applied = true where user_id = ? and event_type = ? "+
+			"and entity_id = ? and related_entity_id = ?", notification.UserId, template.Id, entityId, relatedEntityId)
+
+		notificationIter := session.Query("select entity_id, related_entity_id, created_at "+
+			"from notification where user_id = ? and event_type = ? and created_at >= ?",
+			notification.UserId, template.Id, notification.CreatedAt.Add(-3*24*30*time.Hour)).WithContext(ctx).Iter()
+
+		found := false
+		entityIdSelected = 0
+		relatedEntityIdSelected = 0
+		var createdAt time.Time
+
+		for notificationIter.Scan(&entityIdSelected, &relatedEntityIdSelected, &createdAt) {
+			if (relatedEntityId != 0 && entityIdSelected == entityId) || relatedEntityId == 0 {
+				found = true
+				break
+			}
+		}
+
+		if err = notificationIter.Close(); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to close notification iterator")
+			return true, errors.WithStack(err)
+		}
+
+		if found {
+			log.Ctx(ctx).Info().
+				Int64("entity_id", entityIdSelected).
+				Int64("related_entity_id", relatedEntityIdSelected).
+				Msg("[PushNotification] Found duplicate notification, deleting")
+			batch.Query("delete from notification where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
+				notification.UserId, template.Id, createdAt, entityIdSelected, relatedEntityIdSelected)
+			if err = s.UpdateCreatedAtInGroupQueue(notification.UserId, template.Id, entityIdSelected,
+				relatedEntityIdSelected, notification.CreatedAt, ctx); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to update createdAt in group queue")
+				return true, errors.WithStack(err)
+			}
+		}
+	}
+
+	var headline string
+	var titleMultiple string
+	var bodyMultiple string
+	var headlineMultiple string
+
+	if notification.RenderingVariables == nil {
+		notification.RenderingVariables = database.RenderingVariables{}
+	}
+
+	notification.RenderingVariables["notificationsCount"] = strconv.FormatInt(notificationsCount-1, 10)
+
+	if !isCustomPush {
+		if template.IsGrouped {
+			if firstname, ok := notification.RenderingVariables["firstname"]; ok && len(strings.TrimSpace(firstname)) == 0 {
+				if notificationsCount <= 1 {
+					return false, nil
+				} else {
+					notification.RenderingVariables["firstname"] = "Someone"
+				}
+			}
+		}
+
+		title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, notification.RenderingVariables, language)
+		if err == renderer.TemplateRenderingError {
+			return false, errors.WithStack(err) // we should continue, no need to retry
+		} else if err != nil {
+			return true, errors.WithStack(err)
+		}
+	}
+
+	notification.Title = title
+	notification.Message = body
+
+	if notificationsCount > 1 {
+		title = titleMultiple
+		body = bodyMultiple
+		headline = headlineMultiple
+	}
+
+	batch.Query("update notification set notifications_count = ?, title = ?, body = ?, headline = ?, kind = ?, rendering_variables = ?, "+
+		"custom_data = ?, notification_info = ? where user_id = ? and event_type = ? "+
+		"and created_at = ? and entity_id = ? and related_entity_id = ?", notificationsCount, title, body, headline,
+		kind, string(renderingVariablesMarshalled), string(customDataMarshalled), string(notificationInfoMarshalled),
+		notification.UserId, template.Id, notification.CreatedAt, entityId, relatedEntityId)
+
+	if err = session.ExecuteBatch(batch); err != nil {
+		return true, errors.WithStack(err)
+	}
+
+	tx := database.GetDb(database.DbTypeMaster).WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err = tx.Create(&notification).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
+		return true, err
+	}
+
+	if err = notificationPkg.IncrementUnreadNotificationsCounter(tx, notification.UserId); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to increment unread notifications counter")
+		return true, err
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to commit transaction")
+		return true, errors.WithStack(err)
+	}
+
+	if !alreadySend {
+		log.Ctx(ctx).Info().
+			Int64("user_id", notification.UserId).
+			Str("template_id", template.Id).
+			Msg("[PushNotification] Sending custom push notification")
+		if _, err = s.sendCustomPushTemplateMessageToUser(template.Id, kind, title, body, "", notification.UserId, notification.CustomData, template.IsGrouped,
+			entityId, relatedEntityId, notification.CreatedAt, ctx); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to send custom push notification")
+			return true, errors.WithStack(err)
+		}
+	}
+
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
+
+	log.Ctx(ctx).Info().
+		Str("notification_id", notification.Id.String()).
+		Msg("[PushNotification] Notification sent successfully")
+
+	return false, nil
+}
+
+func (s *Sender) sendPet2GroupedPush(eventType, kind string, userId int64, entityId int64, notificationCount int64,
+	renderingVariables database.RenderingVariables, customData database.CustomData, ctx context.Context) error {
+	db := database.GetDbWithContext(database.DbTypeReadonly, ctx)
+
+	var template database.RenderTemplate
+	if err := db.Where("id = ?", eventType).Find(&template).Error; err != nil {
+		return errors.WithStack(err)
+	}
+
+	if template.Id != eventType {
+		return errors.WithStack(errors.New("template not found"))
+	}
+
+	if template.Muted {
+		return nil
+	}
+
+	userTokens, err := token.GetUserTokens(database.GetDbWithContext(database.DbTypeReadonly, ctx), userId)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if len(userTokens) == 0 {
+		return nil
+	}
+
+	isMuted, err := s.settingsService.IsPushNotificationMuted(userId, eventType, ctx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if isMuted {
+		return nil
+	}
+
+	session := database.GetScyllaSession()
+
+	notificationRelationIter := session.Query("select user_id, event_applied from notification_relation where user_id = ? "+
+		"and event_type = ? and entity_id = ? and related_entity_id = ?", userId, eventType, entityId, 0).Iter()
+
+	var userIdFromSelect int64
+	var eventApplied bool
+	notificationRelationIter.Scan(&userIdFromSelect, &eventApplied)
+
+	if err = notificationRelationIter.Close(); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if userIdFromSelect > 0 && !eventApplied {
+		return nil
+	}
+
+	var userData user_go.UserRecord
+
+	resp := <-s.userWrapper.GetUsers([]int64{userId}, ctx, false)
+	if resp.Error != nil {
+		return errors.WithStack(resp.Error.ToError())
+	}
+
+	var ok bool
+	if userData, ok = resp.Response[userId]; !ok {
+		return errors.WithStack(errors.New("user not found"))
+	}
+
+	renderingVariables["notificationsCount"] = strconv.FormatInt(notificationCount-1, 10)
+
+	if firstname, ok := renderingVariables["firstname"]; ok && len(strings.TrimSpace(firstname)) == 0 {
+		if notificationCount <= 1 {
+			return nil
+		} else {
+			renderingVariables["firstname"] = "Someone"
+		}
+	}
+
+	var title string
+	var body string
+	var headline string
+	var titleMultiple string
+	var bodyMultiple string
+	var headlineMultiple string
+	title, body, headline, titleMultiple, bodyMultiple, headlineMultiple, err = renderer.Render(template, renderingVariables, userData.Language)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if notificationCount > 1 {
+		title = titleMultiple
+		body = bodyMultiple
+		headline = headlineMultiple
+	}
+
+	if err = <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, eventType, kind, title, body, headline, fmt.Sprint(userId), customData,
+		userId), ctx); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func (s *Sender) sendCustomPushPet2TemplateMessageToUser(pushType, kind, title, body, headline string, userId int64,
+	customData database.CustomData, isGrouped bool, entityId int64, relatedEntityId int64, createdAt time.Time,
+	ctx context.Context) (interface{}, error) {
+	userTokens, err := token.GetUserTokens(database.GetDbWithContext(database.DbTypeReadonly, ctx), userId)
+
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if len(userTokens) == 0 {
+		return nil, nil
+	}
+
+	isMuted, err := s.settingsService.IsPushNotificationMuted(userId, pushType, ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if isMuted {
+		return nil, nil
+	}
+
+	if !isGrouped {
+		sendResult := <-s.gateway.EnqueuePushForUser(s.prepareCustomPushEvents(userTokens, pushType, kind, title, body, headline, fmt.Sprint(userId), customData,
+			userId), ctx)
+		return nil, sendResult
+	}
+
+	session := database.GetScyllaSession()
+
+	notificationRelationIter := session.Query("select event_applied from notification_relation where user_id = ? "+
+		"and event_type = ? and entity_id = ?", userId, pushType, entityId).Iter()
+
+	var eventApplied bool
+	notificationRelationIter.Scan(&eventApplied)
+
+	if err = notificationRelationIter.Close(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if !eventApplied {
+		return nil, nil
+	}
+
+	deadlineKeys, deadlines := GetDeadlinesForSelect(createdAt)
+	deadline := deadlines[0]
+
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline_key", deadlineKeys)
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "deadline", deadlines)
+
+	query := fmt.Sprintf("select deadline_key, deadline, user_id, "+
+		"event_type, entity_id, created_at, notification_count from push_notification_group_queue "+
+		"where deadline_key in (%v) and deadline in (%v) and user_id = ? and event_type = ?",
+		utils.JoinDatesForInStatement(deadlineKeys), utils.JoinDatesForInStatement(deadlines))
+
+	if relatedEntityId != 0 {
+		query = fmt.Sprintf("%v and entity_id = %v", query, entityId)
+	}
+
+	pushNotificationGroupQueueIter := session.Query(query, userId, pushType).WithContext(ctx).Iter()
+
+	pushNotificationsGroupQueue := make([]scylla.PushNotificationGroupQueue, 0)
+	var pushNotificationGroupQueue scylla.PushNotificationGroupQueue
+	for pushNotificationGroupQueueIter.Scan(&pushNotificationGroupQueue.DeadlineKey, &pushNotificationGroupQueue.Deadline,
+		&pushNotificationGroupQueue.UserId, &pushNotificationGroupQueue.EventType, &pushNotificationGroupQueue.EntityId,
+		&pushNotificationGroupQueue.CreatedAt, &pushNotificationGroupQueue.NotificationCount) {
+		pushNotificationsGroupQueue = append(pushNotificationsGroupQueue, pushNotificationGroupQueue)
+		pushNotificationGroupQueue = scylla.PushNotificationGroupQueue{}
+	}
+
+	if err = pushNotificationGroupQueueIter.Close(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	flooredCreatedAt := TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineMinutes, true)
+
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "grouped_queued_notifications_count", len(pushNotificationsGroupQueue))
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "push_notifications_group_queue", pushNotificationsGroupQueue)
+
+	for _, item := range pushNotificationsGroupQueue {
+		if !flooredCreatedAt.Before(item.DeadlineKey) /* >= */ || item.Deadline.Equal(deadline) {
+			continue
+		}
+
+		pushNotificationGroupQueue = item
+		break
+	}
+
+	batch := session.NewBatch(gocql.UnloggedBatch).WithContext(ctx)
+
+	hasPreviousPushNotificationGroupQueueItem := pushNotificationGroupQueue.UserId != 0
+	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "has_previous_push_notification_group_queue_item", hasPreviousPushNotificationGroupQueueItem)
+
+	if !hasPreviousPushNotificationGroupQueueItem {
+		deadline = TimeToNearestMinutes(createdAt, configs.PushNotificationDeadlineMinutes, true).
+			Add(configs.PushNotificationDeadlineMinutes * time.Minute)
+
+		var deadlineKey time.Time
+		if configs.PushNotificationDeadlineKeyMinutes != configs.PushNotificationDeadlineMinutes {
+			deadlineKey = createdAt.Add(configs.PushNotificationDeadlineKeyMinutes * time.Minute)
+			deadlineKey = TimeToNearestMinutes(deadlineKey, configs.PushNotificationDeadlineMinutes, false)
+		} else {
+			deadlineKey = deadline
+		}
+
+		batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
+			"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
+			createdAt, 1, deadlineKey, deadline, userId, pushType, entityId)
+
+		if err = session.ExecuteBatch(batch); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		return nil, nil
+	}
+
+	notificationCount := pushNotificationGroupQueue.NotificationCount + 1
+
+	newDeadline := pushNotificationGroupQueue.Deadline.Add(configs.PushNotificationDeadlineMinutes * time.Minute)
+
+	if notificationCount <= 2 || newDeadline.After(pushNotificationGroupQueue.DeadlineKey) {
+		newDeadline = pushNotificationGroupQueue.Deadline
+	}
+
+	if relatedEntityId == 0 {
+		pushNotificationGroupQueue.EntityId = entityId
+		if err = session.Query("delete from push_notification_group_queue where deadline_key = ? and deadline = ? and "+
+			"user_id = ? and event_type = ?", pushNotificationGroupQueue.DeadlineKey, pushNotificationGroupQueue.Deadline,
+			pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType).Exec(); err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	batch.Query("update push_notification_group_queue set created_at = ?, notification_count = ? "+
+		"where deadline_key = ? and deadline = ? and user_id = ? and event_type = ? and entity_id = ?",
+		pushNotificationGroupQueue.CreatedAt, notificationCount, pushNotificationGroupQueue.DeadlineKey, newDeadline,
+		pushNotificationGroupQueue.UserId, pushNotificationGroupQueue.EventType, pushNotificationGroupQueue.EntityId)
+
+	if err = session.ExecuteBatch(batch); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return nil, nil
+}
+
+func (s *Sender) prepareCustomPet2PushEvents(tokens []database.Device, pushType, kind, title string, body string, headline string,
+	key string, customData database.CustomData, userId int64) []notification_gateway.SendPushRequest {
+	mm := map[common.DeviceType]*notification_gateway.SendPushRequest{}
+
+	var extraData = map[string]string{
+		"type":     pushType,
+		"kind":     kind,
+		"headline": headline,
+	}
+	if customData != nil {
+		js, err := json.Marshal(&customData)
+		if err != nil {
+			log.Error().Str("push_type", pushType).Str("push_kind", kind).Err(err).Send()
+		}
+		extraData["custom_data"] = string(js)
+	}
+
+	for _, t := range tokens {
+		if _, ok := mm[t.Platform]; !ok {
+			req := notification_gateway.SendPushRequest{
+				Tokens:     nil,
+				DeviceType: t.Platform,
+				Title:      title,
+				Body:       body,
+				ExtraData:  extraData,
+				PublishKey: key,
+				UserId:     userId,
+			}
+
+			mm[t.Platform] = &req
+		}
+
+		mm[t.Platform].Tokens = append(mm[t.Platform].Tokens, t.PushToken)
+	}
+
+	var resp []notification_gateway.SendPushRequest
+
+	for _, v := range mm {
+		resp = append(resp, *v)
+	}
+
+	return resp
 }
