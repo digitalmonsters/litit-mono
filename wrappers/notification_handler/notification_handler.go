@@ -152,3 +152,9 @@ func (h *NotificationHandlerWrapper) DisableUnregisteredTokens(tokens []string, 
 		"DisableUnregisteredTokens", DisableUnregisteredTokensRequest{Tokens: tokens},
 		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
 }
+
+func (h *NotificationHandlerWrapper) CreateNotification(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse] {
+	return wrappers.ExecuteRpcRequestAsync[CreateNotificationResponse](h.baseWrapper, h.apiUrl,
+		"createNotification", CreateNotificationRequest{Notifications: notifications},
+		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
+}

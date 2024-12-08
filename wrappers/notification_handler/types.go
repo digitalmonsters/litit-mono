@@ -3,9 +3,10 @@ package notification_handler
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers"
-	"time"
 )
 
 type INotificationHandlerWrapper interface {
@@ -68,4 +69,31 @@ type GetNotificationsReadCountRequest struct {
 
 type DisableUnregisteredTokensRequest struct {
 	Tokens []string `json:"tokens"`
+}
+
+type Notification struct {
+	UserID               int                    `gorm:"not null"`
+	Type                 string                 `gorm:"type:varchar(255);not null"`
+	Title                string                 `gorm:"type:varchar(255);not null"`
+	Message              string                 `gorm:"type:varchar(255);not null"`
+	RelatedUserID        *int                   `gorm:"type:int"`
+	CommentID            *int                   `gorm:"type:int"`
+	Comment              map[string]interface{} `gorm:"type:jsonb"`
+	ContentID            *int                   `gorm:"type:int"`
+	Content              map[string]interface{} `gorm:"type:jsonb"`
+	QuestionID           *int                   `gorm:"type:int"`
+	CreatedAt            time.Time              `gorm:"default:CURRENT_TIMESTAMP"`
+	KycReason            *string                `gorm:"type:varchar(255)"`
+	KycStatus            *string                `gorm:"type:varchar(255)"`
+	ContentCreatorStatus *int                   `gorm:"type:int"`
+	RenderingVariables   map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
+	CustomData           map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
+}
+
+type CreateNotificationRequest struct {
+	Notifications Notification
+}
+
+type CreateNotificationResponse struct {
+	Status bool
 }
