@@ -33,7 +33,7 @@ func (m *NotificationHandlerWrapperMock) DisableUnregisteredTokens(tokens []stri
 	return m.DisableUnregisteredTokensFn(tokens, ctx, forceLog)
 }
 
-func (m *NotificationHandlerWrapperMock) CreateNotificationfunc(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse] {
+func (m *NotificationHandlerWrapperMock) CreateNotification(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse] {
 	return m.CreateNotificationFn(notifications, ctx, forceLog)
 }
 
