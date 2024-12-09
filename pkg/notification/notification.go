@@ -387,6 +387,68 @@ func DisableUnregisteredTokens(req notification_handler.DisableUnregisteredToken
 	return req.Tokens, nil
 }
 
+func CreateNotification(req notification_handler.CreateNotificationRequest, db *gorm.DB) (notification_handler.CreateNotificationResponse, error) {
+
+	result := MapInternalToDatabaseNotification(req)
+
+	if err := db.Create(&result).Error; err != nil {
+		return notification_handler.CreateNotificationResponse{Status: false}, err
+	}
+
+	if err := IncrementUnreadNotificationsCounter(db, result.UserId); err != nil {
+		return notification_handler.CreateNotificationResponse{Status: true}, err
+	}
+
+	return notification_handler.CreateNotificationResponse{Status: true}, nil
+}
+
+func MapInternalToDatabaseNotification(req notification_handler.CreateNotificationRequest) database.Notification {
+	return database.Notification{
+		Id:                 uuid.New(), // Generating a new UUID
+		UserId:             int64(req.Notifications.UserID),
+		Type:               req.Notifications.Type,
+		Title:              req.Notifications.Title,
+		Message:            req.Notifications.Message,
+		RelatedUserId:      ToNullInt(req.Notifications.RelatedUserID),
+		CommentId:          ToNullInt(req.Notifications.CommentID),
+		ContentId:          ToNullInt(req.Notifications.ContentID),
+		Content:            ToNotificationContent(req.Notifications.Content),
+		QuestionId:         ToNullInt(req.Notifications.QuestionID),
+		CreatedAt:          req.Notifications.CreatedAt,
+		RenderingVariables: ToRenderingVariables(req.Notifications.RenderingVariables),
+		CustomData:         req.Notifications.CustomData,
+	}
+}
+
+func ToNullInt(value *int) null.Int {
+	if value != nil {
+		return null.IntFrom(int64(*value))
+	}
+	return null.Int{}
+}
+
+func ToNotificationContent(data map[string]interface{}) *database.NotificationContent {
+	if data == nil {
+		return nil
+	}
+	return &database.NotificationContent{
+		Id:      int64(data["id"].(float64)), // Adjust casting based on data type
+		Width:   int(data["width"].(float64)),
+		Height:  int(data["height"].(float64)),
+		VideoId: data["video_id"].(string),
+	}
+}
+
+func ToRenderingVariables(data map[string]interface{}) database.RenderingVariables {
+	renderingVars := make(database.RenderingVariables)
+	for key, value := range data {
+		if strValue, ok := value.(string); ok {
+			renderingVars[key] = strValue
+		}
+	}
+	return renderingVars
+}
+
 func GetPet2Notifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, pushAdminSupported bool, limit int,
 	userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
 	if strings.Contains(page, "empty") {
