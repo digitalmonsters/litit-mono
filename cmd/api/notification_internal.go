@@ -9,6 +9,7 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
+	"github.com/rs/zerolog/log"
 )
 
 func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
@@ -64,19 +65,20 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(createNotification,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+			log.Info().Msg("Starting RPC command for createNotification")
 			var req notification_handler.CreateNotificationRequest
-
 			if err := json.Unmarshal(request, &req); err != nil {
+				log.Error().Err(err).Msg("Failed to unmarshal request")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 			}
-
 			resp, err := notification.CreateNotification(req, database.GetDb(database.DbTypeMaster))
 			if err != nil {
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}
-
+			log.Info().Msg("Successfully created notification")
 			return resp, nil
 		}, false)); err != nil {
+		log.Error().Err(err).Msg("Failed to register RPC command for createNotification")
 		return err
 	}
 

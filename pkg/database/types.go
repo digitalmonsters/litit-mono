@@ -265,9 +265,12 @@ func GetNotificationTypeForAll(templateId string) string {
 		return "push.music-creator.status"
 	case "music_creator_status_approved":
 		return "push.music-creator.status"
+	case "intro":
+		return "push.content.intro"
 	case "music_creator_status_pending":
 		return "push.music-creator.status"
 	}
+
 	return ""
 }
 
