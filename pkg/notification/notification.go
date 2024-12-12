@@ -236,11 +236,11 @@ func getNotificationsTemplatesByTypeGroup(typeGroup TypeGroup) []string {
 			"monthly_mega_bonus_completed", "monthly_mega_bonus_progress",
 			"monthly_mega_bonus_progress_almost_finished", "monthly_mega_bonus_one_day_missing", "monthly_mega_bonus_do_not_miss",
 			"push_admin", "first_x_social_media_added", "add_social_subs_target_achieved_bonus", "ads_campaign_rejected", "ads_campaign_approved",
-			"music_creator_status_rejected", "music_creator_status_approved", "music_creator_status_pending",
+			"music_creator_status_rejected", "music_creator_status_approved", "music_creator_status_pending", "intro",
 		}
 	case TypeGroupComment:
 		return []string{"comment_reply", "comment_vote_like", "comment_vote_dislike", "comment_profile_resource_create",
-			"comment_content_resource_create"}
+			"comment_content_resource_create", "intro"}
 	case TypeGroupSystem:
 		return []string{"push_admin"}
 	case TypeGroupFollowing:
@@ -385,4 +385,262 @@ func DisableUnregisteredTokens(req notification_handler.DisableUnregisteredToken
 	}
 
 	return req.Tokens, nil
+}
+
+func CreateNotification(req notification_handler.CreateNotificationRequest, db *gorm.DB) (notification_handler.CreateNotificationResponse, error) {
+
+	result := MapInternalToDatabaseNotification(req)
+
+	if err := db.Create(&result).Error; err != nil {
+		return notification_handler.CreateNotificationResponse{Status: false}, err
+	}
+
+	if err := IncrementUnreadNotificationsCounter(db, result.UserId); err != nil {
+		return notification_handler.CreateNotificationResponse{Status: true}, err
+	}
+
+	return notification_handler.CreateNotificationResponse{Status: true}, nil
+}
+
+func MapInternalToDatabaseNotification(req notification_handler.CreateNotificationRequest) database.Notification {
+	return database.Notification{
+		Id:                 uuid.New(), // Generating a new UUID
+		UserId:             int64(req.Notifications.UserID),
+		Type:               req.Notifications.Type,
+		Title:              req.Notifications.Title,
+		Message:            req.Notifications.Message,
+		RelatedUserId:      ToNullInt(req.Notifications.RelatedUserID),
+		CommentId:          ToNullInt(req.Notifications.CommentID),
+		ContentId:          ToNullInt(req.Notifications.ContentID),
+		Content:            ToNotificationContent(req.Notifications.Content),
+		QuestionId:         ToNullInt(req.Notifications.QuestionID),
+		CreatedAt:          req.Notifications.CreatedAt,
+		RenderingVariables: ToRenderingVariables(req.Notifications.RenderingVariables),
+		CustomData:         req.Notifications.CustomData,
+	}
+}
+
+func ToNullInt(value *int) null.Int {
+	if value != nil {
+		return null.IntFrom(int64(*value))
+	}
+	return null.Int{}
+}
+
+func ToNotificationContent(data map[string]interface{}) *database.NotificationContent {
+	if data == nil {
+		return nil
+	}
+	return &database.NotificationContent{
+		Id:      int64(data["id"].(float64)), // Adjust casting based on data type
+		Width:   int(data["width"].(float64)),
+		Height:  int(data["height"].(float64)),
+		VideoId: data["video_id"].(string),
+	}
+}
+
+func ToRenderingVariables(data map[string]interface{}) database.RenderingVariables {
+	renderingVars := make(database.RenderingVariables)
+	for key, value := range data {
+		if strValue, ok := value.(string); ok {
+			renderingVars[key] = strValue
+		}
+	}
+	return renderingVars
+}
+
+func GetPet2Notifications(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, pushAdminSupported bool, limit int,
+	userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+	if strings.Contains(page, "empty") {
+		return &NotificationsResponse{
+			Data:        make([]NotificationsResponseItem, 0),
+			Next:        "empty",
+			Prev:        page,
+			UnreadCount: 0,
+		}, nil
+	}
+
+	var pageState []byte
+
+	if len(page) > 0 {
+		var err error
+
+		pageState, err = base32.StdEncoding.DecodeString(page)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		pageState, err = snappy.Decode(pageState)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	session := database.GetScyllaSession()
+
+	notificationByTypeGroupView := TypeGroupToScyllaViewName(typeGroup)
+	if len(notificationByTypeGroupView) == 0 {
+		return nil, errors.WithStack(errors.New("unknown group"))
+	}
+
+	if pushAdminSupported {
+		notificationByTypeGroupView = fmt.Sprintf("%v_with_push_admin", notificationByTypeGroupView)
+	}
+
+	query := fmt.Sprintf("select created_at, event_type, entity_id, related_entity_id from %v where user_id = ?", notificationByTypeGroupView)
+
+	iter := session.Query(query, userId).WithContext(ctx).PageSize(limit).PageState(pageState).Iter()
+
+	nextPageState := iter.PageState()
+	scanner := iter.Scanner()
+
+	notifications := make([]database.Notification, 0)
+	notificationsCounts := make(map[uuid.UUID]int64)
+
+	for scanner.Next() {
+		notificationByTypeGroup := scylla.NotificationByTypeGroup{UserId: userId}
+
+		if err := scanner.Scan(&notificationByTypeGroup.CreatedAt, &notificationByTypeGroup.EventType,
+			&notificationByTypeGroup.EntityId, &notificationByTypeGroup.RelatedEntityId); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		notificationIter := session.Query("select title, body, notifications_count, notification_info from notification "+
+			"where user_id = ? and event_type = ? and created_at = ? and entity_id = ? and related_entity_id = ?",
+			userId, notificationByTypeGroup.EventType, notificationByTypeGroup.CreatedAt,
+			notificationByTypeGroup.EntityId, notificationByTypeGroup.RelatedEntityId).Iter()
+
+		var title string
+		var body string
+		var notificationsCount int64
+		var notificationInfo string
+
+		notificationIter.Scan(&title, &body, &notificationsCount, &notificationInfo)
+
+		if err := notificationIter.Close(); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		var notification database.Notification
+		if err := json.Unmarshal([]byte(notificationInfo), &notification); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		notification.Title = title
+		notification.Message = body
+		notificationsCounts[notification.Id] = notificationsCount
+
+		notifications = append(notifications, notification)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if err := iter.Close(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	nextPage := ""
+
+	if len(nextPageState) > 0 {
+		nextPage = base32.StdEncoding.EncodeToString(snappy.Encode(nextPageState))
+	}
+
+	notificationsResp := mapNotificationsToResponseItems(notifications, notificationsCounts, userGoWrapper, followWrapper, ctx)
+
+	var userNotification database.UserNotification
+
+	if err := db.Where("user_id = ?", userId).Find(&userNotification).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	resp := NotificationsResponse{
+		Data:        notificationsResp,
+		UnreadCount: userNotification.UnreadCount,
+	}
+
+	if len(nextPage) > 0 {
+		resp.Next = nextPage
+	} else {
+		resp.Next = "empty"
+	}
+
+	if len(page) > 0 {
+		resp.Prev = page
+	} else {
+		resp.Prev = "empty"
+	}
+
+	return &resp, nil
+}
+
+func GetPet2NotificationsLegacy(db *gorm.DB, userId int64, page string, typeGroup TypeGroup, pushAdminSupported bool,
+	limit int, userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, ctx context.Context) (*NotificationsResponse, error) {
+	notifications := make([]database.Notification, 0)
+
+	p := paginator.New(
+		&paginator.Config{
+			Rules: []paginator.Rule{{
+				Key:   "CreatedAt",
+				Order: paginator.DESC,
+			}},
+			Limit: limit,
+			After: page,
+		},
+	)
+
+	notificationsTemplates := getNotificationsTemplatesByTypeGroup(typeGroup)
+
+	if !pushAdminSupported {
+		notificationsTemplates = lo.Filter(notificationsTemplates, func(item string, i int) bool {
+			return item != "push_admin"
+		})
+	}
+
+	notificationsTypes := make([]string, len(notificationsTemplates))
+	for i, templateId := range notificationsTemplates {
+		notificationsTypes[i] = database.GetNotificationTypeForAll(templateId)
+	}
+
+	query := db.Model(notifications).Where("user_id = ?", userId)
+
+	if len(notificationsTypes) > 0 {
+		query = query.Where("type in ?", notificationsTypes)
+	}
+
+	result, cursor, err := p.Paginate(query, &notifications)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if result.Error != nil {
+		return nil, errors.WithStack(result.Error)
+	}
+
+	var userNotification database.UserNotification
+
+	if err = db.Where("user_id = ?", userId).Find(&userNotification).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	notificationsResp := mapNotificationsToResponseItems(notifications, nil, userGoWrapper, followWrapper, ctx)
+
+	resp := NotificationsResponse{
+		Data:        notificationsResp,
+		UnreadCount: userNotification.UnreadCount,
+	}
+
+	if cursor.After != nil {
+		resp.Next = *cursor.After
+	} else {
+		resp.Next = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+	}
+
+	if cursor.Before != nil {
+		resp.Prev = *cursor.Before
+	} else {
+		resp.Prev = "WyIyMDIxLTEyLTIzVDE1OjAwOjEzLjE3N1oiLCI2Zjk4NTljNS1kYmI4LTQyMzMtOWY4Yy1mODM2MTVkODY5MjkiXQ=="
+	}
+
+	return &resp, nil
 }
