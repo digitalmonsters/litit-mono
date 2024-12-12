@@ -502,3 +502,10 @@ func (w UserGoWrapper) GetIsRequested(userId int64, ctx context.Context, forceLo
 			UserId: userId,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
+
+func (w UserGoWrapper) GetUserRelations(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRelationData] {
+	return wrappers.ExecuteRpcRequestAsync[UserRelationData](w.baseWrapper, w.serviceApiUrl,
+		"GetUserRelations", IsRequestedRequest{
+			UserId: userId,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
