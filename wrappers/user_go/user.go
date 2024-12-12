@@ -48,6 +48,7 @@ type IUserGoWrapper interface {
 	GetFriendListData(suggested bool, userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetIsRequested(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
+	GetUserRelations(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRelationData]
 }
 
 //goland:noinspection GoNameStartsWithPackageName

@@ -4,6 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"reflect"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -13,11 +19,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"go.elastic.co/apm"
-	"os"
-	"reflect"
-	"strings"
-	"sync"
-	"time"
 )
 
 type BaseWrapper struct {
@@ -487,7 +488,7 @@ func endRpcSpan(rawBodyRequest []byte, rawBodyResponse []byte,
 
 	finalStatement := ""
 
-	if shouldLog && rqSpan != nil {
+	if shouldLog {
 		if data, err := json.Marshal(map[string]interface{}{
 			"request":  rawBodyRequest,
 			"response": rawBodyResponse,
