@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,6 +32,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/user_update"
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/vote"
 	"github.com/digitalmonsters/notification-handler/cmd/notification"
+	"github.com/digitalmonsters/notification-handler/pkg/firebase"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	settingsPkg "github.com/digitalmonsters/notification-handler/pkg/settings"
 	templatePkg "github.com/digitalmonsters/notification-handler/pkg/template"
@@ -66,6 +68,15 @@ func main() {
 	)
 
 	ctx := context.Background()
+
+	jsonStr, err := json.Marshal(cfg.Firebase.ServiceAccountJSON)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to marshal Firebase.ServiceAccountJSON")
+	} else {
+		log.Info().Msgf("Serialized ServiceAccountJSON: %s", string(jsonStr))
+	}
+
+	firebaseClient := firebase.Initialize(ctx, string(jsonStr))
 
 	settingsService := settingsPkg.NewService()
 
@@ -145,7 +156,7 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
 
-	if err := api.InitInternalNotificationApi(httpRouter, apiDef); err != nil {
+	if err := api.InitInternalNotificationApi(httpRouter, apiDef, firebaseClient); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init internal notification api")
 	}
 

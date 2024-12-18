@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/digitalmonsters/go-common/error_codes"
@@ -8,11 +9,12 @@ import (
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
+	"github.com/digitalmonsters/notification-handler/pkg/firebase"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/rs/zerolog/log"
 )
 
-func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
+func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, firebaseClient *firebase.FirebaseClient) error {
 	getNotificationsReadCount := "GetNotificationsReadCount"
 	disableUnregisteredTokens := "DisableUnregisteredTokens"
 	createNotification := "CreateNotification"
@@ -66,15 +68,47 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(createNotification,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 			log.Info().Msg("Starting RPC command for createNotification")
+
+			// Log the raw request payload
+			log.Debug().Msgf("Raw request payload: %s", string(request))
+
 			var req notification_handler.CreateNotificationRequest
 			if err := json.Unmarshal(request, &req); err != nil {
 				log.Error().Err(err).Msg("Failed to unmarshal request")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 			}
-			resp, err := notification.CreateNotification(req, database.GetDb(database.DbTypeMaster))
+
+			log.Info().Msgf("Parsed request: %+v", req)
+
+			// Log database connection initialization
+			log.Info().Msg("Initializing database connection")
+			db := database.GetDb(database.DbTypeMaster)
+			log.Info().Msg("Database connection initialized successfully")
+
+			log.Info().Msg("Creating notification")
+			resp, err := notification.CreateNotification(req, db)
 			if err != nil {
+				log.Error().Err(err).Msg("Failed to create notification")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}
+
+			log.Info().Msg("Fetching latest device information for user")
+			deviceInfo, err := notification.GetLatestDeviceForUser(req.Notifications.UserID, db)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to fetch latest device information")
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			}
+
+			log.Info().Msgf("Fetched device info: %+v", deviceInfo)
+
+			// Log notification sending conditions
+			log.Info().Msgf("Notification type: %s, title: %s", req.Notifications.Type, req.Notifications.Title)
+			if req.Notifications.Type == "push.content.successful-upload" && req.Notifications.Title == "You got a reply" {
+				log.Info().Msg("Sending push notification via Firebase")
+				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, req.Notifications.Title, req.Notifications.Message, nil)
+				log.Info().Msg("Push notification sent successfully")
+			}
+
 			log.Info().Msg("Successfully created notification")
 			return resp, nil
 		}, false)); err != nil {

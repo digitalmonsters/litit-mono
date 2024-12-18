@@ -387,6 +387,15 @@ func DisableUnregisteredTokens(req notification_handler.DisableUnregisteredToken
 	return req.Tokens, nil
 }
 
+func GetLatestDeviceForUser(userID int, db *gorm.DB) (*database.Device, error) {
+	var device database.Device
+	if err := db.Raw(`SELECT * FROM devices WHERE "userId" = ? ORDER BY "createdAt" DESC LIMIT 1
+	`, userID).Scan(&device).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &device, nil
+}
+
 func CreateNotification(req notification_handler.CreateNotificationRequest, db *gorm.DB) (notification_handler.CreateNotificationResponse, error) {
 
 	result := MapInternalToDatabaseNotification(req)

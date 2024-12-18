@@ -1,7 +1,7 @@
 ############################
 # STEP 1 build executable binary
 ############################
-FROM golang:1.18-buster AS builder
+FROM golang:1.21 AS builder
 
 # Create appuser.
 ENV USER=appuser
@@ -30,7 +30,7 @@ RUN go mod tidy -e
 COPY ./config.json /go/bin/
 
 # Build the binary.
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags='-w -s -extldflags "-static"' -a -o /go/bin/main cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o /go/bin/main cmd/main.go
 
 # Run the binary.
 CMD ["/go/bin/main"]
