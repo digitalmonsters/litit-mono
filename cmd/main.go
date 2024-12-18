@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"os/signal"
 	"syscall"
@@ -68,7 +69,14 @@ func main() {
 
 	ctx := context.Background()
 
-	firebaseClient := firebase.Initialize(ctx, cfg.Firebase.ServiceAccountJSON)
+	jsonStr, err := json.Marshal(cfg.Firebase.ServiceAccountJSON)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to marshal Firebase.ServiceAccountJSON")
+	} else {
+		log.Info().Msgf("Serialized ServiceAccountJSON: %s", string(jsonStr))
+	}
+
+	firebaseClient := firebase.Initialize(ctx, string(jsonStr))
 
 	firebaseClient.SendNotification(ctx, "", "", "", nil)
 

@@ -56,7 +56,7 @@ type Settings struct {
 }
 
 type FirebaseConfig struct {
-	ServiceAccountJSON string `json:"ServiceAccountJSON"`
+	ServiceAccountJSON map[string]interface{} `json:"ServiceAccountJSON"`
 }
 
 type EmailLinks struct {
