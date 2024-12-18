@@ -1,7 +1,7 @@
 ############################
 # STEP 1 build executable binary
 ############################
-FROM golang:1.18-buster AS builder
+FROM golang:1.21-buster AS builder
 
 # Create appuser.
 ENV USER=appuser
