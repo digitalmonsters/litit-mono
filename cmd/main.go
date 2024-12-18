@@ -78,8 +78,6 @@ func main() {
 
 	firebaseClient := firebase.Initialize(ctx, string(jsonStr))
 
-	firebaseClient.SendNotification(ctx, "", "", "", nil)
-
 	settingsService := settingsPkg.NewService()
 
 	log.Info().Msg("getting jobber")
