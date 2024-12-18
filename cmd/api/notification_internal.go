@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
@@ -69,25 +68,45 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(createNotification,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 			log.Info().Msg("Starting RPC command for createNotification")
+
+			// Log the raw request payload
+			log.Debug().Msgf("Raw request payload: %s", string(request))
+
 			var req notification_handler.CreateNotificationRequest
 			if err := json.Unmarshal(request, &req); err != nil {
 				log.Error().Err(err).Msg("Failed to unmarshal request")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 			}
+
+			log.Info().Msgf("Parsed request: %+v", req)
+
+			// Log database connection initialization
+			log.Info().Msg("Initializing database connection")
 			db := database.GetDb(database.DbTypeMaster)
+			log.Info().Msg("Database connection initialized successfully")
+
+			log.Info().Msg("Creating notification")
 			resp, err := notification.CreateNotification(req, db)
 			if err != nil {
+				log.Error().Err(err).Msg("Failed to create notification")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}
 
+			log.Info().Msg("Fetching latest device information for user")
 			deviceInfo, err := notification.GetLatestDeviceForUser(req.Notifications.UserID, db)
 			if err != nil {
+				log.Error().Err(err).Msg("Failed to fetch latest device information")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}
-			fmt.Println(deviceInfo.PushToken)
 
+			log.Info().Msgf("Fetched device info: %+v", deviceInfo)
+
+			// Log notification sending conditions
+			log.Info().Msgf("Notification type: %s, title: %s", req.Notifications.Type, req.Notifications.Title)
 			if req.Notifications.Type == "push.content.successful-upload" && req.Notifications.Title == "You got a reply" {
+				log.Info().Msg("Sending push notification via Firebase")
 				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, req.Notifications.Title, req.Notifications.Message, nil)
+				log.Info().Msg("Push notification sent successfully")
 			}
 
 			log.Info().Msg("Successfully created notification")
