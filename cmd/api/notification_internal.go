@@ -1,18 +1,21 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
+	"github.com/digitalmonsters/notification-handler/pkg/firebase"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/rs/zerolog/log"
 )
 
-func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
+func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, firebaseClient *firebase.FirebaseClient) error {
 	getNotificationsReadCount := "GetNotificationsReadCount"
 	disableUnregisteredTokens := "DisableUnregisteredTokens"
 	createNotification := "CreateNotification"
@@ -71,10 +74,22 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 				log.Error().Err(err).Msg("Failed to unmarshal request")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 			}
-			resp, err := notification.CreateNotification(req, database.GetDb(database.DbTypeMaster))
+			db := database.GetDb(database.DbTypeMaster)
+			resp, err := notification.CreateNotification(req, db)
 			if err != nil {
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}
+
+			deviceInfo, err := notification.GetLatestDeviceForUser(req.Notifications.UserID, db)
+			if err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			}
+			fmt.Println(deviceInfo.PushToken)
+
+			if req.Notifications.Type == "push.content.successful-upload" && req.Notifications.Title == "You got a reply" {
+				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, req.Notifications.Title, req.Notifications.Message, nil)
+			}
+
 			log.Info().Msg("Successfully created notification")
 			return resp, nil
 		}, false)); err != nil {
