@@ -50,6 +50,13 @@ type Settings struct {
 	AzureBlob                      boilerplate.AzureBlobConfig            `json:"AzureBlob"`
 	Jobber                         JobberConfig                           `json:"Jobber"`
 	MusicCreatorListener           boilerplate.KafkaListenerConfiguration `json:"MusicCreatorListener"`
+
+	// Firebase Configuration
+	Firebase FirebaseConfig `json:"Firebase"`
+}
+
+type FirebaseConfig struct {
+	ServiceAccountJSON string `json:"ServiceAccountJSON"`
 }
 
 type EmailLinks struct {

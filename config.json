@@ -256,5 +256,8 @@
     "Tls": false,
     "GroupId": "dev_music_notification_handler_music_creator_listener",
     "Topic": "dev.music.creators"
+  },
+  "Firebase": {
+    "ServiceAccountJSON": ""
   }
 }
