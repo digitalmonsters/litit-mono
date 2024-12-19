@@ -89,6 +89,7 @@ type Notification struct {
 	ContentCreatorStatus *int                   `gorm:"type:int"`
 	RenderingVariables   map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
 	CustomData           map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
+	InApp                bool                   `json:"in_app"`
 }
 
 type CreateNotificationRequest struct {
