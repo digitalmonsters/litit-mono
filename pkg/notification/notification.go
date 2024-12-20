@@ -174,6 +174,7 @@ func GetNotificationsLegacy(db *gorm.DB, userId int64, page string, typeGroup Ty
 	for i, templateId := range notificationsTemplates {
 		notificationsTypes[i] = database.GetNotificationTypeForAll(templateId)
 	}
+	notificationsTypes = append(notificationsTypes, "push.intro.successful-upload")
 
 	query := db.Model(notifications).Where("user_id = ?", userId)
 
