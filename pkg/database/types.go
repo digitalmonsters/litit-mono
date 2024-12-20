@@ -404,3 +404,24 @@ type UserNotificationsSettings struct {
 func GetUserNotificationsSettingsClusterKey(userId int64) int64 {
 	return userId / 30000
 }
+
+type InAppNotification struct {
+	Id                   uuid.UUID                    `json:"id" gorm:"primaryKey;autoIncrement"`
+	UserId               int64                        `json:"user_id"`
+	Type                 string                       `json:"type"`
+	Title                string                       `json:"title"`
+	Message              string                       `json:"message"`
+	RelatedUserId        null.Int                     `json:"related_user_id"`
+	CommentId            null.Int                     `json:"comment_id"`
+	Comment              *NotificationComment         `json:"comment" gorm:"type:jsonb"`
+	ContentId            null.Int                     `json:"content_id"`
+	Content              *NotificationContent         `json:"content" gorm:"type:jsonb"`
+	QuestionId           null.Int                     `json:"question_id"`
+	CreatedAt            time.Time                    `json:"created_at"`
+	KycReason            *eventsourcing.KycReason     `json:"kyc_reason"`
+	KycStatus            *eventsourcing.KycStatusType `json:"kyc_status"`
+	ContentCreatorStatus *user_go.CreatorStatus       `json:"content_creator_status"`
+	RenderingVariables   RenderingVariables           `json:"rendering_variables" gorm:"type:jsonb"`
+	CustomData           CustomData                   `json:"custom_data" gorm:"type:jsonb"`
+	IsShown              bool                         `json:"is_shown" gorm:"default:false"`
+}
