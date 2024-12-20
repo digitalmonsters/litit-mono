@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/extract"
 	"github.com/digitalmonsters/go-common/router"
@@ -13,7 +15,6 @@ import (
 	"github.com/google/uuid"
 	ua "github.com/mileusna/useragent"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper,
@@ -22,6 +23,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 	readNotificationPath := "/mobile/v1/notification/read"
+	inAppNotificationsPath := "/mobile/v1/app/notifications"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -53,6 +55,23 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 
 		return resp, nil
 	}, notificationsPath, http.MethodGet).RequireIdentityValidation().Build()); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		userId := executionData.UserId
+
+		if userId <= 0 {
+			return nil, error_codes.NewErrorWithCodeRef(errors.New("invalid user_id"), error_codes.GenericValidationError)
+		}
+
+		resp, err := notificationPkg.GetInAppNotifications(userId, database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context))
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+		return resp, nil
+	}, inAppNotificationsPath, http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 

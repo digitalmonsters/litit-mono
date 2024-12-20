@@ -587,5 +587,35 @@ func getMigrations() []*gormigrate.Migration {
 				)
 			},
 		},
+		{
+			ID: "in_app_notification_templates_280720221402",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+				CREATE TABLE public.inapp_notifications (
+				    id uuid NOT NULL DEFAULT gen_random_uuid(),
+				    user_id int4 NOT NULL,
+				    "type" varchar(255) NOT NULL,
+				    title varchar(255) NOT NULL,
+				    message varchar(255) NOT NULL,
+				    related_user_id int4 NULL,
+				    comment_id int4 NULL,
+				    "comment" jsonb NULL,
+				    content_id int4 NULL,
+				    "content" jsonb NULL,
+				    question_id int4 NULL,
+				    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				    kyc_reason varchar(255) NULL,
+				    kyc_status varchar(255) NULL,
+				    content_creator_status int4 NULL,
+				    rendering_variables jsonb NOT NULL DEFAULT '{}'::jsonb,
+				    custom_data jsonb NOT NULL DEFAULT '{}'::jsonb,
+				    is_shown bool NOT NULL DEFAULT false,
+				    CONSTRAINT inapp_notifications_pkey PRIMARY KEY (id)
+				);
+				CREATE INDEX inapp_notifications_search_idx ON public.inapp_notifications USING btree (user_id, type, created_at);
+				CREATE INDEX inapp_notifications_user_idx ON public.inapp_notifications USING btree (user_id);
+				`)
+			},
+		},
 	}
 }
