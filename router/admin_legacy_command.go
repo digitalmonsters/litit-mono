@@ -34,11 +34,11 @@ func NewLegacyAdminCommand(methodName string, fn CommandFunc) ICommand {
 	}
 }
 
-func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, bool, translation.Language, *rpc.ExtendedLocalRpcError) {
-	userId, isGuest, isBanned, isPet2User, language, err := publicCanExecuteLogic(httpCtx, a.requireIdentityValidation, a.allowBanned, userValidator)
+func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, bool, translation.Language, string, *rpc.ExtendedLocalRpcError) {
+	userId, isGuest, isBanned, isPet2User, language, customUserIp, err := publicCanExecuteLogic(httpCtx, a.requireIdentityValidation, a.allowBanned, userValidator)
 
 	if err != nil {
-		return 0, isGuest, isBanned, isPet2User, language, err
+		return 0, isGuest, isBanned, isPet2User, language, customUserIp, err
 	}
 
 	httpCtx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
@@ -49,7 +49,7 @@ func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context
 	if userId <= 0 {
 		err := errors.New("legacy admin method requires identity validation")
 
-		return 0, isGuest, isBanned, isPet2User, language, &rpc.ExtendedLocalRpcError{
+		return 0, isGuest, isBanned, isPet2User, language, customUserIp, &rpc.ExtendedLocalRpcError{
 			RpcError: rpc.RpcError{
 				Code:        error_codes.MissingJwtToken,
 				Message:     "legacy admin method requires identity validation",
@@ -63,17 +63,17 @@ func (a LegacyAdminCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context
 	resp := <-auth.CheckLegacyAdmin(userId, apm.TransactionFromContext(ctx), false)
 
 	if resp.Error != nil {
-		return 0, isGuest, isBanned, isPet2User, language, &rpc.ExtendedLocalRpcError{
+		return 0, isGuest, isBanned, isPet2User, language, customUserIp, &rpc.ExtendedLocalRpcError{
 			RpcError: *resp.Error,
 		}
 	}
 
 	if resp.Resp.IsAdmin || resp.Resp.IsSuperAdmin {
-		return userId, isGuest, isBanned, isPet2User, language, nil
+		return userId, isGuest, isBanned, isPet2User, language, customUserIp, nil
 	}
 
 	err1 := errors.New("user is not marked as admin")
-	return 0, isGuest, isBanned, isPet2User, language, &rpc.ExtendedLocalRpcError{
+	return 0, isGuest, isBanned, isPet2User, language, customUserIp, &rpc.ExtendedLocalRpcError{
 		RpcError: rpc.RpcError{
 			Code:        error_codes.InvalidJwtToken,
 			Message:     err1.Error(),

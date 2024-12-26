@@ -20,6 +20,7 @@ type MethodExecutionData struct {
 	Language       translation.Language
 	FullUrl        string
 	IsPet2User     bool
+	CustomUserIp   string
 	getUserValueFn func(key string) interface{}
 }
 

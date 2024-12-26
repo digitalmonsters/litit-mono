@@ -33,8 +33,8 @@ func NewServiceCommand(methodName string, fn CommandFunc, forceLog bool) IComman
 	}
 }
 
-func (a ServiceCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, bool, translation.Language, *rpc.ExtendedLocalRpcError) {
-	return 0, false, false, false, translation.DefaultUserLanguage, nil
+func (a ServiceCommand) CanExecute(httpCtx *fasthttp.RequestCtx, ctx context.Context, auth auth_go.IAuthGoWrapper, userValidator UserExecutorValidator) (int64, bool, bool, bool, translation.Language, string, *rpc.ExtendedLocalRpcError) {
+	return 0, false, false, false, translation.DefaultUserLanguage, "", nil
 }
 
 func (a ServiceCommand) ForceLog() bool {

@@ -467,7 +467,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 
 	shouldLog = forceLog
 
-	userId, isGuest, isBanned, isPet2User, language, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
+	userId, isGuest, isBanned, isPet2User, language, customUserIp, rpcError := cmd.CanExecute(httpCtx, ctx, r.authGoWrapper, r.userExecutorValidator)
 	if userId == 0 {
 		if authHeaderValue := httpCtx.Request.Header.Peek("Authorization"); len(authHeaderValue) > 0 {
 			jwtStr := string(authHeaderValue)
@@ -532,6 +532,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 		FullUrl:        httpCtx.URI().String(),
 		getUserValueFn: getUserValue,
 		IsPet2User:     isPet2User,
+		CustomUserIp:   customUserIp,
 	}
 
 	if deviceId := httpCtx.Request.Header.Peek("device-id"); len(deviceId) > 0 {
