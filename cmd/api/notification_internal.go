@@ -110,6 +110,13 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 				log.Info().Msg("Push notification sent successfully")
 			}
 
+			go func() {
+				gerr := notification.CreateInAppNotification(req, db)
+				if gerr != nil {
+					log.Error().Err(gerr).Msg("Failed to create in_app notification")
+				}
+			}()
+
 			log.Info().Msg("Successfully created notification")
 			return resp, nil
 		}, false)); err != nil {

@@ -174,6 +174,7 @@ func GetNotificationsLegacy(db *gorm.DB, userId int64, page string, typeGroup Ty
 	for i, templateId := range notificationsTemplates {
 		notificationsTypes[i] = database.GetNotificationTypeForAll(templateId)
 	}
+	notificationsTypes = append(notificationsTypes, "push.intro.successful-upload")
 
 	query := db.Model(notifications).Where("user_id = ?", userId)
 
@@ -426,6 +427,69 @@ func MapInternalToDatabaseNotification(req notification_handler.CreateNotificati
 		CreatedAt:          req.Notifications.CreatedAt,
 		RenderingVariables: ToRenderingVariables(req.Notifications.RenderingVariables),
 		CustomData:         req.Notifications.CustomData,
+	}
+}
+
+func GetInAppNotifications(userID int64, db *gorm.DB) ([]database.InAppNotification, error) {
+	var notifications []database.InAppNotification
+
+	tx := db.Begin()
+
+	if err := tx.Where("user_id = ? AND is_shown = ?", userID, false).
+		Order("created_at DESC").
+		Find(&notifications).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if len(notifications) == 0 {
+		tx.Rollback()
+		return notifications, nil
+	}
+
+	var ids []uuid.UUID
+	for _, notification := range notifications {
+		ids = append(ids, notification.Id)
+	}
+
+	if err := tx.Model(&database.InAppNotification{}).
+		Where("id IN ?", ids).
+		Update("is_shown", true).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return notifications, nil
+}
+
+func CreateInAppNotification(req notification_handler.CreateNotificationRequest, db *gorm.DB) error {
+	inAppNotification := MapInternalToDatabaseInAppNotification(req)
+	if err := db.Create(&inAppNotification).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func MapInternalToDatabaseInAppNotification(req notification_handler.CreateNotificationRequest) database.InAppNotification {
+	return database.InAppNotification{
+		Id:                 uuid.New(), // Generating a new UUID
+		UserId:             int64(req.Notifications.UserID),
+		Type:               req.Notifications.Type,
+		Title:              req.Notifications.Title,
+		Message:            req.Notifications.Message,
+		RelatedUserId:      ToNullInt(req.Notifications.RelatedUserID),
+		CommentId:          ToNullInt(req.Notifications.CommentID),
+		ContentId:          ToNullInt(req.Notifications.ContentID),
+		Content:            ToNotificationContent(req.Notifications.Content),
+		QuestionId:         ToNullInt(req.Notifications.QuestionID),
+		CreatedAt:          req.Notifications.CreatedAt,
+		RenderingVariables: ToRenderingVariables(req.Notifications.RenderingVariables),
+		CustomData:         req.Notifications.CustomData,
+		IsShown:            false,
 	}
 }
 
