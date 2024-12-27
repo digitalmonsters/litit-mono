@@ -117,7 +117,6 @@ func main() {
 	if err = notificationSender.RegisterUserPushNotificationTasks(); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not register user push notifications tasks")
 	}
-
 	contentWrapper := content.NewContentWrapper(cfg.Wrappers.Content)
 	followWrapper := follow.NewFollowWrapper(cfg.Wrappers.Follows)
 	commentWrapper := comment.NewCommentWrapper(cfg.Wrappers.Comment)
@@ -149,7 +148,7 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin creator api")
 	}
 
-	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper); err != nil {
+	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, authGoWrapper, followWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init notification api")
 	}
 
