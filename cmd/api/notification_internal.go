@@ -103,10 +103,16 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 
 			// Log notification sending conditions
 			log.Info().Msgf("Notification type: %s, title: %s", req.Notifications.Type, req.Notifications.Title)
-			if (req.Notifications.Type == "push.content.successful-upload" || req.Notifications.Type == "push.intro.successful-upload") &&
-				(req.Notifications.Title == "You got a reply" || req.Notifications.Title == "You got a video DM") {
+			if ((req.Notifications.Type == "push.content.successful-upload" || req.Notifications.Type == "push.intro.successful-upload") &&
+				(req.Notifications.Title == "You got a reply" || req.Notifications.Title == "You got a video DM")) || req.Notifications.TriggerFireBase {
 				log.Info().Msg("Sending push notification via Firebase")
-				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, req.Notifications.Title, req.Notifications.Message, nil)
+				data := make(map[string]string)
+				for k, v := range req.Notifications.CustomData {
+					if strVal, ok := v.(string); ok {
+						data[k] = strVal
+					}
+				}
+				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, req.Notifications.Title, req.Notifications.Message, data)
 				log.Info().Msg("Push notification sent successfully")
 			}
 
