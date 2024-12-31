@@ -115,7 +115,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 					case int:
 						data[k] = fmt.Sprintf("%d", value)
 					case float64:
-						data[k] = fmt.Sprintf("%f", value)
+						data[k] = fmt.Sprintf("%.0f", value)
 					default:
 						// Skip other types
 					}
