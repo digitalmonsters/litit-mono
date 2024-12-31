@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
@@ -108,10 +109,18 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 				log.Info().Msg("Sending push notification via Firebase")
 				data := make(map[string]string)
 				for k, v := range req.Notifications.CustomData {
-					if strVal, ok := v.(string); ok {
-						data[k] = strVal
+					switch value := v.(type) {
+					case string:
+						data[k] = value
+					case int:
+						data[k] = fmt.Sprintf("%d", value)
+					case float64:
+						data[k] = fmt.Sprintf("%f", value)
+					default:
+						// Skip other types
 					}
 				}
+				data["type"] = req.Notifications.Type
 				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, req.Notifications.Title, req.Notifications.Message, data)
 				log.Info().Msg("Push notification sent successfully")
 			}
