@@ -56,10 +56,10 @@ func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, titl
 
 	message := &messaging.Message{
 		Token: deviceToken,
-		Notification: &messaging.Notification{
-			Title: title,
-			Body:  body,
-		},
+		// Notification: &messaging.Notification{
+		// 	Title: title,
+		// 	Body:  body,
+		// },
 		Data: map[string]string{
 			"custom_data": string(customDataJSON),
 			"type":        notificationType,
