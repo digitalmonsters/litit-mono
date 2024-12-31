@@ -2,6 +2,7 @@ package firebase
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"sync"
 
@@ -45,18 +46,26 @@ func Initialize(ctx context.Context, serviceAccountJSON string) *FirebaseClient 
 }
 
 // SendNotification sends a push notification to a specific device token
-func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, title, body string, data map[string]string) (string, error) {
+func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, title, body, notificationType string, data map[string]string) (string, error) {
 	if data == nil {
 		data = make(map[string]string)
 	}
 	data["sound"] = "Sweet.mp3"
+
+	customDataJSON, _ := json.Marshal(data)
+
 	message := &messaging.Message{
 		Token: deviceToken,
 		Notification: &messaging.Notification{
 			Title: title,
 			Body:  body,
 		},
-		Data: data,
+		Data: map[string]string{
+			"custom_data": string(customDataJSON),
+			"type":        notificationType,
+			"title":       title,
+			"body":        body,
+		},
 	}
 
 	// message := &messaging.Message{
