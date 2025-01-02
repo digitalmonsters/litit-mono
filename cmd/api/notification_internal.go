@@ -120,7 +120,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 						// Skip other types
 					}
 				}
-				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, req.Notifications.Title, req.Notifications.Message, req.Notifications.Type, data)
+				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, string(deviceInfo.Platform), req.Notifications.Title, req.Notifications.Message, req.Notifications.Type, data)
 				log.Info().Msg("Push notification sent successfully")
 			}
 
