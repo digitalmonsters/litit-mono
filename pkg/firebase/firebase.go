@@ -46,7 +46,7 @@ func Initialize(ctx context.Context, serviceAccountJSON string) *FirebaseClient 
 }
 
 // SendNotification sends a push notification to a specific device token
-func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, title, body, notificationType string, data map[string]string) (string, error) {
+func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, platform string, title, body, notificationType string, data map[string]string) (string, error) {
 	if data == nil {
 		data = make(map[string]string)
 	}
@@ -56,16 +56,19 @@ func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, titl
 
 	message := &messaging.Message{
 		Token: deviceToken,
-		// Notification: &messaging.Notification{
-		// 	Title: title,
-		// 	Body:  body,
-		// },
 		Data: map[string]string{
 			"custom_data": string(customDataJSON),
 			"type":        notificationType,
 			"title":       title,
 			"body":        body,
 		},
+	}
+
+	if platform == "ios" {
+		message.Notification = &messaging.Notification{
+			Title: title,
+			Body:  body,
+		}
 	}
 
 	// message := &messaging.Message{
