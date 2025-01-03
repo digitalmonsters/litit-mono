@@ -2,16 +2,12 @@ package uploader
 
 import (
 	"context"
-	"crypto/md5"
-	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/digitalmonsters/go-common/azure_blob"
 	"github.com/digitalmonsters/go-common/wrappers/content_uploader"
-	"github.com/digitalmonsters/notification-handler/configs"
-	"github.com/digitalmonsters/notification-handler/pkg/utils"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"github.com/valyala/fasthttp"
@@ -75,26 +71,35 @@ func FileUpload(ctx *fasthttp.RequestCtx, uploaderWrapper content_uploader.ICont
 		return nil, err
 	}
 
-	fileId := fmt.Sprintf("%x", md5.Sum(body))
-	filename := fmt.Sprintf("%s.%s", fileId, f[len(f)-1])
+	//fileId := fmt.Sprintf("%x", md5.Sum(body))
+	// filename := fmt.Sprintf("%s.%s", fileId, f[len(f)-1])
 
-	cfg := configs.GetConfig()
-	filePath := filepath.Join(cfg.AzureBlob.CdnDirectory, filename)
-	uploader := azure_blob.NewAzureBlobObject(&cfg.AzureBlob)
+	// cfg := configs.GetConfig()
+	// filePath := filepath.Join(cfg.AzureBlob.CdnDirectory, filename)
+	// uploader := azure_blob.NewAzureBlobObject(&cfg.AzureBlob)
 
-	signedUrl, err := GetSignedUrl(filePath, uploader)
-	if err != nil {
-		return nil, err
-	}
+	// signedUrl, err := GetSignedUrl(filePath, uploader)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	respChan := uploaderWrapper.UploadContentInternal(utils.RetrieveContentUploaderPath(appCtx, signedUrl), "application/octet-stream", body, apmTx, true)
+	imagePath := getImagePath()
+	respChan := uploaderWrapper.UploadContentInternal(imagePath, "application/octet-stream", body, apmTx, true)
 
 	if err := <-respChan; err != nil {
 		return nil, err
 	}
 
 	return &uploadResponse{
-		FileUrl: fmt.Sprintf("%v/%v", cfg.CdnBase, filePath),
+		FileUrl: getImageUrl(imagePath),
 		Size:    size,
 	}, nil
+}
+
+func getImagePath() string {
+	return "image/notification/" + uuid.NewString() + ".jpg"
+}
+
+func getImageUrl(path string) string {
+	return "https://litit-images.b-cdn.net/" + path
 }
