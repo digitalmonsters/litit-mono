@@ -9,13 +9,14 @@ import (
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/firebase"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/rs/zerolog/log"
 )
 
-func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, firebaseClient *firebase.FirebaseClient) error {
+func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, firebaseClient *firebase.FirebaseClient, userGoWrapper user_go.IUserGoWrapper) error {
 	getNotificationsReadCount := "GetNotificationsReadCount"
 	disableUnregisteredTokens := "DisableUnregisteredTokens"
 	createNotification := "CreateNotification"
@@ -119,6 +120,14 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 					default:
 						// Skip other types
 					}
+				}
+				if req.Notifications.RelatedUserID != nil {
+					resp := <-userGoWrapper.GetUsersDetails([]int64{int64(*req.Notifications.RelatedUserID)}, context.Background(), false)
+					userResp, hasUser := (resp.Response)[int64(*req.Notifications.RelatedUserID)]
+					if !hasUser {
+						log.Info().Msg("Sending push notification via Firebase, not user found for RelatedUserID")
+					}
+					data["avatar_url"] = userResp.Avatar.String
 				}
 				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, string(deviceInfo.Platform), req.Notifications.Title, req.Notifications.Message, req.Notifications.Type, data)
 				log.Info().Msg("Push notification sent successfully")

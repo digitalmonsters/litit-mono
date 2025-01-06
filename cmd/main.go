@@ -156,7 +156,7 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
 
-	if err := api.InitInternalNotificationApi(httpRouter, apiDef, firebaseClient); err != nil {
+	if err := api.InitInternalNotificationApi(httpRouter, apiDef, firebaseClient, userGoWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init internal notification api")
 	}
 
