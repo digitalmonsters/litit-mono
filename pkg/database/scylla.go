@@ -12,7 +12,7 @@ import (
 var session *gocql.Session
 
 func init() {
-	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci || boilerplate.GetCurrentEnvironment() == boilerplate.Local {
+	if boilerplate.GetCurrentEnvironment() == boilerplate.Ci  {
 		initCi()
 	} else {
 		initNonCi()
