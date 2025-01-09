@@ -20,6 +20,37 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 	getNotificationsReadCount := "GetNotificationsReadCount"
 	disableUnregisteredTokens := "DisableUnregisteredTokens"
 	createNotification := "CreateNotification"
+	deleteNotificationByIntroID := "DeleteNotificationByIntroID"
+
+	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(deleteNotificationByIntroID,
+		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+			log.Info().Msg("Starting RPC command for DeleteNotificationByIntroID")
+
+			var req notification.DeleteNotificationByIntroIDRequest
+
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+
+			db := database.GetDb(database.DbTypeMaster)
+
+			log.Info().Msg("Deleting notifications for given Intro ")
+
+			err := notification.DeleteNotificationByIntroIDAndType(executionData.Context, db, req.IntroID)
+			if err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			}
+			log.Info().Msg("Successfully Deleted the notifications for given Intro ")
+
+			return true, nil
+		}, false)); err != nil {
+		return err
+	}
+
+	apiDef[deleteNotificationByIntroID] = swagger.ApiDescription{
+		Request: notification.GetNotificationsReadCountRequest{},
+		Tags:    []string{"notification"},
+	}
 
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(getNotificationsReadCount,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -148,7 +179,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 	}
 
 	apiDef[createNotification] = swagger.ApiDescription{
-		Request: notification_handler.DisableUnregisteredTokensRequest{},
+		Request: notification_handler.CreateNotificationRequest{},
 		Tags:    []string{"notification"},
 	}
 	return nil

@@ -412,6 +412,23 @@ func CreateNotification(req notification_handler.CreateNotificationRequest, db *
 	return notification_handler.CreateNotificationResponse{Status: true}, nil
 }
 
+func DeleteNotificationByIntroIDAndType(ctx context.Context, db *gorm.DB, introID int) error {
+	result := db.Table("notifications").
+		Where("custom_data->>'intro_id' = ?", fmt.Sprintf("%d", introID)).
+		Where("type = ?", "push.intro.successful-upload").
+		Delete(nil)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete notification: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		fmt.Errorf("no notification found with intro_id: %d ", introID)
+	}
+
+	return nil
+}
+
 func MapInternalToDatabaseNotification(req notification_handler.CreateNotificationRequest) database.Notification {
 	return database.Notification{
 		Id:                 uuid.New(), // Generating a new UUID
