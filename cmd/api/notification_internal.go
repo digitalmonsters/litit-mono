@@ -48,7 +48,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 	}
 
 	apiDef[deleteNotificationByIntroID] = swagger.ApiDescription{
-		Request: notification.GetNotificationsReadCountRequest{},
+		Request: notification.DeleteNotificationByIntroIDRequest{},
 		Tags:    []string{"notification"},
 	}
 
