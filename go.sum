@@ -155,6 +155,8 @@ github.com/digitalmonsters/go-common v1.42.3 h1:IvXsroyMjlh/aowTkSS65LqfAiMkqGT1
 github.com/digitalmonsters/go-common v1.42.3/go.mod h1:bfQd20iSaStfqExhi3BvwsOihW3ayXOi2d9g6/JZ9Qw=
 github.com/digitalmonsters/go-common v1.42.5 h1:YZkVDXFZReEpeJnBBMgU3omRKdBBrkHVf2DAo1sG52M=
 github.com/digitalmonsters/go-common v1.42.5/go.mod h1:bfQd20iSaStfqExhi3BvwsOihW3ayXOi2d9g6/JZ9Qw=
+github.com/digitalmonsters/go-common v1.42.6 h1:UGxdkXZ9GJk7EB4qd3Nh/bLVpDKeuAxMnADNyWkzqWQ=
+github.com/digitalmonsters/go-common v1.42.6/go.mod h1:bfQd20iSaStfqExhi3BvwsOihW3ayXOi2d9g6/JZ9Qw=
 github.com/dnaeon/go-vcr v1.2.0 h1:zHCHvJYTMh1N7xnV7zf1m1GPBF9Ad0Jk/whtQ1663qI=
 github.com/dnaeon/go-vcr v1.2.0/go.mod h1:R4UdLID7HZT3taECzJs4YgbbH6PIGXB6W/sc5OLb6RQ=
 github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
