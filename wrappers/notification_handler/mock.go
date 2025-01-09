@@ -13,6 +13,7 @@ type NotificationHandlerWrapperMock struct {
 	GetNotificationsReadCountFn             func(notificationIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64]
 	DisableUnregisteredTokensFn             func(tokens []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]string]
 	CreateNotificationFn                    func(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse]
+	DeleteNotificationByIntroIDFn           func(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse]
 }
 
 func (m *NotificationHandlerWrapperMock) EnqueueNotificationWithTemplate(templateName string, userId int64,
@@ -35,6 +36,10 @@ func (m *NotificationHandlerWrapperMock) DisableUnregisteredTokens(tokens []stri
 
 func (m *NotificationHandlerWrapperMock) CreateNotification(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse] {
 	return m.CreateNotificationFn(notifications, ctx, forceLog)
+}
+
+func (m *NotificationHandlerWrapperMock) DeleteNotificationByIntroID(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse] {
+	return m.DeleteNotificationByIntroIDFn(introID, ctx, forceLog)
 }
 
 func GetMock() INotificationHandlerWrapper { // for compiler errors

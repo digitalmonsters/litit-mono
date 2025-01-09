@@ -158,3 +158,9 @@ func (h *NotificationHandlerWrapper) CreateNotification(notifications Notificati
 		"createNotification", CreateNotificationRequest{Notifications: notifications},
 		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
 }
+
+func (h *NotificationHandlerWrapper) DeleteNotificationByIntroID(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse] {
+	return wrappers.ExecuteRpcRequestAsync[DeleteNotificationByIntroIDResponse](h.baseWrapper, h.apiUrl,
+		"deleteNotificationByIntroId", DeleteNotificationByIntroIDRequest{IntroID: introID},
+		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
+}
