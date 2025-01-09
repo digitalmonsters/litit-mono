@@ -1,12 +1,13 @@
 package notification
 
 import (
+	"time"
+
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 type TypeGroup string
@@ -103,4 +104,8 @@ type ReadNotificationRequest struct {
 
 type GetNotificationsReadCountRequest struct {
 	NotificationIds []int64 `json:"notification_ids"`
+}
+
+type DeleteNotificationByIntroIDRequest struct {
+	IntroID int `json:"intro_id"`
 }
