@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/digitalmonsters/go-common/boilerplate_testing"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/translation"
@@ -19,9 +23,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"os"
-	"testing"
-	"time"
 )
 
 var config configs.Settings
@@ -77,7 +78,7 @@ func TestMain(m *testing.M) {
 		return respChan
 	}
 
-	sender = NewSender(gateway, settingsServiceMock, nil, userWrapperMock)
+	sender = NewSender(gateway, settingsServiceMock, nil, userWrapperMock, nil)
 
 	os.Exit(m.Run())
 }
