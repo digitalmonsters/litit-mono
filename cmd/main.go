@@ -112,7 +112,7 @@ func main() {
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
-		cfg.Wrappers.NotificationGateway), settingsService, jobber, userGoWrapper)
+		cfg.Wrappers.NotificationGateway), settingsService, jobber, userGoWrapper, firebaseClient)
 
 	if err = notificationSender.RegisterUserPushNotificationTasks(); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not register user push notifications tasks")
