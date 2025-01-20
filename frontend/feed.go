@@ -94,8 +94,8 @@ type ContentModel struct {
 	PetID       null.Int    `json:"pet_id"`
 	SpotType    null.Int    `json:"spot_type"`
 	GeoLocation null.String `json:"geo_location"`
-	IsPrivateDM null.Bool   `json:"is_private_dm",omitempty`
-	IsIntro     null.Bool   `json:"is_intro",omitempty`
+	IsPrivateDM null.Bool   `json:"is_private_dm,omitempty"`
+	IsIntro     null.Bool   `json:"is_intro,omitempty"`
 }
 
 type ContentWithPointsCount struct {
