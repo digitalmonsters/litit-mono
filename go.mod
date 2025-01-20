@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/digitalmonsters/go-common v1.42.6
-	github.com/go-gormigrate/gormigrate/v2 2.0.0
+	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/shopspring/decimal v1.3.1
