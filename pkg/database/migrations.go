@@ -591,7 +591,7 @@ func getMigrations() []*gormigrate.Migration {
 			ID: "in_app_notification_templates_280720221403",
 			Migrate: func(db *gorm.DB) error {
 				return boilerplate_testing.ExecutePostgresSql(db, `
-				CREATE TABLE public.in_app_notifications (
+				CREATE TABLE IF NOT EXISTS public.in_app_notifications (
 				    id uuid NOT NULL DEFAULT gen_random_uuid(),
 				    user_id int4 NOT NULL,
 				    "type" varchar(255) NOT NULL,
