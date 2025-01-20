@@ -61,7 +61,7 @@ jobs:
 
       - name: Restart Kubernetes deployment
         run: |
-          kubectl rollout restart deployment content -n dev
+          kubectl rollout restart deployment configurator -n dev
 
       - name: Send Slack notification
         run: |
