@@ -16,11 +16,9 @@ import (
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
-	oa "github.com/digitalmonsters/go-common/online_activity"
 	"github.com/digitalmonsters/go-common/rpc"
 	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
-	"github.com/digitalmonsters/notification-handler/pkg/database"
 	fastRouter "github.com/fasthttp/router"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -487,9 +485,6 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 				}
 				return
 			}
-			db := database.GetDb(database.DbTypeMaster)
-			userId = resp.Resp.UserId
-			oa.TriggerUserOnline(db, userId)
 		}
 	}
 
