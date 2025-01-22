@@ -116,11 +116,11 @@ func (a *apiApp) upsertConfig() router.ICommand {
 
 func (a *apiApp) getConfigurations() router.ICommand {
 
-	a.apiDef["GetConfigs"] = swagger.ApiDescription{
+	a.apiDef["GetConfigurations"] = swagger.ApiDescription{
 		Request:           configs.GetConfigRequest{},
 		Response:          configs.GetConfigResponse{},
-		MethodDescription: "Get configs on admin panel",
-		Summary:           "Get configs",
+		MethodDescription: "Get configuratios on admin panel",
+		Summary:           "Get configurations",
 		Tags:              []string{"configs", "admin"},
 	}
 
