@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/digitalmonsters/configurator/pkg/configs"
 	"github.com/digitalmonsters/configurator/pkg/database"
 	"github.com/digitalmonsters/go-common/application"
@@ -16,6 +17,7 @@ func (a *apiApp) initAdminApi(endpoint router.IRpcEndpoint) error {
 		a.getConfigs(),
 		a.getConfigLogs(),
 		a.upsertConfig(),
+		a.getConfigurations(),
 	}
 
 	for _, c := range commands {
@@ -110,4 +112,29 @@ func (a *apiApp) upsertConfig() router.ICommand {
 		}
 		return resp, nil
 	}, common.AccessLevelWrite, "configs:upsert")
+}
+
+func (a *apiApp) getConfigurations() router.ICommand {
+
+	a.apiDef["GetConfigs"] = swagger.ApiDescription{
+		Request:           configs.GetConfigRequest{},
+		Response:          configs.GetConfigResponse{},
+		MethodDescription: "Get configs on admin panel",
+		Summary:           "Get configs",
+		Tags:              []string{"configs", "admin"},
+	}
+
+	return router.NewAdminCommand("GetConfigurations", func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+		var req configs.GetConfigRequest
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+		resp, err := a.service.AdminGetConfigs(database.GetDb(database.DbTypeReadonly).WithContext(executionData.Context), req, executionData)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+		return resp, nil
+	}, common.AccessLevelRead, "configs:view")
 }
