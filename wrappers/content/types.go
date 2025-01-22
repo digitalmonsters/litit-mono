@@ -184,5 +184,6 @@ type GetIfIntroExistsRequest struct {
 }
 
 type IntroExists struct {
-	Exists bool `json:"exists"`
+	UserId int64 `json:"user_id"`
+	Exists bool  `json:"exists"`
 }
