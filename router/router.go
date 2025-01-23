@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	onlineactivity "github.com/digitalmonsters/go-common/online_activity"
 	"github.com/digitalmonsters/go-common/wrappers/auth"
 
 	"github.com/digitalmonsters/go-common/apm_helper"
@@ -515,6 +517,12 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 		if apmTransaction != nil {
 			apmTransaction.Context.SetUserID(fmt.Sprint(userId))
 		}
+		db, err := boilerplate_testing.GetPostgresConnection(&boilerplate.DbConfig{})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get Gorm connection")
+			return
+		}
+		onlineactivity.TriggerUserOnline(db, userId)
 	}
 
 	executionTiming := time.Now()
