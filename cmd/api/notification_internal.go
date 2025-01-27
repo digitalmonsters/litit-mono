@@ -42,7 +42,9 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 			}
 			log.Info().Msg("Successfully Deleted the notifications for given Intro ")
 
-			return true, nil
+			return notification_handler.CreateNotificationResponse{
+				Status: true,
+			}, nil
 		}, false)); err != nil {
 		return err
 	}
