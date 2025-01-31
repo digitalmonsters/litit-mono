@@ -117,3 +117,7 @@ type AddOnlineUserRequest struct {
 type OnlineUserResponse struct {
 	UserIds []int64 `json:"user_ids"`
 }
+
+type GetOnlineUsersResponse struct {
+	UserIds []int64 `json:"user_ids"`
+}
