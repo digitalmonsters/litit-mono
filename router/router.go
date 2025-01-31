@@ -515,6 +515,7 @@ func (r *HttpRouter) executeAction(rpcRequest rpc.RpcRequest, cmd ICommand, http
 		if apmTransaction != nil {
 			apmTransaction.Context.SetUserID(fmt.Sprint(userId))
 		}
+		r.authGoWrapper.TriggerUserOnline(userId)
 	}
 
 	executionTiming := time.Now()
