@@ -113,3 +113,7 @@ type UpdateEmailForUserResponse struct {
 type AddOnlineUserRequest struct {
 	UserId int64 `json:"user_id"`
 }
+
+type OnlineUserResponse struct {
+	UserIds []int64 `json:"user_ids"`
+}
