@@ -663,21 +663,24 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
 
-	deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(notification.UserId), database.GetDbWithContext(database.DbTypeMaster, ctx))
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to get token for firebase")
-		return false, nil
-	}
-	if deviceInfo.PushToken != "" {
-		data := make(map[string]string)
-		fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
+	if notification.Type == "push.admin.bulk" {
+		deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(notification.UserId), database.GetDbWithContext(database.DbTypeMaster, ctx))
 		if err != nil {
-			log.Info().Msgf("firebase-reponse failed %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
-			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
+			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to get token for firebase")
 			return false, nil
 		}
-		log.Info().Msgf("firebase-reponse success %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
-		log.Info().Msg("Push notification firebase successfully")
+		if deviceInfo.PushToken != "" {
+			data := make(map[string]string)
+			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
+			if err != nil {
+				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
+				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
+				return false, nil
+			}
+			log.Info().Msgf("firebase-reponse success %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
+			log.Info().Msgf("firebase-reponse %v", fResp)
+			log.Info().Msg("Push notification firebase successfully")
+		}
 	}
 
 	log.Ctx(ctx).Info().
