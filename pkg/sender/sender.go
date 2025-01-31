@@ -672,10 +672,11 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		data := make(map[string]string)
 		fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
 		if err != nil {
+			log.Info().Msgf("firebase-reponse failed %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
 			return false, nil
 		}
-		log.Info().Msgf("firebase-reponse %v", fResp)
+		log.Info().Msgf("firebase-reponse success %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 		log.Info().Msg("Push notification firebase successfully")
 	}
 
