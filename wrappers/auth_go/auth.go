@@ -26,8 +26,8 @@ type IAuthGoWrapper interface {
 	GetUsersRegistrationType(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
 	InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
 	UpdateEmailForUser(userId int64, email string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
-	GetOnlineUsers(apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64]
-	TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[any]
+	GetOnlineUsers(forceLog bool) chan wrappers.GenericResponseChan[OnlineUserResponse]
+	TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[AddOnlineUserRequest]
 }
 
 type AuthGoWrapper struct {
@@ -109,12 +109,6 @@ func (u AuthGoWrapper) AddNewUser(req eventsourcing.UserEvent, apmTransaction *a
 	}()
 
 	return respCh
-}
-
-func (u *AuthGoWrapper) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[any] {
-	return wrappers.ExecuteRpcRequestAsync[any](u.baseWrapper, u.apiUrl, "TriggerUserOnline", AddOnlineUserRequest{
-		UserId: userId,
-	}, map[string]string{}, u.defaultTimeout, nil, u.serviceName, false)
 }
 
 func (u *AuthGoWrapper) CheckLegacyAdmin(userId int64, transaction *apm.Transaction, forceLog bool) chan CheckLegacyAdminResponseChan {
@@ -270,8 +264,14 @@ func (u AuthGoWrapper) GetUsersRegistrationType(userIds []int64, apmTransaction 
 	}, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
 }
 
-func (u AuthGoWrapper) GetOnlineUsers(apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64] {
-	return wrappers.ExecuteRpcRequestAsync[map[int64]int64](u.baseWrapper, u.apiUrl, "GetOnlineUsers", nil, map[string]string{}, u.defaultTimeout, apmTransaction, u.serviceName, forceLog)
+func (u AuthGoWrapper) GetOnlineUsers(forceLog bool) chan wrappers.GenericResponseChan[OnlineUserResponse] {
+	return wrappers.ExecuteRpcRequestAsync[OnlineUserResponse](u.baseWrapper, u.apiUrl, "GetOnlineUsers", nil, map[string]string{}, u.defaultTimeout, nil, u.serviceName, forceLog)
+}
+
+func (u *AuthGoWrapper) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[AddOnlineUserRequest] {
+	return wrappers.ExecuteRpcRequestAsync[AddOnlineUserRequest](u.baseWrapper, u.apiUrl, "TriggerUserOnline", AddOnlineUserRequest{
+		UserId: userId,
+	}, map[string]string{}, u.defaultTimeout, nil, u.serviceName, false)
 }
 
 func (u AuthGoWrapper) InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator] {
