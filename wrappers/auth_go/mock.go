@@ -18,15 +18,16 @@ type AuthGoWrapperMock struct {
 	GetUsersRegistrationTypeFn      func(userIds []int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]SocialProviderType]
 	InternalGetUsersForValidationFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
 	UpdateEmailForUserFn            func(userId int64, email string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
+	GetOnlineUsersFn                func(forceLog bool) chan wrappers.GenericResponseChan[OnlineUserResponse]
 }
 
 // GetOnlineUsers implements IAuthGoWrapper.
-func (w *AuthGoWrapperMock) GetOnlineUsers(apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64] {
-	panic("unimplemented")
+func (w *AuthGoWrapperMock) GetOnlineUsers(forceLog bool) chan wrappers.GenericResponseChan[OnlineUserResponse] {
+	return w.GetOnlineUsersFn(forceLog)
 }
 
 // TriggerUserOnline implements IAuthGoWrapper.
-func (w *AuthGoWrapperMock) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[any] {
+func (w *AuthGoWrapperMock) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[AddOnlineUserRequest] {
 	panic("unimplemented")
 }
 
