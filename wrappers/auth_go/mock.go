@@ -27,7 +27,11 @@ func (w *AuthGoWrapperMock) GetOnlineUsers(forceLog bool) chan wrappers.GenericR
 }
 
 // TriggerUserOnline implements IAuthGoWrapper.
-func (w *AuthGoWrapperMock) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[AddOnlineUserRequest] {
+func (w *AuthGoWrapperMock) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest] {
+	panic("unimplemented")
+}
+
+func (w *AuthGoWrapperMock) TriggerUserOffline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest] {
 	panic("unimplemented")
 }
 

@@ -110,7 +110,7 @@ type UpdateEmailForUserResponse struct {
 	Status int64 `json:"status"`
 }
 
-type AddOnlineUserRequest struct {
+type GenericTriggerOnlineOfflineRequest struct {
 	UserId int64 `json:"user_id"`
 }
 

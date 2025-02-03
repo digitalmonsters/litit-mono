@@ -27,7 +27,8 @@ type IAuthGoWrapper interface {
 	InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
 	UpdateEmailForUser(userId int64, email string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
 	GetOnlineUsers(forceLog bool) chan wrappers.GenericResponseChan[OnlineUserResponse]
-	TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[AddOnlineUserRequest]
+	TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest]
+	TriggerUserOffline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest]
 }
 
 type AuthGoWrapper struct {
@@ -268,8 +269,14 @@ func (u AuthGoWrapper) GetOnlineUsers(forceLog bool) chan wrappers.GenericRespon
 	return wrappers.ExecuteRpcRequestAsync[OnlineUserResponse](u.baseWrapper, u.apiUrl, "GetOnlineUsers", nil, map[string]string{}, u.defaultTimeout, nil, u.serviceName, forceLog)
 }
 
-func (u *AuthGoWrapper) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[AddOnlineUserRequest] {
-	return wrappers.ExecuteRpcRequestAsync[AddOnlineUserRequest](u.baseWrapper, u.apiUrl, "TriggerUserOnline", AddOnlineUserRequest{
+func (u AuthGoWrapper) TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest] {
+	return wrappers.ExecuteRpcRequestAsync[GenericTriggerOnlineOfflineRequest](u.baseWrapper, u.apiUrl, "TriggerUserOnline", GenericTriggerOnlineOfflineRequest{
+		UserId: userId,
+	}, map[string]string{}, u.defaultTimeout, nil, u.serviceName, false)
+}
+
+func (u AuthGoWrapper) TriggerUserOffline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest] {
+	return wrappers.ExecuteRpcRequestAsync[GenericTriggerOnlineOfflineRequest](u.baseWrapper, u.apiUrl, "TriggerUserOffline", GenericTriggerOnlineOfflineRequest{
 		UserId: userId,
 	}, map[string]string{}, u.defaultTimeout, nil, u.serviceName, false)
 }
