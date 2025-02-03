@@ -19,6 +19,7 @@ type AuthGoWrapperMock struct {
 	InternalGetUsersForValidationFn func(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator]
 	UpdateEmailForUserFn            func(userId int64, email string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
 	GetOnlineUsersFn                func(forceLog bool) chan wrappers.GenericResponseChan[OnlineUserResponse]
+	TriggerAllUsersOfflineFn        func() chan wrappers.GenericResponseChan[any]
 }
 
 // GetOnlineUsers implements IAuthGoWrapper.
@@ -31,7 +32,7 @@ func (w *AuthGoWrapperMock) TriggerUserOnline(userId int64) chan wrappers.Generi
 	panic("unimplemented")
 }
 
-func (w *AuthGoWrapperMock) TriggerUserOffline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest] {
+func (w *AuthGoWrapperMock) TriggerAllUsersOffline() chan wrappers.GenericResponseChan[any] {
 	panic("unimplemented")
 }
 

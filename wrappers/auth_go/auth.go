@@ -28,7 +28,7 @@ type IAuthGoWrapper interface {
 	UpdateEmailForUser(userId int64, email string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UpdateEmailForUserResponse]
 	GetOnlineUsers(forceLog bool) chan wrappers.GenericResponseChan[OnlineUserResponse]
 	TriggerUserOnline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest]
-	TriggerUserOffline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest]
+	TriggerAllUsersOffline() chan wrappers.GenericResponseChan[any]
 }
 
 type AuthGoWrapper struct {
@@ -275,10 +275,8 @@ func (u AuthGoWrapper) TriggerUserOnline(userId int64) chan wrappers.GenericResp
 	}, map[string]string{}, u.defaultTimeout, nil, u.serviceName, false)
 }
 
-func (u AuthGoWrapper) TriggerUserOffline(userId int64) chan wrappers.GenericResponseChan[GenericTriggerOnlineOfflineRequest] {
-	return wrappers.ExecuteRpcRequestAsync[GenericTriggerOnlineOfflineRequest](u.baseWrapper, u.apiUrl, "TriggerUserOffline", GenericTriggerOnlineOfflineRequest{
-		UserId: userId,
-	}, map[string]string{}, u.defaultTimeout, nil, u.serviceName, false)
+func (u AuthGoWrapper) TriggerAllUsersOffline() chan wrappers.GenericResponseChan[any] {
+	return wrappers.ExecuteRpcRequestAsync[any](u.baseWrapper, u.apiUrl, "TriggerAllUsersOffline", nil, map[string]string{}, u.defaultTimeout, nil, u.serviceName, false)
 }
 
 func (u AuthGoWrapper) InternalGetUsersForValidation(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserForValidator] {
