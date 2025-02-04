@@ -40,18 +40,16 @@ type Sender struct {
 	jobber          *machinery.Server
 	userWrapper     user_go.IUserGoWrapper
 	firebaseClient  *firebase.FirebaseClient
-	batchSender     *firebase.BatchNotificationSender
 }
 
 func NewSender(gateway notification_gateway.INotificationGatewayWrapper, settingsService settings.IService,
-	jobber *machinery.Server, userWrapper user_go.IUserGoWrapper, firebaseClient *firebase.FirebaseClient, batchSender *firebase.BatchNotificationSender) *Sender {
+	jobber *machinery.Server, userWrapper user_go.IUserGoWrapper, firebaseClient *firebase.FirebaseClient) *Sender {
 	return &Sender{
 		gateway:         gateway,
 		settingsService: settingsService,
 		jobber:          jobber,
 		userWrapper:     userWrapper,
 		firebaseClient:  firebaseClient,
-		batchSender:     batchSender,
 	}
 }
 
@@ -665,7 +663,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
 
-	if notification.Type == "push.admin.bulk" || notification.Type == "push.profile.following" {
+	if notification.Type == "push.admin.bulk" || notification.Type == "push.profile.following" || notification.Type == "push.content.like" {
 		deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(notification.UserId), database.GetDbWithContext(database.DbTypeMaster, ctx))
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to get token for firebase")
@@ -673,8 +671,15 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 		if deviceInfo.PushToken != "" {
 			data := make(map[string]string)
-			s.batchSender.QueueNotification(deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
-			log.Info().Msg("Push notification firebase QueueNotification")
+			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
+			if err != nil {
+				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
+				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
+				return false, nil
+			}
+			log.Info().Msgf("firebase-reponse success %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
+			log.Info().Msgf("firebase-reponse %v", fResp)
+			log.Info().Msg("Push notification firebase successfully")
 		}
 	}
 

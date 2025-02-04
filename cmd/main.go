@@ -77,8 +77,6 @@ func main() {
 	}
 
 	firebaseClient := firebase.Initialize(ctx, string(jsonStr))
-	batchSender := firebaseClient.NewBatchNotificationSender(ctx)
-	defer batchSender.Stop()
 
 	settingsService := settingsPkg.NewService()
 
@@ -114,7 +112,7 @@ func main() {
 	userGoWrapper := user_go.NewUserGoWrapper(cfg.Wrappers.UserGo)
 
 	notificationSender := sender.NewSender(notification_gateway.NewNotificationGatewayWrapper(
-		cfg.Wrappers.NotificationGateway), settingsService, jobber, userGoWrapper, firebaseClient, batchSender)
+		cfg.Wrappers.NotificationGateway), settingsService, jobber, userGoWrapper, firebaseClient)
 
 	if err = notificationSender.RegisterUserPushNotificationTasks(); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not register user push notifications tasks")
