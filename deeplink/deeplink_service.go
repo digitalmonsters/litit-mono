@@ -149,7 +149,7 @@ func (s *Service) GetVideoShareLink(contentId int64, contentType eventsourcing.C
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
-	return s.generateDeeplink(link, ProviderBranch)
+	return s.generateDeeplink(link, ProviderFirebase)
 }
 
 func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error) {
@@ -159,7 +159,7 @@ func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcin
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
-	return s.generateDeeplink(link, ProviderBranch)
+	return s.generateDeeplink(link, ProviderFirebase)
 }
 
 func (s *Service) GetPreviewShareLink(contentId int64, contentType eventsourcing.ContentType, uri string, userId int64, referralCode string) (string, error) {
@@ -169,7 +169,7 @@ func (s *Service) GetPreviewShareLink(contentId int64, contentType eventsourcing
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
-	return s.generateDeeplink(link, ProviderBranch)
+	return s.generateDeeplink(link, ProviderFirebase)
 }
 
 func (s *Service) getShareType(contentType eventsourcing.ContentType) string {
