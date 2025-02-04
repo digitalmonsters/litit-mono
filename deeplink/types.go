@@ -10,6 +10,7 @@ type IService interface {
 	GetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string) (string, error)
 	GetPreviewShareLink(contentId int64, contentType eventsourcing.ContentType, uri string, userId int64, referralCode string) (string, error)
 	GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error)
+	GetVideoShareLinkWithMeta(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, title string, description string, previewThumbnail string) (string, error)
 }
 
 type firebaseCreateDeeplinkRequest struct {
