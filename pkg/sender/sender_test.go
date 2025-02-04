@@ -78,7 +78,7 @@ func TestMain(m *testing.M) {
 		return respChan
 	}
 
-	sender = NewSender(gateway, settingsServiceMock, nil, userWrapperMock, nil)
+	sender = NewSender(gateway, settingsServiceMock, nil, userWrapperMock, nil, nil)
 
 	os.Exit(m.Run())
 }

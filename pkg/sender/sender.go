@@ -40,16 +40,18 @@ type Sender struct {
 	jobber          *machinery.Server
 	userWrapper     user_go.IUserGoWrapper
 	firebaseClient  *firebase.FirebaseClient
+	batchSender     *firebase.BatchNotificationSender
 }
 
 func NewSender(gateway notification_gateway.INotificationGatewayWrapper, settingsService settings.IService,
-	jobber *machinery.Server, userWrapper user_go.IUserGoWrapper, firebaseClient *firebase.FirebaseClient) *Sender {
+	jobber *machinery.Server, userWrapper user_go.IUserGoWrapper, firebaseClient *firebase.FirebaseClient, batchSender *firebase.BatchNotificationSender) *Sender {
 	return &Sender{
 		gateway:         gateway,
 		settingsService: settingsService,
 		jobber:          jobber,
 		userWrapper:     userWrapper,
 		firebaseClient:  firebaseClient,
+		batchSender:     batchSender,
 	}
 }
 
@@ -671,15 +673,8 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 		if deviceInfo.PushToken != "" {
 			data := make(map[string]string)
-			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
-			if err != nil {
-				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
-				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
-				return false, nil
-			}
-			log.Info().Msgf("firebase-reponse success %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
-			log.Info().Msgf("firebase-reponse %v", fResp)
-			log.Info().Msg("Push notification firebase successfully")
+			s.batchSender.QueueNotification(deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
+			log.Info().Msg("Push notification firebase QueueNotification")
 		}
 	}
 
