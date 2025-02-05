@@ -671,6 +671,19 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 		if deviceInfo.PushToken != "" {
 			data := make(map[string]string)
+			for k, v := range notification.CustomData {
+				switch value := v.(type) {
+				case string:
+					data[k] = value
+				case int:
+					data[k] = fmt.Sprintf("%d", value)
+				case float64:
+					data[k] = fmt.Sprintf("%.0f", value)
+				default:
+					// Skip other types
+				}
+			}
+
 			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
 			if err != nil {
 				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
