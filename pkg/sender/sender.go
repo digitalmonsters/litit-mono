@@ -663,7 +663,8 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
 
-	if notification.Type != "push.content.intro" && notification.Type != "push.user.need.avatar" {
+	if notification.Type == "push.admin.bulk" || notification.Type == "push.profile.following" || notification.Type == "push.content.like" ||
+		notification.Type == "push.user.after_signup" || notification.Type == "push.user.need.upload" || notification.Type == "push.user.need.avatar" {
 		deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(notification.UserId), database.GetDbWithContext(database.DbTypeMaster, ctx))
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to get token for firebase")
@@ -671,11 +672,26 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 		if deviceInfo.PushToken != "" {
 			data := make(map[string]string)
+			for k, v := range notification.CustomData {
+				switch value := v.(type) {
+				case string:
+					data[k] = value
+				case int:
+					data[k] = fmt.Sprintf("%d", value)
+				case float64:
+					data[k] = fmt.Sprintf("%.0f", value)
+				default:
+					// Skip other types
+				}
+			}
+
 			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
 			if err != nil {
+				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
 				return false, nil
 			}
+			log.Info().Msgf("firebase-reponse success %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 			log.Info().Msgf("firebase-reponse %v", fResp)
 			log.Info().Msg("Push notification firebase successfully")
 		}
