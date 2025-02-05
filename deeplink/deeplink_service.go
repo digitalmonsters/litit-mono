@@ -37,20 +37,49 @@ func NewService(config Config, httpClient *http_client.HttpClient, ctx context.C
 	}
 }
 
-func (s *Service) generateDeeplink(link string, provider Provider) (string, error) {
-	switch provider {
-	case ProviderFirebase:
-		return s.generateFirebaseDeeplink(link)
-	case ProviderBranch:
-		return s.generateBranchDeeplink(link)
-	default:
-		return "", fmt.Errorf("unsupported provider: %v", provider)
+func (s *Service) GetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string) (string, error) {
+	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
+	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
+	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&selectedtype=%v", userId, shareCode, contentType)
+	if len(referralCode) > 0 {
+		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
+	return s.generateDeeplink(link, ProviderBranch)
 }
 
-func (s *Service) generateBranchDeeplinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
+func (s *Service) GetVideoShareLinkWithMeta(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, title string, description string, previewThumbnail string) (string, error) {
+	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
+	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
+	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&selectedtype=%v", userId, shareCode, contentType)
+	if len(referralCode) > 0 {
+		link += fmt.Sprintf("&referralCode=%v", referralCode)
+	}
+	return s.GenerateBranchDeeplinkWithMeta(link, title, description, previewThumbnail)
+}
+
+func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error) {
+	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
+	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
+	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&petType=%v&petId=%v&petName=%s", userId, shareCode, petType, petId, petName)
+	if len(referralCode) > 0 {
+		link += fmt.Sprintf("&referralCode=%v", referralCode)
+	}
+	return s.generateDeeplink(link, ProviderBranch)
+}
+
+func (s *Service) GetPreviewShareLink(contentId int64, contentType eventsourcing.ContentType, uri string, userId int64, referralCode string) (string, error) {
+	link := fmt.Sprintf("%v/%v/%v", uri, s.getShareType(contentType), contentId)
+	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
+	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v", userId, shareCode)
+	if len(referralCode) > 0 {
+		link += fmt.Sprintf("&referralCode=%v", referralCode)
+	}
+	return s.generateDeeplink(link, ProviderBranch)
+}
+
+func (s *Service) GenerateBranchDeeplinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
 	requestBody := BranchLinkRequest{
-		BranchKey: s.config.Key,
+		BranchKey: s.config.BranchConfig.BranchKey,
 		Data: map[string]string{
 			"$deeplink_path":  link,
 			"$canonical_url":  link,
@@ -108,6 +137,17 @@ func (s *Service) generateBranchDeeplinkWithMeta(link string, title string, desc
 		return "", fmt.Errorf("error decoding response: %v", err)
 	}
 	return branchResponse.URL, nil
+}
+
+func (s *Service) generateDeeplink(link string, provider Provider) (string, error) {
+	switch provider {
+	case ProviderFirebase:
+		return s.generateFirebaseDeeplink(link)
+	case ProviderBranch:
+		return s.generateBranchDeeplink(link)
+	default:
+		return "", fmt.Errorf("unsupported provider: %v", provider)
+	}
 }
 
 func (s *Service) generateBranchDeeplink(link string) (string, error) {
@@ -204,46 +244,6 @@ func (s *Service) generateFirebaseDeeplink(link string) (string, error) {
 	return firebaseResp.ShortLink, nil
 }
 
-func (s *Service) GetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string) (string, error) {
-	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
-	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
-	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&selectedtype=%v", userId, shareCode, contentType)
-	if len(referralCode) > 0 {
-		link += fmt.Sprintf("&referralCode=%v", referralCode)
-	}
-	return s.generateDeeplink(link, ProviderBranch)
-}
-
-func (s *Service) GetVideoShareLinkWithMeta(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, title string, description string, previewThumbnail string) (string, error) {
-	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
-	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
-	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&selectedtype=%v", userId, shareCode, contentType)
-	if len(referralCode) > 0 {
-		link += fmt.Sprintf("&referralCode=%v", referralCode)
-	}
-	return s.generateBranchDeeplinkWithMeta(link, title, description, previewThumbnail)
-}
-
-func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error) {
-	link := fmt.Sprintf("%v/%v/%v", s.config.URI, s.getShareType(contentType), contentId)
-	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
-	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v&petType=%v&petId=%v&petName=%s", userId, shareCode, petType, petId, petName)
-	if len(referralCode) > 0 {
-		link += fmt.Sprintf("&referralCode=%v", referralCode)
-	}
-	return s.generateDeeplink(link, ProviderBranch)
-}
-
-func (s *Service) GetPreviewShareLink(contentId int64, contentType eventsourcing.ContentType, uri string, userId int64, referralCode string) (string, error) {
-	link := fmt.Sprintf("%v/%v/%v", uri, s.getShareType(contentType), contentId)
-	shareCode := fmt.Sprintf("%v%v%v", contentId, userId, time.Now().Unix())
-	link += fmt.Sprintf("?sharerId=%v&referredByType=shared_content&shareCode=%v", userId, shareCode)
-	if len(referralCode) > 0 {
-		link += fmt.Sprintf("&referralCode=%v", referralCode)
-	}
-	return s.generateDeeplink(link, ProviderBranch)
-}
-
 func (s *Service) getShareType(contentType eventsourcing.ContentType) string {
 	switch contentType {
 	case eventsourcing.ContentTypeMusic:
@@ -271,7 +271,7 @@ func NewBranchService(ctx context.Context, config Config) *BranchService {
 
 func (s *BranchService) GenerateBranchDeepLinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
 	requestBody := BranchLinkRequest{
-		BranchKey: s.config.Key,
+		BranchKey: s.config.BranchConfig.BranchKey,
 		Data: map[string]string{
 			"$deeplink_path":  link,
 			"$canonical_url":  link,
