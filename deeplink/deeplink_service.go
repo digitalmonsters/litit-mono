@@ -185,13 +185,12 @@ func (s *Service) generateFirebaseDeeplinkWithMeta(link string, title string, de
 }
 
 func (s *Service) generateDeeplink(link string, provider Provider) (string, error) {
-	switch provider {
-	case ProviderFirebase:
+	if s.config.Provider == "firebase" || provider == ProviderFirebase {
 		return s.generateFirebaseDeeplink(link)
-	case ProviderBranch:
+	} else if s.config.Provider == "branch" || provider == ProviderBranch {
 		return s.generateBranchDeeplink(link)
-	default:
-		return "", fmt.Errorf("unsupported provider: %v", provider)
+	} else {
+		return "", fmt.Errorf("unsupported provider: %v", s.config.Provider)
 	}
 }
 
