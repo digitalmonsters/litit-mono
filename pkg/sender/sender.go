@@ -663,7 +663,8 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
 
-	if notification.Type == "push.admin.bulk" || notification.Type == "push.profile.following" || notification.Type == "push.content.like" {
+	if notification.Type == "push.admin.bulk" || notification.Type == "push.profile.following" || notification.Type == "push.content.like" ||
+		notification.Type == "push.user.after_signup" || notification.Type == "push.user.need.upload" || notification.Type == "push.user.need.avatar" {
 		deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(notification.UserId), database.GetDbWithContext(database.DbTypeMaster, ctx))
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to get token for firebase")
