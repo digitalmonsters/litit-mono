@@ -159,10 +159,11 @@ func (s *Service) generateFirebaseDeeplinkWithMeta(link string, title string, de
 				IosBundleId:   s.config.IOSBundleId,
 				IosAppStoreId: s.config.IOSAppStoreId,
 			},
-		}, SocialMetaTag: socialnMetaTagInfo{
-			SocialTitle:       title,
-			SocialDescription: description,
-			SocialImageLink:   previewThumbnail,
+			SocialMetaTag: socialnMetaTagInfo{
+				SocialTitle:       title,
+				SocialDescription: description,
+				SocialImageLink:   previewThumbnail,
+			},
 		},
 	}
 	requestJsonBody, err := json.Marshal(requestBody)

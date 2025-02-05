@@ -20,7 +20,6 @@ type firebaseCreateDeeplinkRequest struct {
 
 type firebaseCreateDeeplinkRequestWithMeta struct {
 	DynamicLinkInfo dynamicLinkInfo `json:"dynamicLinkInfo"`
-	SocialMetaTag   socialnMetaTagInfo
 }
 
 type socialnMetaTagInfo struct {
@@ -30,10 +29,11 @@ type socialnMetaTagInfo struct {
 }
 
 type dynamicLinkInfo struct {
-	DomainUriPrefix string      `json:"domainUriPrefix"`
-	Link            string      `json:"link"`
-	AndroidInfo     androidInfo `json:"androidInfo"`
-	IosInfo         iosInfo     `json:"iosInfo"`
+	DomainUriPrefix string             `json:"domainUriPrefix"`
+	Link            string             `json:"link"`
+	AndroidInfo     androidInfo        `json:"androidInfo"`
+	IosInfo         iosInfo            `json:"iosInfo"`
+	SocialMetaTag   socialnMetaTagInfo `json:"socialMetaTagInfo"`
 }
 
 type androidInfo struct {
