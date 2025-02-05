@@ -18,6 +18,17 @@ type firebaseCreateDeeplinkRequest struct {
 	DynamicLinkInfo dynamicLinkInfo `json:"dynamicLinkInfo"`
 }
 
+type firebaseCreateDeeplinkRequestWithMeta struct {
+	DynamicLinkInfo dynamicLinkInfo `json:"dynamicLinkInfo"`
+	SocialMetaTag   socialnMetaTagInfo
+}
+
+type socialnMetaTagInfo struct {
+	SocialTitle       string `json:"socialTitle"`
+	SocialDescription string `json:"socialDescription"`
+	SocialImageLink   string `json:"socialImageLink"`
+}
+
 type dynamicLinkInfo struct {
 	DomainUriPrefix string      `json:"domainUriPrefix"`
 	Link            string      `json:"link"`
@@ -51,6 +62,7 @@ type Config struct {
 	IOSAppStoreId      string           `json:"IOSAppStoreId"`
 	Key                string           `json:"Key"`
 	BranchConfig       BranchConfigType `json:"branch_config"`
+	Provider           string           `json:"provider"`
 }
 
 type BranchLinkData struct {

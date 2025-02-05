@@ -54,7 +54,15 @@ func (s *Service) GetVideoShareLinkWithMeta(contentId int64, contentType eventso
 	if len(referralCode) > 0 {
 		link += fmt.Sprintf("&referralCode=%v", referralCode)
 	}
-	return s.GenerateBranchDeeplinkWithMeta(link, title, description, previewThumbnail)
+	switch s.config.Provider {
+	case "branch":
+		return s.GenerateBranchDeeplinkWithMeta(link, title, description, previewThumbnail)
+	case "firebase":
+		return s.generateFirebaseDeeplinkWithMeta(link, title, description, previewThumbnail)
+	default:
+		return "", fmt.Errorf("unsupported provider: %v", s.config.Provider)
+	}
+
 }
 
 func (s *Service) GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error) {
@@ -137,6 +145,43 @@ func (s *Service) GenerateBranchDeeplinkWithMeta(link string, title string, desc
 		return "", fmt.Errorf("error decoding response: %v", err)
 	}
 	return branchResponse.URL, nil
+}
+
+func (s *Service) generateFirebaseDeeplinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
+	requestBody := firebaseCreateDeeplinkRequestWithMeta{
+		DynamicLinkInfo: dynamicLinkInfo{
+			DomainUriPrefix: s.config.DomainURIPrefix,
+			Link:            link,
+			AndroidInfo: androidInfo{
+				AndroidPackageName: s.config.AndroidPackageName,
+			},
+			IosInfo: iosInfo{
+				IosBundleId:   s.config.IOSBundleId,
+				IosAppStoreId: s.config.IOSAppStoreId,
+			},
+		}, SocialMetaTag: socialnMetaTagInfo{
+			SocialTitle:       title,
+			SocialDescription: description,
+			SocialImageLink:   previewThumbnail,
+		},
+	}
+	requestJsonBody, err := json.Marshal(requestBody)
+
+	if err != nil {
+		return "", err
+	}
+	resp, err := s.httpClient.NewRequest(s.ctx).SetContentType("application/json").SetBody(requestJsonBody).Post(s.url)
+
+	if err != nil {
+		return "", err
+	}
+
+	var firebaseResp firebaseCreateDeeplinkResponse
+
+	if err := json.Unmarshal(resp.Bytes(), &firebaseResp); err != nil {
+		return "", err
+	}
+	return firebaseResp.ShortLink, nil
 }
 
 func (s *Service) generateDeeplink(link string, provider Provider) (string, error) {
