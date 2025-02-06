@@ -10,21 +10,39 @@ type IService interface {
 	GetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string) (string, error)
 	GetPreviewShareLink(contentId int64, contentType eventsourcing.ContentType, uri string, userId int64, referralCode string) (string, error)
 	GetPetVideoShareLink(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, petType int64, petId int64, petName string) (string, error)
+	GetVideoShareLinkWithMeta(contentId int64, contentType eventsourcing.ContentType, userId int64, referralCode string, title string, description string, previewThumbnail string) (string, error)
+	GenerateBranchDeeplinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error)
 }
 
 type firebaseCreateDeeplinkRequest struct {
 	DynamicLinkInfo dynamicLinkInfo `json:"dynamicLinkInfo"`
 }
 
+type firebaseCreateDeeplinkRequestWithMeta struct {
+	DynamicLinkInfo dynamicLinkInfo `json:"dynamicLinkInfo"`
+}
+
+type socialnMetaTagInfo struct {
+	SocialTitle       string `json:"socialTitle"`
+	SocialDescription string `json:"socialDescription"`
+	SocialImageLink   string `json:"socialImageLink"`
+}
+
 type dynamicLinkInfo struct {
-	DomainUriPrefix string      `json:"domainUriPrefix"`
-	Link            string      `json:"link"`
-	AndroidInfo     androidInfo `json:"androidInfo"`
-	IosInfo         iosInfo     `json:"iosInfo"`
+	DomainUriPrefix string             `json:"domainUriPrefix"`
+	Link            string             `json:"link"`
+	AndroidInfo     androidInfo        `json:"androidInfo"`
+	IosInfo         iosInfo            `json:"iosInfo"`
+	SocialMetaTag   socialnMetaTagInfo `json:"socialMetaTagInfo"`
 }
 
 type androidInfo struct {
 	AndroidPackageName string `json:"androidPackageName"`
+}
+
+type BranchConfigType struct {
+	BranchKey   string `json:"branch_key"`
+	BranchSecret string `json:"branch_secret"`
 }
 
 type iosInfo struct {
@@ -37,12 +55,14 @@ type firebaseCreateDeeplinkResponse struct {
 }
 
 type Config struct {
-	URI                string `json:"URI"`
-	DomainURIPrefix    string `json:"DomainURIPrefix"`
-	AndroidPackageName string `json:"AndroidPackageName"`
-	IOSBundleId        string `json:"IOSBundleId"`
-	IOSAppStoreId      string `json:"IOSAppStoreId"`
-	Key                string `json:"Key"`
+	URI                string           `json:"URI"`
+	DomainURIPrefix    string           `json:"DomainURIPrefix"`
+	AndroidPackageName string           `json:"AndroidPackageName"`
+	IOSBundleId        string           `json:"IOSBundleId"`
+	IOSAppStoreId      string           `json:"IOSAppStoreId"`
+	Key                string           `json:"Key"`
+	BranchConfig       BranchConfigType `json:"branch_config"`
+	Provider           string           `json:"provider"`
 }
 
 type BranchLinkData struct {
