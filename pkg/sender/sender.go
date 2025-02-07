@@ -634,6 +634,12 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	tx := database.GetDb(database.DbTypeMaster).WithContext(ctx).Begin()
 	defer tx.Rollback()
 
+	if notification.Type == "push.profile.following" {
+		if notification.Message == "Someone  started following you" {
+			notification.Message = "Someone started following you"
+		}
+	}
+
 	if err = tx.Create(&notification).Error; err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
 		return true, err
