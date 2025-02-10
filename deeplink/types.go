@@ -41,8 +41,8 @@ type androidInfo struct {
 }
 
 type BranchConfigType struct {
-	BranchKey   string `json:"BranchKey"`
-	BranchSecet string `json:"BranchSecret"`
+	BranchKey    string `json:"BranchKey"`
+	BranchSecret string `json:"BranchSecret"`
 }
 
 type iosInfo struct {

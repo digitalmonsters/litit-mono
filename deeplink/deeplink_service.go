@@ -314,9 +314,9 @@ func NewBranchService(ctx context.Context, config Config) *BranchService {
 	}
 }
 
-func (s *BranchService) GenerateBranchDeepLinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
+func (b *BranchService) GenerateBranchDeepLinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
 	requestBody := BranchLinkRequest{
-		BranchKey: s.config.BranchConfig.BranchKey,
+		BranchKey: b.config.BranchConfig.BranchKey,
 		Data: map[string]string{
 			"$deeplink_path":  link,
 			"$canonical_url":  link,
@@ -374,4 +374,42 @@ func (s *BranchService) GenerateBranchDeepLinkWithMeta(link string, title string
 		return "", fmt.Errorf("error decoding response: %v", err)
 	}
 	return branchResponse.URL, nil
+}
+
+func (b *BranchService) generateFirebaseDeeplinkWithMeta(httpClient *http_client.HttpClient, link string, title string, description string, previewThumbnail string) (string, error) {
+	requestBody := firebaseCreateDeeplinkRequestWithMeta{
+		DynamicLinkInfo: dynamicLinkInfo{
+			DomainUriPrefix: b.config.DomainURIPrefix,
+			Link:            link,
+			AndroidInfo: androidInfo{
+				AndroidPackageName: b.config.AndroidPackageName,
+			},
+			IosInfo: iosInfo{
+				IosBundleId:   b.config.IOSBundleId,
+				IosAppStoreId: b.config.IOSAppStoreId,
+			},
+			SocialMetaTag: socialnMetaTagInfo{
+				SocialTitle:       title,
+				SocialDescription: description,
+				SocialImageLink:   previewThumbnail,
+			},
+		},
+	}
+	requestJsonBody, err := json.Marshal(requestBody)
+
+	if err != nil {
+		return "", err
+	}
+	resp, err := httpClient.NewRequest(b.ctx).SetContentType("application/json").SetBody(requestJsonBody).Post(link)
+
+	if err != nil {
+		return "", err
+	}
+
+	var firebaseResp firebaseCreateDeeplinkResponse
+
+	if err := json.Unmarshal(resp.Bytes(), &firebaseResp); err != nil {
+		return "", err
+	}
+	return firebaseResp.ShortLink, nil
 }
