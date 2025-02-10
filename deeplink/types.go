@@ -41,8 +41,8 @@ type androidInfo struct {
 }
 
 type BranchConfigType struct {
-	BranchKey   string `json:"branch_key"`
-	BranchSecet string `json:"branch_secret"`
+	BranchKey    string `json:"BranchKey"`
+	BranchSecret string `json:"BranchSecret"`
 }
 
 type iosInfo struct {
@@ -61,8 +61,8 @@ type Config struct {
 	IOSBundleId        string           `json:"IOSBundleId"`
 	IOSAppStoreId      string           `json:"IOSAppStoreId"`
 	Key                string           `json:"Key"`
-	BranchConfig       BranchConfigType `json:"branch_config"`
-	Provider           string           `json:"provider"`
+	BranchConfig       BranchConfigType `json:"BranchConfig"`
+	Provider           string           `json:"Provider"`
 }
 
 type BranchLinkData struct {
