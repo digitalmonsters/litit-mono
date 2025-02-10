@@ -376,7 +376,7 @@ func (b *BranchService) GenerateBranchDeepLinkWithMeta(link string, title string
 	return branchResponse.URL, nil
 }
 
-func (b *BranchService) generateFirebaseDeeplinkWithMeta(httpClient *http_client.HttpClient, link string, title string, description string, previewThumbnail string) (string, error) {
+func (b *BranchService) GenerateFirebaseDeeplinkWithMeta(httpClient *http_client.HttpClient, link string, title string, description string, previewThumbnail string) (string, error) {
 	requestBody := firebaseCreateDeeplinkRequestWithMeta{
 		DynamicLinkInfo: dynamicLinkInfo{
 			DomainUriPrefix: b.config.DomainURIPrefix,
