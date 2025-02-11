@@ -93,7 +93,12 @@ func (s *Service) GenerateBranchDeeplinkWithMeta(link string, title string, desc
 			"$canonical_url":  link,
 			"$og_title":       title,
 			"$og_description": description,
-			"$og_image_url":   previewThumbnail,
+			"$custom_meta_tags": func() string {
+				metaTags, _ := json.Marshal(specialBranchConfig{
+					Ogimage: previewThumbnail,
+				})
+				return string(metaTags)
+			}(),
 		},
 	}
 	jsonData, err := json.Marshal(requestBody)
@@ -107,7 +112,7 @@ func (s *Service) GenerateBranchDeeplinkWithMeta(link string, title string, desc
 		},
 	}
 
-	req, err := http.NewRequest("POST", "https://api.branch.io/v1/url", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", "https://api2.branch.io/v1/url", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("error creating HTTP request: %v", err)
 	}
