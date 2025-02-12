@@ -28,6 +28,10 @@ type socialnMetaTagInfo struct {
 	SocialImageLink   string `json:"socialImageLink"`
 }
 
+type specialBranchConfig struct {
+	Ogimage string `json:"og:image"`
+}
+
 type dynamicLinkInfo struct {
 	DomainUriPrefix string             `json:"domainUriPrefix"`
 	Link            string             `json:"link"`

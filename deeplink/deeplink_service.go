@@ -93,7 +93,12 @@ func (s *Service) GenerateBranchDeeplinkWithMeta(link string, title string, desc
 			"$canonical_url":  link,
 			"$og_title":       title,
 			"$og_description": description,
-			"$og_image_url":   previewThumbnail,
+			"$custom_meta_tags": func() string {
+				metaTags, _ := json.Marshal(specialBranchConfig{
+					Ogimage: previewThumbnail,
+				})
+				return string(metaTags)
+			}(),
 		},
 	}
 	jsonData, err := json.Marshal(requestBody)
@@ -107,7 +112,7 @@ func (s *Service) GenerateBranchDeeplinkWithMeta(link string, title string, desc
 		},
 	}
 
-	req, err := http.NewRequest("POST", "https://api.branch.io/v1/url", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", "https://api2.branch.io/v1/url", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("error creating HTTP request: %v", err)
 	}
@@ -301,115 +306,6 @@ func (s *Service) getShareType(contentType eventsourcing.ContentType) string {
 		return "video"
 	}
 }
-
-type BranchService struct {
-	ctx    context.Context
-	config Config
-}
-
-func NewBranchService(ctx context.Context, config Config) *BranchService {
-	return &BranchService{
-		ctx:    ctx,
-		config: config,
-	}
-}
-
-func (b *BranchService) GenerateBranchDeepLinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
-	requestBody := BranchLinkRequest{
-		BranchKey: b.config.BranchConfig.BranchKey,
-		Data: map[string]string{
-			"$deeplink_path":  link,
-			"$canonical_url":  link,
-			"$og_title":       title,
-			"$og_description": description,
-			"$og_image_url":   previewThumbnail,
-		},
-	}
-	jsonData, err := json.Marshal(requestBody)
-	if err != nil {
-		return "", fmt.Errorf("error marshaling JSON: %v", err)
-	}
-
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			ForceAttemptHTTP2: false, // Disable HTTP/2 and use HTTP/1.1
-		},
-	}
-
-	req, err := http.NewRequest("POST", "https://api.branch.io/v1/url", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("error creating HTTP request: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("error making POST request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Check for a valid response and ensure body exists
-	if resp.Body == nil {
-		return "", fmt.Errorf("response body is nil")
-	}
-
-	// Read the body only once
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response body: %v", err)
-	}
-
-	// Print the response body for debugging
-	fmt.Println("Response body: ", string(bodyBytes), "Status code:", resp.StatusCode)
-
-	// Check for non-200 response status codes
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("non-200 status code: %d, body: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	// Decode the response into the BranchLinkResponse struct
-	var branchResponse BranchLinkResponse
-	err = json.Unmarshal(bodyBytes, &branchResponse)
-	if err != nil {
-		return "", fmt.Errorf("error decoding response: %v", err)
-	}
-	return branchResponse.URL, nil
-}
-
-func (b *BranchService) GenerateFirebaseDeeplinkWithMeta(httpClient *http_client.HttpClient, link string, title string, description string, previewThumbnail string) (string, error) {
-	requestBody := firebaseCreateDeeplinkRequestWithMeta{
-		DynamicLinkInfo: dynamicLinkInfo{
-			DomainUriPrefix: b.config.DomainURIPrefix,
-			Link:            link,
-			AndroidInfo: androidInfo{
-				AndroidPackageName: b.config.AndroidPackageName,
-			},
-			IosInfo: iosInfo{
-				IosBundleId:   b.config.IOSBundleId,
-				IosAppStoreId: b.config.IOSAppStoreId,
-			},
-			SocialMetaTag: socialnMetaTagInfo{
-				SocialTitle:       title,
-				SocialDescription: description,
-				SocialImageLink:   previewThumbnail,
-			},
-		},
-	}
-	requestJsonBody, err := json.Marshal(requestBody)
-
-	if err != nil {
-		return "", err
-	}
-	resp, err := httpClient.NewRequest(b.ctx).SetContentType("application/json").SetBody(requestJsonBody).Post(link)
-
-	if err != nil {
-		return "", err
-	}
-
-	var firebaseResp firebaseCreateDeeplinkResponse
-
-	if err := json.Unmarshal(resp.Bytes(), &firebaseResp); err != nil {
-		return "", err
-	}
-	return firebaseResp.ShortLink, nil
+func (s *Service) GenerateFirebaseDeeplinkWithMeta(link string, title string, description string, previewThumbnail string) (string, error) {
+	return s.generateFirebaseDeeplinkWithMeta(link, title, description, previewThumbnail)
 }
