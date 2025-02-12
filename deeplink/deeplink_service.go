@@ -89,8 +89,8 @@ func (s *Service) GenerateBranchDeeplinkWithMeta(link string, title string, desc
 	requestBody := BranchLinkRequest{
 		BranchKey: s.config.BranchConfig.BranchKey,
 		Data: map[string]string{
+			"$desktop_url":    link,
 			"$deeplink_path":  link,
-			"$canonical_url":  link,
 			"$og_title":       title,
 			"$og_description": description,
 			"$custom_meta_tags": func() string {
