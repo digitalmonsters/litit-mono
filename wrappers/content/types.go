@@ -187,3 +187,16 @@ type IntroExists struct {
 	UserId int64 `json:"user_id"`
 	Exists bool  `json:"exists"`
 }
+
+type UploadCountResponse struct {
+	UserId    int64 `json:"user_id"`
+	RealLife  int64 `json:"real_life"`
+	RealDog   int64 `json:"real_dog"`
+	RealCat   int64 `json:"real_cat"`
+	IntroFeed int64 `json:"intro_feed"`
+	Total     int64 `json:"total"`
+}
+
+type GetAllUploadCountRequest struct {
+	UserId int64 `json:"user_id"`
+}

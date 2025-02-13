@@ -92,6 +92,10 @@ func (w *ContentWrapperMock) GetIfIntroExists(ctx context.Context, userId []int6
 	panic("implement me")
 }
 
+func (w *ContentWrapperMock) GetAllUploadCount(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[UploadCountResponse] {
+	panic("implement me")
+}
+
 func GetMock() IContentWrapper { // for compiler errors
 	return &ContentWrapperMock{}
 }
