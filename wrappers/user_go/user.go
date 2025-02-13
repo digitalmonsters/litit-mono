@@ -113,6 +113,9 @@ func (w UserGoWrapper) GetUserDetails(userId int64, ctx context.Context, forceLo
 
 			return
 		}
+		for k, v := range resp.Response {
+			log.Info().Msgf("GetUserDetails: k: %v, v: %v", k, v)
+		}
 
 		if v, ok := resp.Response[userId]; ok {
 			ch <- wrappers.GenericResponseChan[UserDetailRecord]{

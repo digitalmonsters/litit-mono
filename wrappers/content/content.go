@@ -34,6 +34,7 @@ type IContentWrapper interface {
 	InsertMusicContent(content MusicContentRequest, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[SimpleContent]
 	GetLastContent(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[[]SimpleContent]
 	GetIfIntroExists(ctx context.Context, userId []int64) chan wrappers.GenericResponseChan[[]IntroExists]
+	GetAllUploadCount(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[UploadCountResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -173,6 +174,12 @@ func (w *ContentWrapper) InsertMusicContent(content MusicContentRequest, ctx con
 
 func (w *ContentWrapper) GetIfIntroExists(ctx context.Context, userId []int64) chan wrappers.GenericResponseChan[[]IntroExists] {
 	return wrappers.ExecuteRpcRequestAsync[[]IntroExists](w.baseWrapper, w.apiUrl, "GetIfIntroExists", GetIfIntroExistsRequest{
+		UserId: userId,
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, false)
+}
+
+func (w *ContentWrapper) GetAllUploadCount(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[UploadCountResponse] {
+	return wrappers.ExecuteRpcRequestAsync[UploadCountResponse](w.baseWrapper, w.apiUrl, "GetAllUploadCount", GetAllUploadCountRequest{
 		UserId: userId,
 	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, false)
 }
