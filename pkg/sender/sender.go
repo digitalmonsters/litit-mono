@@ -640,6 +640,41 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 	}
 
+	if notification.Type == "push.profile.following" {
+		// Delete any existing notifications and return the count of deleted rows
+		var deletedCount int64
+		result := tx.Exec(`
+			DELETE FROM notifications 
+			WHERE user_id = ? 
+			AND related_user_id = ? 
+			AND type = ? 
+			AND created_at >= ?`,
+			notification.UserId,
+			notification.RelatedUserId,
+			notification.Type,
+			time.Now().Add(-24*time.Hour),
+		)
+
+		if result.Error != nil {
+			log.Ctx(ctx).Error().Err(result.Error).Msg("[PushNotification] Failed to delete existing notifications")
+			return true, result.Error
+		}
+
+		deletedCount = result.RowsAffected
+		if deletedCount > 0 {
+			log.Ctx(ctx).Info().
+				Int64("deleted_count", deletedCount).
+				Int64("user_id", notification.UserId).
+				Msg("[PushNotification] Deleted existing notifications")
+		}
+	}
+
+	// Then create the new notification
+	if err = tx.Create(&notification).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
+		return true, err
+	}
+
 	if err = tx.Create(&notification).Error; err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
 		return true, err
