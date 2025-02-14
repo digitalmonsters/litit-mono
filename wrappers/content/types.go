@@ -180,7 +180,7 @@ type GetLastContentRequest struct {
 }
 
 type GetIfIntroExistsRequest struct {
-	UserId []int64 `json:"user_id"`
+	UserId int64 `json:"user_id"`
 }
 
 type IntroExists struct {
