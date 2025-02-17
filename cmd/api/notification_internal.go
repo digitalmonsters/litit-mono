@@ -120,8 +120,19 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 			db := database.GetDb(database.DbTypeMaster)
 			log.Info().Msg("Database connection initialized successfully")
 
+			if req.Notifications.Type == "push.profile.unfollowing" {
+				err := notification.DeleteUnFollowNotification(context.Background(), req, db)
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to Delete notification for unfollowing user")
+					return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+				} else {
+					log.Info().Msg("successfully deleted record for unfollowed user")
+					return nil, nil
+				}
+			}
+
 			log.Info().Msg("Creating notification")
-			resp, err := notification.CreateNotification(req, db)
+			resp, err := notification.CreateNotification(context.Background(), req, db)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to create notification")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
@@ -165,13 +176,6 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, string(deviceInfo.Platform), req.Notifications.Title, req.Notifications.Message, req.Notifications.Type, data)
 				log.Info().Msg("Push notification sent successfully")
 			}
-
-			go func() {
-				gerr := notification.CreateInAppNotification(req, db)
-				if gerr != nil {
-					log.Error().Err(gerr).Msg("Failed to create in_app notification")
-				}
-			}()
 
 			log.Info().Msg("Successfully created notification")
 			return resp, nil
