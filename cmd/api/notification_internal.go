@@ -130,7 +130,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 				}
 
 				log.Info().Int64("user_id", int64(req.Notifications.UserID)).Msg("Successfully deleted notification for unfollowing user")
-				return nil, nil
+				return notification_handler.CreateNotificationResponse{true}, nil
 			}
 
 			log.Info().Msg("Creating notification")
