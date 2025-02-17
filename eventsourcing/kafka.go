@@ -26,6 +26,9 @@ type KafkaEventPublisher struct {
 }
 
 func NewKafkaEventPublisher(cfg boilerplate.KafkaWriterConfiguration, topicConfig boilerplate.KafkaTopicConfig) *KafkaEventPublisher {
+	if cfg.Hosts == "" {
+		cfg.Hosts = "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092"
+	}
 	hosts := boilerplate.SplitHostsToSlice(cfg.Hosts)
 
 	h := &KafkaEventPublisher{
