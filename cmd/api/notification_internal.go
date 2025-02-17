@@ -121,14 +121,16 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 			log.Info().Msg("Database connection initialized successfully")
 
 			if req.Notifications.Type == "push.profile.unfollowing" {
+				log.Info().Int64("user_id", int64(req.Notifications.UserID)).Msg("Attempting to delete notification for unfollowing user")
+
 				err := notification.DeleteUnFollowNotification(context.Background(), req, db)
 				if err != nil {
-					log.Error().Err(err).Msg("Failed to Delete notification for unfollowing user")
+					log.Error().Err(err).Int64("user_id", int64(req.Notifications.UserID)).Msg("Failed to delete notification for unfollowing user")
 					return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
-				} else {
-					log.Info().Msg("successfully deleted record for unfollowed user")
-					return nil, nil
 				}
+
+				log.Info().Int64("user_id", int64(req.Notifications.UserID)).Msg("Successfully deleted notification for unfollowing user")
+				return nil, nil
 			}
 
 			log.Info().Msg("Creating notification")
