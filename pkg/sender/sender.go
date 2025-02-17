@@ -675,11 +675,6 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		return true, err
 	}
 
-	if err = tx.Create(&notification).Error; err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
-		return true, err
-	}
-
 	if err = notificationPkg.IncrementUnreadNotificationsCounter(tx, notification.UserId); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to increment unread notifications counter")
 		return true, err
