@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 	snappy "github.com/segmentio/kafka-go/compress/snappy/go-xerial-snappy"
 	"gopkg.in/guregu/null.v4"
@@ -397,9 +398,11 @@ func GetLatestDeviceForUser(userID int, db *gorm.DB) (*database.Device, error) {
 	return &device, nil
 }
 
-func CreateNotification(req notification_handler.CreateNotificationRequest, db *gorm.DB) (notification_handler.CreateNotificationResponse, error) {
+func CreateNotification(ctx context.Context, req notification_handler.CreateNotificationRequest, db *gorm.DB) (notification_handler.CreateNotificationResponse, error) {
 
 	result := MapInternalToDatabaseNotification(req)
+
+	DeleteUnFollowNotification(ctx, req, db)
 
 	if err := db.Create(&result).Error; err != nil {
 		return notification_handler.CreateNotificationResponse{Status: false}, err
@@ -410,6 +413,35 @@ func CreateNotification(req notification_handler.CreateNotificationRequest, db *
 	}
 
 	return notification_handler.CreateNotificationResponse{Status: true}, nil
+}
+
+func DeleteUnFollowNotification(ctx context.Context, notification notification_handler.CreateNotificationRequest, db *gorm.DB) error {
+
+	var deletedCount int64
+	result := db.Exec(`
+		DELETE FROM notifications 
+		WHERE user_id = ? 
+		AND related_user_id = ? 
+		AND type = ? `,
+		notification.Notifications.UserID,
+		notification.Notifications.RelatedUserID,
+		"push.profile.following",
+	)
+
+	if result.Error != nil {
+		log.Ctx(ctx).Error().Err(result.Error).Msg("[PushNotification] Failed to delete existing notifications")
+		return result.Error
+	}
+
+	deletedCount = result.RowsAffected
+	if deletedCount > 0 {
+		log.Ctx(ctx).Info().
+			Int64("deleted_count", deletedCount).
+			Int64("user_id", int64(notification.Notifications.UserID)).
+			Msg("[PushNotification] Deleted existing notifications")
+	}
+
+	return nil
 }
 
 func DeleteNotificationByIntroIDAndType(ctx context.Context, db *gorm.DB, introID int) error {
