@@ -634,6 +634,42 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 	tx := database.GetDb(database.DbTypeMaster).WithContext(ctx).Begin()
 	defer tx.Rollback()
 
+	if notification.Type == "push.profile.following" {
+		if notification.Message == "Someone  started following you" {
+			notification.Message = "Someone started following you"
+		}
+	}
+
+	if notification.Type == "push.profile.following" {
+		// Delete any existing notifications and return the count of deleted rows
+		var deletedCount int64
+		result := tx.Exec(`
+			DELETE FROM notifications 
+			WHERE user_id = ? 
+			AND related_user_id = ? 
+			AND type = ? 
+			AND created_at >= ?`,
+			notification.UserId,
+			notification.RelatedUserId,
+			notification.Type,
+			time.Now().Add(-24*time.Hour),
+		)
+
+		if result.Error != nil {
+			log.Ctx(ctx).Error().Err(result.Error).Msg("[PushNotification] Failed to delete existing notifications")
+			return true, result.Error
+		}
+
+		deletedCount = result.RowsAffected
+		if deletedCount > 0 {
+			log.Ctx(ctx).Info().
+				Int64("deleted_count", deletedCount).
+				Int64("user_id", notification.UserId).
+				Msg("[PushNotification] Deleted existing notifications")
+		}
+	}
+
+	// Then create the new notification
 	if err = tx.Create(&notification).Error; err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
 		return true, err
@@ -663,7 +699,8 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
 
-	if notification.Type == "push.admin.bulk" {
+	if notification.Type == "push.admin.bulk" || notification.Type == "push.profile.following" || notification.Type == "push.content.like" ||
+		notification.Type == "push.user.after_signup" || notification.Type == "push.user.need.upload" || notification.Type == "push.user.need.avatar" {
 		deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(notification.UserId), database.GetDbWithContext(database.DbTypeMaster, ctx))
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to get token for firebase")
@@ -671,11 +708,26 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 		}
 		if deviceInfo.PushToken != "" {
 			data := make(map[string]string)
+			for k, v := range notification.CustomData {
+				switch value := v.(type) {
+				case string:
+					data[k] = value
+				case int:
+					data[k] = fmt.Sprintf("%d", value)
+				case float64:
+					data[k] = fmt.Sprintf("%.0f", value)
+				default:
+					// Skip other types
+				}
+			}
+
 			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
 			if err != nil {
+				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
 				return false, nil
 			}
+			log.Info().Msgf("firebase-reponse success %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 			log.Info().Msgf("firebase-reponse %v", fResp)
 			log.Info().Msg("Push notification firebase successfully")
 		}

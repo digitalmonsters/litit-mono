@@ -42,7 +42,9 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 			}
 			log.Info().Msg("Successfully Deleted the notifications for given Intro ")
 
-			return true, nil
+			return notification_handler.CreateNotificationResponse{
+				Status: true,
+			}, nil
 		}, false)); err != nil {
 		return err
 	}
@@ -118,8 +120,21 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 			db := database.GetDb(database.DbTypeMaster)
 			log.Info().Msg("Database connection initialized successfully")
 
+			if req.Notifications.Type == "push.profile.unfollowing" {
+				log.Info().Int64("user_id", int64(req.Notifications.UserID)).Msg("Attempting to delete notification for unfollowing user")
+
+				err := notification.DeleteUnFollowNotification(context.Background(), req, db)
+				if err != nil {
+					log.Error().Err(err).Int64("user_id", int64(req.Notifications.UserID)).Msg("Failed to delete notification for unfollowing user")
+					return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+				}
+
+				log.Info().Int64("user_id", int64(req.Notifications.UserID)).Msg("Successfully deleted notification for unfollowing user")
+				return notification_handler.CreateNotificationResponse{true}, nil
+			}
+
 			log.Info().Msg("Creating notification")
-			resp, err := notification.CreateNotification(req, db)
+			resp, err := notification.CreateNotification(context.Background(), req, db)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to create notification")
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
@@ -163,13 +178,6 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, string(deviceInfo.Platform), req.Notifications.Title, req.Notifications.Message, req.Notifications.Type, data)
 				log.Info().Msg("Push notification sent successfully")
 			}
-
-			go func() {
-				gerr := notification.CreateInAppNotification(req, db)
-				if gerr != nil {
-					log.Error().Err(gerr).Msg("Failed to create in_app notification")
-				}
-			}()
 
 			log.Info().Msg("Successfully created notification")
 			return resp, nil
