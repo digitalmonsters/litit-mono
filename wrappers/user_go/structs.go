@@ -522,7 +522,8 @@ type IsRequestedResponse struct {
 
 type UserRelationData struct {
 	FriendIDs    []int64 `json:"friend_ids"`
-	BlockIDs     []int64 `json:"block_ids"`
+	HasBlockIDs  []int64 `json:"block_ids"`
+	IsBlockedIDs []int64 `json:"is_blocked_ids"`
 	RequestedIDs []int64 `json:"requested_ids"`
 }
 
