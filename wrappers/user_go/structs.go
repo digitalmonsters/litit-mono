@@ -525,3 +525,9 @@ type UserRelationData struct {
 	BlockIDs     []int64 `json:"block_ids"`
 	RequestedIDs []int64 `json:"requested_ids"`
 }
+
+type BlockOfUser struct {
+	HasBeenBlockedBy []int64 `json:"has_blocked"`
+
+	IsBlockedBy []int64 `json:"is_blocked_by"`
+}

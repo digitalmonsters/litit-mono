@@ -49,6 +49,7 @@ type IUserGoWrapper interface {
 	GetUsersWithFollowers(userIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetIsRequested(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetFriendListDataResponse]
 	GetUserRelations(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRelationData]
+	GetBlockInfo(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[BlockOfUser]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -510,6 +511,13 @@ func (w UserGoWrapper) GetIsRequested(userId int64, ctx context.Context, forceLo
 func (w UserGoWrapper) GetUserRelations(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[UserRelationData] {
 	return wrappers.ExecuteRpcRequestAsync[UserRelationData](w.baseWrapper, w.serviceApiUrl,
 		"GetUserRelations", IsRequestedRequest{
+			UserId: userId,
+		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
+}
+
+func (w UserGoWrapper) GetBlockInfo(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[BlockOfUser] {
+	return wrappers.ExecuteRpcRequestAsync[BlockOfUser](w.baseWrapper, w.serviceApiUrl,
+		"GetBlockInfo", VerifyUserRequest{
 			UserId: userId,
 		}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, forceLog)
 }
