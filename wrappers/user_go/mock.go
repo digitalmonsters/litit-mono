@@ -160,6 +160,10 @@ func (m *UserGoWrapperMock) GetUserRelations(userId int64, ctx context.Context, 
 	panic("implement me")
 }
 
+func (m *UserGoWrapperMock) GetBlockInfo(userId int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[BlockOfUser] {
+	panic("implement me")
+}
+
 func GetMock() IUserGoWrapper { // for compiler errors
 	return &UserGoWrapperMock{}
 }
