@@ -2,6 +2,7 @@ package follow
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
@@ -38,7 +39,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		RelatedUserId:      null.IntFrom(event.UserId),
 		RenderingVariables: renderData,
 		CustomData:         database.CustomData{"user_id": event.UserId},
-	}, event.UserId, 0, templateName, language, "user_follow", ctx)
+	}, "", event.UserId, 0, templateName, language, "user_follow", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

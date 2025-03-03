@@ -133,7 +133,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			ContentId:          event.ContentId,
 			Content:            notificationContent,
 			RenderingVariables: renderData,
-		}, event.ContentId.ValueOrZero(), event.AuthorId, templateName, language, "default", ctx)
+		}, "", event.ContentId.ValueOrZero(), event.AuthorId, templateName, language, "default", ctx)
 		if err != nil {
 			if shouldRetry {
 				return nil, errors.WithStack(err)
@@ -167,7 +167,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			ContentId:          event.ContentId,
 			Content:            notificationContent,
 			RenderingVariables: renderDataAuthor,
-		}, event.ProfileId.Int64, 0, templateName, language, "default", ctx)
+		}, "", event.ProfileId.Int64, 0, templateName, language, "default", ctx)
 		if err != nil {
 			if shouldRetry {
 				return nil, errors.WithStack(err)
