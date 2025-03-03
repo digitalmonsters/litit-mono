@@ -2,6 +2,8 @@ package comment
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
@@ -13,7 +15,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
-	"strconv"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender, contentWrapper content.IContentWrapper,
@@ -99,7 +100,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 			ContentId:          event.ContentId,
 			Content:            notificationContent,
 			RenderingVariables: renderData,
-		}, notificationComment.ParentId.ValueOrZero(), event.AuthorId, templateName, language, "default", ctx)
+		}, "", notificationComment.ParentId.ValueOrZero(), event.AuthorId, templateName, language, "default", ctx)
 		if err != nil {
 			if shouldRetry {
 				return nil, errors.WithStack(err)

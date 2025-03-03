@@ -422,7 +422,7 @@ func (s *Sender) prepareCustomPushEvents(tokens []database.Device, pushType, kin
 }
 
 // -
-func (s *Sender) PushNotification(notification database.Notification, entityId int64, relatedEntityId int64,
+func (s *Sender) PushNotification(notification database.Notification, imageUrl string, entityId int64, relatedEntityId int64,
 	templateName string, language translation.Language, customKind string, ctx context.Context) (shouldRetry bool, innerErr error) {
 
 	log.Ctx(ctx).Info().
@@ -721,7 +721,7 @@ func (s *Sender) PushNotification(notification database.Notification, entityId i
 				}
 			}
 
-			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, notification.Message, notification.Type, data)
+			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, imageUrl, notification.Message, notification.Type, data)
 			if err != nil {
 				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
