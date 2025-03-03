@@ -3,6 +3,7 @@ package music_creator
 import (
 	"context"
 	"fmt"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -42,7 +43,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Type:                 "push.music-creator.status",
 		ContentCreatorStatus: &event.Status,
 		RenderingVariables:   renderData,
-	}, event.UserId, 0, templateName, language, "music_creator", ctx)
+	}, "", event.UserId, 0, templateName, language, "music_creator", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

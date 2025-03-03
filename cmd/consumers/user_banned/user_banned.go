@@ -2,6 +2,8 @@ package user_banned
 
 import (
 	"context"
+	"time"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -10,7 +12,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
-	"time"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
@@ -30,7 +31,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		UserId:        event.UserId,
 		Type:          "popup",
 		RelatedUserId: null.IntFrom(event.UserId),
-	}, 0, 0, "user_banned", event.Language, "popup", ctx)
+	}, "", 0, 0, "user_banned", event.Language, "popup", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

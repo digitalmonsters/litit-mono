@@ -224,7 +224,7 @@ func TestSender_PushNotification_Likes(t *testing.T) {
 			"firstname": "test_f2",
 			"lastname":  "test_l2",
 		},
-	}, 1, 2, template.Id, translation.DefaultUserLanguage, "default", context.TODO()); err != nil {
+	}, "", 1, 2, template.Id, translation.DefaultUserLanguage, "default", context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -291,7 +291,7 @@ func TestSender_PushNotification_Likes(t *testing.T) {
 			"firstname": "test_f3",
 			"lastname":  "test_l3",
 		},
-	}, 1, 3, template.Id, translation.DefaultUserLanguage, "default", context.TODO()); err != nil {
+	}, "", 1, 3, template.Id, translation.DefaultUserLanguage, "default", context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -381,7 +381,7 @@ func TestSender_PushNotification_Follows(t *testing.T) {
 			"firstname": "test_f2",
 			"lastname":  "test_l2",
 		},
-	}, 2, 0, template.Id, translation.DefaultUserLanguage, "user_follow", context.TODO()); err != nil {
+	}, "", 2, 0, template.Id, translation.DefaultUserLanguage, "user_follow", context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -447,7 +447,7 @@ func TestSender_PushNotification_Follows(t *testing.T) {
 			"firstname": "test_f3",
 			"lastname":  "test_l3",
 		},
-	}, 3, 0, template.Id, translation.DefaultUserLanguage, "user_follow", context.TODO()); err != nil {
+	}, "", 3, 0, template.Id, translation.DefaultUserLanguage, "user_follow", context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 
