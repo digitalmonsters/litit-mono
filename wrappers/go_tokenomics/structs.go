@@ -121,6 +121,7 @@ const (
 	PointsEarnedTypeBonusReferFriendsWithinWeeklyPeriod       = PointsEarnedType(60) // "bonus refer x friends within the week period"
 	PointsEarnedTypeUserDeductPointWeeklyLogin                = PointsEarnedType(61)
 	PointsEarnedTypeUserDeductPointWeeklySpendTime            = PointsEarnedType(62)
+	PointsEarnedTypeOnboardingDailyTime                       = PointsEarnedType(63)
 )
 
 type WithdrawalStatus int16
