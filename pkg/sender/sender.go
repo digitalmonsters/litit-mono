@@ -720,6 +720,7 @@ func (s *Sender) PushNotification(notification database.Notification, imageUrl s
 					// Skip other types
 				}
 			}
+			fmt.Printf("PushNotification: %v\n", notification)
 
 			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, imageUrl, notification.Message, notification.Type, data)
 			if err != nil {
