@@ -29,9 +29,11 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
+	"gorm.io/gorm/clause"
 )
 
 type Sender struct {
@@ -44,13 +46,203 @@ type Sender struct {
 
 func NewSender(gateway notification_gateway.INotificationGatewayWrapper, settingsService settings.IService,
 	jobber *machinery.Server, userWrapper user_go.IUserGoWrapper, firebaseClient *firebase.FirebaseClient) *Sender {
-	return &Sender{
+	sender := &Sender{
 		gateway:         gateway,
 		settingsService: settingsService,
 		jobber:          jobber,
 		userWrapper:     userWrapper,
 		firebaseClient:  firebaseClient,
 	}
+	setupNotificationCronJobs(sender)
+	return sender
+}
+
+func setupNotificationCronJobs(sender *Sender) {
+	c := cron.New()
+
+	c.AddFunc("0 4 * * *", func() {
+		ctx := context.Background()
+		log.Info().Msg("Running daily notification aggregation job (8pm PST)")
+		if err := sender.SendDailyAggregatedNotifications(ctx); err != nil {
+			log.Error().Err(err).Msg("Error running daily notification aggregation job")
+		}
+	})
+
+	c.Start()
+}
+
+// SendDailyAggregatedNotifications is called by a cron job once a day
+func (s *Sender) SendDailyAggregatedNotifications(ctx context.Context) error {
+	log.Ctx(ctx).Info().Msg("Starting daily notification aggregation job")
+
+	db := database.GetDbWithContext(database.DbTypeMaster, ctx)
+
+	var userIds []int64
+	if err := db.Model(&database.Notification{}).
+		Where("type IN (?) AND aggregated_sent = false",
+			[]string{"push.profile.following", "push.content.like"}).
+		Distinct().
+		Pluck("user_id", &userIds).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to get users with notifications")
+		return err
+	}
+
+	log.Ctx(ctx).Info().Int("user_count", len(userIds)).Msg("Found users with notifications")
+
+	for _, userId := range userIds {
+		go func(uid int64) {
+			if err := s.processUserNotifications(uid, ctx); err != nil {
+				log.Ctx(ctx).Error().Err(err).Int64("user_id", uid).
+					Msg("Failed to process notifications")
+			}
+		}(userId)
+	}
+
+	return nil
+}
+
+// Process notifications for a single user
+func (s *Sender) processUserNotifications(userId int64, ctx context.Context) error {
+	db := database.GetDbWithContext(database.DbTypeMaster, ctx)
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+	defer tx.Rollback()
+
+	var notificationCount int64
+	if err := tx.Model(&database.Notification{}).
+		Where("user_id = ? AND type IN (?) AND aggregated_sent = false",
+			userId, []string{"push.profile.following", "push.content.like"}).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Count(&notificationCount).Error; err != nil {
+		return err
+	}
+
+	if notificationCount == 0 {
+		tx.Rollback()
+		return nil
+	}
+
+	var friendRequestCount int64
+	if err := tx.Model(&database.Notification{}).
+		Where("user_id = ? AND type = ? AND aggregated_sent = false AND message LIKE '%friend request%'",
+			userId, "push.profile.following").
+		Count(&friendRequestCount).Error; err != nil {
+		return err
+	}
+
+	var followCount int64
+	if err := tx.Model(&database.Notification{}).
+		Where("user_id = ? AND type = ? AND aggregated_sent = false AND message LIKE '%following you%'",
+			userId, "push.profile.following").
+		Count(&followCount).Error; err != nil {
+		return err
+	}
+
+	var likesCount int64
+	if err := tx.Model(&database.Notification{}).
+		Where("user_id = ? AND type = ? AND aggregated_sent = false",
+			userId, "push.content.like").
+		Count(&likesCount).Error; err != nil {
+		return err
+	}
+
+	totalCount := friendRequestCount + followCount + likesCount
+	if totalCount == 0 {
+		tx.Rollback()
+		return nil
+	}
+
+	var messageBuilder strings.Builder
+	var notificationTitle string
+	var activityTypes []string
+
+	if friendRequestCount > 0 {
+		activityTypes = append(activityTypes, fmt.Sprintf("%d friend request(s)", friendRequestCount))
+	}
+	if followCount > 0 {
+		activityTypes = append(activityTypes, fmt.Sprintf("%d new follower(s)", followCount))
+	}
+	if likesCount > 0 {
+		activityTypes = append(activityTypes, fmt.Sprintf("%d like(s)", likesCount))
+	}
+
+	notificationTitle = "Lit.it"
+
+	if len(activityTypes) > 1 {
+		messageBuilder.WriteString("You have ")
+		for i, activity := range activityTypes {
+			if i > 0 {
+				if i == len(activityTypes)-1 {
+					messageBuilder.WriteString(" and ")
+				} else {
+					messageBuilder.WriteString(", ")
+				}
+			}
+			messageBuilder.WriteString(activity)
+		}
+	} else if friendRequestCount > 0 {
+		messageBuilder.WriteString(fmt.Sprintf("You have %d friend request(s)", friendRequestCount))
+	} else if followCount > 0 {
+		messageBuilder.WriteString(fmt.Sprintf("You have %d new follower(s)", followCount))
+	} else if likesCount > 0 {
+		messageBuilder.WriteString(fmt.Sprintf("You got %d like(s) on your videos", likesCount))
+	}
+
+	if err := tx.Model(&database.Notification{}).
+		Where("user_id = ? AND type IN (?) AND aggregated_sent = false",
+			userId, []string{"push.profile.following", "push.content.like"}).
+		Update("aggregated_sent", true).Error; err != nil {
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(userId), db)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to get device for user")
+		return err
+	}
+
+	if deviceInfo.PushToken == "" {
+		log.Ctx(ctx).Info().Int64("user_id", userId).Msg("User has no push token, skipping")
+		return nil
+	}
+
+	data := map[string]string{
+		"friend_requests_count": fmt.Sprintf("%d", friendRequestCount),
+		"follows_count":         fmt.Sprintf("%d", followCount),
+		"likes_count":           fmt.Sprintf("%d", likesCount),
+		"is_aggregated":         "true",
+	}
+
+	// Send notification
+	fResp, err := s.firebaseClient.SendNotification(
+		ctx,
+		deviceInfo.PushToken,
+		string(deviceInfo.Platform),
+		notificationTitle,
+		"",
+		messageBuilder.String(),
+		"push.aggregate",
+		data,
+	)
+
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to send Firebase notification")
+		return err
+	}
+
+	log.Ctx(ctx).Info().
+		Str("response", fResp).
+		Int64("user_id", userId).
+		Msg("Sent aggregated notification successfully")
+
+	return nil
 }
 
 func (s *Sender) SendEmail(msg []notification_gateway.SendEmailMessageRequest, ctx context.Context) error {
@@ -641,7 +833,6 @@ func (s *Sender) PushNotification(notification database.Notification, imageUrl s
 	}
 
 	if notification.Type == "push.profile.following" {
-		// Delete any existing notifications and return the count of deleted rows
 		var deletedCount int64
 		result := tx.Exec(`
 			DELETE FROM notifications 
@@ -669,7 +860,11 @@ func (s *Sender) PushNotification(notification database.Notification, imageUrl s
 		}
 	}
 
-	// Then create the new notification
+	if notification.Type == "push.profile.following" || notification.Type == "push.content.like" {
+		notification.AggregatedSent = false
+	} else {
+		notification.AggregatedSent = true
+	}
 	if err = tx.Create(&notification).Error; err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to create notification")
 		return true, err
@@ -699,14 +894,24 @@ func (s *Sender) PushNotification(notification database.Notification, imageUrl s
 
 	apm_helper.AddApmLabel(apm.TransactionFromContext(ctx), "notification_id", notification.Id.String())
 
-	if notification.Type == "push.admin.bulk" || notification.Type == "push.profile.following" || notification.Type == "push.content.like" ||
-		notification.Type == "push.user.after_signup" || notification.Type == "push.user.need.upload" || notification.Type == "push.user.need.avatar" {
+	isAggregationEligible := notification.Type == "push.profile.following" || notification.Type == "push.content.like"
+	isSendDirectly := notification.Type == "push.admin.bulk" || notification.Type == "push.user.after_signup" ||
+		notification.Type == "push.user.need.upload" || notification.Type == "push.user.need.avatar"
+
+	if isAggregationEligible || isSendDirectly {
 		deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(notification.UserId), database.GetDbWithContext(database.DbTypeMaster, ctx))
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to get token for firebase")
 			return false, nil
 		}
+
 		if deviceInfo.PushToken != "" {
+			if isAggregationEligible {
+				log.Ctx(ctx).Info().
+					Msg("[PushNotification] Skipping aggregation, recently sent")
+				return false, nil
+			}
+			// Now send the notification (either aggregated or individual)
 			data := make(map[string]string)
 			for k, v := range notification.CustomData {
 				switch value := v.(type) {
@@ -714,15 +919,21 @@ func (s *Sender) PushNotification(notification database.Notification, imageUrl s
 					data[k] = value
 				case int:
 					data[k] = fmt.Sprintf("%d", value)
+				case int64:
+					data[k] = fmt.Sprintf("%d", value)
 				case float64:
 					data[k] = fmt.Sprintf("%.0f", value)
+				case bool:
+					data[k] = fmt.Sprintf("%t", value)
 				default:
 					// Skip other types
 				}
 			}
+
 			fmt.Printf("PushNotification: %v\n", notification)
 
-			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), notification.Title, imageUrl, notification.Message, notification.Type, data)
+			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform),
+				notification.Title, imageUrl, notification.Message, notification.Type, data)
 			if err != nil {
 				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")
