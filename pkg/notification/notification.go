@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
@@ -403,6 +404,34 @@ func CreateNotification(ctx context.Context, req notification_handler.CreateNoti
 	result := MapInternalToDatabaseNotification(req)
 
 	DeleteUnFollowNotification(ctx, req, db)
+
+	if req.Notifications.Type == "push.profile.following" {
+		var deletedCount int64
+		result := db.Exec(`
+			DELETE FROM notifications 
+			WHERE user_id = ? 
+			AND related_user_id = ? 
+			AND type = ? 
+			AND created_at >= ?`,
+			req.Notifications.UserID,
+			req.Notifications.RelatedUserID,
+			req.Notifications.Type,
+			time.Now().Add(-24*time.Hour),
+		)
+
+		if result.Error != nil {
+			log.Ctx(ctx).Error().Err(result.Error).Msg("[PushNotification] Failed to delete existing notifications")
+			return notification_handler.CreateNotificationResponse{Status: false}, result.Error
+		}
+
+		deletedCount = result.RowsAffected
+		if deletedCount > 0 {
+			log.Ctx(ctx).Info().
+				Int64("deleted_count", deletedCount).
+				Int("user_id", req.Notifications.UserID).
+				Msg("[PushNotification] Deleted existing notifications")
+		}
+	}
 
 	if err := db.Create(&result).Error; err != nil {
 		return notification_handler.CreateNotificationResponse{Status: false}, err
