@@ -35,6 +35,7 @@ type IContentWrapper interface {
 	GetLastContent(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[[]SimpleContent]
 	GetIfIntroExists(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[IntroExists]
 	GetAllUploadCount(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[UploadCountResponse]
+	GenerateThumbnail(ctx context.Context, thumbnailURL string) chan wrappers.GenericResponseChan[GenerateThumbnailResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -64,6 +65,12 @@ func NewContentWrapper(config boilerplate.WrapperConfig) IContentWrapper {
 		apiUrl:         fmt.Sprintf("%v/rpc-service", common.StripSlashFromUrl(config.ApiUrl)),
 		serviceName:    "content",
 	}
+}
+
+func (w *ContentWrapper) GenerateThumbnail(ctx context.Context, thumbnailURL string) chan wrappers.GenericResponseChan[GenerateThumbnailResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GenerateThumbnailResponse](w.baseWrapper, w.apiUrl, "GenerateThumbnail", GenerateThumbnailRequest{
+		ThumbnailUrl: thumbnailURL,
+	}, map[string]string{}, w.defaultTimeout, apm.TransactionFromContext(ctx), w.serviceName, false)
 }
 
 func (w *ContentWrapper) GetLastContent(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[[]SimpleContent] {

@@ -96,6 +96,14 @@ func (w *ContentWrapperMock) GetAllUploadCount(ctx context.Context, userId int64
 	panic("implement me")
 }
 
+func (w *ContentWrapperMock) GetUploadCount(ctx context.Context, userId int64) chan wrappers.GenericResponseChan[UploadCountResponse] {
+	panic("implement me")
+}
+
+func (w *ContentWrapperMock) GenerateThumbnail(ctx context.Context, contentId string) chan wrappers.GenericResponseChan[GenerateThumbnailResponse] {
+	panic("implement me")
+}
+
 func GetMock() IContentWrapper { // for compiler errors
 	return &ContentWrapperMock{}
 }
