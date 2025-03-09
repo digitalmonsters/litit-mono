@@ -54,6 +54,7 @@ func NewSender(gateway notification_gateway.INotificationGatewayWrapper, setting
 		firebaseClient:  firebaseClient,
 	}
 	setupNotificationCronJobs(sender)
+	sender.SendDailyAggregatedNotifications(context.Background())
 	return sender
 }
 
@@ -73,7 +74,7 @@ func setupNotificationCronJobs(sender *Sender) {
 
 // SendDailyAggregatedNotifications is called by a cron job once a day
 func (s *Sender) SendDailyAggregatedNotifications(ctx context.Context) error {
-	log.Ctx(ctx).Info().Msg("Starting daily notification aggregation job")
+	log.Ctx(ctx).Info().Msg("[AggregatedNotifications]Starting daily notification aggregation job")
 
 	db := database.GetDbWithContext(database.DbTypeMaster, ctx)
 
@@ -83,17 +84,17 @@ func (s *Sender) SendDailyAggregatedNotifications(ctx context.Context) error {
 			[]string{"push.profile.following", "push.content.like"}).
 		Distinct().
 		Pluck("user_id", &userIds).Error; err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Failed to get users with notifications")
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] Failed to get users with notifications")
 		return err
 	}
 
-	log.Ctx(ctx).Info().Int("user_count", len(userIds)).Msg("Found users with notifications")
+	log.Ctx(ctx).Info().Int("user_count", len(userIds)).Msg("[AggregatedNotifications] Found users with notifications")
 
 	for _, userId := range userIds {
 		go func(uid int64) {
 			if err := s.processUserNotifications(uid, ctx); err != nil {
 				log.Ctx(ctx).Error().Err(err).Int64("user_id", uid).
-					Msg("Failed to process notifications")
+					Msg("[AggregatedNotifications] Failed to process notifications")
 			}
 		}(userId)
 	}
@@ -204,12 +205,12 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 
 	deviceInfo, err := notificationPkg.GetLatestDeviceForUser(int(userId), db)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Failed to get device for user")
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] Failed to get device for user")
 		return err
 	}
 
 	if deviceInfo.PushToken == "" {
-		log.Ctx(ctx).Info().Int64("user_id", userId).Msg("User has no push token, skipping")
+		log.Ctx(ctx).Info().Int64("user_id", userId).Msg("[AggregatedNotifications] User has no push token, skipping")
 		return nil
 	}
 
@@ -234,14 +235,14 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 	)
 
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Failed to send Firebase notification")
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] Failed to send Firebase notification")
 		return err
 	}
 
 	log.Ctx(ctx).Info().
 		Str("response", fResp).
 		Int64("user_id", userId).
-		Msg("Sent aggregated notification successfully")
+		Msg("[AggregatedNotifications] Sent aggregated notification successfully")
 
 	return nil
 }
