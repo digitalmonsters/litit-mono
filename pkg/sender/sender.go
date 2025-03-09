@@ -33,7 +33,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
-	"gorm.io/gorm/clause"
 )
 
 type Sender struct {
@@ -112,12 +111,29 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 	}
 	defer tx.Rollback()
 
+	// First use a raw query to try to acquire an advisory lock on this user ID
+	var lockAcquired bool
+	if err := tx.Raw("SELECT pg_try_advisory_xact_lock(?)", userId).Scan(&lockAcquired).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] SELECT pg_try_advisory_xact_lock(?)")
+
+		return err
+	}
+
+	// If we couldn't get the lock, another pod is already processing this user
+	if !lockAcquired {
+		tx.Rollback()
+		log.Ctx(ctx).Info().Int64("user_id", userId).Msg("[AggregatedNotifications] Another process is handling this user")
+		return nil
+	}
+
+	// Now we have an exclusive lock on this user ID for the duration of our transaction
+	// Continue with regular queries (no need for FOR UPDATE)
 	var notificationCount int64
 	if err := tx.Model(&database.Notification{}).
 		Where("user_id = ? AND type IN (?) AND aggregated_sent = false",
 			userId, []string{"push.profile.following", "push.content.like"}).
-		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Count(&notificationCount).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] error while getting user data")
 		return err
 	}
 
@@ -131,6 +147,8 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 		Where("user_id = ? AND type = ? AND aggregated_sent = false AND message LIKE '%friend request%'",
 			userId, "push.profile.following").
 		Count(&friendRequestCount).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] error while getting friend request count")
+
 		return err
 	}
 
@@ -139,6 +157,8 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 		Where("user_id = ? AND type = ? AND aggregated_sent = false AND message LIKE '%following you%'",
 			userId, "push.profile.following").
 		Count(&followCount).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] error while getting follow request count")
+
 		return err
 	}
 
@@ -147,6 +167,8 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 		Where("user_id = ? AND type = ? AND aggregated_sent = false",
 			userId, "push.content.like").
 		Count(&likesCount).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] error while getting likes count")
+
 		return err
 	}
 
@@ -196,6 +218,7 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 		Where("user_id = ? AND type IN (?) AND aggregated_sent = false",
 			userId, []string{"push.profile.following", "push.content.like"}).
 		Update("aggregated_sent", true).Error; err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("[AggregatedNotifications] error while updating aggregated flag to true")
 		return err
 	}
 
