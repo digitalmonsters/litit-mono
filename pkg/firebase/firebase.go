@@ -47,7 +47,7 @@ func Initialize(ctx context.Context, serviceAccountJSON string) *FirebaseClient 
 }
 
 // SendNotification sends a push notification to a specific device token
-func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken string, platform string, title string, imageUrl string, body, notificationType string, data map[string]string) (string, error) {
+func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken string, platform string, collapseKey string, title string, imageUrl string, body string, notificationType string, data map[string]string) (string, error) {
 	if data == nil {
 		data = make(map[string]string)
 	}
@@ -68,7 +68,8 @@ func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken strin
 			Body:  body,
 		},
 		Android: &messaging.AndroidConfig{
-			TTL: &oneHour,
+			CollapseKey: collapseKey,
+			TTL:         &oneHour,
 			Notification: &messaging.AndroidNotification{
 				ImageURL: imageUrl,
 			},

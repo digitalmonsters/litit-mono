@@ -225,6 +225,7 @@ func (s *Sender) processUserNotifications(userId int64, ctx context.Context) err
 		ctx,
 		deviceInfo.PushToken,
 		string(deviceInfo.Platform),
+		"",
 		notificationTitle,
 		"",
 		messageBuilder.String(),
@@ -930,9 +931,7 @@ func (s *Sender) PushNotification(notification database.Notification, imageUrl s
 				}
 			}
 
-			fmt.Printf("PushNotification: %v\n", notification)
-
-			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform),
+			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), "",
 				notification.Title, imageUrl, notification.Message, notification.Type, data)
 			if err != nil {
 				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)

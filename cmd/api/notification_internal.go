@@ -175,7 +175,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 					}
 					data["avatar_url"] = userResp.Avatar.String
 				}
-				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, string(deviceInfo.Platform), req.Notifications.Title, data["avatar_url"], req.Notifications.Message, req.Notifications.Type, data)
+				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, string(deviceInfo.Platform), req.Notifications.CollapseKey, req.Notifications.Title, data["avatar_url"], req.Notifications.Message, req.Notifications.Type, data)
 				log.Info().Msg("Push notification sent successfully")
 			}
 
@@ -184,11 +184,6 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 		}, false)); err != nil {
 		log.Error().Err(err).Msg("Failed to register RPC command for createNotification")
 		return err
-	}
-
-	apiDef[createNotification] = swagger.ApiDescription{
-		Request: notification_handler.CreateNotificationRequest{},
-		Tags:    []string{"notification"},
 	}
 	return nil
 }
