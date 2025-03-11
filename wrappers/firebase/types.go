@@ -16,7 +16,6 @@ type INotificationHandlerWrapper interface {
 	GetNotificationsReadCount(notificationIds []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]int64]
 	DisableUnregisteredTokens(tokens []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]string]
 	CreateNotification(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse]
-	DeleteNotificationByIntroID(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -91,6 +90,7 @@ type Notification struct {
 	RenderingVariables   map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
 	CustomData           map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
 	InApp                bool                   `json:"in_app"`
+	CollapseKey          string                 `json:"collapse_key"`
 	TriggerFireBase      bool                   `json:"trigger_firebase"`
 }
 
@@ -99,13 +99,5 @@ type CreateNotificationRequest struct {
 }
 
 type CreateNotificationResponse struct {
-	Status bool
-}
-
-type DeleteNotificationByIntroIDRequest struct {
-	IntroID int `json:"intro_id"`
-}
-
-type DeleteNotificationByIntroIDResponse struct {
 	Status bool
 }
