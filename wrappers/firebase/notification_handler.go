@@ -29,14 +29,14 @@ func (h *NotificationHandlerWrapper) CreatePushNotification(noti database.Notifi
 		cfg.Wrappers.NotificationGateway), settingsService, jobber, userGoWrapper, firebaseClient)
 
 	retryCount := 3
-	shouldRetry, innerErr := notificationSender.PushNotification(noti, int64(entityId), int64(relatedEntityId), templateName, language, "default", ctx)
+	shouldRetry, innerErr := notificationSender.PushNotification(noti, "", int64(entityId), int64(relatedEntityId), templateName, language, "default", ctx)
 	if innerErr != nil {
 		log.Error().Err(innerErr).Msg("Failed to send push notification")
 	}
 
 	if shouldRetry && retryCount > 0 {
 		// Retry
-		notificationSender.PushNotification(noti, int64(entityId), int64(relatedEntityId), templateName, language, "default", ctx)
+		notificationSender.PushNotification(noti, "", int64(entityId), int64(relatedEntityId), templateName, language, "default", ctx)
 		retryCount -= 1
 	}
 }

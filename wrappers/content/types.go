@@ -1,12 +1,20 @@
 package content
 
 import (
+	"image"
 	"time"
 
-	"gopkg.in/guregu/null.v4"
-
 	"github.com/digitalmonsters/go-common/eventsourcing"
+	"gopkg.in/guregu/null.v4"
 )
+
+type GenerateThumbnailRequest struct {
+	ThumbnailUrl string `json:"thumbnail_url"`
+}
+
+type GenerateThumbnailResponse struct {
+	Thumbnail image.Image `json:"thumbnail"`
+}
 
 type SimpleContent struct {
 	Id            int64                     `json:"id"`
