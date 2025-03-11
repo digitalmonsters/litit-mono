@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/RichardKnop/machinery v1.10.6
-	github.com/digitalmonsters/go-common v1.45.0
+	github.com/digitalmonsters/go-common v1.45.1
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.6.0
