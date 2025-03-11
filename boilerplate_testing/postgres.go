@@ -4,19 +4,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	path2 "path"
+	"strings"
+	"testing"
+
 	"github.com/digitalmonsters/go-common/boilerplate"
 	"github.com/jackc/pgx/v4"
 	"github.com/juju/fslock"
 	"github.com/pkg/errors"
 	"github.com/romanyx/polluter"
-	"github.com/rs/zerolog/log"
-	"github.com/thoas/go-funk"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"os"
-	path2 "path"
-	"strings"
-	"testing"
 )
 
 func GetPostgresConnection(config *boilerplate.DbConfig) (*gorm.DB, error) {
@@ -117,86 +116,8 @@ func DropPostgresCiDatabase(config *boilerplate.DbConfig, m *testing.M) error {
 	return err
 }
 
-func FlushPostgresTables(config boilerplate.DbConfig, tables []string, exceptTables []string, m *testing.T) error {
-	return flushPostgresInternal(config, tables, nil)
-}
-
-func FlushPostgresAllTables(config boilerplate.DbConfig, exceptTables []string, m *testing.T) error {
-	return flushPostgresInternal(config, nil, exceptTables)
-}
-
 func GetPostgresCiDatabaseName() string {
 	return fmt.Sprintf("ci_%v", int64(os.Getpid()))
-}
-
-func flushPostgresInternal(config boilerplate.DbConfig, tables []string, exceptTables []string) error {
-	rawStr, _ := boilerplate.GetDbConnectionString(config)
-
-	conn, err := pgx.Connect(context.Background(), rawStr)
-
-	if err != nil {
-		return err
-	}
-
-	defer conn.Close(context.Background())
-
-	res, err := conn.Query(context.Background(), "SELECT table_schema, table_name FROM information_schema.tables where table_schema != 'pg_catalog' and table_schema != 'information_schema';")
-
-	if err != nil {
-		return err
-	}
-
-	existing := map[string]bool{}
-
-	for res.Next() {
-		values := res.RawValues()
-
-		resultPath := fmt.Sprintf("%v.%v", string(values[0]), string(values[1]))
-		existing[resultPath] = true
-	}
-
-	builder := strings.Builder{}
-
-	builder.WriteString("BEGIN TRANSACTION; ")
-
-	exceptTables = append(exceptTables, "public.migrations")
-
-	if tables != nil {
-		for _, table := range tables {
-			if funk.Contains(exceptTables, func(s string) bool {
-				return strings.EqualFold(table, s)
-			}) {
-				continue
-			}
-
-			if _, ok := existing[strings.ToLower(table)]; ok {
-
-				builder.WriteString(fmt.Sprintf(" truncate table %v CASCADE; ", strings.ToLower(table)))
-			} else {
-				log.Warn().Msgf("table %v does not exists", table)
-			}
-		}
-	} else {
-		for name := range existing {
-			if funk.Contains(exceptTables, func(s string) bool {
-				return strings.EqualFold(name, s)
-			}) {
-				continue
-			}
-
-			builder.WriteString(fmt.Sprintf(" truncate table %v CASCADE; ", strings.ToLower(name)))
-		}
-	}
-
-	builder.WriteString(" COMMIT;")
-
-	_, err = conn.Exec(context.Background(), builder.String())
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func randStringRunes() string {
