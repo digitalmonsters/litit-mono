@@ -91,6 +91,7 @@ type Notification struct {
 	RenderingVariables   map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
 	CustomData           map[string]interface{} `gorm:"type:jsonb;default:'{}'"`
 	InApp                bool                   `json:"in_app"`
+	CollapseKey          string                 `json:"collapse_key"`
 	TriggerFireBase      bool                   `json:"trigger_firebase"`
 }
 
