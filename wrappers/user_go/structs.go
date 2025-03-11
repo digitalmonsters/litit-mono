@@ -339,7 +339,7 @@ type UpdateUserMetaDataRequest struct {
 	Email                  null.String          `json:"email"`
 	Firstname              null.String          `json:"firstname"`
 	Lastname               null.String          `json:"lastname"`
-	Birthdate              null.Time            `json:"birthdate"`
+	AgeCategory            null.Int             `json:"age_category"`
 	CountryCode            string               `json:"country_code"`
 	Username               null.String          `json:"username"`
 	Gender                 null.String          `json:"gender"`
