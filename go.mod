@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/RichardKnop/machinery v1.10.6
-	github.com/digitalmonsters/go-common v1.42.6
+	github.com/digitalmonsters/go-common v1.45.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/gocql/gocql v1.0.0
 	github.com/google/uuid v1.6.0
@@ -15,6 +15,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.3.0
 	github.com/pkg/errors v0.9.1
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/romanyx/polluter v1.2.2
 	github.com/rs/zerolog v1.26.1
 	github.com/samber/lo v1.21.0
@@ -114,7 +115,6 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/romanyx/jwalk v1.0.0 // indirect
 	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
 	github.com/savsgio/gotils v0.0.0-20220401102855-e56b59f40436 // indirect
