@@ -13,7 +13,6 @@ import (
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/pkg/errors"
@@ -21,7 +20,7 @@ import (
 )
 
 func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserGoWrapper, contentWrapper content.IContentWrapper,
-	apiDef map[string]swagger.ApiDescription, commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
+	commentNotifier *comment.Notifier, contentCommentsNotifier *content_comments_counter.Notifier,
 	userCommentsNotifier *user_comments_counter.Notifier) error {
 	// Initiation
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -40,21 +39,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 	}, "/{comment_id}", http.MethodGet).Build()); err != nil {
 		return err
-	}
-
-	apiDef["/{comment_id}"] = swagger.ApiDescription{
-		Response:          frontendCommentResponse{},
-		MethodDescription: "get comment by id",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "comment_id",
-				In:          swagger.ParameterInPath,
-				Description: "comment_id",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Tags: []string{"comment"},
 	}
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -83,21 +67,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 	}, "/{delete_comment_id}", http.MethodDelete).RequireIdentityValidation().Build()); err != nil {
 		return err
-	}
-
-	apiDef["/{delete_comment_id}"] = swagger.ApiDescription{
-		Response:          successResponse{},
-		MethodDescription: "delete comment by id",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "delete_comment_id",
-				In:          swagger.ParameterInPath,
-				Description: "comment_id",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Tags: []string{"comment"},
 	}
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -137,21 +106,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		return err
 	}
 
-	apiDef["/{update_comment_id}"] = swagger.ApiDescription{
-		Response:          successResponse{},
-		MethodDescription: "update comment by id",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "update_comment_id",
-				In:          swagger.ParameterInPath,
-				Description: "comment_id",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Tags: []string{"comment"},
-	}
-
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		commentId := utils.ExtractInt64(executionData.GetUserValue, "comment_id", 0, 0)
@@ -182,49 +136,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 	}, "/{comment_id}/replies", http.MethodGet).Build()); err != nil {
 		return err
-	}
-
-	apiDef["/{comment_id}/replies"] = swagger.ApiDescription{
-		Response:          frontendCommentPaginationResponse{},
-		MethodDescription: "get replies by comment id",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "comment_id",
-				In:          swagger.ParameterInPath,
-				Description: "comment_id",
-				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "count",
-				In:          swagger.ParameterInQuery,
-				Description: "count per page",
-				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "after",
-				In:          swagger.ParameterInQuery,
-				Description: "cursor pagination",
-				Required:    false,
-				Type:        "string",
-			},
-			{
-				Name:        "before",
-				In:          swagger.ParameterInQuery,
-				Description: "cursor pagination",
-				Required:    false,
-				Type:        "string",
-			},
-			{
-				Name:        "sort_order",
-				In:          swagger.ParameterInQuery,
-				Description: "sort. top_reactions  newest most_replied least_popular oldest",
-				Required:    false,
-				Type:        "string",
-			},
-		},
-		Tags: []string{"comment"},
 	}
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -263,56 +174,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		return err
 	}
 
-	apiDef["/{type}/{resource_id}"] = swagger.ApiDescription{
-		Response:          frontendCommentPaginationResponse{},
-		MethodDescription: "get comments by resource",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "type",
-				In:          swagger.ParameterInPath,
-				Description: "resource type. comment || profile",
-				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "resource_id",
-				In:          swagger.ParameterInPath,
-				Description: "resource_id",
-				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "count",
-				In:          swagger.ParameterInQuery,
-				Description: "count per page",
-				Required:    true,
-				Type:        "integer",
-			},
-			{
-				Name:        "after",
-				In:          swagger.ParameterInQuery,
-				Description: "cursor pagination",
-				Required:    false,
-				Type:        "string",
-			},
-			{
-				Name:        "before",
-				In:          swagger.ParameterInQuery,
-				Description: "cursor pagination",
-				Required:    false,
-				Type:        "string",
-			},
-			{
-				Name:        "sort_order",
-				In:          swagger.ParameterInQuery,
-				Description: "sort. top_reactions  newest most_replied least_popular oldest",
-				Required:    false,
-				Type:        "string",
-			},
-		},
-		Tags: []string{"comment"},
-	}
-
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		contentId := utils.ExtractInt64(executionData.GetUserValue, "content_id_to_create_comment_on", 0, 0)
@@ -347,21 +208,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		return err
 	}
 
-	apiDef["/content/{content_id_to_create_comment_on}"] = swagger.ApiDescription{
-		Response:          createCommentResponse{},
-		MethodDescription: "create comment on content",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "content_id_to_create_comment_on",
-				In:          swagger.ParameterInPath,
-				Description: "content_id",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Tags: []string{"comment"},
-	}
-
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		profileId := utils.ExtractInt64(executionData.GetUserValue, "profile_id_to_create_comment_on", 0, 0)
@@ -393,21 +239,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, userWrapper user_go.IUserG
 		}
 	}, "/profile/{profile_id_to_create_comment_on}", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
-	}
-
-	apiDef["/profile/{profile_id_to_create_comment_on}"] = swagger.ApiDescription{
-		Response:          createCommentOnProfileResponse{},
-		MethodDescription: "create comment on content",
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "profile_id_to_create_comment_on",
-				In:          swagger.ParameterInPath,
-				Description: "profile_id",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Tags: []string{"comment"},
 	}
 
 	return nil

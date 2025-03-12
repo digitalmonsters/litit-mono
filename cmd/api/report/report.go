@@ -2,17 +2,17 @@ package report
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/digitalmonsters/comments/pkg/report"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"net/http"
 )
 
-func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.ApiDescription) error {
+func Init(httpRouter *router.HttpRouter, db *gorm.DB) error {
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -48,22 +48,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 		}
 	}, "/{comment_id}/report", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
-	}
-
-	def["/{comment_id}/report"] = swagger.ApiDescription{
-		Request:  reportCommentRequest{},
-		Response: successResponse{},
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "comment_id",
-				In:          swagger.ParameterInPath,
-				Description: "comment_id",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		MethodDescription: "report comment",
-		Tags:              []string{"report"},
 	}
 
 	return nil

@@ -2,6 +2,11 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/digitalmonsters/comments/cmd/api"
 	"github.com/digitalmonsters/comments/cmd/api/comments"
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
@@ -20,15 +25,10 @@ import (
 	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	user "github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func main() {
@@ -40,7 +40,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configs.GetConfig()
 	db := database.GetDb()
-	apiDef := map[string]swagger.ApiDescription{}
 	fastHttpRouter := router.NewRouter("/rpc", auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)).
 		StartAsync(cfg.HttpPort)
 
@@ -63,32 +62,28 @@ func main() {
 	user_consumer.InitListener(ctx, cfg.UserListener, commentNotifier, contentCommentsNotifier, userCommentsNotifier).
 		ListenAsync()
 
-	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, apiDef, commentNotifier,
+	if err := comments.Init(fastHttpRouter, db, userWrapper, contentWrapper, commentNotifier,
 		contentCommentsNotifier, userCommentsNotifier); err != nil {
 		panic(err)
 	}
 
-	if err := report.Init(fastHttpRouter, db, apiDef); err != nil {
+	if err := report.Init(fastHttpRouter, db); err != nil {
 		panic(err)
 	}
 
-	if err := vote.Init(fastHttpRouter, db, apiDef, commentNotifier, voteNotifier, contentWrapper); err != nil {
+	if err := vote.Init(fastHttpRouter, db, commentNotifier, voteNotifier, contentWrapper); err != nil {
 		panic(err)
 	}
 
-	if err := api.InitInternalApi(fastHttpRouter.GetRpcServiceEndpoint(), apiDef, db); err != nil {
+	if err := api.InitInternalApi(fastHttpRouter.GetRpcServiceEndpoint(), db); err != nil {
 		panic(err)
 	}
 
 	var rootApplication application.RootApplication
 
 	rootApplication.
-		AddApplication(report2.Application(fastHttpRouter, apiDef, userWrapper, contentWrapper)).
+		AddApplication(report2.Application(fastHttpRouter, userWrapper, contentWrapper)).
 		MustInit()
-
-	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
-		fastHttpRouter.RegisterDocs(apiDef, nil)
-	}
 
 	privateRouter.Ready()
 
