@@ -75,6 +75,12 @@ func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken strin
 			},
 		},
 		APNS: &messaging.APNSConfig{
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Sound:          "Sweet.mp3",
+					MutableContent: true,
+				},
+			},
 			FCMOptions: &messaging.APNSFCMOptions{
 				ImageURL: imageUrl,
 			},
