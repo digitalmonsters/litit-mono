@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
+	"time"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
@@ -46,14 +47,14 @@ func Initialize(ctx context.Context, serviceAccountJSON string) *FirebaseClient 
 }
 
 // SendNotification sends a push notification to a specific device token
-func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, platform string, title, body, notificationType string, data map[string]string) (string, error) {
+func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken string, platform string, collapseKey string, title string, imageUrl string, body string, notificationType string, data map[string]string) (string, error) {
 	if data == nil {
 		data = make(map[string]string)
 	}
 	data["sound"] = "Sweet.mp3"
 
 	customDataJSON, _ := json.Marshal(data)
-
+	oneHour := time.Duration(1) * time.Hour
 	message := &messaging.Message{
 		Token: deviceToken,
 		Data: map[string]string{
@@ -62,22 +63,30 @@ func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken, plat
 			"title":       title,
 			"body":        body,
 		},
-	}
-
-	if platform == "ios" {
-		message.Notification = &messaging.Notification{
+		Notification: &messaging.Notification{
 			Title: title,
 			Body:  body,
-		}
+		},
+		Android: &messaging.AndroidConfig{
+			CollapseKey: collapseKey,
+			TTL:         &oneHour,
+			Notification: &messaging.AndroidNotification{
+				ImageURL: imageUrl,
+			},
+		},
+		APNS: &messaging.APNSConfig{
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Sound:          "Sweet.mp3",
+					MutableContent: true,
+				},
+			},
+			FCMOptions: &messaging.APNSFCMOptions{
+				ImageURL: imageUrl,
+			},
+		},
+		Topic: "fcm_default_channel",
 	}
-
-	// message := &messaging.Message{
-	// 	Token: deviceToken,
-	// 	Notification: &messaging.Notification{
-	// 		Title: "Hello from Firebase!",
-	// 		Body:  "This is a test notification.",
-	// 	},
-	// }
 
 	response, err := f.client.Send(ctx, message)
 	if err != nil {

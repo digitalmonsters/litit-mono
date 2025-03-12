@@ -2,6 +2,7 @@ package tokenomics_notification
 
 import (
 	"context"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/go-common/translation"
@@ -68,7 +69,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		ContentId:          contentId,
 		RelatedUserId:      event.Payload.RelatedUserId,
 		RenderingVariables: renderData,
-	}, event.Payload.RelatedUserId.ValueOrZero(), 0, templateName, language, "default", ctx)
+	}, "", event.Payload.RelatedUserId.ValueOrZero(), 0, templateName, language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

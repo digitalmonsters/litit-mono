@@ -2,6 +2,8 @@ package sending_queue
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/digitalmonsters/go-common/apm_helper"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
@@ -10,7 +12,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.elastic.co/apm"
 	"gopkg.in/guregu/null.v4"
-	"strconv"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
@@ -68,7 +69,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		RelatedUserId:      relatedUserId,
 		RenderingVariables: event.RenderingVariables,
 		CustomData:         customData,
-	}, event.UserId, 0, event.TemplateName, language, "", ctx)
+	}, "", event.UserId, 0, event.TemplateName, language, "", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)

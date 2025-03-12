@@ -141,7 +141,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		ContentId:          null.IntFrom(event.Id),
 		Content:            notificationContent,
 		RenderingVariables: renderData,
-	}, event.Id, event.UserId, templateName, authorLanguage, "default", ctx)
+	}, "", event.Id, event.UserId, templateName, authorLanguage, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)
@@ -221,7 +221,7 @@ func sendPushToFollowers(event newSendingEvent, notificationContent *database.No
 				ContentId:          null.IntFrom(event.Id),
 				Content:            notificationContent,
 				RenderingVariables: renderingVariables,
-			}, entityId, 0, "content_posted", language, "default", ctx)
+			}, "", entityId, 0, "content_posted", language, "default", ctx)
 			if err != nil {
 				if shouldRetry {
 					return nil, errors.WithStack(err)

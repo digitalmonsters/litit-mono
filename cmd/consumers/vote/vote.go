@@ -3,6 +3,9 @@ package vote
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
+	"strconv"
+
 	"github.com/digitalmonsters/go-common/eventsourcing"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
@@ -10,8 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"gopkg.in/guregu/null.v4"
-	"hash/fnv"
-	"strconv"
 )
 
 func process(event newSendingEvent, ctx context.Context, notifySender sender.ISender) (*kafka.Message, error) {
@@ -68,7 +69,7 @@ func process(event newSendingEvent, ctx context.Context, notifySender sender.ISe
 		Comment:            &notificationContent,
 		RelatedUserId:      null.IntFrom(event.UserId),
 		RenderingVariables: renderData,
-	}, entityId, 0, templateName, language, "default", ctx)
+	}, "", entityId, 0, templateName, language, "default", ctx)
 	if err != nil {
 		if shouldRetry {
 			return nil, errors.WithStack(err)
