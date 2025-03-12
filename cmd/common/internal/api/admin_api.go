@@ -2,12 +2,12 @@ package api
 
 import (
 	"encoding/json"
+
 	commonPkg "github.com/digitalmonsters/ads-manager/pkg/common"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 )
 
 func (a *apiApp) initAdminApi(httpRouter router.IRpcEndpoint) error {
@@ -34,11 +34,6 @@ func (a *apiApp) initAdminApi(httpRouter router.IRpcEndpoint) error {
 func (a *apiApp) upsertActionButtons() router.ICommand {
 	methodName := "UpsertActionButtons"
 
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request: commonPkg.UpsertActionButtonsRequest{},
-		Tags:    []string{"common", "button"},
-	}
-
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.UpsertActionButtonsRequest
 
@@ -63,11 +58,6 @@ func (a *apiApp) upsertActionButtons() router.ICommand {
 
 func (a *apiApp) upsertRejectReasons() router.ICommand {
 	methodName := "UpsertRejectReasons"
-
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request: commonPkg.UpsertRejectReasonsRequest{},
-		Tags:    []string{"common", "reject reason"},
-	}
 
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.UpsertRejectReasonsRequest
@@ -94,11 +84,6 @@ func (a *apiApp) upsertRejectReasons() router.ICommand {
 func (a *apiApp) deleteActionButtons() router.ICommand {
 	methodName := "DeleteActionButtons"
 
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request: commonPkg.DeleteRequest{},
-		Tags:    []string{"common", "button"},
-	}
-
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.DeleteRequest
 
@@ -123,11 +108,6 @@ func (a *apiApp) deleteActionButtons() router.ICommand {
 
 func (a *apiApp) deleteRejectReasons() router.ICommand {
 	methodName := "DeleteRejectReasons"
-
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request: commonPkg.DeleteRequest{},
-		Tags:    []string{"common", "reject reason"},
-	}
 
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.DeleteRequest
@@ -154,12 +134,6 @@ func (a *apiApp) deleteRejectReasons() router.ICommand {
 func (a *apiApp) listActionButtons() router.ICommand {
 	methodName := "ListActionButtons"
 
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request:  commonPkg.ListActionButtonsRequest{},
-		Response: commonPkg.ListActionButtonsResponse{},
-		Tags:     []string{"common", "button"},
-	}
-
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.ListActionButtonsRequest
 
@@ -181,12 +155,6 @@ func (a *apiApp) listActionButtons() router.ICommand {
 func (a *apiApp) listRejectReasons() router.ICommand {
 	methodName := "ListRejectReasons"
 
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request:  commonPkg.ListRejectReasonsRequest{},
-		Response: commonPkg.ListRejectReasonsResponse{},
-		Tags:     []string{"common", "reject reason"},
-	}
-
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.ListRejectReasonsRequest
 
@@ -206,12 +174,6 @@ func (a *apiApp) listRejectReasons() router.ICommand {
 
 func (a *apiApp) upsertAdCampaignCountryPrices() router.ICommand {
 	methodName := "UpsertAdCampaignCountryPrices"
-
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request:  commonPkg.UpsertAdCampaignCountryPriceRequest{},
-		Response: nil,
-		Tags:     []string{"common", "country price"},
-	}
 
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.UpsertAdCampaignCountryPriceRequest
@@ -237,12 +199,6 @@ func (a *apiApp) upsertAdCampaignCountryPrices() router.ICommand {
 
 func (a *apiApp) listAdCampaignCountryPrices() router.ICommand {
 	methodName := "ListAdCampaignCountryPrices"
-
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request:  commonPkg.ListAdCampaignCountryPriceRequest{},
-		Response: commonPkg.ListAdCampaignCountryPriceResponse{},
-		Tags:     []string{"common", "country price"},
-	}
 
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.ListAdCampaignCountryPriceRequest

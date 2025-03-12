@@ -2,16 +2,16 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/ads-manager/pkg/message"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/pkg/errors"
 )
 
-func InitAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription) error {
+func InitAdminApi(adminLegacyEndpoint router.IRpcEndpoint) error {
 	if err := adminLegacyEndpoint.RegisterRpcCommand(router.NewAdminCommand("UpsertMessageBulkAdmin", func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req message.UpsertMessageAdminRequest
 
@@ -112,24 +112,6 @@ func InitAdminApi(adminLegacyEndpoint router.IRpcEndpoint, apiDef map[string]swa
 		return resp, nil
 	}, common.AccessLevelWrite, "ads:list")); err != nil {
 		return err
-	}
-
-	apiDef["UpsertMessageBulkAdmin"] = swagger.ApiDescription{
-		Request:  message.UpsertMessageAdminRequest{},
-		Response: []database.Message{},
-		Tags:     []string{"message", "upsert"},
-	}
-
-	apiDef["DeleteMessagesBulkAdmin"] = swagger.ApiDescription{
-		Request:  message.DeleteMessagesBulkAdminRequest{},
-		Response: nil,
-		Tags:     []string{"message", "delete"},
-	}
-
-	apiDef["MessagesListAdmin"] = swagger.ApiDescription{
-		Request:  message.MessagesListAdminRequest{},
-		Response: message.MessagesListAdminResponse{},
-		Tags:     []string{"message", "list"},
 	}
 
 	return nil

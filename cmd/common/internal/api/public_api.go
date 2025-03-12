@@ -2,11 +2,11 @@ package api
 
 import (
 	"encoding/json"
+
 	commonPkg "github.com/digitalmonsters/ads-manager/pkg/common"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 )
 
 func (a *apiApp) initPublicApi(httpRouter *router.HttpRouter) error {
@@ -25,12 +25,6 @@ func (a *apiApp) initPublicApi(httpRouter *router.HttpRouter) error {
 
 func (a *apiApp) publicListActionButtons() *router.RestCommand {
 	path := "/list_action_buttons"
-
-	a.apiDef[path] = swagger.ApiDescription{
-		Request:  commonPkg.PublicListActionButtonsRequest{},
-		Response: commonPkg.ListActionButtonsResponse{},
-		Tags:     []string{"common", "button"},
-	}
 
 	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req commonPkg.PublicListActionButtonsRequest
