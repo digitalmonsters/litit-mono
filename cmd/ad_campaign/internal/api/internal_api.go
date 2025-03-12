@@ -2,10 +2,10 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/ads_manager"
 )
 
@@ -25,12 +25,6 @@ func (a *apiApp) initInternalApi(httpRouter router.IRpcEndpoint) error {
 
 func (a *apiApp) getAdsContentForUser() router.ICommand {
 	methodName := "GetAdsContentForUser"
-
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request:  ads_manager.GetAdsContentForUserRequest{},
-		Response: ads_manager.GetAdsContentForUserResponse{},
-		Tags:     []string{"ads_content"},
-	}
 
 	return router.NewServiceCommand(methodName,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {

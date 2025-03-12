@@ -5,14 +5,12 @@ import (
 	"github.com/digitalmonsters/ads-manager/pkg/common"
 	"github.com/digitalmonsters/go-common/application"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 )
 
 func Application(
 	httpRouter *router.HttpRouter,
-	apiDef map[string]swagger.ApiDescription,
 	commonService common.IService,
 ) *application.BaseApplication {
 	return application.NewBaseApplication("common").
-		AddSubApplication(api.SubApp(httpRouter, apiDef, commonService))
+		AddSubApplication(api.SubApp(httpRouter, commonService))
 }

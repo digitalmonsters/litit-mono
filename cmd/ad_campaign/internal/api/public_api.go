@@ -3,11 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/digitalmonsters/ads-manager/pkg/ad_campaign"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 )
@@ -33,11 +33,6 @@ func (a *apiApp) initPublicApi(httpRouter *router.HttpRouter) error {
 
 func (a *apiApp) createAdCampaign() *router.RestCommand {
 	path := "/create_ad_campaign"
-
-	a.apiDef[path] = swagger.ApiDescription{
-		Request: ad_campaign.CreateAdCampaignRequest{},
-		Tags:    []string{"ad_campaign"},
-	}
 
 	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req ad_campaign.CreateAdCampaignRequest
@@ -78,11 +73,6 @@ func (a *apiApp) createAdCampaign() *router.RestCommand {
 func (a *apiApp) clickLink() *router.RestCommand {
 	path := "/click_link"
 
-	a.apiDef[path] = swagger.ApiDescription{
-		Request: ad_campaign.ClickLinkRequest{},
-		Tags:    []string{"ad_campaign"},
-	}
-
 	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req ad_campaign.ClickLinkRequest
 
@@ -113,11 +103,6 @@ func (a *apiApp) clickLink() *router.RestCommand {
 
 func (a *apiApp) stopAdCampaign() *router.RestCommand {
 	path := "/stop_ad_campaign"
-
-	a.apiDef[path] = swagger.ApiDescription{
-		Request: ad_campaign.StopAdCampaignRequest{},
-		Tags:    []string{"ad_campaign"},
-	}
 
 	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req ad_campaign.StopAdCampaignRequest
@@ -150,11 +135,6 @@ func (a *apiApp) stopAdCampaign() *router.RestCommand {
 func (a *apiApp) startAdCampaign() *router.RestCommand {
 	path := "/start_ad_campaign"
 
-	a.apiDef[path] = swagger.ApiDescription{
-		Request: ad_campaign.StartAdCampaignRequest{},
-		Tags:    []string{"ad_campaign"},
-	}
-
 	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req ad_campaign.StartAdCampaignRequest
 
@@ -186,12 +166,6 @@ func (a *apiApp) startAdCampaign() *router.RestCommand {
 func (a *apiApp) listAdCampaigns() *router.RestCommand {
 	path := "/list_ad_campaigns"
 
-	a.apiDef[path] = swagger.ApiDescription{
-		Request:  ad_campaign.ListAdCampaignsRequest{},
-		Response: ad_campaign.ListAdCampaignsResponse{},
-		Tags:     []string{"ad_campaign"},
-	}
-
 	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req ad_campaign.ListAdCampaignsRequest
 
@@ -212,11 +186,6 @@ func (a *apiApp) listAdCampaigns() *router.RestCommand {
 
 func (a *apiApp) hasAdCampaigns() *router.RestCommand {
 	path := "/has_ad_campaigns"
-
-	a.apiDef[path] = swagger.ApiDescription{
-		Response: ad_campaign.HasAdCampaignsResponse{},
-		Tags:     []string{"ad_campaign"},
-	}
 
 	return router.NewRestCommand(func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		resp, err := a.adCampaignService.HasAdCampaigns(executionData.UserId, database.GetDbWithContext(database.DbTypeReadonly, executionData.Context))

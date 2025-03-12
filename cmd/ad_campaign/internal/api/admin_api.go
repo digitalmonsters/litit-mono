@@ -2,14 +2,13 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/digitalmonsters/ads-manager/pkg/ad_campaign/ad_moderation"
-	commonPkg "github.com/digitalmonsters/ads-manager/pkg/common"
 	"github.com/digitalmonsters/ads-manager/pkg/database"
 	"github.com/digitalmonsters/go-common/callback"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 )
 
 func (a *apiApp) initAdminApi(httpRouter router.IRpcEndpoint) error {
@@ -30,12 +29,6 @@ func (a *apiApp) initAdminApi(httpRouter router.IRpcEndpoint) error {
 func (a *apiApp) getModerationRequest() router.ICommand {
 	methodName := "GetAdsModerationRequests"
 
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request:  ad_moderation.GetAdModerationRequest{},
-		Response: ad_moderation.GetAdModerationResponse{},
-		Tags:     []string{"ad moderation"},
-	}
-
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req ad_moderation.GetAdModerationRequest
 
@@ -54,12 +47,6 @@ func (a *apiApp) getModerationRequest() router.ICommand {
 
 func (a *apiApp) setAdsRejectReason() router.ICommand {
 	methodName := "SetAdsRejectReason"
-
-	a.apiDef[methodName] = swagger.ApiDescription{
-		Request:  ad_moderation.SetAdRejectReasonRequest{},
-		Response: commonPkg.AddModerationItem{},
-		Tags:     []string{"ad moderation"},
-	}
 
 	return router.NewAdminCommand(methodName, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req ad_moderation.SetAdRejectReasonRequest

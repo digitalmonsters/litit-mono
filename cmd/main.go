@@ -22,7 +22,6 @@ import (
 	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/digitalmonsters/go-common/wrappers/go_tokenomics"
@@ -44,8 +43,6 @@ func main() {
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
 
-	apiDef := map[string]swagger.ApiDescription{}
-
 	privateRouter := ops.NewPrivateHttpServer().StartAsync(
 		cfg.PrivateHttpPort,
 	)
@@ -56,12 +53,12 @@ func main() {
 	notificationHandler := notification_handler.NewNotificationHandlerWrapper(cfg.Wrappers.NotificationHandler)
 	goTokenomicsWrapper := go_tokenomics.NewGoTokenomicsWrapper(cfg.Wrappers.GoTokenomics)
 
-	if err := api.InitAdminApi(httpRouter.GetRpcAdminEndpoint(), apiDef); err != nil {
+	if err := api.InitAdminApi(httpRouter.GetRpcAdminEndpoint()); err != nil {
 		log.Panic().Err(err).Msg("[Admin API] Cannot initialize api")
 		panic(err)
 	}
 
-	if err := api.InitPublicApi(httpRouter, apiDef, userGoWrapper); err != nil {
+	if err := api.InitPublicApi(httpRouter, userGoWrapper); err != nil {
 		log.Panic().Err(err).Msg("[Public API] Cannot initialize api")
 		panic(err)
 	}
@@ -101,8 +98,8 @@ func main() {
 	commonService := commonPkg.NewService()
 
 	rootApplication.
-		AddApplication(adCampaignApp.Application(httpRouter, apiDef, adCampaignService, adModerationService)).
-		AddApplication(common.Application(httpRouter, apiDef, commonService)).
+		AddApplication(adCampaignApp.Application(httpRouter, adCampaignService, adModerationService)).
+		AddApplication(common.Application(httpRouter, commonService)).
 		MustInit()
 
 	viewContentListener := view_content.InitListener(healthContext, database.GetDb(database.DbTypeMaster),
@@ -110,7 +107,6 @@ func main() {
 		ListenAsync(true)
 
 	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
-		httpRouter.RegisterDocs(apiDef, nil)
 		httpRouter.RegisterProfiler()
 	}
 

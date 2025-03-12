@@ -6,11 +6,10 @@ import (
 	"github.com/digitalmonsters/ads-manager/utils"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 )
 
-func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper) error {
+func InitPublicApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IUserGoWrapper) error {
 	getAdsMessagePath := "/ads/message/me"
 	messagePath := "/message/me"
 	adsAvailablePath := "/ads/available"
@@ -53,39 +52,6 @@ func InitPublicApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiD
 		}, nil
 	}, adsAvailablePath, router.MethodGet).Build()); err != nil {
 		return err
-	}
-
-	apiDef[adsAvailablePath] = swagger.ApiDescription{
-		Response: adsAvailableResponse{},
-		Tags:     []string{"ads", "message"},
-	}
-
-	apiDef[getAdsMessagePath] = swagger.ApiDescription{
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "type",
-				In:          swagger.ParameterInPath,
-				Description: "message type",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Response: message.NotificationMessage{},
-		Tags:     []string{"ads", "message"},
-	}
-
-	apiDef[messagePath] = swagger.ApiDescription{
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "type",
-				In:          swagger.ParameterInPath,
-				Description: "message type",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Response: message.NotificationMessage{},
-		Tags:     []string{"message"},
 	}
 
 	return nil
