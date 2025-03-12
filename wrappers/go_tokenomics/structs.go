@@ -122,6 +122,9 @@ const (
 	PointsEarnedTypeUserDeductPointWeeklyLogin                = PointsEarnedType(61)
 	PointsEarnedTypeUserDeductPointWeeklySpendTime            = PointsEarnedType(62)
 	PointsEarnedTypeOnboardingDailyTime                       = PointsEarnedType(63)
+	PointsEarnedTypeDay1OnboardingReward                      = PointsEarnedType(64)
+	PointsEarnedTypeDay2OnboardingReward                      = PointsEarnedType(65)
+	PointsEarnedTypeDay3OnboardingReward                      = PointsEarnedType(66)
 )
 
 type WithdrawalStatus int16
