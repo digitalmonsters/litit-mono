@@ -41,7 +41,6 @@ import (
 	"github.com/digitalmonsters/go-common/ops"
 	"github.com/digitalmonsters/go-common/router"
 	"github.com/digitalmonsters/go-common/shutdown"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/notification-handler/cmd/api/creator"
 	"github.com/digitalmonsters/notification-handler/configs"
@@ -60,8 +59,6 @@ func main() {
 	authGoWrapper := auth_go.NewAuthGoWrapper(cfg.Wrappers.AuthGo)
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
-
-	apiDef := map[string]swagger.ApiDescription{}
 
 	privateRouter := ops.NewPrivateHttpServer().StartAsync(
 		cfg.PrivateHttpPort,
@@ -144,35 +141,31 @@ func main() {
 
 	api.InitInternalApi(httpRouter.GetRpcServiceEndpoint())
 
-	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), apiDef, cfg); err != nil {
+	if err := creator.InitAdminApi(httpRouter.GetRpcAdminLegacyEndpoint(), cfg); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin creator api")
 	}
 
-	if err := api.InitNotificationApi(httpRouter, apiDef, userGoWrapper, authGoWrapper, followWrapper); err != nil {
+	if err := api.InitNotificationApi(httpRouter, userGoWrapper, authGoWrapper, followWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init notification api")
 	}
 
-	if err := api.InitAdminNotificationApi(httpRouter, apiDef, userGoWrapper, followWrapper, jobber); err != nil {
+	if err := api.InitAdminNotificationApi(httpRouter, userGoWrapper, followWrapper, jobber); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
 
-	if err := api.InitInternalNotificationApi(httpRouter, apiDef, firebaseClient, userGoWrapper); err != nil {
+	if err := api.InitInternalNotificationApi(httpRouter, firebaseClient, userGoWrapper); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init internal notification api")
 	}
 
-	if err := api.InitTokenApi(httpRouter, apiDef); err != nil {
+	if err := api.InitTokenApi(httpRouter); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init token api")
 	}
 
 	templateService := templatePkg.NewService()
 
 	rootApplication.
-		AddApplication(notification.Application(httpRouter, apiDef, settingsService, templateService, contentUploaderWrapper, ctx)).
+		AddApplication(notification.Application(httpRouter, settingsService, templateService, contentUploaderWrapper, ctx)).
 		MustInit()
-
-	if boilerplate.GetCurrentEnvironment() != boilerplate.Prod {
-		httpRouter.RegisterDocs(apiDef, nil)
-	}
 
 	privateRouter.Ready()
 	sg := <-sig
