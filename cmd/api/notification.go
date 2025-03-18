@@ -8,7 +8,6 @@ import (
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/extract"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/auth_go"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
@@ -19,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, userGoWrapper user_go.IUserGoWrapper, authWrapper auth_go.IAuthGoWrapper,
+func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IUserGoWrapper, authWrapper auth_go.IAuthGoWrapper,
 	followWrapper follow.IFollowWrapper) error {
 	notificationsPath := "/mobile/v1/notifications"
 	deleteNotificationPath := "/mobile/v1/notifications/{id}"
@@ -137,53 +136,6 @@ func InitNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagge
 		return nil, nil
 	}, readNotificationPath, http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
-	}
-
-	apiDef[notificationsPath] = swagger.ApiDescription{
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "page",
-				In:          swagger.ParameterInQuery,
-				Description: "page",
-				Required:    false,
-				Type:        "string",
-			},
-			{
-				Name:        "notification_type",
-				In:          swagger.ParameterInQuery,
-				Description: "all|comment|system|following",
-				Required:    false,
-				Type:        "string",
-			},
-		},
-		Response:          notificationPkg.NotificationsResponse{},
-		MethodDescription: "user notifications",
-		Tags:              []string{"notification"},
-	}
-
-	apiDef[deleteNotificationPath] = swagger.ApiDescription{
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "id",
-				In:          swagger.ParameterInPath,
-				Description: "notification id",
-				Required:    true,
-				Type:        "uuid",
-			},
-		},
-		MethodDescription: "delete notification",
-		Tags:              []string{"notification"},
-	}
-
-	apiDef[readAllNotificationsPath] = swagger.ApiDescription{
-		MethodDescription: "read all notifications",
-		Tags:              []string{"notification"},
-	}
-
-	apiDef[readNotificationPath] = swagger.ApiDescription{
-		Request:           notificationPkg.ReadNotificationRequest{},
-		MethodDescription: "read notification",
-		Tags:              []string{"notification"},
 	}
 
 	return nil

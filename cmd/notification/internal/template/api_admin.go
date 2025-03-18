@@ -2,10 +2,10 @@ package template
 
 import (
 	"encoding/json"
+
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/template"
 )
@@ -27,11 +27,6 @@ func (a templateApp) initAdminApi(endpoint router.IRpcEndpoint) error {
 
 func (a templateApp) editTemplate() router.ICommand {
 	method := "EditTemplate"
-
-	a.apiDef[method] = swagger.ApiDescription{
-		Request: template.EditTemplateRequest{},
-		Tags:    []string{"template"},
-	}
 
 	return router.NewAdminCommand(method, func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -58,12 +53,6 @@ func (a templateApp) editTemplate() router.ICommand {
 
 func (a templateApp) listTemplates() router.ICommand {
 	method := "ListTemplates"
-
-	a.apiDef[method] = swagger.ApiDescription{
-		Request:  template.ListTemplatesRequest{},
-		Response: template.ListTemplatesResponse{},
-		Tags:     []string{"template"},
-	}
 
 	return router.NewAdminCommand(method, func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {

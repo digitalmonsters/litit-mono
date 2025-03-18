@@ -7,7 +7,6 @@ import (
 
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/notification_handler"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
@@ -16,7 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription, firebaseClient *firebase.FirebaseClient, userGoWrapper user_go.IUserGoWrapper) error {
+func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *firebase.FirebaseClient, userGoWrapper user_go.IUserGoWrapper) error {
 	getNotificationsReadCount := "GetNotificationsReadCount"
 	disableUnregisteredTokens := "DisableUnregisteredTokens"
 	createNotification := "CreateNotification"
@@ -49,11 +48,6 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 		return err
 	}
 
-	apiDef[deleteNotificationByIntroID] = swagger.ApiDescription{
-		Request: notification.DeleteNotificationByIntroIDRequest{},
-		Tags:    []string{"notification"},
-	}
-
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(getNotificationsReadCount,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 			var req notification.GetNotificationsReadCountRequest
@@ -72,11 +66,6 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 		return err
 	}
 
-	apiDef[getNotificationsReadCount] = swagger.ApiDescription{
-		Request: notification.GetNotificationsReadCountRequest{},
-		Tags:    []string{"notification"},
-	}
-
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(disableUnregisteredTokens,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 			var req notification_handler.DisableUnregisteredTokensRequest
@@ -93,11 +82,6 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, apiDef map[strin
 			return resp, nil
 		}, false)); err != nil {
 		return err
-	}
-
-	apiDef[disableUnregisteredTokens] = swagger.ApiDescription{
-		Request: notification_handler.DisableUnregisteredTokensRequest{},
-		Tags:    []string{"notification"},
 	}
 
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(createNotification,
