@@ -2,12 +2,12 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/follow"
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/configs"
@@ -15,7 +15,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 )
 
-func InitAdminNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription,
+func InitAdminNotificationApi(httpRouter *router.HttpRouter,
 	userGoWrapper user_go.IUserGoWrapper, followWrapper follow.IFollowWrapper, jobber *machinery.Server) error {
 	listNotificationsMethod := "ListNotifications"
 	generalPushNotificationTaskMethod := "GeneralPushNotificationTask"
@@ -104,22 +104,6 @@ func InitAdminNotificationApi(httpRouter *router.HttpRouter, apiDef map[string]s
 			return nil, nil
 		}, common.AccessLevelWrite, "notifications:task:user")); err != nil {
 		return err
-	}
-
-	apiDef[listNotificationsMethod] = swagger.ApiDescription{
-		Request:  notification.ListNotificationsByAdminRequest{},
-		Response: notification.ListNotificationsByAdminResponse{},
-		Tags:     []string{"notification"},
-	}
-
-	apiDef[generalPushNotificationTaskMethod] = swagger.ApiDescription{
-		Request: GeneralPushNotificationTaskRequest{},
-		Tags:    []string{"notification"},
-	}
-
-	apiDef[userPushNotificationTaskMethod] = swagger.ApiDescription{
-		Request: UserPushNotificationTaskRequest{},
-		Tags:    []string{"notification"},
 	}
 
 	return nil

@@ -2,17 +2,17 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/extract"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	tokenPkg "github.com/digitalmonsters/notification-handler/pkg/token"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
-func InitTokenApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDescription) error {
+func InitTokenApi(httpRouter *router.HttpRouter) error {
 	createTokenPath := "/mobile/v1/push/token"
 	deleteTokenPath := "/mobile/v1/push/token/{device_id}"
 
@@ -59,26 +59,6 @@ func InitTokenApi(httpRouter *router.HttpRouter, apiDef map[string]swagger.ApiDe
 		return nil, nil
 	}, deleteTokenPath, http.MethodDelete).RequireIdentityValidation().AllowBanned().Build()); err != nil {
 		return err
-	}
-
-	apiDef[createTokenPath] = swagger.ApiDescription{
-		Request:           tokenPkg.TokenCreateRequest{},
-		MethodDescription: "create token",
-		Tags:              []string{"token"},
-	}
-
-	apiDef[deleteTokenPath] = swagger.ApiDescription{
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "device_id",
-				In:          swagger.ParameterInPath,
-				Description: "device id",
-				Required:    true,
-				Type:        "string",
-			},
-		},
-		MethodDescription: "delete token",
-		Tags:              []string{"token"},
 	}
 
 	return nil
