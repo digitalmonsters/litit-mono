@@ -159,6 +159,8 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *
 					}
 					data["avatar_url"] = userResp.Avatar.String
 				}
+				log.Warn().Msgf("req.notifications: %+v", req.Notifications)
+				log.Warn().Msgf("data: %+v", data)
 				firebaseClient.SendNotification(context.Background(), deviceInfo.PushToken, string(deviceInfo.Platform), req.Notifications.CollapseKey, req.Notifications.Title, data["avatar_url"], req.Notifications.Message, req.Notifications.Type, data)
 				log.Info().Msg("Push notification sent successfully")
 			}
