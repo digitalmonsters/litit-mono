@@ -3,16 +3,17 @@ package firebase
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"google.golang.org/api/option"
 )
 
-// FirebaseClient wraps the Firebase Messaging client
+// FirebaseClient wraps the Firebase Messaging client.
 type FirebaseClient struct {
 	client *messaging.Client
 }
@@ -22,39 +23,46 @@ var (
 	once     sync.Once
 )
 
-// Initialize initializes the Firebase App and Messaging client
+// Initialize creates and returns a singleton FirebaseClient.
 func Initialize(ctx context.Context, serviceAccountJSON string) *FirebaseClient {
 	once.Do(func() {
 		opt := option.WithCredentialsJSON([]byte(serviceAccountJSON))
 		app, err := firebase.NewApp(ctx, nil, opt)
 		if err != nil {
-			log.Fatalf("Failed to initialize Firebase app: %v", err)
+			log.Fatal().Err(err).Msg("Failed to initialize Firebase app")
 		}
 
-		// Create a Messaging client
 		messagingClient, err := app.Messaging(ctx)
 		if err != nil {
-			log.Fatalf("Failed to initialize Firebase Messaging client: %v", err)
+			log.Fatal().Err(err).Msg("Failed to initialize Firebase Messaging client")
 		}
 
 		fbClient = &FirebaseClient{
 			client: messagingClient,
 		}
-		log.Println("Firebase client initialized successfully")
+		log.Info().Msg("Firebase client initialized successfully")
 	})
-
 	return fbClient
 }
 
-// SendNotification sends a push notification to a specific device token
-func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken string, platform string, collapseKey string, title string, imageUrl string, body string, notificationType string, data map[string]string) (string, error) {
+// SendNotification sends a push notification to a specific device token.
+func (f *FirebaseClient) SendNotification(
+	ctx context.Context,
+	deviceToken, platform, collapseKey, title, imageUrl, body, notificationType string,
+	data map[string]string,
+) (string, error) {
 	if data == nil {
 		data = make(map[string]string)
 	}
 	data["sound"] = "Sweet.mp3"
 
-	customDataJSON, _ := json.Marshal(data)
-	oneHour := time.Duration(1) * time.Hour
+	customDataJSON, err := json.Marshal(data)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to marshal custom data")
+		return "", err
+	}
+
+	ttl := time.Hour
 	message := &messaging.Message{
 		Token: deviceToken,
 		Data: map[string]string{
@@ -69,7 +77,7 @@ func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken strin
 		},
 		Android: &messaging.AndroidConfig{
 			CollapseKey: collapseKey,
-			TTL:         &oneHour,
+			TTL:         &ttl,
 			Notification: &messaging.AndroidNotification{
 				ImageURL: imageUrl,
 			},
@@ -90,10 +98,11 @@ func (f *FirebaseClient) SendNotification(ctx context.Context, deviceToken strin
 
 	response, err := f.client.Send(ctx, message)
 	if err != nil {
-		log.Printf("Error sending notification: %v", err)
+		log.Error().Err(err).Msg("Failed to send message")
+		log.Debug().Msgf("Message details: %+v", message)
 		return "", err
 	}
 
-	log.Printf("Successfully sent message: %s", response)
+	log.Info().Msgf("Successfully sent message: %s", response)
 	return response, nil
 }
