@@ -2,20 +2,20 @@ package vote
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/digitalmonsters/comments/cmd/api/comments/notifiers/comment"
 	vote2 "github.com/digitalmonsters/comments/cmd/api/vote/notifiers/vote"
 	"github.com/digitalmonsters/comments/pkg/vote"
 	"github.com/digitalmonsters/comments/utils"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/content"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"net/http"
 )
 
-func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.ApiDescription, commentNotifier *comment.Notifier,
+func Init(httpRouter *router.HttpRouter, db *gorm.DB, commentNotifier *comment.Notifier,
 	voteNotifier *vote2.Notifier, contentWrapper content.IContentWrapper) error {
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -45,22 +45,6 @@ func Init(httpRouter *router.HttpRouter, db *gorm.DB, def map[string]swagger.Api
 		}
 	}, "/{comment_id}/vote", http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
-	}
-
-	def["/{comment_id}/vote"] = swagger.ApiDescription{
-		Request: voteRequest{},
-		AdditionalSwaggerParameters: []swagger.ParameterDescription{
-			{
-				Name:        "comment_id",
-				In:          swagger.ParameterInPath,
-				Description: "comment_id",
-				Required:    true,
-				Type:        "integer",
-			},
-		},
-		Response:          successResponse{},
-		MethodDescription: "report comment",
-		Tags:              []string{"report"},
 	}
 
 	return nil

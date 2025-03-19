@@ -8,7 +8,6 @@ import (
 	"github.com/digitalmonsters/go-common/common"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 )
 
 func (a *adminApiApp) initAdminApi(endpoint router.IRpcEndpoint) error {
@@ -31,12 +30,6 @@ func (a *adminApiApp) initAdminApi(endpoint router.IRpcEndpoint) error {
 func (a *adminApiApp) getReportedUserProfileComments() router.ICommand {
 	method := "GetReportedUserProfileComments"
 
-	a.apiDef[method] = swagger.ApiDescription{
-		Request:  report.GetReportedUserProfileCommentsRequest{},
-		Response: report.GetReportedUserProfileCommentsResponse{},
-		Tags:     []string{"report"},
-	}
-
 	return router.NewAdminCommand(method, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req report.GetReportedUserProfileCommentsRequest
 
@@ -55,12 +48,6 @@ func (a *adminApiApp) getReportedUserProfileComments() router.ICommand {
 
 func (a *adminApiApp) getReportedVideoComments() router.ICommand {
 	method := "GetReportedVideoComments"
-
-	a.apiDef[method] = swagger.ApiDescription{
-		Request:  report.GetReportedVideoCommentsRequest{},
-		Response: report.GetReportedVideoCommentsResponse{},
-		Tags:     []string{"report"},
-	}
 
 	return router.NewAdminCommand(method, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req report.GetReportedVideoCommentsRequest
@@ -81,12 +68,6 @@ func (a *adminApiApp) getReportedVideoComments() router.ICommand {
 func (a *adminApiApp) GetReportsForComment() router.ICommand {
 	method := "GetReportsForComment"
 
-	a.apiDef[method] = swagger.ApiDescription{
-		Request:  report.GetReportsForCommentRequest{},
-		Response: report.GetReportsForCommentResponse{},
-		Tags:     []string{"report"},
-	}
-
 	return router.NewAdminCommand(method, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req report.GetReportsForCommentRequest
 
@@ -105,12 +86,6 @@ func (a *adminApiApp) GetReportsForComment() router.ICommand {
 
 func (a *adminApiApp) ApproveRejectReportedComment() router.ICommand {
 	method := "ApproveRejectReportedComment"
-
-	a.apiDef[method] = swagger.ApiDescription{
-		Request:  report.ApproveRejectReportedCommentRequest{},
-		Response: report.ApproveRejectReportedCommentResponse{},
-		Tags:     []string{"report"},
-	}
 
 	return router.NewAdminCommand(method, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
 		var req report.ApproveRejectReportedCommentRequest

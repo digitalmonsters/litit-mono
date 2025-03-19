@@ -2,15 +2,15 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/digitalmonsters/comments/pkg/comments"
 	"github.com/digitalmonsters/go-common/error_codes"
 	"github.com/digitalmonsters/go-common/router"
-	"github.com/digitalmonsters/go-common/swagger"
 	"github.com/digitalmonsters/go-common/wrappers/comment"
 	"gorm.io/gorm"
 )
 
-func InitInternalApi(serviceEndpoint router.IRpcEndpoint, apiDef map[string]swagger.ApiDescription, db *gorm.DB) error {
+func InitInternalApi(serviceEndpoint router.IRpcEndpoint, db *gorm.DB) error {
 	getCommentsInfoByIdMethod := "GetCommentsInfoById"
 
 	if err := serviceEndpoint.RegisterRpcCommand(router.NewServiceCommand(getCommentsInfoByIdMethod, func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -27,10 +27,5 @@ func InitInternalApi(serviceEndpoint router.IRpcEndpoint, apiDef map[string]swag
 		return err
 	}
 
-	apiDef[getCommentsInfoByIdMethod] = swagger.ApiDescription{
-		Request:  comment.GetCommentsInfoByIdRequest{},
-		Response: map[int64]comment.CommentsInfoById{},
-		Tags:     []string{"internal", "comment"},
-	}
 	return nil
 }
