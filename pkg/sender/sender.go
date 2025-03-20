@@ -957,7 +957,7 @@ func (s *Sender) PushNotification(notification database.Notification, imageUrl s
 
 			fResp, err := s.firebaseClient.SendNotification(ctx, deviceInfo.PushToken, string(deviceInfo.Platform), "",
 				notification.Title, imageUrl, notification.Message, notification.Type, data)
-
+			log.Warn().Msgf("%+v", data)
 			if err != nil {
 				log.Info().Msgf("firebase-reponse fail %v for user-id %v for token %v", fResp, notification.UserId, deviceInfo.PushToken)
 				log.Ctx(ctx).Error().Err(err).Msg("[PushNotification] Failed to sent notification on firebase")

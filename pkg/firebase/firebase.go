@@ -93,7 +93,6 @@ func (f *FirebaseClient) SendNotification(
 				ImageURL: imageUrl,
 			},
 		},
-		// Topic: "fcm_default_channel",
 	}
 
 	response, err := f.client.Send(ctx, message)
