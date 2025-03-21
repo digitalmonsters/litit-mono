@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
-	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -62,7 +61,6 @@ func (f *FirebaseClient) SendNotification(
 		return "", err
 	}
 
-	ttl := time.Hour
 	message := &messaging.Message{
 		Token: deviceToken,
 		Data: map[string]string{
@@ -71,13 +69,8 @@ func (f *FirebaseClient) SendNotification(
 			"title":       title,
 			"body":        body,
 		},
-		Notification: &messaging.Notification{
-			Title: title,
-			Body:  body,
-		},
 		Android: &messaging.AndroidConfig{
 			CollapseKey: collapseKey,
-			TTL:         &ttl,
 			Notification: &messaging.AndroidNotification{
 				ImageURL: imageUrl,
 			},
