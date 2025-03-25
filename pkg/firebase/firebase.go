@@ -78,6 +78,7 @@ func (f *FirebaseClient) SendNotification(
 		APNS: &messaging.APNSConfig{
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
+					Category:       notificationType,
 					Sound:          "Sweet.mp3",
 					MutableContent: true,
 				},
