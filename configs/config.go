@@ -8,6 +8,7 @@ import (
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/digitalmonsters/go-common/boilerplate"
+	"github.com/digitalmonsters/notification-handler/pkg/mail"
 )
 
 var CDN_BASE string
@@ -50,6 +51,7 @@ type Settings struct {
 	AzureBlob                      boilerplate.AzureBlobConfig            `json:"AzureBlob"`
 	Jobber                         JobberConfig                           `json:"Jobber"`
 	MusicCreatorListener           boilerplate.KafkaListenerConfiguration `json:"MusicCreatorListener"`
+	EmailConfig                    mail.EmailService                      `json:"AwsSMTPConfig"`
 
 	// Firebase Configuration
 	Firebase FirebaseConfig `json:"Firebase"`

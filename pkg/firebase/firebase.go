@@ -69,6 +69,10 @@ func (f *FirebaseClient) SendNotification(
 			"title":       title,
 			"body":        body,
 		},
+		Notification: &messaging.Notification{
+			Title: title,
+			Body:  body,
+		},
 		Android: &messaging.AndroidConfig{
 			CollapseKey: collapseKey,
 			Notification: &messaging.AndroidNotification{
@@ -78,6 +82,7 @@ func (f *FirebaseClient) SendNotification(
 		APNS: &messaging.APNSConfig{
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
+					Category:       notificationType,
 					Sound:          "Sweet.mp3",
 					MutableContent: true,
 				},

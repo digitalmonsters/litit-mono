@@ -11,15 +11,18 @@ import (
 	"github.com/digitalmonsters/go-common/wrappers/user_go"
 	"github.com/digitalmonsters/notification-handler/pkg/database"
 	"github.com/digitalmonsters/notification-handler/pkg/firebase"
+	"github.com/digitalmonsters/notification-handler/pkg/mail"
 	"github.com/digitalmonsters/notification-handler/pkg/notification"
 	"github.com/rs/zerolog/log"
 )
 
-func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *firebase.FirebaseClient, userGoWrapper user_go.IUserGoWrapper) error {
+func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *firebase.FirebaseClient, userGoWrapper user_go.IUserGoWrapper, mailSvc mail.IEmailService) error {
 	getNotificationsReadCount := "GetNotificationsReadCount"
 	disableUnregisteredTokens := "DisableUnregisteredTokens"
 	createNotification := "CreateNotification"
 	deleteNotificationByIntroID := "DeleteNotificationByIntroID"
+	sendCustomEmail := "SendCustomEmail"
+	sendCustomEmailWithGenericHTML := "SendCustomEmailWithGenericHTML"
 
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(deleteNotificationByIntroID,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -114,7 +117,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *
 				}
 
 				log.Info().Int64("user_id", int64(req.Notifications.UserID)).Msg("Successfully deleted notification for unfollowing user")
-				return notification_handler.CreateNotificationResponse{true}, nil
+				return notification_handler.CreateNotificationResponse{Status: true}, nil
 			}
 
 			log.Info().Msg("Creating notification")
@@ -171,5 +174,40 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *
 		log.Error().Err(err).Msg("Failed to register RPC command for createNotification")
 		return err
 	}
+
+	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(sendCustomEmail,
+		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+			log.Info().Msg("Starting RPC command for Sending Custom Email")
+
+			var req mail.GenericEmailRPC
+
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+
+			return notification_handler.CreateNotificationResponse{
+				Status: true,
+			}, nil
+		}, false)); err != nil {
+		return err
+	}
+
+	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(sendCustomEmailWithGenericHTML,
+		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+			log.Info().Msg("Starting RPC command for Sending Custom Email with Generic HTML")
+
+			var req mail.GenericHTMLEmailRPC
+
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+
+			return notification_handler.CreateNotificationResponse{
+				Status: true,
+			}, nil
+		}, false)); err != nil {
+		return err
+	}
+
 	return nil
 }
