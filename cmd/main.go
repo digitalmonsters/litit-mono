@@ -33,6 +33,7 @@ import (
 	"github.com/digitalmonsters/notification-handler/cmd/consumers/vote"
 	"github.com/digitalmonsters/notification-handler/cmd/notification"
 	"github.com/digitalmonsters/notification-handler/pkg/firebase"
+	"github.com/digitalmonsters/notification-handler/pkg/mail"
 	"github.com/digitalmonsters/notification-handler/pkg/sender"
 	settingsPkg "github.com/digitalmonsters/notification-handler/pkg/settings"
 	templatePkg "github.com/digitalmonsters/notification-handler/pkg/template"
@@ -60,6 +61,7 @@ func main() {
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
 
+	mailSvc := mail.NewEmailService(cfg.EmailConfig.SMTPHost, cfg.EmailConfig.SMTPPort, cfg.EmailConfig.Username, cfg.EmailConfig.Password, cfg.EmailConfig.SendersAddr)
 	privateRouter := ops.NewPrivateHttpServer().StartAsync(
 		cfg.PrivateHttpPort,
 	)
@@ -153,7 +155,7 @@ func main() {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init admin notification api")
 	}
 
-	if err := api.InitInternalNotificationApi(httpRouter, firebaseClient, userGoWrapper); err != nil {
+	if err := api.InitInternalNotificationApi(httpRouter, firebaseClient, userGoWrapper, mailSvc); err != nil {
 		log.Fatal().Err(err).Msgf("[HTTP] Could not init internal notification api")
 	}
 
