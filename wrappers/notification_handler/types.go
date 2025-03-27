@@ -110,3 +110,19 @@ type DeleteNotificationByIntroIDRequest struct {
 type DeleteNotificationByIntroIDResponse struct {
 	Status bool
 }
+
+type GenericEmailRPCRequest struct {
+	To      string `json:"to"`
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
+type GenericHTMLEmailRPCRequest struct {
+	To      string `json:"to"`
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
+type GenericEmailResponse struct {
+	Status bool
+}
