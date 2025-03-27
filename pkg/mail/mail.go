@@ -19,7 +19,7 @@ func NewEmailService(smtpHost, smtpPort, username, password, sendersAddr, sender
 
 // SendGenericEmail sends a plain-text email.
 func (s *EmailService) SendGenericEmail(to, subject, body string) error {
-	from := s.SenderName
+	from := s.SenderMail
 	recipient := to
 	msg := []byte("From: " + from + "\r\n" +
 		"To: " + recipient + "\r\n" +
@@ -39,7 +39,7 @@ func (s *EmailService) SendGenericEmail(to, subject, body string) error {
 
 // SendGenericHTMLEmail sends an HTML email.
 func (s *EmailService) SendGenericHTMLEmail(to, subject, body string) error {
-	from := s.SenderName
+	from := s.SenderMail
 	recipient := to
 
 	headers := map[string]string{
