@@ -189,3 +189,19 @@ func (h *NotificationHandlerWrapper) DeleteNotificationByIntroID(introID int, ct
 		"deleteNotificationByIntroId", DeleteNotificationByIntroIDRequest{IntroID: introID},
 		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
 }
+
+func (h *NotificationHandlerWrapper) SendGenericEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GenericEmailResponse](h.baseWrapper, h.apiUrl,
+		"sendCustomEmail", GenericEmailRPCRequest{To: To, Subject: Subject, Body: Body},
+		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
+}
+
+func (h *NotificationHandlerWrapper) SendGenericHTMLEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GenericEmailResponse](h.baseWrapper, h.apiUrl,
+		"sendCustomEmailWithGenericHTML", GenericHTMLEmailRPCRequest{
+			To:      To,
+			Subject: Subject,
+			Body:    Body,
+		},
+		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
+}
