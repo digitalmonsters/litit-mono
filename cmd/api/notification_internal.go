@@ -185,6 +185,12 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 			}
 
+			log.Info().Msg("Sending custom email")
+			if err := mailSvc.SendGenericEmail(req.To, req.Subject, req.Body); err != nil {
+				log.Error().Err(err).Msg("Failed to send custom email")
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			}
+
 			return notification_handler.CreateNotificationResponse{
 				Status: true,
 			}, nil
@@ -200,6 +206,12 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *
 
 			if err := json.Unmarshal(request, &req); err != nil {
 				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+
+			log.Info().Msg("Sending custom email")
+			if err := mailSvc.SendGenericEmail(req.To, req.Subject, req.Body); err != nil {
+				log.Error().Err(err).Msg("Failed to send custom email")
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
 			}
 
 			return notification_handler.CreateNotificationResponse{

@@ -1,11 +1,12 @@
 package mail
 
 type EmailService struct {
-	SMTPHost    string
-	SMTPPort    string
-	Username    string
-	Password    string
-	SendersAddr string
+	Host       string `json:"host"`
+	SenderName string `json:"sendername"`
+	User       string `json:"user"`
+	Password   string `json:"password"`
+	SenderMail string `json:"sendermail"`
+	Port       string `json:"port"`
 }
 
 // IEmailService defines the interface for email services.

@@ -6,19 +6,20 @@ import (
 	"strings"
 )
 
-func NewEmailService(smtpHost, smtpPort, username, password, sendersAddr string) IEmailService {
+func NewEmailService(smtpHost, smtpPort, username, password, sendersAddr, senderName string) IEmailService {
 	return &EmailService{
-		SMTPHost:    smtpHost,
-		SMTPPort:    smtpPort,
-		Username:    username,
-		Password:    password,
-		SendersAddr: sendersAddr,
+		Host:       smtpHost,
+		Port:       smtpPort,
+		User:       username,
+		Password:   password,
+		SenderName: senderName,
+		SenderMail: sendersAddr,
 	}
 }
 
 // SendGenericEmail sends a plain-text email.
 func (s *EmailService) SendGenericEmail(to, subject, body string) error {
-	from := s.SendersAddr
+	from := s.SenderMail
 	recipient := to
 	msg := []byte("From: " + from + "\r\n" +
 		"To: " + recipient + "\r\n" +
@@ -26,9 +27,9 @@ func (s *EmailService) SendGenericEmail(to, subject, body string) error {
 		"Content-Type: text/plain; charset=\"UTF-8\"\r\n" +
 		"\r\n" +
 		body + "\r\n")
-	auth := smtp.PlainAuth("", s.Username, s.Password, s.SMTPHost)
+	auth := smtp.PlainAuth("", s.User, s.Password, s.Host)
 
-	err := smtp.SendMail(s.SMTPHost+":"+s.SMTPPort, auth, from, []string{recipient}, msg)
+	err := smtp.SendMail(s.Host+":"+s.Port, auth, from, []string{recipient}, msg)
 	if err != nil {
 		return fmt.Errorf("failed to send generic email to %s: %w", recipient, err)
 	}
@@ -38,7 +39,7 @@ func (s *EmailService) SendGenericEmail(to, subject, body string) error {
 
 // SendGenericHTMLEmail sends an HTML email.
 func (s *EmailService) SendGenericHTMLEmail(to, subject, body string) error {
-	from := s.SendersAddr
+	from := s.SenderMail
 	recipient := to
 
 	headers := map[string]string{
@@ -59,9 +60,9 @@ func (s *EmailService) SendGenericHTMLEmail(to, subject, body string) error {
 
 	msg := []byte(msgBuilder.String())
 
-	auth := smtp.PlainAuth("", s.Username, s.Password, s.SMTPHost)
+	auth := smtp.PlainAuth("", s.User, s.Password, s.Host)
 	err := smtp.SendMail(
-		s.SMTPHost+":"+s.SMTPPort, // address
+		s.Host+":"+s.Port, // address
 		auth,
 		from,
 		[]string{recipient},
