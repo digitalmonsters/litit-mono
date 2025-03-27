@@ -61,7 +61,7 @@ func main() {
 	httpRouter := router.NewRouter("/rpc", authGoWrapper).
 		StartAsync(cfg.HttpPort)
 
-	mailSvc := mail.NewEmailService(cfg.EmailConfig.SMTPHost, cfg.EmailConfig.SMTPPort, cfg.EmailConfig.Username, cfg.EmailConfig.Password, cfg.EmailConfig.SendersAddr)
+	mailSvc := mail.NewEmailService(cfg.EmailConfig.Host, cfg.EmailConfig.Port, cfg.EmailConfig.User, cfg.EmailConfig.Password, cfg.EmailConfig.SenderMail, cfg.EmailConfig.SenderName)
 	privateRouter := ops.NewPrivateHttpServer().StartAsync(
 		cfg.PrivateHttpPort,
 	)
