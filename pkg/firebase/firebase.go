@@ -69,10 +69,10 @@ func (f *FirebaseClient) SendNotification(
 			"title":       title,
 			"body":        body,
 		},
-		Notification: &messaging.Notification{
-			Title: title,
-			Body:  body,
-		},
+		// Notification: &messaging.Notification{
+		// 	Title: title,
+		// 	Body:  body,
+		// },
 		Android: &messaging.AndroidConfig{
 			CollapseKey: collapseKey,
 			Notification: &messaging.AndroidNotification{
