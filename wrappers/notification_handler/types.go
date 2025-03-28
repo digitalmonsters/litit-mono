@@ -17,6 +17,8 @@ type INotificationHandlerWrapper interface {
 	DisableUnregisteredTokens(tokens []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]string]
 	CreateNotification(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse]
 	DeleteNotificationByIntroID(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse]
+	SendGenericEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
+	SendGenericHTMLEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName

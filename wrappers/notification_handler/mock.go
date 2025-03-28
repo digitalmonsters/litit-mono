@@ -42,6 +42,13 @@ func (m *NotificationHandlerWrapperMock) DeleteNotificationByIntroID(introID int
 	return m.DeleteNotificationByIntroIDFn(introID, ctx, forceLog)
 }
 
+func (m *NotificationHandlerWrapperMock) SendGenericEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse] {
+	return m.SendGenericEmail(To, Subject, Body, ctx, forceLog)
+}
+func (m *NotificationHandlerWrapperMock) SendGenericHTMLEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse] {
+	return m.SendGenericHTMLEmail(To, Subject, Body, ctx, forceLog)
+}
+
 func GetMock() INotificationHandlerWrapper { // for compiler errors
 	return &NotificationHandlerWrapperMock{}
 }
