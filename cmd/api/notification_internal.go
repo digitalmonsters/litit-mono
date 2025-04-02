@@ -23,6 +23,7 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *
 	deleteNotificationByIntroID := "DeleteNotificationByIntroID"
 	sendCustomEmail := "SendCustomEmail"
 	sendCustomEmailWithGenericHTML := "SendCustomEmailWithGenericHTML"
+	getDeviceTokens := "GetDeviceTokens"
 
 	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(deleteNotificationByIntroID,
 		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -221,5 +222,25 @@ func InitInternalNotificationApi(httpRouter *router.HttpRouter, firebaseClient *
 		return err
 	}
 
+	if err := httpRouter.GetRpcServiceEndpoint().RegisterRpcCommand(router.NewServiceCommand(
+		getDeviceTokens,
+		func(request []byte, executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+			var req notification.GetDeviceTokensRPCRequest
+
+			if err := json.Unmarshal(request, &req); err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+			}
+
+			db := database.GetDb(database.DbTypeMaster)
+
+			resp, err := notification.GetDeviceTokensByUserID(req.UserIDs, db)
+			if err != nil {
+				return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+			}
+			return resp, nil
+		}, true)); err != nil {
+		log.Err(err).Msg("Failed to register RPC command for getDeviceTokens")
+		return err
+	}
 	return nil
 }
