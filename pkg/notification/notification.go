@@ -800,9 +800,10 @@ func GetDeviceTokensByUserID(userID []int64, db *gorm.DB) (GetDeviceTokensRPCRes
 
 	var devices []database.Device
 	query := `
-		SELECT DISTINCT ON ("userId") *
+		SELECT DISTINCT ON ("userId") "userId", "pushToken", "createdAt", "id"
 		FROM devices
 		WHERE "userId" IN ?
+		AND "pushToken" IS NOT NULL
 		ORDER BY "userId", "createdAt" DESC
 	`
 	if err := db.Raw(query, userID).Scan(&devices).Error; err != nil {
