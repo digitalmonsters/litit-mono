@@ -799,9 +799,15 @@ func GetPet2NotificationsLegacy(db *gorm.DB, userId int64, page string, typeGrou
 func GetDeviceTokensByUserID(userID []int64, db *gorm.DB) (GetDeviceTokensRPCResponse, error) {
 
 	var devices []database.Device
-
-	if err := db.Where("user_id IN ?", userID).Find(&devices).Error; err != nil {
-		return GetDeviceTokensRPCResponse{}, errors.WithStack(err)
+	query := `
+		SELECT DISTINCT ON ("userId") *
+		FROM devices
+		WHERE "userId" IN ?
+		ORDER BY "userId", "createdAt" DESC
+	`
+	if err := db.Raw(query, userID).Scan(&devices).Error; err != nil {
+		log.Err(err).Msg("Failed to fetch latest devices per user")
+		return GetDeviceTokensRPCResponse{}, err
 	}
 
 	if len(devices) == 0 {
