@@ -109,3 +109,11 @@ type GetNotificationsReadCountRequest struct {
 type DeleteNotificationByIntroIDRequest struct {
 	IntroID int `json:"intro_id"`
 }
+
+type GetDeviceTokensRPCRequest struct {
+	UserIDs []int64 `json:"user_ids"`
+}
+
+type GetDeviceTokensRPCResponse struct {
+	DeviceTokens map[int64]string `json:"device_tokens"`
+}
