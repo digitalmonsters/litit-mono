@@ -484,7 +484,7 @@ func DeleteNotificationByIntroIDAndType(ctx context.Context, db *gorm.DB, introI
 	}
 
 	if result.RowsAffected == 0 {
-		fmt.Errorf("no notification found with intro_id: %d ", introID)
+		log.Error().Msgf("no notification found with intro_id: %d ", introID)
 	}
 
 	return nil
@@ -794,4 +794,29 @@ func GetPet2NotificationsLegacy(db *gorm.DB, userId int64, page string, typeGrou
 	}
 
 	return &resp, nil
+}
+
+func GetDeviceTokensByUserID(userID []int64, db *gorm.DB) (GetDeviceTokensRPCResponse, error) {
+
+	var devices []database.Device
+
+	if err := db.Where("user_id IN ?", userID).Find(&devices).Error; err != nil {
+		return GetDeviceTokensRPCResponse{}, errors.WithStack(err)
+	}
+
+	if len(devices) == 0 {
+		return GetDeviceTokensRPCResponse{}, errors.WithStack(errors.New("no devices found"))
+	}
+
+	tokens := make(map[int64]string)
+
+	for _, device := range devices {
+		tokens[device.UserId] = device.PushToken
+	}
+
+	response := GetDeviceTokensRPCResponse{
+		DeviceTokens: tokens,
+	}
+
+	return response, nil
 }
