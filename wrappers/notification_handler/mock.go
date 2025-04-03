@@ -14,6 +14,9 @@ type NotificationHandlerWrapperMock struct {
 	DisableUnregisteredTokensFn             func(tokens []string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[[]string]
 	CreateNotificationFn                    func(notifications Notification, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[CreateNotificationResponse]
 	DeleteNotificationByIntroIDFn           func(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse]
+	SendGenericEmailFn                      func(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
+	SendGenericHTMLEmailFn                  func(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
+	GetPushTokensFn                         func(Ids []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetPushTokensRPCResponse]
 }
 
 func (m *NotificationHandlerWrapperMock) EnqueueNotificationWithTemplate(templateName string, userId int64,
@@ -43,10 +46,14 @@ func (m *NotificationHandlerWrapperMock) DeleteNotificationByIntroID(introID int
 }
 
 func (m *NotificationHandlerWrapperMock) SendGenericEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse] {
-	return m.SendGenericEmail(To, Subject, Body, ctx, forceLog)
+	return m.SendGenericEmailFn(To, Subject, Body, ctx, forceLog)
 }
 func (m *NotificationHandlerWrapperMock) SendGenericHTMLEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse] {
-	return m.SendGenericHTMLEmail(To, Subject, Body, ctx, forceLog)
+	return m.SendGenericHTMLEmailFn(To, Subject, Body, ctx, forceLog)
+}
+
+func (m *NotificationHandlerWrapperMock) GetPushTokens(Ids []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetPushTokensRPCResponse] {
+	return m.GetPushTokensFn(Ids, ctx, forceLog)
 }
 
 func GetMock() INotificationHandlerWrapper { // for compiler errors
