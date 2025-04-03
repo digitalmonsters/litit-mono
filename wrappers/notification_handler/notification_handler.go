@@ -205,3 +205,9 @@ func (h *NotificationHandlerWrapper) SendGenericHTMLEmail(To, Subject, Body stri
 		},
 		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
 }
+
+func (h *NotificationHandlerWrapper) GetPushTokens(Ids []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetPushTokensRPCResponse] {
+	return wrappers.ExecuteRpcRequestAsync[GetPushTokensRPCResponse](h.baseWrapper, h.apiUrl,
+		"getDeviceTokens", GetPushTokensRPCRequest{UserIds: Ids},
+		map[string]string{}, h.defaultTimeout, apm.TransactionFromContext(ctx), h.serviceName, forceLog)
+}

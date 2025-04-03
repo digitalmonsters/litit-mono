@@ -128,3 +128,11 @@ type GenericHTMLEmailRPCRequest struct {
 type GenericEmailResponse struct {
 	Status bool
 }
+
+type GetPushTokensRPCRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
+type GetPushTokensRPCResponse struct {
+	Tokens map[int64][]string `json:"tokens"`
+}
