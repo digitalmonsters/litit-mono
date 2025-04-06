@@ -135,5 +135,5 @@ type GetPushTokensRPCRequest struct {
 }
 
 type GetPushTokensRPCResponse struct {
-	Tokens map[int64][]string `json:"tokens"`
+	Tokens map[int64]string `json:"device_tokens"`
 }
