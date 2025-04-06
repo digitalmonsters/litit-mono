@@ -19,6 +19,7 @@ type INotificationHandlerWrapper interface {
 	DeleteNotificationByIntroID(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse]
 	SendGenericEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
 	SendGenericHTMLEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
+	GetPushTokens(Ids []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetPushTokensRPCResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
