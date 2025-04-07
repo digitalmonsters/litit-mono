@@ -19,6 +19,7 @@ type INotificationHandlerWrapper interface {
 	DeleteNotificationByIntroID(introID int, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[DeleteNotificationByIntroIDResponse]
 	SendGenericEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
 	SendGenericHTMLEmail(To, Subject, Body string, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GenericEmailResponse]
+	GetPushTokens(Ids []int64, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[GetPushTokensRPCResponse]
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -127,4 +128,12 @@ type GenericHTMLEmailRPCRequest struct {
 
 type GenericEmailResponse struct {
 	Status bool
+}
+
+type GetPushTokensRPCRequest struct {
+	UserIds []int64 `json:"user_ids"`
+}
+
+type GetPushTokensRPCResponse struct {
+	Tokens map[int64]string `json:"device_tokens"`
 }
