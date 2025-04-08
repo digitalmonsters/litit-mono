@@ -260,6 +260,16 @@ type DeductVaultPointsForIntroFeedRequest struct {
 	UserId int64 `json:"user_id"`
 }
 
+type AddPointsToVaultRequest struct {
+	UserId int64           `json:"user_id" validate:"required"`
+	Amount decimal.Decimal `json:"amount" validate:"required"`
+}
+
+type AddPointsToVaultResponse struct {
+	Status      bool            `json:"status"`
+	VaultPoints decimal.Decimal `json:"vault_points"`
+}
+
 type ReferredUsersWatchTimeInfo struct {
 	Id          int64     `json:"id"`
 	UserId      int64     `json:"user_id"`
