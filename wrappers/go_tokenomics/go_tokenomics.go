@@ -241,5 +241,6 @@ func (w *Wrapper) DeductVaultPointsForIntroFeed(userId int64, apmTransaction *ap
 func (w *Wrapper) AddPointsToVault(userId int64, points decimal.Decimal, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[AddPointsToVaultResponse] {
 	return wrappers.ExecuteRpcRequestAsync[AddPointsToVaultResponse](w.baseWrapper, w.apiUrl, "AddPointsToVault", AddPointsToVaultRequest{
 		UserId: userId,
+		Amount: points,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }
