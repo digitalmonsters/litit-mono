@@ -37,6 +37,7 @@ type IGoTokenomicsWrapper interface {
 	GetReferralsProgressInfo(referrerId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralProgressInfoResponse]
 	GetMyReferredUsersWatchedVideoInfo(referrerId, page, count int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetMyReferredUsersWatchedVideoInfoResponse]
 	DeductVaultPointsForIntroFeed(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[DeductVaultPointsForIntroFeedResponse]
+	AddPointsToVault(userId int64, points decimal.Decimal, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[AddPointsToVaultResponse]
 }
 
 func NewGoTokenomicsWrapper(config boilerplate.WrapperConfig) IGoTokenomicsWrapper {
@@ -234,5 +235,12 @@ func (w *Wrapper) GetMyReferredUsersWatchedVideoInfo(referrerId, page, count int
 func (w *Wrapper) DeductVaultPointsForIntroFeed(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[DeductVaultPointsForIntroFeedResponse] {
 	return wrappers.ExecuteRpcRequestAsync[DeductVaultPointsForIntroFeedResponse](w.baseWrapper, w.apiUrl, "DeductVaultPointsForIntroFeed", DeductVaultPointsForIntroFeedRequest{
 		UserId: userId,
+	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
+}
+
+func (w *Wrapper) AddPointsToVault(userId int64, points decimal.Decimal, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[AddPointsToVaultResponse] {
+	return wrappers.ExecuteRpcRequestAsync[AddPointsToVaultResponse](w.baseWrapper, w.apiUrl, "AddPointsToVault", AddPointsToVaultRequest{
+		UserId: userId,
+		Amount: points,
 	}, map[string]string{}, w.defaultTimeout, apmTransaction, w.serviceName, forceLog)
 }

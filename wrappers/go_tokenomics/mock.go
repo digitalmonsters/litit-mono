@@ -22,6 +22,7 @@ type GoTokenomicsWrapperMock struct {
 	GetReferralsProgressInfoFn            func(referrerId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetReferralProgressInfoResponse]
 	GetMyReferredUsersWatchedVideoInfoFn  func(referrerId, page, count int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[GetMyReferredUsersWatchedVideoInfoResponse]
 	DeductVaultPointsForIntroFeedFn       func(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[DeductVaultPointsForIntroFeedResponse]
+	AddPointsToVaultFn                    func(userId int64, points decimal.Decimal, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[AddPointsToVaultResponse]
 }
 
 func (w *GoTokenomicsWrapperMock) GetUsersTokenomicsInfo(userIds []int64, filters []filters.Filter, ctx context.Context, forceLog bool) chan wrappers.GenericResponseChan[map[int64]UserTokenomicsInfo] {
@@ -68,6 +69,10 @@ func (w *GoTokenomicsWrapperMock) GetMyReferredUsersWatchedVideoInfo(referrerId,
 
 func (w *GoTokenomicsWrapperMock) DeductVaultPointsForIntroFeed(userId int64, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[DeductVaultPointsForIntroFeedResponse] {
 	return w.DeductVaultPointsForIntroFeedFn(userId, apmTransaction, forceLog)
+}
+
+func (w *GoTokenomicsWrapperMock) AddPointsToVault(userId int64, points decimal.Decimal, apmTransaction *apm.Transaction, forceLog bool) chan wrappers.GenericResponseChan[AddPointsToVaultResponse] {
+	return w.AddPointsToVaultFn(userId, points, apmTransaction, forceLog)
 }
 
 func GetMock() IGoTokenomicsWrapper {
