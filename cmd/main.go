@@ -133,8 +133,8 @@ func main() {
 	followListener := followConsumer.InitListener(ctx, cfg.FollowListener, notificationSender).ListenAsync()
 	tokenomicsNotificationListener := tokenomics_notification.InitListener(ctx, cfg.TokenomicsNotificationListener,
 		notificationSender).ListenAsync()
-	emailNotificationListener := email_notification.InitListener(ctx, cfg.EmailNotificationListener,
-		notificationSender, cfg.EmailLinks).ListenAsync()
+	email_notification.InitListener(ctx, cfg.EmailNotificationListener,
+		notificationSender, cfg.EmailLinks, mailSvc, userGoWrapper)
 	pushAdminMessageListener := push_admin_message.InitListener(ctx, cfg.PushAdminMessageListener,
 		notificationSender).ListenAsync()
 	userDeleteListener := user_delete.InitListener(ctx, cfg.UserDeleteListener).ListenAsync()
@@ -208,9 +208,6 @@ func main() {
 		},
 		func() error {
 			return tokenomicsNotificationListener.Close()
-		},
-		func() error {
-			return emailNotificationListener.Close()
 		},
 		func() error {
 			return pushAdminMessageListener.Close()

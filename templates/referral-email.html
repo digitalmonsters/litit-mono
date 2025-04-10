@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="x-apple-disable-message-reformatting" />
+        <title>You’ve Been Referred!</title>
+    </head>
+    <body
+        style="
+            font-family: Inter, sans-serif;
+            padding: 40px 0;
+            background-color: #f5f5f5;
+        "
+    >
+        <table
+            align="center"
+            width="100%"
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            role="presentation"
+            style="
+                max-width: 600px;
+                background-color: #ffffff;
+                border-radius: 16px;
+                margin: 0 auto;
+                padding: 48px;
+                box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.12);
+            "
+        >
+            <tr>
+                <td>
+                    <img
+                        alt="Logo"
+                        height="120"
+                        src="https://lit.it/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo-pic.aa01ca02.png&amp;w=640&amp;q=75"
+                        style="display: block; margin: 0 auto 32px"
+                        width="120"
+                    />
+                    <h1
+                        style="
+                            font-size: 36px;
+                            font-weight: 800;
+                            color: #ff3366;
+                            text-align: center;
+                            margin: 0 0 8px;
+                        "
+                    >
+                        You’ve Been Referred!
+                    </h1>
+                    <p
+                        style="
+                            font-size: 18px;
+                            font-weight: 500;
+                            color: #666666;
+                            margin: 16px 0 24px;
+                            text-align: center;
+                        "
+                    >
+                        {{.ReferrerName}} thinks you’d love this!
+                    </p>
+                    <p
+                        style="
+                            font-size: 16px;
+                            color: #444444;
+                            margin-bottom: 32px;
+                            text-align: center;
+                        "
+                    >
+                        Hello {{.UserName}}, you’ve been invited to join by
+                        <strong>{{.ReferrerName}}</strong>. You’re just a click
+                        away from unlocking exclusive benefits!
+                    </p>
+                    <div style="text-align: center; margin: 32px 0">
+                        <a
+                            href="{{.ReferralLink}}"
+                            style="
+                                font-size: 18px;
+                                text-decoration: none;
+                                background-color: #ff3366;
+                                color: #ffffff;
+                                font-weight: 700;
+                                padding: 12px 24px;
+                                border-radius: 8px;
+                                display: inline-block;
+                            "
+                            >Accept Your Invite</a
+                        >
+                    </div>
+                    <p
+                        style="
+                            font-size: 14px;
+                            color: #666666;
+                            margin-bottom: 32px;
+                            text-align: center;
+                        "
+                    >
+                        You’ve been referred {{.NumReferrals}} time{{if ne
+                        .NumReferrals 1}}s{{end}}!
+                    </p>
+                    <hr
+                        style="
+                            width: 100%;
+                            border-top: 1px solid #eaeaea;
+                            border-bottom: 1px solid #e5e5e5;
+                            margin: 32px 0;
+                        "
+                    />
+                    <p
+                        style="
+                            font-size: 24px;
+                            font-weight: 600;
+                            color: #333333;
+                            margin: 16px 0 24px;
+                            text-align: center;
+                        "
+                    >
+                        Why Join Us?
+                    </p>
+                    <table
+                        align="center"
+                        width="100%"
+                        cellpadding="0"
+                        cellspacing="0"
+                        role="presentation"
+                        style="display: flex; justify-content: center"
+                    >
+                        <tr>
+                            <td
+                                style="
+                                    text-align: center;
+                                    padding: 24px;
+                                    border-radius: 12px;
+                                    background-color: #f9f9f9;
+                                    margin: 0 12px;
+                                    width: 50%;
+                                "
+                            >
+                                <img
+                                    alt="Icon"
+                                    height="40"
+                                    src="https://lit.it/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fadvantages-pic-1.e852a4f6.png&amp;w=1920&amp;q=75"
+                                    style="margin: 0 auto 16px"
+                                    width="40"
+                                />
+                                <p
+                                    style="
+                                        font-size: 18px;
+                                        font-weight: 600;
+                                        color: #ff3366;
+                                        margin-bottom: 8px;
+                                    "
+                                >
+                                    Rewarding Experience
+                                </p>
+                                <p style="font-size: 14px; color: #666666">
+                                    Earn points and perks when you join through
+                                    a referral
+                                </p>
+                            </td>
+                            <td
+                                style="
+                                    text-align: center;
+                                    padding: 24px;
+                                    border-radius: 12px;
+                                    background-color: #f9f9f9;
+                                    margin: 0 12px;
+                                    width: 50%;
+                                "
+                            >
+                                <img
+                                    alt="Icon"
+                                    height="40"
+                                    src="https://lit.it/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fadvantages-pic-2.ef839ef8.png&amp;w=1920&amp;q=75"
+                                    style="margin: 0 auto 16px"
+                                    width="40"
+                                />
+                                <p
+                                    style="
+                                        font-size: 18px;
+                                        font-weight: 600;
+                                        color: #ff3366;
+                                        margin-bottom: 8px;
+                                    "
+                                >
+                                    Trusted Network
+                                </p>
+                                <p style="font-size: 14px; color: #666666">
+                                    Join a platform recommended by someone you
+                                    trust
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
