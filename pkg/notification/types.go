@@ -118,6 +118,7 @@ type GetDeviceTokensRPCResponse struct {
 	DeviceTokens map[int64]string `json:"device_tokens"`
 }
 
+
 type TrackFCMNotification struct {
 	UserId         int64     `json:"user_id"`
 	NotificationId int64     `json:"notification_id"`

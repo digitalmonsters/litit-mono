@@ -827,7 +827,6 @@ func GetDeviceTokensByUserID(userID []int64, db *gorm.DB) (GetDeviceTokensRPCRes
 
 	return response, nil
 }
-func NotificationEventAPILog(req TrackFCMNotification, db *gorm.DB) error {
 	if err := db.Table("track_fcm_notifications").Create(&req).Error; err != nil {
 		return err
 	}
