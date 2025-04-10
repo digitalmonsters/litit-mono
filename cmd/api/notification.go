@@ -25,6 +25,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 	readNotificationPath := "/mobile/v1/notification/read"
 	inAppNotificationsPath := "/mobile/v1/app/notifications"
+	notificationTracker := "/mobile/v1/tracknotification"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -135,6 +136,26 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 
 		return nil, nil
 	}, readNotificationPath, http.MethodPost).RequireIdentityValidation().Build()); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+
+		var req notificationPkg.TrackFCMNotification
+
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
+		}
+
+		db := database.GetDb(database.DbTypeMaster).WithContext(executionData.Context)
+
+		if err := notificationPkg.NotificationEventAPILog(req, db); err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return nil, nil
+	}, notificationTracker, http.MethodPost).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
