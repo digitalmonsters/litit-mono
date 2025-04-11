@@ -125,6 +125,7 @@ const (
 	PointsEarnedTypeDay1OnboardingReward                      = PointsEarnedType(64)
 	PointsEarnedTypeDay2OnboardingReward                      = PointsEarnedType(65)
 	PointsEarnedTypeDay3OnboardingReward                      = PointsEarnedType(66)
+	PointsEarnedTypeIntroDmReward                             = PointsEarnedType(67)
 )
 
 type WithdrawalStatus int16
@@ -356,6 +357,7 @@ const (
 	FRIENDS_WATCHED_10HRS_VIDEO = PointToVaultType("FRIENDS_WATCHED_10HRS_VIDEO")
 	WEEKLY_REFERRALS            = PointToVaultType("WEEKLY_REFERRALS")
 	FRIENDS_WATCHED_10ADS       = PointToVaultType("FRIENDS_WATCHED_10ADS")
+	INTRO_DM_REWARD             = PointToVaultType("INTRO_DM_REWARD")
 )
 
 var ALL_FRONTEND_REWARD_TYPES = []PointToVaultType{
@@ -377,6 +379,7 @@ var ALL_FRONTEND_REWARD_TYPES = []PointToVaultType{
 	MONTHLY_TIME_MEGA_BONUS,
 	SURVEY,
 	FRIENDS_WATCHED_10ADS,
+	INTRO_DM_REWARD,
 }
 
 type TokenomicsAppConfig struct {
