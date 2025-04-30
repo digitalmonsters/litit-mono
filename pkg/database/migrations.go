@@ -617,5 +617,23 @@ func getMigrations() []*gormigrate.Migration {
 				`)
 			},
 		},
+		{
+			ID: "track_fcm_notifications_100420251200",
+			Migrate: func(db *gorm.DB) error {
+				return boilerplate_testing.ExecutePostgresSql(db, `
+					CREATE TABLE IF NOT EXISTS public.track_fcm_notifications (
+						user_id int8 NOT NULL,
+						notification_id int8 NOT NULL,
+						device_id varchar(255) NOT NULL,
+						opened_at timestamptz NOT NULL,
+						created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+					);
+		
+					CREATE INDEX IF NOT EXISTS track_fcm_notifications_user_idx ON public.track_fcm_notifications USING btree (user_id);
+					CREATE INDEX IF NOT EXISTS track_fcm_notifications_device_idx ON public.track_fcm_notifications USING btree (device_id);
+					CREATE INDEX IF NOT EXISTS track_fcm_notifications_notification_idx ON public.track_fcm_notifications USING btree (notification_id);
+				`)
+			},
+		},
 	}
 }

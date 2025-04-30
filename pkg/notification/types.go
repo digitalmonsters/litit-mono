@@ -117,3 +117,10 @@ type GetDeviceTokensRPCRequest struct {
 type GetDeviceTokensRPCResponse struct {
 	DeviceTokens map[int64]string `json:"device_tokens"`
 }
+
+type TrackFCMNotification struct {
+	UserId         int64     `json:"user_id"`
+	NotificationId int64     `json:"notification_id"`
+	DeviceId       string    `json:"device_id"`
+	OpenedAt       time.Time `json:"opened_at"`
+}

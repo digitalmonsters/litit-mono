@@ -25,6 +25,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 	readNotificationPath := "/mobile/v1/notification/read"
 	inAppNotificationsPath := "/mobile/v1/app/notifications"
+	// notificationTracker := "/mobile/v1/tracknotification"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
 		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
@@ -129,8 +130,9 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericMappingError)
 		}
 
-		if err := notificationPkg.ReadNotification(req, executionData.UserId, executionData.Context); err != nil {
-			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		db := database.GetDb(database.DbTypeMaster).WithContext(executionData.Context)
+
+		if err := notificationPkg.NotificationEventAPILog(executionData.UserId, req.NotificationId, executionData.DeviceId, db); err != nil {
 		}
 
 		return nil, nil
