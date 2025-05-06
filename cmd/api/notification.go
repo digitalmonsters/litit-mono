@@ -133,8 +133,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 
 		db := database.GetDb(database.DbTypeMaster).WithContext(executionData.Context)
 
-		if err := notificationPkg.NotificationEventAPILog(req.NotificationId, executionData.UserId, executionData.DeviceId, db); err != nil {
-			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		if err := notificationPkg.NotificationEventAPILog(executionData.UserId, req.NotificationId, executionData.DeviceId, db); err != nil {
 		}
 
 		return nil, nil
