@@ -124,3 +124,9 @@ type TrackFCMNotification struct {
 	DeviceId       string    `json:"device_id"`
 	OpenedAt       time.Time `json:"opened_at"`
 }
+
+type NotificationDeviceStats struct {
+	NotificationId int64
+	DeviceId       string
+	Opens          int64
+}

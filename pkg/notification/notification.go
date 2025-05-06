@@ -841,3 +841,18 @@ func NotificationEventAPILog(userId, notificationId int64, deviceId string, db *
 	}
 	return nil
 }
+
+func NotificationAnalyticsByDevice(db *gorm.DB) ([]NotificationDeviceStats, error) {
+	var stats []NotificationDeviceStats
+
+	err := db.Table("track_fcm_notifications").
+		Select("notification_id, device_id, COUNT(*) as opens").
+		Group("notification_id, device_id").
+		Scan(&stats).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
+}
