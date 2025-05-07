@@ -25,6 +25,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 	readNotificationPath := "/mobile/v1/notification/read"
 	inAppNotificationsPath := "/mobile/v1/app/notifications"
+	notificationAnalyticsPath := "/v1/notification/analytics"
 	// notificationTracker := "/mobile/v1/tracknotification"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
@@ -137,6 +138,21 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 
 		return nil, nil
 	}, readNotificationPath, http.MethodPost).RequireIdentityValidation().Build()); err != nil {
+		return err
+	}
+
+	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
+		executionData router.MethodExecutionData) (interface{}, *error_codes.ErrorWithCode) {
+
+		db := database.GetDb(database.DbTypeMaster).WithContext(executionData.Context)
+
+		data, err := notificationPkg.NotificationAnalyticsByDevice(db)
+		if err != nil {
+			return nil, error_codes.NewErrorWithCodeRef(err, error_codes.GenericServerError)
+		}
+
+		return data, nil
+	}, notificationAnalyticsPath, http.MethodGet).RequireIdentityValidation().Build()); err != nil {
 		return err
 	}
 
