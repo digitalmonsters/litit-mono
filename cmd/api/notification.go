@@ -25,7 +25,7 @@ func InitNotificationApi(httpRouter *router.HttpRouter, userGoWrapper user_go.IU
 	readAllNotificationsPath := "/mobile/v1/notifications/reset"
 	readNotificationPath := "/mobile/v1/notification/read"
 	inAppNotificationsPath := "/mobile/v1/app/notifications"
-	notificationAnalyticsPath := "/v1/notification/analytics"
+	notificationAnalyticsPath := "/mobile/v1/notification/analytics"
 	// notificationTracker := "/mobile/v1/tracknotification"
 
 	if err := httpRouter.RegisterRestCmd(router.NewRestCommand(func(request []byte,
