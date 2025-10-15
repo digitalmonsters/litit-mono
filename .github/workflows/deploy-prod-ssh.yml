@@ -1,0 +1,41 @@
+name: deploy-prod-ssh
+
+on:
+  push:
+    tags: [ "v*.*.*" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key:      ${{ secrets.PROD_SSH_KEY }}
+          port:     ${{ secrets.PROD_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            # Use the tag name as IMAGE_TAG (e.g., v1.2.3)
+            export IMAGE_TAG="${GITHUB_REF##*/}"
+            export GITHUB_ORG="${{ github.repository_owner }}"
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+            mkdir -p /opt/litit-mono
+            cd /opt/litit-mono
+            cat > docker-compose.yml <<'COMPOSE'
+            services:
+              api:
+                image: ghcr.io/${GITHUB_ORG}/litit-mono:${IMAGE_TAG}
+                env_file: .env.prod
+                ports:
+                  - "8080:8080"
+                restart: always
+            COMPOSE
+            docker compose pull
+            docker compose up -d

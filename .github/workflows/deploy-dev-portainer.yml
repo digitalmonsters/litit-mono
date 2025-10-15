@@ -1,0 +1,17 @@
+name: deploy-dev-portainer
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: Redeploy via Portainer webhook
+        run: |
+          curl -X POST "${{ secrets.PORTAINER_WEBHOOK_DEV }}" \
+               -H "Content-Type: application/json" \
+               -d '{"pullImage": true}'

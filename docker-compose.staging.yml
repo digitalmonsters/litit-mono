@@ -1,0 +1,7 @@
+services:
+  api:
+    image: ghcr.io/${GITHUB_ORG:-digitalmonsters}/litit-mono:${IMAGE_TAG:-develop}
+    env_file: .env.staging
+    ports:
+      - "8080:8080"
+    restart: always

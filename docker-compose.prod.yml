@@ -1,0 +1,7 @@
+services:
+  api:
+    image: ghcr.io/${GITHUB_ORG:-digitalmonsters}/litit-mono:${IMAGE_TAG:-latest}
+    env_file: .env.prod
+    ports:
+      - "8080:8080"
+    restart: always

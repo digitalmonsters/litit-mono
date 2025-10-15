@@ -1,0 +1,40 @@
+name: deploy-staging-ssh
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.STG_HOST }}
+          username: ${{ secrets.STG_USER }}
+          key:      ${{ secrets.STG_SSH_KEY }}
+          port:     ${{ secrets.STG_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            export IMAGE_TAG=develop
+            export GITHUB_ORG="${{ github.repository_owner }}"
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+            mkdir -p /opt/litit-mono
+            cd /opt/litit-mono
+            cat > docker-compose.yml <<'COMPOSE'
+            services:
+              api:
+                image: ghcr.io/${GITHUB_ORG}/litit-mono:${IMAGE_TAG}
+                env_file: .env.staging
+                ports:
+                  - "8080:8080"
+                restart: always
+            COMPOSE
+            docker compose pull
+            docker compose up -d
