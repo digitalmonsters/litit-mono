@@ -1,5 +1,6 @@
-FROM golang:1.22 AS build
+FROM golang:1.25.3 AS build
 WORKDIR /app
+ENV GOTOOLCHAIN=auto
 COPY . .
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/litit ./cmd/api
