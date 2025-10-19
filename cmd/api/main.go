@@ -1,14 +1,14 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
-	"github.com/go-chi/chi/v5"
-
-	"github.com/digitalmonsters/litit-mono/internal/user"
-	"github.com/digitalmonsters/litit-mono/internal/configurator"
+  // ...
+  "github.com/digitalmonsters/litit-mono/internal/notifications"
 )
+r.Route("/v1", func(v chi.Router) {
+  // ...
+  notifications.RegisterRoutes(v)
+})
+
 
 var Version = "dev"
 
