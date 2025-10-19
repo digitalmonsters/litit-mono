@@ -1,0 +1,71 @@
+{
+  "HttpPort": 5212,
+  "PrivateHttpPort": 5211,
+  "AuthApiUrl": "http://localhost",
+  "Db": {
+    "Host": "litit-staging.postgres.database.azure.com",
+    "Port": 5432,
+    "Db": "base-api",
+    "User": "litit",
+    "Password": "7V4DNDqn5t"
+  },
+  "KafkaWriter": {
+    "Hosts": "localhost",
+    "Tls": false
+  },
+  "NotifierCommentConfig": {
+    "KafkaTopic": {
+      "Name": "local.comments",
+      "NumPartitions": 1,
+      "ReplicationFactor": 1
+    },
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierContentCommentsCounterConfig": {
+    "KafkaTopic": {
+      "Name": "local.content_comments_counter",
+      "NumPartitions": 1,
+      "ReplicationFactor": 1
+    },
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierUserCommentsCounterConfig": {
+    "KafkaTopic": {
+      "Name": "local.user_comments_counter",
+      "NumPartitions": 1,
+      "ReplicationFactor": 1
+    },
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "NotifierVoteConfig": {
+    "KafkaTopic": {
+      "Name": "local.comment_votes",
+      "NumPartitions": 1,
+      "ReplicationFactor": 1
+    },
+    "PollTimeMs": 2000,
+    "WorkerPoolSize": 128
+  },
+  "Wrappers": {
+    "Content": {
+      "ApiUrl": ""
+    },
+    "UserInfo": {
+      "ApiUrl": ""
+    },
+    "UserBlock": {
+      "ApiUrl": ""
+    }
+  },
+  "UserListener": {
+    "Hosts": "127.0.0.1",
+    "Topic": "local.user",
+    "GroupId": "local_comments_user_listener",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true
+  }
+}
