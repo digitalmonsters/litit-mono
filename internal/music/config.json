@@ -1,0 +1,167 @@
+{
+  "HttpPort": 5212,
+  "PrivateHttpPort": 5211,
+  "MasterDb": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "local_music",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "ReadonlyDb": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "local_music",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "SoundStripe": {
+    "ApiUrl": "",
+    "ApiToken": "",
+    "MaxWorkers": 64,
+    "MaxTimeout": 10
+  },
+  "S3": {
+    "CdnDirectory": "",
+    "CdnUrl": "",
+    "Region": "",
+    "Bucket": ""
+  },
+  "Creators": {
+    "MaxThresholdHours": 48,
+    "Listeners": {
+      "DislikeCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_dislike_consumer",
+          "Topic": "local.dislikes_count",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      },
+      "LoveCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_love_consumer",
+          "Topic": "local.loves_count",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      },
+      "LikeCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_like_consumer",
+          "Topic": "local.likes_count",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      },
+      "ListenCounter": {
+        "Kafka": {
+          "Hosts": "127.0.0.1",
+          "KafkaAuth": {},
+          "MinBytes": 100,
+          "MaxBytes": 10e7,
+          "Tls": true,
+          "GroupId": "local_back_listen_consumer",
+          "Topic": "local.view_stats_update",
+          "MaxBackOffTimeMilliseconds": 60000,
+          "BackOffTimeIntervalMilliseconds": 1000
+        },
+        "MaxDuration": 500,
+        "MaxBatchSize": 1000,
+        "WorkerPoolSize": 5
+      }
+    }
+  },
+  "KafkaWriter": {
+    "Hosts": "",
+    "KafkaAuth": {},
+    "Tls": true
+  },
+  "NotifierCreatorsConfig": {
+    "KafkaTopic": {
+      "Name": "local.creators",
+      "NumPartitions": 12,
+      "ReplicationFactor": 2
+    },
+    "PollTimeMs": 2000
+  },
+  "Redis": {
+    "Host": "localhost:6379",
+    "Tls": false,
+    "Db": 1
+  },
+  "Jobber": {
+    "Tls": true,
+    "DefaultQueue": "local_music_tasks",
+    "ResultExpire": 3600,
+    "Broker": "redis://127.0.0.1:6379",
+    "ResultBackend": "redis://127.0.0.1:6379",
+    "Lock": "redis://127.0.0.1:6379",
+    "Concurrency": 15
+  },
+  "Wrappers": {
+    "Content": {
+      "ApiUrl": ""
+    },
+    "UserInfo": {
+      "ApiUrl": ""
+    },
+    "UserBlock": {
+      "ApiUrl": ""
+    },
+    "Auth": {
+      "ApiUrl": ""
+    },
+    "Likes": {
+      "ApiUrl": ""
+    },
+    "Follows": {
+      "ApiUrl": ""
+    },
+    "Views": {
+      "ApiUrl": ""
+    },
+    "UserCategories": {
+      "ApiUrl": ""
+    },
+    "UserHashtags": {
+      "ApiUrl": ""
+    },
+    "UserLikes": {
+      "ApiUrl": ""
+    },
+    "Categories": {
+      "ApiUrl": ""
+    },
+    "Hashtags": {
+      "ApiUrl": ""
+    },
+    "PointsCount": {
+      "ApiUrl": ""
+    }
+  }
+}
