@@ -1,0 +1,51 @@
+name: prod cicd
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Add it Github .netrc
+        run: |
+          mkdir priv
+          echo ${{ secrets.NETRC_FILE_CONTENT }} > priv/.netrc
+        env:
+          NETRC_FILE_CONTENT: ${{ secrets.NETRC_FILE_CONTENT }}
+
+      - name: Authenticate with Azure ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: lititacr.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          image_tag="v10"
+          echo "Using hardcoded image tag: $image_tag"
+          docker build -t lititacr.azurecr.io/configurator:$image_tag .
+          docker push lititacr.azurecr.io/configurator:$image_tag
+
+      - name: Update version tag using API
+        run: |
+          curl --location --request POST 'https://cicd.lit.it/api/v1/update_version_tag/configurator/v10' \
+               --header "access_token: ${{ secrets.ACCESS_TOKEN }}"
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Send Slack notification
+        run: |
+          # Add your Slack notification logic here
