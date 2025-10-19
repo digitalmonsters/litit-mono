@@ -1,0 +1,68 @@
+name: CI/CD for Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Add it Github .netrc
+        run: |
+          mkdir priv
+          echo ${{ secrets.NETRC_FILE_CONTENT }} > priv/.netrc
+        env:
+          NETRC_FILE_CONTENT: ${{ secrets.NETRC_FILE_CONTENT }}
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group lititRG --name litit-aks
+
+      - name: Authenticate with Azure ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: lititacr.azurecr.io
+          username: ${{ secrets.ACR_USERNAME_STAGING }}
+          password: ${{ secrets.ACR_PASSWORD_STAGING }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t lititacr.azurecr.io/notification-handler:stg .
+          docker push lititacr.azurecr.io/notification-handler:stg
+
+      - name: Update version tag using API
+        run: |
+          curl --location --request POST 'https://cicd.api.litit1.com/api/v1/update_version_tag/notification-handler/v1' \
+               --header "access_token: ${{ secrets.ACCESS_TOKEN_STAGING }}"
+        env:
+          ACCESS_TOKEN_STAGING: ${{ secrets.ACCESS_TOKEN_STAGING }}
+
+      - name: Restart Kubernetes deployment
+        run: |
+          kubectl rollout restart deployment content -n dev
+
+      - name: Send Slack notification
+        run: |
+          # Add your Slack notification logic here

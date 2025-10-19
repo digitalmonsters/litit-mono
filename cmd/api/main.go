@@ -1,13 +1,16 @@
 package main
 
 import (
+	// ...
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-
-	"github.com/digitalmonsters/litit-mono/internal/user"
+	"github.com/digitalmonsters/litit-mono/internal/ads"
+	"github.com/digitalmonsters/litit-mono/internal/comments"
 	"github.com/digitalmonsters/litit-mono/internal/configurator"
+	"github.com/digitalmonsters/litit-mono/internal/notifications"
+	"github.com/digitalmonsters/litit-mono/internal/user"
+	"github.com/go-chi/chi/v5"
 )
 
 var Version = "dev"
@@ -27,6 +30,9 @@ func main() {
 	r.Route("/v1", func(v chi.Router) {
 		user.RegisterRoutes(v)
 		configurator.RegisterRoutes(v)
+		notifications.RegisterRoutes(v)
+		comments.RegisterRoutes(v)
+		ads.RegisterRoutes(v)
 	})
 
 	log.Println("listening on :8080")

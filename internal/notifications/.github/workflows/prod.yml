@@ -1,0 +1,77 @@
+name: CI/CD for Prod
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get image tag from API
+        id: get-image-tag
+        run: |
+          echo "Calling API to get image tag"
+          response=$(curl --location 'https://cicd.lit.it/api/v1/get_new_version_tag/notification-handler' \
+                     --header "access_token: ${{ secrets.ACCESS_TOKEN }}" --silent --write-out "%{http_code}" --output response.json)
+          http_code=$(tail -n1 response.json)
+          echo "HTTP status code: $http_code"
+          if [[ "$http_code" -ne 200 ]]; then
+            echo "API call failed with status $http_code. Defaulting to image tag v10."
+            image_tag="v10"
+          else
+            response=$(cat response.json)
+            echo "API response: $response"  # Log the API response for debugging
+            image_tag=$(echo "$response" | jq -r '.image_tag')
+            if [[ -z "$image_tag" || "$image_tag" == "null" ]]; then
+              image_tag="v10"  # Default to v10 if the image_tag is empty or null
+              echo "Using default image tag: $image_tag"
+            else
+              echo "Extracted image tag: $image_tag"  # Log the extracted image tag for debugging
+            fi
+          fi
+          echo "::set-output name=image_tag::$image_tag"
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Add it Github .netrc
+        run: |
+          mkdir priv
+          echo ${{ secrets.NETRC_FILE_CONTENT }} > priv/.netrc
+        env:
+          NETRC_FILE_CONTENT: ${{ secrets.NETRC_FILE_CONTENT }}
+
+      - name: Authenticate with Azure ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: lititacr.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          image_tag=${{ steps.get-image-tag.outputs.image_tag }}
+          echo "Using image tag: $image_tag"  # Log the image tag before building and pushing
+          docker build -t lititacr.azurecr.io/notification-handler:$image_tag .
+          docker push lititacr.azurecr.io/notification-handler:$image_tag
+
+      - name: Update version tag using API
+        run: |
+          curl --location --request POST 'https://cicd.lit.it/api/v1/update_version_tag/notification-handler/${{ steps.get-image-tag.outputs.image_tag }}' \
+               --header "access_token: ${{ secrets.ACCESS_TOKEN }}"
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Send Slack notification
+        run: |
+          # Add your Slack notification logic here

@@ -1,0 +1,212 @@
+{
+  "HttpPort": 5046,
+  "PrivateHttpPort": 5047,
+  "MasterDb": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "notifications",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "ReadonlyDb": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Db": "notifications",
+    "User": "postgres",
+    "Password": "qwerty"
+  },
+  "Scylla": {
+    "Hosts": "localhost:9042",
+    "UserName": "",
+    "Password": "",
+    "Keyspace": "notifications",
+    "PageSize": 0,
+    "NumConns": 12,
+    "MaxRoutingKeyInfo": 3000,
+    "MaxPreparedStmts": 3000
+  },
+  "KafkaWriter": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "Tls": false
+  },
+  "CreatorsListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_users_notification_handler_creators_listener",
+    "Topic": "prodv2.users.creators"
+  },
+  "MusicCreatorsListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": true,
+    "GroupId": "prodv2_notification_handler_music_creators_listener",
+    "Topic": "prodv2_creators"
+  },
+  "SendingQueueListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_notifications_notification_handler_sending_queue_listener",
+    "Topic": "prodv2.notifications.handler_sending_queue"
+  },
+  "CommentListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_comments_notification_handler_comment_listener",
+    "Topic": "prodv2.comments"
+  },
+  "VoteListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_comments_notification_handler_vote_listener",
+    "Topic": "prodv2.comment_votes"
+  },
+  "LikeListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_likes_notification_handler_like_listener",
+    "Topic": "prodv2.likes.likes"
+  },
+  "ContentListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_content_notification_handler_content_listener",
+    "Topic": "prodv2.content.content"
+  },
+  "KysStatusListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_users_notification_handler_kyc_status_listener",
+    "Topic": "prodv2.users.user"
+  },
+  "FollowListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_follows_notification_handler_follow_listener",
+    "Topic": "prodv2.follows.follows"
+  },
+  "TokenomicsNotificationListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_notifications_notification_handler_tokenomics_notification_listener",
+    "Topic": "prodv2.notifications.notification_created"
+  },
+  "EmailNotificationListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_notifications_notification_handler_email_notification_listener",
+    "Topic": "prodv2.notifications.notification_created"
+  },
+  "PushAdminMessageListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_notifications_notification_handler_push_admin_messages_listener",
+    "Topic": "prodv2.notifications.push_admin_messages"
+  },
+  "UserDeleteListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_users_notification_handler_user_delete_listener",
+    "Topic": "prodv2.users.user"
+  },
+  "UserBannedListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_user_notification_handler_user_banned_listener",
+    "Topic": "prodv2.users.user"
+  },
+  "UserUpdateListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 10000000,
+    "Tls": false,
+    "GroupId": "prodv2_user_notification_handler_user_update_listener",
+    "Topic": "prodv2.users.user"
+  },
+  "Wrappers": {
+    "NotificationGateway": {
+      "ApiUrl": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+      "TimeoutSec": 10,
+      "PushPublisher": {
+        "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "prodv2.notifications.push_messages",
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
+        }
+      },
+      "EmailPublisher": {
+        "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+        "Tls": false,
+        "KafkaAuth": {},
+        "Topic": {
+          "Name": "prodv2.notifications.email",
+          "NumPartitions": 12,
+          "ReplicationFactor": 2
+        }
+      }
+    }
+  },
+  "EmailLinks": {
+    "VerifyHost": "lit.it",
+    "VerifyPath": "pages/verify",
+    "MarketingSite": "https://lit.it",
+    "VerifyEmailMarketingPath": "pages/verify_profile"
+  },
+  "AzureBlob": {
+    "UseCliAuth": false,
+    "AccountName": "",
+    "AccountKey": "",
+    "Container": "lit-video-cdn-dev",
+    "CdnDirectory": "",
+    "CdnUrl": ""
+  },
+  "Jobber": {
+    "DefaultQueue": "dev_notification_handler_tasks",
+    "ResultExpire": 3600,
+    "Broker": "rediss://localhost:6379/6",
+    "ResultBackend": "rediss://localhost:6379/7",
+    "Lock": "rediss://localhost:6379",
+    "Concurrency": 40,
+    "Tls": false
+  },
+  "MusicCreatorListener": {
+    "Hosts": "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092",
+    "MinBytes": 100,
+    "MaxBytes": 1000000,
+    "Tls": false,
+    "GroupId": "prodv2_music_notification_handler_music_creator_listener",
+    "Topic": "prodv2.music.creators"
+  },
+  "Firebase": {
+    "ServiceAccountJSON": ""
+  }
+}

@@ -1,0 +1,76 @@
+package popular
+
+import (
+	"fmt"
+	"github.com/digitalmonsters/go-common/boilerplate_testing"
+	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/music/configs"
+	"github.com/digitalmonsters/music/pkg/database"
+	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
+	"os"
+	"testing"
+)
+
+var config configs.Settings
+var gormDb *gorm.DB
+
+func TestMain(m *testing.M) {
+	config = configs.GetConfig()
+	gormDb = database.GetDb(database.DbTypeMaster)
+	os.Exit(m.Run())
+}
+
+func TestGetPopularSongs(t *testing.T) {
+	if err := boilerplate_testing.FlushPostgresTables(config.MasterDb, []string{"public.playlists", "public.songs", "public.playlist_song_relations"}, nil, t); err != nil {
+		t.Fatal(err)
+	}
+
+	var songs []database.Song
+	for i := 0; i < 50; i++ {
+		songs = append(songs, database.Song{
+			ExternalId:   fmt.Sprintf("test_%v", i),
+			Source:       database.SongSourceSoundStripe,
+			Title:        fmt.Sprintf("test_%v", i),
+			Artist:       fmt.Sprintf("artist_%v", i),
+			ListenAmount: i * 100,
+		})
+	}
+
+	err := gormDb.Create(&songs).Error
+	assert.Nil(t, err)
+
+	playlist := database.Playlist{
+		Name:      "test",
+		SortOrder: 1,
+	}
+
+	err = gormDb.Create(&playlist).Error
+	assert.Nil(t, err)
+
+	songRelations := []database.PlaylistSongRelations{
+		{
+			PlaylistId: playlist.Id,
+			SongId:     songs[0].Id,
+			SortOrder:  1,
+		},
+		{
+			PlaylistId: playlist.Id,
+			SongId:     songs[1].Id,
+			SortOrder:  2,
+		},
+	}
+
+	err = gormDb.Create(&songRelations).Error
+	assert.Nil(t, err)
+
+	resp, err := GetPopularSongs(GetPopularSongsRequest{
+		Count: 10,
+	}, gormDb, router.MethodExecutionData{
+		ApmTransaction: nil,
+		Context:        nil,
+		UserId:         0,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, resp.Items, 2)
+}

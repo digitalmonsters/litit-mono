@@ -1,0 +1,37 @@
+package comments
+
+import (
+	"github.com/digitalmonsters/comments/pkg/database"
+)
+
+func MapDbCommentToComment(comment database.Comment) Comment {
+	return Comment{
+		SimpleComment: SimpleComment{
+			Id:           comment.Id,
+			AuthorId:     comment.AuthorId,
+			NumReplies:   comment.NumReplies,
+			NumUpvotes:   comment.NumUpvotes,
+			NumDownvotes: comment.NumDownvotes,
+			CreatedAt:    comment.CreatedAt,
+			CreatedAtTs:  comment.CreatedAt.Unix(),
+			ContentId:    comment.ContentId,
+			Comment:      comment.Comment,
+		},
+	}
+}
+
+func mapDbCommentToCommentOnProfile(comment database.Comment) CommentOnProfile {
+	return CommentOnProfile{
+		SimpleComment: SimpleComment{
+			Id:           comment.Id,
+			AuthorId:     comment.AuthorId,
+			NumReplies:   comment.NumReplies,
+			NumUpvotes:   comment.NumUpvotes,
+			NumDownvotes: comment.NumDownvotes,
+			CreatedAt:    comment.CreatedAt,
+			CreatedAtTs:  comment.CreatedAt.Unix(),
+			ContentId:    comment.ContentId,
+			Comment:      comment.Comment,
+		},
+	}
+}
