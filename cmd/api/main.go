@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/digitalmonsters/litit-mono/internal/ads"
+	"github.com/digitalmonsters/litit-mono/internal/comments"
 	"github.com/digitalmonsters/litit-mono/internal/configurator"
 	"github.com/digitalmonsters/litit-mono/internal/notifications"
 	"github.com/digitalmonsters/litit-mono/internal/user"
@@ -29,6 +31,8 @@ func main() {
 		user.RegisterRoutes(v)
 		configurator.RegisterRoutes(v)
 		notifications.RegisterRoutes(v)
+		comments.RegisterRoutes(v)
+		ads.RegisterRoutes(v)
 	})
 
 	log.Println("listening on :8080")
