@@ -1,0 +1,278 @@
+package message
+
+import (
+	"fmt"
+	"github.com/digitalmonsters/ads-manager/configs"
+	"github.com/digitalmonsters/ads-manager/pkg/database"
+	"github.com/digitalmonsters/go-common/router"
+	"github.com/digitalmonsters/go-common/wrappers/user_go"
+	"github.com/lib/pq"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"math"
+	"strings"
+	"time"
+)
+
+func UpsertMessageBulkAdmin(req UpsertMessageAdminRequest, db *gorm.DB) ([]database.Message, error) {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	for _, item := range req.Items {
+		var duplicates []int64
+
+		query := tx.Model(&database.Message{}).
+			Where("countries && ?::text[]", item.Countries).
+			Where("verification_status = ?", item.VerificationStatus).
+			Where("type = ?", item.Type)
+
+		if item.Id.Valid {
+			query = query.Where("id <> ?", item.Id.Int64)
+		}
+
+		if item.AgeFrom > 0 && item.AgeTo > 0 {
+			query = query.Where(db.Where("int4range(messages.age_from, messages.age_to) && int4range(?,?)", item.AgeFrom, item.AgeTo).
+				Or("messages.age_from = ?", item.AgeTo).Or("messages.age_to = ?", item.AgeFrom))
+		}
+
+		if item.PointsFrom > 0 && item.PointsTo > 0 {
+			query = query.Where(db.Where("numrange(messages.points_from, messages.points_to) && numrange(?,?)", item.PointsFrom, item.PointsTo).
+				Or("messages.points_from = ?", item.PointsTo).Or("messages.points_to = ?", item.PointsFrom))
+		}
+
+		if err := query.Pluck("id", &duplicates).Error; err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		if len(duplicates) > 0 {
+			return nil, fmt.Errorf("there are overlaps with other messages %v", duplicates)
+		}
+	}
+
+	var records []database.Message
+	var messagesIds []int64
+	for _, item := range req.Items {
+		if item.Id.Valid {
+			messagesIds = append(messagesIds, item.Id.Int64)
+		}
+	}
+
+	if err := tx.Where("id in ?", messagesIds).Find(&records).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	exitingRecordsMapped := map[int64]database.Message{}
+	for _, r := range records {
+		exitingRecordsMapped[r.Id] = r
+	}
+
+	records = []database.Message{}
+	for _, item := range req.Items {
+		r := database.Message{
+			Title:       item.Title,
+			Type:        item.Type,
+			Description: item.Description,
+			Countries:   item.Countries,
+			AgeFrom:     item.AgeFrom,
+			AgeTo:       item.AgeTo,
+			PointsFrom:  item.PointsFrom,
+			PointsTo:    item.PointsTo,
+			IsActive:    item.IsActive,
+		}
+
+		if item.VerificationStatus.Valid {
+			status := database.VerificationStatus(int8(item.VerificationStatus.Int64))
+			r.VerificationStatus = &status
+		}
+
+		if item.Id.Valid {
+			r.Id = item.Id.Int64
+			r.UpdatedAt = time.Now()
+
+			if exRecord, ok := exitingRecordsMapped[item.Id.Int64]; ok && exRecord.IsActive != item.IsActive && !item.IsActive {
+				t := time.Now()
+				r.DeactivatedAt = &t
+			}
+		}
+
+		records = append(records, r)
+	}
+
+	if err := tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		UpdateAll: true,
+	}).Create(&records).Error; err != nil {
+		if contain := strings.Contains(err.Error(), "duplicate key value violates unique constraint"); contain {
+			return nil, errors.New("message with the given name has been already created")
+		}
+
+		return nil, errors.WithStack(err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return records, nil
+}
+
+func DeleteMessagesBulkAdmin(req DeleteMessagesBulkAdminRequest, db *gorm.DB) error {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	if err := tx.Where("id in ?", req.Ids).Delete(&database.Message{}).Error; err != nil {
+		return errors.WithStack(err)
+	}
+
+	return tx.Commit().Error
+}
+
+func MessagesListAdmin(req MessagesListAdminRequest, db *gorm.DB) (*MessagesListAdminResponse, error) {
+	var records []database.Message
+	query := db.Model(&database.Message{})
+
+	if req.Keyword.Valid {
+		query = query.Where("title ilike ?", fmt.Sprintf("%%%v%%", req.Keyword.String)).
+			Or("description ilike ?", fmt.Sprintf("%%%v%%", req.Keyword.String))
+	}
+
+	if req.VerificationStatus != nil {
+		query = query.Where("verification_status = ?", req.VerificationStatus)
+	}
+
+	if len(req.Countries) > 0 {
+		var countryArray pq.StringArray
+
+		for _, country := range req.Countries {
+			countryArray = append(countryArray, country)
+		}
+
+		query = query.Where("countries && ?::text[]", countryArray)
+	}
+
+	if req.AgeFromFrom > 0 {
+		query = query.Where("age_from >= ?", req.AgeFromFrom)
+	}
+
+	if req.AgeFromTo > 0 {
+		query = query.Where("age_from <= ?", req.AgeFromTo)
+	}
+
+	if req.AgeToFrom > 0 {
+		query = query.Where("age_to >= ?", req.AgeToFrom)
+	}
+
+	if req.AgeToTo > 0 {
+		query = query.Where("age_to <= ?", req.AgeToTo)
+	}
+
+	if req.PointsFromFrom > 0 {
+		query = query.Where("points_from >= ?", req.PointsFromFrom)
+	}
+
+	if req.PointsFromTo > 0 {
+		query = query.Where("points_from <= ?", req.PointsFromTo)
+	}
+
+	if req.PointsToFrom > 0 {
+		query = query.Where("points_to >= ?", req.PointsToFrom)
+	}
+
+	if req.PointsToTo > 0 {
+		query = query.Where("points_to <= ?", req.PointsToTo)
+	}
+
+	if req.IsActive.Valid {
+		query = query.Where("is_active = ?", req.IsActive.Bool)
+	}
+
+	var totalCount int64
+
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if err := query.Limit(req.Limit).Offset(req.Offset).
+		Order("id desc").Find(&records).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &MessagesListAdminResponse{
+		Items:      records,
+		TotalCount: totalCount,
+	}, nil
+}
+
+func IsAdsAvailableForUser(userId int64) bool {
+	userIdStr := fmt.Sprint(userId)
+	for _, val := range strings.Split(configs.GetAppConfig().ADS_AVAILABLE_FOR_USER_IDS, ",") {
+		if strings.EqualFold(userIdStr, strings.TrimSpace(val)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func GetMessageForUser(userId int64, messageType database.MessageType, db *gorm.DB, userGoWrapper user_go.IUserGoWrapper, executionData router.MethodExecutionData) (*NotificationMessage, error) {
+	userRespCh := <-userGoWrapper.GetUsersDetails([]int64{userId}, executionData.Context, true)
+	if userRespCh.Error != nil {
+		return nil, userRespCh.Error.ToError()
+	}
+
+	userInfo, ok := userRespCh.Response[userId]
+	if !ok {
+		return nil, errors.New("user info not found")
+	}
+
+	var q string
+	if messageType == database.MessageTypeWeb {
+		q = fmt.Sprintf("select * from messages where type = %v and is_active is true and deleted_at is null order by id desc", messageType)
+	} else if messageType == database.MessageTypeMobile {
+		q = fmt.Sprintf("select * from messages where type = %v and countries && ARRAY['%v'] and (verification_status = %v or verification_status is null) "+
+			"and int4range(messages.age_from, messages.age_to) @> %v "+
+			"and (numrange(messages.points_from, messages.points_to) @> %.2f OR (points_from = 0 and points_to = 0)) "+
+			"and is_active is true and deleted_at is null", messageType, userInfo.CountryCode, database.VerificationStatusFromString(userInfo.KycStatus),
+			getAge(userInfo.Birthdate.ValueOrZero()), userInfo.VaultPoints.InexactFloat64())
+	}
+
+	var records []database.Message
+	if err := db.Raw(q).Scan(&records).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	switch len(records) {
+	case 0:
+		return nil, nil
+	case 1:
+		return &NotificationMessage{
+			Title:       records[0].Title,
+			Description: records[0].Description,
+		}, nil
+	default:
+		r := getProperMessage(records, userInfo)
+		return &NotificationMessage{
+			Title:       r.Title,
+			Description: r.Description,
+		}, nil
+	}
+}
+
+func getProperMessage(records []database.Message, user user_go.UserDetailRecord) database.Message {
+	for _, r := range records {
+		if (r.PointsFrom >= user.VaultPoints.InexactFloat64()) && (r.PointsTo <= user.VaultPoints.InexactFloat64()) {
+			return r
+		}
+
+		if r.VerificationStatus != nil && *r.VerificationStatus == database.VerificationStatusFromString(user.KycStatus) {
+			return r
+		}
+	}
+
+	return records[0]
+}
+
+func getAge(birthdate time.Time) int {
+	return int(math.Floor(time.Since(birthdate).Hours() / 24 / 365))
+}
