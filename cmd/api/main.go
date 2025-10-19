@@ -1,36 +1,34 @@
 package main
 
 import (
-    "log"
-    "net/http"
+	"log"
+	"net/http"
 
-    "github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5"
 
-    // import the user module from this repo
-    "github.com/digitalmonsters/litit-mono/internal/user"
+	"github.com/digitalmonsters/litit-mono/internal/user"
+	"github.com/digitalmonsters/litit-mono/internal/configurator"
 )
 
+var Version = "dev"
+
 func main() {
-    r := chi.NewRouter()
+	r := chi.NewRouter()
 
-    // health
-    r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
-        w.Write([]byte("ok"))
-    })
+	// health & version
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
+	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(Version))
+	})
 
-    // versioned API
-    r.Route("/v1", func(v chi.Router) {
-        user.RegisterRoutes(v)
-        // auth.RegisterRoutes(v)
-        // content.RegisterRoutes(v)
-        // comments.RegisterRoutes(v)
-        // ads.RegisterRoutes(v)
-        // notifications.RegisterRoutes(v)
-        // music.RegisterRoutes(v)
-        // tokenomics.RegisterRoutes(v)
-        // configurator.RegisterRoutes(v)
-    })
+	// versioned API surface
+	r.Route("/v1", func(v chi.Router) {
+		user.RegisterRoutes(v)
+		configurator.RegisterRoutes(v)
+	})
 
-    log.Println("listening on :8080")
-    log.Fatal(http.ListenAndServe(":8080", r))
+	log.Println("listening on :8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
