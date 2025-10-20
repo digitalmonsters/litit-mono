@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LitIt Infrastructure – Live Mermaid Presentation 🌴</title>
 <style>
   body { font-family: Poppins, sans-serif; margin: 0; transition: background .5s, color .5s; }
@@ -10,12 +10,12 @@
   nav a { margin: 0 .5rem; text-decoration: none; color: inherit; font-weight: 600; }
   .slide { display: none; padding: 2rem; text-align: center; }
   .mermaid { margin: 1rem auto; max-width: 90%; }
-  textarea.mmd { width: 90%; height: 200px; margin: 1rem auto; display: block;
+  textarea.mmd { width: 90%; height: 220px; margin: 1rem auto; display: block;
                  font-family: monospace; font-size: 14px; }
   footer { position: fixed; bottom: 10px; width: 100%; text-align: center; }
-  button { background: #FF6F61; color: #fff; border: none; padding: .5rem 1rem;
-           border-radius: 6px; font-weight: 600; cursor: pointer; margin: 0 .3rem; }
-  @media (prefers-color-scheme: dark){
+  button { background: #FF6F61; color: #fff; border: none; padding: .5rem 1rem; border-radius: 6px;
+           font-weight: 600; cursor: pointer; margin: 0 .3rem; }
+  @media (prefers-color-scheme: dark) {
     body { background: #0B132B; color: #E0E0E0; }
     button { background: #4ABDAC; }
   }
@@ -24,7 +24,7 @@
 <body>
 
 <header>
-  <h1>LitIt Platform Infrastructure 🌴</h1>
+  <h1>LitIt Platform Infrastructure 🌴 (Live Mermaid)</h1>
   <nav id="nav"></nav>
 </header>
 
@@ -42,8 +42,9 @@ import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.mi
 mermaid.initialize({ startOnLoad:false, theme:"default" });
 
 const diagrams = [
-  { title:"01 Overview", desc:"High-level architecture", mmd:`graph TD
-  subgraph "Clients"
+  { title:'01 Overview', desc:'High-level architecture',
+    mmd:`graph TD
+  subgraph "Clients (Mobile & Web)"
     A1["Android / iOS / PWA"]
     A2["Web Admin Portal (Next.js)"]
   end
@@ -70,9 +71,10 @@ const diagrams = [
   A2 -->|Admin| B1
   C1 --> D1 & D2 & D3 & D4 & D5
   E1 --> E2 --> C1
-  C1 --> F1` },
+  C1 --> F1`},
 
-  { title:"02 Backend Monolith", desc:"Go Fiber internal modules", mmd:`graph LR
+  { title:'02 Backend Monolith', desc:'Go Fiber monolith modules',
+    mmd:`graph LR
   subgraph "Go Fiber Monolith"
     A["/internal/common<br>Config · DB · Logger · Redis"]
     B["/internal/ws<br>Gotify Bridge + Fallback Hub"]
@@ -85,9 +87,10 @@ const diagrams = [
   end
   A --> B & C & D & E & F & G & H
   E -->|Uploads| Bunny
-  F -->|Tokens| Redis` },
+  F -->|Tokens| Redis`},
 
-  { title:"03 Internal Services", desc:"Background workers and pipelines", mmd:`graph TD
+  { title:'03 Internal Services', desc:'Workers, content, and pipelines',
+    mmd:`graph TD
   subgraph "Internal Services"
     A["content.service.go"]
     B["auth.service.go"]
@@ -101,9 +104,10 @@ const diagrams = [
   C -->|Sync| Postgres
   D -->|Index Build| Meilisearch
   E -->|Push| Gotify
-  F -->|Cache Cleanup| Redis` },
+  F -->|Cache Cleanup| Redis`},
 
-  { title:"04 Database & Storage", desc:"Persistent data layer", mmd:`graph LR
+  { title:'04 Database & Storage', desc:'Persistence layer overview',
+    mmd:`graph LR
   A["PostgreSQL<br>Primary ACID DB"]
   B["Redis 7<br>Cache / Sessions"]
   C["Meilisearch<br>Search Index"]
@@ -112,9 +116,10 @@ const diagrams = [
   A --> E
   B --> A
   C --> A
-  D --> A` },
+  D --> A`},
 
-  { title:"05 Mobile App & UI", desc:"Flutter endpoints and flows", mmd:`graph TD
+  { title:'05 Mobile App & UI', desc:'Flutter endpoints and flows',
+    mmd:`graph TD
   subgraph "Mobile App (Flutter)"
     A1["Login / Register<br>/api/auth/*"]
     A2["Dashboard<br>/api/feed/*"]
@@ -124,9 +129,10 @@ const diagrams = [
     A6["Media Upload<br>/api/content/upload"]
   end
   A1 --> A2 --> A3 --> A4 --> A5 --> A6
-  A4 -->|WebSocket /ws| Gotify` },
+  A4 -->|WebSocket /ws| Gotify`},
 
-  { title:"06 CI/CD & Monitoring", desc:"DevOps & observability stack", mmd:`graph LR
+  { title:'06 CI/CD & Monitoring', desc:'DevOps workflow',
+    mmd:`graph LR
   subgraph "CI/CD"
     A["GitHub Actions"]
     B["Docker Build + Push (GHCR)"]
@@ -139,28 +145,30 @@ const diagrams = [
     G["Loki Logs"]
   end
   A --> B --> C --> D
-  D --> E --> F --> G` },
+  D --> E --> F --> G`},
 
-  { title:"07 Security & Network", desc:"Auth, TLS, and WAF layers", mmd:`graph TD
+  { title:'07 Security & Network', desc:'Auth, TLS, and WAF',
+    mmd:`graph TD
   A["JWT Auth (HS256 / ES256)"]
   B["Device Binding (Mobile)"]
   C["Role-Based Access (/admin/*)"]
   D["TLS Auto-Renew (Caddy)"]
   E["Cloudflare WAF (DDoS Protection)"]
-  A --> B --> C --> D --> E` },
+  A --> B --> C --> D --> E`},
 
-  { title:"08 Marketing & Analytics", desc:"Tracking and analytics stack", mmd:`graph LR
+  { title:'08 Marketing & Analytics', desc:'Tracking and data insights',
+    mmd:`graph LR
   A["Google Analytics / Firebase"]
   B["Meilisearch Logs"]
   C["Bunny Analytics"]
   D["Redis Counters"]
   E["Prometheus / Grafana"]
-  A --> B --> C --> D --> E` }
+  A --> B --> C --> D --> E`}
 ];
 
 const slides=document.getElementById('slides');
 const nav=document.getElementById('nav');
-let idx=0, all=false, editMode=false;
+let editMode=false, idx=0, all=false;
 
 function buildSlides(){
   slides.innerHTML=''; nav.innerHTML='';
@@ -171,34 +179,30 @@ function buildSlides(){
     sec.innerHTML=`
       <h2>${d.title}</h2>
       <p>${d.desc}</p>
-      <textarea class="mmd" style="display:none;">${d.mmd}</textarea>
-      <button class="render-btn" style="display:none;">Render</button>
-      <div class="mermaid">${d.mmd}</div>`;
+      <div class="mmd-view">
+        <textarea class="mmd">${d.mmd}</textarea>
+        <button class="render-btn">Render</button>
+        <div class="mermaid">${d.mmd}</div>
+      </div>`;
     slides.appendChild(sec);
     const link=document.createElement('a');
-    link.textContent=d.title; link.href="#"; link.onclick=(e)=>{e.preventDefault();show(i)};
+    link.textContent=d.title;
+    link.href="#"; link.onclick=(e)=>{e.preventDefault();show(i)};
     nav.appendChild(link);
   });
-  renderAll();
-}
-
-async function renderAll(){
-  try { await mermaid.run({ querySelector: '.mermaid' }); }
-  catch(e){ console.error(e); }
 }
 
 function show(i){
   idx=i;
   document.querySelectorAll('.slide').forEach((s,j)=>s.style.display=(all||j===i)?'block':'none');
-  renderAll();
+  renderAll(); // render current when showing
 }
 
-function toggleView(){ all=!all; show(idx); }
-
-function toggleEdit(){
-  editMode=!editMode;
-  document.querySelectorAll('.mmd').forEach(t=>t.style.display=editMode?'block':'none');
-  document.querySelectorAll('.render-btn').forEach(b=>b.style.display=editMode?'inline-block':'none');
+function renderAll(){
+  document.querySelectorAll('.mermaid').forEach(async el=>{
+    try { await mermaid.run({ nodes:[el] }); }
+    catch(e){ el.textContent='Render error: '+e.message; }
+  });
 }
 
 function attachButtons(){
@@ -213,14 +217,6 @@ function attachButtons(){
   });
 }
 
-document.getElementById('next').onclick=()=>{idx=(idx+1)%diagrams.length;show(idx);};
-document.getElementById('prev').onclick=()=>{idx=(idx-1+diagrams.length)%diagrams.length;show(idx);};
-document.getElementById('toggleView').onclick=toggleView;
-document.getElementById('toggleEdit').onclick=toggleEdit;
-
-buildSlides();
-attachButtons();
-show(0);
-</script>
-</body>
-</html>
+function toggleEdit(){
+  editMode=!editMode;
+  document.querySelectorAll('.mmd').forEach(t=>t
