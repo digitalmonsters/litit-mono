@@ -1,0 +1,36 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#FF6F61",
+    "primaryTextColor": "#FFFFFF",
+    "primaryBorderColor": "#D35400",
+    "secondaryColor": "#FFE66D",
+    "secondaryTextColor": "#23303B",
+    "tertiaryColor": "#4ABDAC",
+    "edgeLabelBackground": "#FCE38A",
+    "fontFamily": "Poppins, sans-serif",
+    "fontSize": "14px",
+    "lineColor": "#F46036",
+    "background": "#FFFFFF"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "htmlLabels": true,
+    "curve": "basis"
+  }
+}}%%
+
+graph LR
+  subgraph "CI/CD"
+    A["GitHub Actions"]
+    B["Docker Build + Push (GHCR)"]
+    C["Portainer Deploy"]
+    D["Watchtower Auto-Update"]
+  end
+  subgraph "Monitoring"
+    E["Prometheus"]
+    F["Grafana"]
+    G["Loki Logs"]
+  end
+  A --> B --> C --> D
+  D --> E --> F --> G

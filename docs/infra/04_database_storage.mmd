@@ -1,0 +1,32 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#FF6F61",
+    "primaryTextColor": "#FFFFFF",
+    "primaryBorderColor": "#D35400",
+    "secondaryColor": "#FFE66D",
+    "secondaryTextColor": "#23303B",
+    "tertiaryColor": "#4ABDAC",
+    "edgeLabelBackground": "#FCE38A",
+    "fontFamily": "Poppins, sans-serif",
+    "fontSize": "14px",
+    "lineColor": "#F46036",
+    "background": "#FFFFFF"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "htmlLabels": true,
+    "curve": "basis"
+  }
+}}%%
+
+graph LR
+  A["PostgreSQL<br>Primary ACID DB"]
+  B["Redis 7<br>Cache / Sessions"]
+  C["Meilisearch<br>Search Index"]
+  D["Bunny.net<br>CDN / Object Storage"]
+  E["Backups → Azure Blob"]
+  A --> E
+  B --> A
+  C --> A
+  D --> A

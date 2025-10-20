@@ -1,0 +1,36 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#FF6F61",
+    "primaryTextColor": "#FFFFFF",
+    "primaryBorderColor": "#D35400",
+    "secondaryColor": "#FFE66D",
+    "secondaryTextColor": "#23303B",
+    "tertiaryColor": "#4ABDAC",
+    "edgeLabelBackground": "#FCE38A",
+    "fontFamily": "Poppins, sans-serif",
+    "fontSize": "14px",
+    "lineColor": "#F46036",
+    "background": "#FFFFFF"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "htmlLabels": true,
+    "curve": "basis"
+  }
+}}%%
+
+graph LR
+  subgraph "Go Fiber Monolith"
+    A["/internal/common<br>Config · DB · Logger · Redis"]
+    B["/internal/ws<br>Gotify Bridge + Fallback Hub"]
+    C["/internal/api<br>Public REST (v1)"]
+    D["/internal/admin<br>Role-based Routes"]
+    E["/internal/content<br>Media Pipeline"]
+    F["/internal/auth<br>JWT + Device Binding"]
+    G["/internal/payments<br>Braintree / Stripe"]
+    H["/internal/ai<br>Gemini & ML Utilities"]
+  end
+  A --> B & C & D & E & F & G & H
+  E -->|Uploads| Bunny
+  F -->|Tokens| Redis
