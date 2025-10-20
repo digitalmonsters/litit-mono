@@ -14,8 +14,10 @@ jobs:
           mkdir -p docs/infra/out
           for f in docs/infra/*.mmd; do
             base=$(basename "$f" .mmd)
-            mmdc -i "$f" -o "docs/infra/out/${base}.svg" \
-              -t base -b transparent -w 1600 -H 1000 --scale 2
+           mmdc -i "$f" -o "docs/infra/out/${base}.svg" \
+            --themeFile docs/infra/tropical-theme.json \
+            -b transparent -w 1600 -H 1000 --scale 2
+
           done
       - run: |
           git config user.name "Mermaid Bot"
