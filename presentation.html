@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LitIt Platform Architecture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Poppins, sans-serif; margin: 0; padding: 0; background: #F9F9F9; color: #23303B; }
+    .slide { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+    img { max-width: 90%; max-height: 90%; }
+    nav { position: fixed; bottom: 20px; width: 100%; text-align: center; }
+    nav a { margin: 0 10px; text-decoration: none; color: #FF6F61; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <img src="./docs/infra/out/01_overview.svg" alt="Overview Diagram">
+  </div>
+  <div class="slide">
+    <img src="./docs/infra/out/02_backend_monolith.svg" alt="Backend Monolith">
+  </div>
+  <!-- add more slides for each diagram -->
+  <nav><a href="#prev">◀ Prev</a> | <a href="#next">Next ▶</a></nav>
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let idx = 0;
+    function show(i) {
+      slides.forEach((s, j) => s.style.display = (j === i ? 'flex' : 'none'));
+    }
+    show(idx);
+    document.body.addEventListener('keydown', e => {
+      if (e.key === "ArrowRight") idx = Math.min(idx+1, slides.length-1);
+      if (e.key === "ArrowLeft") idx = Math.max(idx-1, 0);
+      show(idx);
+    });
+  </script>
+</body>
+</html>
