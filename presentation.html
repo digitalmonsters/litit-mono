@@ -1,38 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>LitIt Platform Architecture</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Poppins, sans-serif; margin: 0; padding: 0; background: #F9F9F9; color: #23303B; }
-    .slide { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
-    img { max-width: 90%; max-height: 90%; }
-    nav { position: fixed; bottom: 20px; width: 100%; text-align: center; }
-    nav a { margin: 0 10px; text-decoration: none; color: #FF6F61; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<title>LitIt Platform Infrastructure</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="presentation.css">
 </head>
 <body>
-  <div class="slide">
-    <img src="./docs/infra/out/01_overview.svg" alt="Overview Diagram">
-  </div>
-  <div class="slide">
-    <img src="./docs/infra/out/02_backend_monolith.svg" alt="Backend Monolith">
-  </div>
-  <!-- add more slides for each diagram -->
-  <nav><a href="#prev">◀ Prev</a> | <a href="#next">Next ▶</a></nav>
-  <script>
-    const slides = document.querySelectorAll('.slide');
-    let idx = 0;
-    function show(i) {
-      slides.forEach((s, j) => s.style.display = (j === i ? 'flex' : 'none'));
-    }
-    show(idx);
-    document.body.addEventListener('keydown', e => {
-      if (e.key === "ArrowRight") idx = Math.min(idx+1, slides.length-1);
-      if (e.key === "ArrowLeft") idx = Math.max(idx-1, 0);
-      show(idx);
-    });
-  </script>
+<header>
+  <h1>LitIt Infrastructure Presentation</h1>
+  <nav id="nav"></nav>
+</header>
+
+<main id="slides"></main>
+
+<footer>
+  <button id="prev">◀ Prev</button>
+  <button id="next">Next ▶</button>
+  <button id="toggleView">View All</button>
+</footer>
+
+<script>
+const diagrams = [
+  {file:'01_overview.svg',title:'Overview',desc:'High-level architecture'},
+  {file:'02_backend_monolith.svg',title:'Backend Monolith',desc:'Go Fiber Modules'},
+  {file:'03_internal_services.svg',title:'Internal Services',desc:'Workers & Pipelines'},
+  {file:'04_database_storage.svg',title:'Database Storage',desc:'Postgres, Redis, Meili, Bunny'},
+  {file:'05_mobile_app_ui.svg',title:'Mobile UI',desc:'Flutter Screens + API'},
+  {file:'06_ci_cd_monitoring.svg',title:'CI/CD & Monitoring',desc:'DevOps Flow'},
+  {file:'07_security_network.svg',title:'Security & Network',desc:'Auth & TLS'},
+  {file:'08_marketing_analytics.svg',title:'Marketing Analytics',desc:'Tracking Stack'}
+];
+const slides=document.getElementById('slides');
+const nav=document.getElementById('nav');
+diagrams.forEach((d,i)=>{
+  const sec=document.createElement('section');
+  sec.className='slide';
+  sec.innerHTML=`<h2>${d.title}</h2><img src="./docs/infra/out/${d.file}" alt="${d.title}"><p>${d.desc}</p>`;
+  slides.appendChild(sec);
+  const a=document.createElement('a');
+  a.textContent=d.title;
+  a.href='#'+i;
+  nav.appendChild(a);
+});
+let idx=0,all=false;
+function show(i){document.querySelectorAll('.slide').forEach((s,j)=>s.style.display=(all||j===i)?'block':'none');}
+show(idx);
+document.getElementById('next').onclick=()=>{idx=(idx+1)%diagrams.length;show(idx);};
+document.getElementById('prev').onclick=()=>{idx=(idx-1+diagrams.length)%diagrams.length;show(idx);};
+document.getElementById('toggleView').onclick=()=>{all=!all;show(idx);};
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'){idx=(idx+1)%diagrams.length;show(idx);}
+  if(e.key==='ArrowLeft'){idx=(idx-1+diagrams.length)%diagrams.length;show(idx);}
+});
+</script>
 </body>
 </html>
