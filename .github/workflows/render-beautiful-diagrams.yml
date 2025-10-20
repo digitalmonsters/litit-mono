@@ -1,0 +1,25 @@
+name: Render Mermaid Diagrams
+on:
+  push:
+    paths: ['docs/infra/**/*.mmd']
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @mermaid-js/mermaid-cli@10
+      - run: |
+          mkdir -p docs/infra/out
+          for f in docs/infra/*.mmd; do
+            base=$(basename "$f" .mmd)
+            mmdc -i "$f" -o "docs/infra/out/${base}.svg" \
+              -t base -b transparent -w 1600 -H 1000 --scale 2
+          done
+      - run: |
+          git config user.name "Mermaid Bot"
+          git config user.email "bot@digitalmonsters.com"
+          git add docs/infra/out/*.svg
+          git commit -m "Auto-update infrastructure diagrams" || echo "No changes"
+          git push
