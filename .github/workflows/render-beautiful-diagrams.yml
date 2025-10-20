@@ -9,43 +9,37 @@ on:
 jobs:
   render:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Check out repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Node and Mermaid CLI (v10.9.1 supports --themeFile)
       - name: Install Mermaid CLI
         run: |
           npm install -g @mermaid-js/mermaid-cli@10.9.1
           mmdc --version
 
-      # 3️⃣ Make sure output folder exists
       - name: Create output folder
         run: mkdir -p docs/infra/out
 
-      # 4️⃣ Render each .mmd file to .svg with your tropical theme
-     - name: Render diagrams
+      - name: Render diagrams
         run: |
-      echo "Rendering Mermaid diagrams..."
-      for f in docs/infra/*.mmd; do
-      base=$(basename "$f" .mmd)
-      echo "🖼️  Rendering $f → docs/infra/out/${base}.svg"
-      mmdc -i "$f" \
-           -o "docs/infra/out/${base}.svg" \
-           -t default \
-           -b transparent \
-           -w 1600 -H 1000 \
-           --scale 2
-    done
-    echo "✅ All diagrams rendered!"
+          echo "Rendering Mermaid diagrams..."
+          for f in docs/infra/*.mmd; do
+            base=$(basename "$f" .mmd)
+            echo "🖼️  Rendering $f → docs/infra/out/${base}.svg"
+            mmdc -i "$f" \
+                 -o "docs/infra/out/${base}.svg" \
+                 -t default \
+                 -b transparent \
+                 -w 1600 -H 1000 \
+                 --scale 2
+          done
+          echo "✅ All diagrams rendered!"
 
-
-      # 5️⃣ Commit changes back to repo (optional if you want automation)
       - name: Commit updated SVGs
         run: |
           git config --global user.name "Mermaid Bot"
           git config --global user.email "bot@digitalmonsters.com"
           git add docs/infra/out/*.svg || true
-          git diff --cached --quiet && echo "No SVG ch
+          git diff --cached --quiet && echo "No SVG changes to commit" || git commit -m "Auto-update Mermaid diagrams"
+          git push || echo "No push (maybe running in PR or no changes)"
