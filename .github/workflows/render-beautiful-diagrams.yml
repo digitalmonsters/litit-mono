@@ -1,28 +1,50 @@
-name: Render Mermaid Diagrams
+name: Render Tropical Mermaid Diagrams
+
 on:
   push:
-    paths: ['docs/infra/**/*.mmd']
+    paths:
+      - 'docs/infra/**/*.mmd'
   workflow_dispatch:
 
 jobs:
   render:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        run: npm install -g @mermaid-js/mermaid-cli@10.9.1
 
-      - run: |
-          mkdir -p docs/infra/out
+    steps:
+      # 1️⃣ Check out repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Install Node and Mermaid CLI (v10.9.1 supports --themeFile)
+      - name: Install Mermaid CLI
+        run: |
+          npm install -g @mermaid-js/mermaid-cli@10.9.1
+          mmdc --version
+
+      # 3️⃣ Make sure output folder exists
+      - name: Create output folder
+        run: mkdir -p docs/infra/out
+
+      # 4️⃣ Render each .mmd file to .svg with your tropical theme
+      - name: Render diagrams
+        run: |
+          echo "Rendering Mermaid diagrams..."
           for f in docs/infra/*.mmd; do
             base=$(basename "$f" .mmd)
-           mmdc -i "$f" -o "docs/infra/out/${base}.svg" \
-            --themeFile docs/infra/tropical-theme.json \
-            -b transparent -w 1600 -H 1000 --scale 2
-
+            echo "🖼️  Rendering $f → docs/infra/out/${base}.svg"
+            mmdc -i "$f" \
+                 -o "docs/infra/out/${base}.svg" \
+                 --themeFile docs/infra/tropical-theme.json \
+                 -b transparent \
+                 -w 1600 -H 1000 \
+                 --scale 2
           done
-      - run: |
-          git config user.name "Mermaid Bot"
-          git config user.email "bot@digitalmonsters.com"
-          git add docs/infra/out/*.svg
-          git commit -m "Auto-update infrastructure diagrams" || echo "No changes"
-          git push
+          echo "✅ All diagrams rendered!"
+
+      # 5️⃣ Commit changes back to repo (optional if you want automation)
+      - name: Commit updated SVGs
+        run: |
+          git config --global user.name "Mermaid Bot"
+          git config --global user.email "bot@digitalmonsters.com"
+          git add docs/infra/out/*.svg || true
+          git diff --cached --quiet && echo "No SVG ch
