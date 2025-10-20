@@ -10,17 +10,21 @@ jobs:
   render:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ Check out the repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Install Node and Mermaid CLI (v10.9.1)
       - name: Install Mermaid CLI
         run: |
           npm install -g @mermaid-js/mermaid-cli@10.9.1
           mmdc --version
 
+      # 3️⃣ Create output folder if it doesn't exist
       - name: Create output folder
         run: mkdir -p docs/infra/out
 
+      # 4️⃣ Render all Mermaid diagrams (no sandbox mode)
       - name: Render diagrams
         run: |
           echo "Rendering Mermaid diagrams..."
@@ -32,10 +36,12 @@ jobs:
                  -t default \
                  -b transparent \
                  -w 1600 -H 1000 \
-                 --scale 2
+                 --scale 2 \
+                 --no-sandbox
           done
           echo "✅ All diagrams rendered!"
 
+      # 5️⃣ Commit and push generated SVGs (optional)
       - name: Commit updated SVGs
         run: |
           git config --global user.name "Mermaid Bot"
