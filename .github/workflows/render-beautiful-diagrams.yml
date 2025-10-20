@@ -9,7 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm install -g @mermaid-js/mermaid-cli@10
+     - name: Install Mermaid CLI
+      run: npm install -g @mermaid-js/mermaid-cli@10.9.1
+
       - run: |
           mkdir -p docs/infra/out
           for f in docs/infra/*.mmd; do
