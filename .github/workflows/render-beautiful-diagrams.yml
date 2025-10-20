@@ -10,22 +10,25 @@ jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ Check out the repo
+      # 1️⃣  Check out the repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Node and Mermaid CLI (v10.9.1)
+      # 2️⃣  Install Node and Mermaid CLI (v10.9.1)
       - name: Install Mermaid CLI
         run: |
           npm install -g @mermaid-js/mermaid-cli@10.9.1
           mmdc --version
 
-      # 3️⃣ Create output folder if it doesn't exist
+      # 3️⃣  Create the output folder
       - name: Create output folder
         run: mkdir -p docs/infra/out
 
-      # 4️⃣ Render all Mermaid diagrams (no sandbox mode)
+      # 4️⃣  Render all Mermaid diagrams (Chromium launched with --no-sandbox)
       - name: Render diagrams
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ""   # let mmdc manage chromium
+          PUPPETEER_ARGS: "--no-sandbox"  # 👈 tells Puppeteer to launch chromium without sandbox
         run: |
           echo "Rendering Mermaid diagrams..."
           for f in docs/infra/*.mmd; do
@@ -36,12 +39,11 @@ jobs:
                  -t default \
                  -b transparent \
                  -w 1600 -H 1000 \
-                 --scale 2 \
-                 --no-sandbox
+                 --scale 2
           done
-          echo "✅ All diagrams rendered!"
+          echo "✅  All diagrams rendered!"
 
-      # 5️⃣ Commit and push generated SVGs (optional)
+      # 5️⃣  Commit and push generated SVGs
       - name: Commit updated SVGs
         run: |
           git config --global user.name "Mermaid Bot"
