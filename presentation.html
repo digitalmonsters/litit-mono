@@ -3,17 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>LitIt Platform Infrastructure – Live Mermaid 🌴</title>
+<title>LitIt Infrastructure – Live & Editable Mermaid 🌴</title>
 <style>
-  body { font-family:Poppins,sans-serif;margin:0;padding:1rem;
-         background:#0B132B;color:#E0E0E0;transition:background .5s,color .5s; }
-  h1 { text-align:center;margin-top:0.5rem;color:#4ABDAC; }
-  section { margin:3rem auto;max-width:95%; }
-  .mermaid { margin:1rem auto;max-width:90%;background:#fff;color:#000;
-             border-radius:8px;padding:0.5rem; }
-  button { background:#4ABDAC;color:#fff;border:none;padding:.5rem 1rem;
-           border-radius:6px;font-weight:600;cursor:pointer;margin:.2rem; }
-  footer { position:fixed;bottom:10px;width:100%;text-align:center; }
+  body {font-family:Poppins,sans-serif;margin:0;padding:1rem;background:#0B132B;color:#E0E0E0;}
+  h1 {text-align:center;color:#4ABDAC;}
+  section {margin:2rem auto;max-width:95%;}
+  .mermaid {margin:1rem auto;max-width:90%;background:#fff;color:#000;border-radius:8px;padding:0.5rem;}
+  textarea {width:90%;height:220px;margin:1rem auto;display:block;font-family:monospace;font-size:14px;}
+  button {background:#4ABDAC;color:#fff;border:none;padding:.4rem .8rem;border-radius:6px;
+          font-weight:600;cursor:pointer;margin:.2rem;}
   @media(prefers-color-scheme:light){
     body{background:#fff;color:#23303B;}
     .mermaid{background:#f8f9fa;}
@@ -26,11 +24,15 @@
 
 <h1>LitIt Platform Infrastructure 🌴</h1>
 
-<!-- 01 Overview -->
-<section>
-<h2>01 Overview</h2>
-<div class="mermaid">
-graph TD
+<div id="slides"></div>
+
+<!-- Mermaid runtime -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({ startOnLoad:true, theme:"default" });
+
+const diagrams = [
+  {title:"01 Overview",desc:"High-level architecture",mmd:`graph TD
   subgraph "Clients"
     A1["Android / iOS / PWA"]
     A2["Web Admin Portal (Next.js)"]
@@ -58,15 +60,9 @@ graph TD
   A2 -->|Admin| B1
   C1 --> D1 & D2 & D3 & D4 & D5
   E1 --> E2 --> C1
-  C1 --> F1
-</div>
-</section>
+  C1 --> F1`},
 
-<!-- 02 Backend Monolith -->
-<section>
-<h2>02 Backend Monolith</h2>
-<div class="mermaid">
-graph LR
+  {title:"02 Backend Monolith",desc:"Go Fiber internal modules",mmd:`graph LR
   subgraph "Go Fiber Monolith"
     A["/internal/common – Config · DB · Logger · Redis"]
     B["/internal/ws – Gotify Bridge + Fallback Hub"]
@@ -79,15 +75,9 @@ graph LR
   end
   A --> B & C & D & E & F & G & H
   E -->|Uploads| Bunny
-  F -->|Tokens| Redis
-</div>
-</section>
+  F -->|Tokens| Redis`},
 
-<!-- 03 Internal Services -->
-<section>
-<h2>03 Internal Services</h2>
-<div class="mermaid">
-graph TD
+  {title:"03 Internal Services",desc:"Workers and pipelines",mmd:`graph TD
   subgraph "Internal Services"
     A["content.service.go"]
     B["auth.service.go"]
@@ -101,15 +91,9 @@ graph TD
   C -->|Sync| Postgres
   D -->|Index Build| Meilisearch
   E -->|Push| Gotify
-  F -->|Cache Cleanup| Redis
-</div>
-</section>
+  F -->|Cache Cleanup| Redis`},
 
-<!-- 04 Database & Storage -->
-<section>
-<h2>04 Database & Storage</h2>
-<div class="mermaid">
-graph LR
+  {title:"04 Database & Storage",desc:"Persistence layer",mmd:`graph LR
   A["PostgreSQL – Primary ACID DB"]
   B["Redis 7 – Cache / Sessions"]
   C["Meilisearch – Search Index"]
@@ -118,15 +102,9 @@ graph LR
   A --> E
   B --> A
   C --> A
-  D --> A
-</div>
-</section>
+  D --> A`},
 
-<!-- 05 Mobile App & UI -->
-<section>
-<h2>05 Mobile App & UI</h2>
-<div class="mermaid">
-graph TD
+  {title:"05 Mobile App & UI",desc:"Flutter endpoints",mmd:`graph TD
   subgraph "Mobile App (Flutter)"
     A1["Login / Register /api/auth/*"]
     A2["Dashboard /api/feed/*"]
@@ -136,15 +114,9 @@ graph TD
     A6["Media Upload /api/content/upload"]
   end
   A1 --> A2 --> A3 --> A4 --> A5 --> A6
-  A4 -->|WebSocket /ws| Gotify
-</div>
-</section>
+  A4 -->|WebSocket /ws| Gotify`},
 
-<!-- 06 CI/CD & Monitoring -->
-<section>
-<h2>06 CI/CD & Monitoring</h2>
-<div class="mermaid">
-graph LR
+  {title:"06 CI/CD & Monitoring",desc:"DevOps workflow",mmd:`graph LR
   subgraph "CI/CD"
     A["GitHub Actions"]
     B["Docker Build + Push (GHCR)"]
@@ -157,47 +129,42 @@ graph LR
     G["Loki Logs"]
   end
   A --> B --> C --> D
-  D --> E --> F --> G
-</div>
-</section>
+  D --> E --> F --> G`},
 
-<!-- 07 Security & Network -->
-<section>
-<h2>07 Security & Network</h2>
-<div class="mermaid">
-graph TD
+  {title:"07 Security & Network",desc:"Auth, TLS, and WAF",mmd:`graph TD
   A["JWT Auth (HS256 / ES256)"]
   B["Device Binding (Mobile)"]
   C["Role-Based Access (/admin/*)"]
   D["TLS Auto-Renew (Caddy)"]
   E["Cloudflare WAF (DDoS Protection)"]
-  A --> B --> C --> D --> E
-</div>
-</section>
+  A --> B --> C --> D --> E`},
 
-<!-- 08 Marketing & Analytics -->
-<section>
-<h2>08 Marketing & Analytics</h2>
-<div class="mermaid">
-graph LR
+  {title:"08 Marketing & Analytics",desc:"Tracking and analytics",mmd:`graph LR
   A["Google Analytics / Firebase"]
   B["Meilisearch Logs"]
   C["Bunny Analytics"]
   D["Redis Counters"]
   E["Prometheus / Grafana"]
-  A --> B --> C --> D --> E
-</div>
-</section>
+  A --> B --> C --> D --> E`}
+];
 
-<footer>
-  <button onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆ Back to Top</button>
-</footer>
+const container=document.getElementById("slides");
+diagrams.forEach((d,i)=>{
+  const sec=document.createElement("section");
+  sec.innerHTML=`<h2>${d.title}</h2><p>${d.desc}</p>
+  <textarea id="edit${i}" class="editor">${d.mmd}</textarea>
+  <button onclick="render(${i})">Render</button>
+  <div id="out${i}" class="mermaid">${d.mmd}</div>`;
+  container.appendChild(sec);
+});
 
-<!-- Mermaid runtime -->
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-<script>
-  mermaid.initialize({ startOnLoad:true, theme:"default" });
+window.render=async(i)=>{
+  const txt=document.getElementById("edit"+i).value;
+  const out=document.getElementById("out"+i);
+  out.innerHTML=txt;
+  try{await mermaid.run({nodes:[out]});}
+  catch(e){out.textContent="Render error: "+e.message;}
+};
 </script>
-
 </body>
 </html>
