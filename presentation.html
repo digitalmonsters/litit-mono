@@ -2,13 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LitIt Platform Infrastructure</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LitIt Infrastructure Presentation 🌴</title>
 <link rel="stylesheet" href="presentation.css">
+<style>
+  body { font-family:Poppins,sans-serif; margin:0; transition:background .5s,color .5s; }
+  header,footer { position:sticky;top:0;padding:.5rem;text-align:center;background:inherit; }
+  nav a { margin:0 .5rem;text-decoration:none;color:inherit;font-weight:600; }
+  .slide { display:none; padding:2rem; text-align:center; }
+  .slide img { max-width:90%; max-height:70vh; border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,.2); }
+  footer { position:fixed;bottom:10px;width:100%;text-align:center; }
+  button { background:#FF6F61;color:#fff;border:none;padding:.5rem 1rem;border-radius:6px;
+           font-weight:600;cursor:pointer;margin:0 .3rem; }
+  textarea.mmd { width:80%;height:200px;margin:1rem auto;display:block;font-family:monospace;font-size:14px; }
+  .mermaid { margin:1rem auto; }
+  @media (prefers-color-scheme:dark){
+    body{background:#0B132B;color:#E0E0E0;}
+    button{background:#4ABDAC;}
+  }
+</style>
 </head>
 <body>
+
 <header>
-  <h1>LitIt Infrastructure Presentation</h1>
+  <h1>LitIt Platform Infrastructure 🌴</h1>
   <nav id="nav"></nav>
 </header>
 
@@ -18,41 +35,223 @@
   <button id="prev">◀ Prev</button>
   <button id="next">Next ▶</button>
   <button id="toggleView">View All</button>
+  <button id="toggleEdit">Toggle Edit Mode</button>
 </footer>
 
-<script>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+mermaid.initialize({ startOnLoad:false, theme:"default" });
+
 const diagrams = [
-  {file:'01_overview.svg',title:'Overview',desc:'High-level architecture'},
-  {file:'02_backend_monolith.svg',title:'Backend Monolith',desc:'Go Fiber Modules'},
-  {file:'03_internal_services.svg',title:'Internal Services',desc:'Workers & Pipelines'},
-  {file:'04_database_storage.svg',title:'Database Storage',desc:'Postgres, Redis, Meili, Bunny'},
-  {file:'05_mobile_app_ui.svg',title:'Mobile UI',desc:'Flutter Screens + API'},
-  {file:'06_ci_cd_monitoring.svg',title:'CI/CD & Monitoring',desc:'DevOps Flow'},
-  {file:'07_security_network.svg',title:'Security & Network',desc:'Auth & TLS'},
-  {file:'08_marketing_analytics.svg',title:'Marketing Analytics',desc:'Tracking Stack'}
+  {
+    file:'01_overview.svg',
+    title:'Overview',
+    desc:'High-level architecture and system overview',
+    mmd:`%%{init: {"theme":"base","themeVariables":{"primaryColor":"#FF6F61","primaryTextColor":"#FFFFFF","primaryBorderColor":"#D35400","secondaryColor":"#FFE66D","secondaryTextColor":"#23303B","tertiaryColor":"#4ABDAC","fontFamily":"Poppins,sans-serif"}}}%%
+graph TD
+  subgraph "Clients (Mobile & Web)"
+    A1["Android / iOS / PWA"]
+    A2["Web Admin Portal (Next.js)"]
+  end
+  subgraph "Network"
+    B1["Caddy / Nginx (HTTP/2, TLS, Brotli)"]
+  end
+  subgraph "Backend"
+    C1["Go Fiber Monolith"]
+    C2["REST API + WebSocket Hub"]
+  end
+  subgraph "Services"
+    D1["PostgreSQL"]
+    D2["Redis"]
+    D3["Meilisearch"]
+    D4["Gotify"]
+    D5["Bunny CDN"]
+  end
+  subgraph "DevOps & Monitoring"
+    E1["GitHub Actions"]
+    E2["Portainer + Watchtower"]
+    F1["Prometheus / Grafana / Loki"]
+  end
+  A1 -->|HTTPS| B1 --> C1
+  A2 -->|Admin| B1
+  C1 --> D1 & D2 & D3 & D4 & D5
+  E1 --> E2 --> C1
+  C1 --> F1`
+  },
+  {
+    file:'02_backend_monolith.svg',
+    title:'Backend Monolith',
+    desc:'Go Fiber Monolith and internal packages',
+    mmd:`graph LR
+  subgraph "Go Fiber Monolith"
+    A["/internal/common<br>Config · DB · Logger · Redis"]
+    B["/internal/ws<br>Gotify Bridge + Fallback Hub"]
+    C["/internal/api<br>Public REST (v1)"]
+    D["/internal/admin<br>Role-based Routes"]
+    E["/internal/content<br>Media Pipeline"]
+    F["/internal/auth<br>JWT + Device Binding"]
+    G["/internal/payments<br>Braintree / Stripe"]
+    H["/internal/ai<br>Gemini & ML Utilities"]
+  end
+  A --> B & C & D & E & F & G & H
+  E -->|Uploads| Bunny
+  F -->|Tokens| Redis`
+  },
+  {
+    file:'03_internal_services.svg',
+    title:'Internal Services',
+    desc:'Background workers, content, auth, payments, and notifications',
+    mmd:`graph TD
+  subgraph "Internal Services"
+    A["content.service.go"]
+    B["auth.service.go"]
+    C["payments.service.go"]
+    D["search.indexer.go"]
+    E["notification.service.go"]
+    F["scheduler.cron.go"]
+  end
+  A -->|Media Uploads| Bunny
+  B -->|JWT Issue| Redis
+  C -->|Sync| Postgres
+  D -->|Index Build| Meilisearch
+  E -->|Push| Gotify
+  F -->|Cache Cleanup| Redis`
+  },
+  {
+    file:'04_database_storage.svg',
+    title:'Database & Storage',
+    desc:'Data persistence layers and flow between Postgres, Redis, Meili, and Bunny',
+    mmd:`graph LR
+  A["PostgreSQL<br>Primary ACID DB"]
+  B["Redis 7<br>Cache / Sessions"]
+  C["Meilisearch<br>Search Index"]
+  D["Bunny.net<br>CDN / Object Storage"]
+  E["Backups → Azure Blob"]
+  A --> E
+  B --> A
+  C --> A
+  D --> A`
+  },
+  {
+    file:'05_mobile_app_ui.svg',
+    title:'Mobile App & UI',
+    desc:'Flutter mobile app endpoints and API routes',
+    mmd:`graph TD
+  subgraph "Mobile App (Flutter)"
+    A1["Login / Register<br>/api/auth/*"]
+    A2["Dashboard<br>/api/feed/*"]
+    A3["Casting Calls<br>/api/cast/*"]
+    A4["Messages<br>/api/chat/*"]
+    A5["Profile Edit<br>/api/user/*"]
+    A6["Media Upload<br>/api/content/upload"]
+  end
+  A1 --> A2 --> A3 --> A4 --> A5 --> A6
+  A4 -->|WebSocket /ws| Gotify`
+  },
+  {
+    file:'06_ci_cd_monitoring.svg',
+    title:'CI/CD & Monitoring',
+    desc:'Continuous integration, delivery, and observability stack',
+    mmd:`graph LR
+  subgraph "CI/CD"
+    A["GitHub Actions"]
+    B["Docker Build + Push (GHCR)"]
+    C["Portainer Deploy"]
+    D["Watchtower Auto-Update"]
+  end
+  subgraph "Monitoring"
+    E["Prometheus"]
+    F["Grafana"]
+    G["Loki Logs"]
+  end
+  A --> B --> C --> D
+  D --> E --> F --> G`
+  },
+  {
+    file:'07_security_network.svg',
+    title:'Security & Network',
+    desc:'Authentication, TLS, and WAF protection',
+    mmd:`graph TD
+  A["JWT Auth (HS256 / ES256)"]
+  B["Device Binding (Mobile)"]
+  C["Role-Based Access (/admin/*)"]
+  D["TLS Auto-Renew (Caddy)"]
+  E["Cloudflare WAF (DDoS Protection)"]
+  A --> B --> C --> D --> E`
+  },
+  {
+    file:'08_marketing_analytics.svg',
+    title:'Marketing & Analytics',
+    desc:'Tracking and analytics tools integrated with LitIt platform',
+    mmd:`graph LR
+  A["Google Analytics / Firebase"]
+  B["Meilisearch Logs"]
+  C["Bunny Analytics"]
+  D["Redis Counters"]
+  E["Prometheus / Grafana"]
+  A --> B --> C --> D --> E`
+  }
 ];
+
 const slides=document.getElementById('slides');
 const nav=document.getElementById('nav');
-diagrams.forEach((d,i)=>{
-  const sec=document.createElement('section');
-  sec.className='slide';
-  sec.innerHTML=`<h2>${d.title}</h2><img src="./docs/infra/out/${d.file}" alt="${d.title}"><p>${d.desc}</p>`;
-  slides.appendChild(sec);
-  const a=document.createElement('a');
-  a.textContent=d.title;
-  a.href='#'+i;
-  nav.appendChild(a);
-});
-let idx=0,all=false;
-function show(i){document.querySelectorAll('.slide').forEach((s,j)=>s.style.display=(all||j===i)?'block':'none');}
-show(idx);
-document.getElementById('next').onclick=()=>{idx=(idx+1)%diagrams.length;show(idx);};
-document.getElementById('prev').onclick=()=>{idx=(idx-1+diagrams.length)%diagrams.length;show(idx);};
-document.getElementById('toggleView').onclick=()=>{all=!all;show(idx);};
-document.addEventListener('keydown',e=>{
-  if(e.key==='ArrowRight'){idx=(idx+1)%diagrams.length;show(idx);}
-  if(e.key==='ArrowLeft'){idx=(idx-1+diagrams.length)%diagrams.length;show(idx);}
-});
+let editMode=false, idx=0, all=false;
+
+function buildSlides(){
+  slides.innerHTML=''; nav.innerHTML='';
+  diagrams.forEach((d,i)=>{
+    const sec=document.createElement('section');
+    sec.className='slide';
+    sec.id=`slide-${i}`;
+    sec.innerHTML=`
+      <h2>${d.title}</h2>
+      <p>${d.desc}</p>
+      <div class="svg-view"><img src="./docs/infra/out/${d.file}" alt="${d.title}"></div>
+      <div class="mmd-view" style="display:none;">
+        <textarea class="mmd">${d.mmd}</textarea>
+        <button class="render-btn">Render</button>
+        <div class="mermaid"></div>
+      </div>`;
+    slides.appendChild(sec);
+    const link=document.createElement('a');
+    link.textContent=d.title; link.href="#"; link.onclick=(e)=>{e.preventDefault();show(i)};
+    nav.appendChild(link);
+  });
+}
+
+function show(i){ idx=i;
+  document.querySelectorAll('.slide').forEach((s,j)=>s.style.display=(all||j===i)?'block':'none');
+}
+
+function toggleEdit(){
+  editMode=!editMode;
+  document.querySelectorAll('.slide').forEach(sec=>{
+    sec.querySelector('.svg-view').style.display=editMode?'none':'block';
+    sec.querySelector('.mmd-view').style.display=editMode?'block':'none';
+  });
+}
+
+function attachRenderButtons(){
+  document.querySelectorAll('.render-btn').forEach(btn=>{
+    btn.onclick=async()=>{
+      const wrap=btn.parentElement;
+      const code=wrap.querySelector('.mmd').value;
+      const out=wrap.querySelector('.mermaid');
+      out.innerHTML=code;
+      try { await mermaid.run({ nodes:[out] }); }
+      catch(e){ out.textContent='Error: '+e.message; }
+    };
+  });
+}
+
+document.getElementById('next').onclick=()=>{idx=(idx+1)%diagrams.length;show(idx);}
+document.getElementById('prev').onclick=()=>{idx=(idx-1+diagrams.length)%diagrams.length;show(idx);}
+document.getElementById('toggleView').onclick=()=>{all=!all;show(idx);}
+document.getElementById('toggleEdit').onclick=()=>{toggleEdit();}
+
+buildSlides();
+attachRenderButtons();
+show(0);
 </script>
 </body>
 </html>
