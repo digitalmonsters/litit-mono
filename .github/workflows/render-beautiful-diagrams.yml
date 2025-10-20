@@ -1,0 +1,44 @@
+name: Render Tropical Mermaid Diagrams
+
+on:
+  push:
+    paths:
+      - 'docs/infra/**/*.mmd'
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/mermaid-js/mermaid-cli:10.9.1
+      options: --no-sandbox
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create output folder
+        run: mkdir -p docs/infra/out
+
+      - name: Render diagrams
+        run: |
+          echo "Rendering Mermaid diagrams..."
+          for f in docs/infra/*.mmd; do
+            base=$(basename "$f" .mmd)
+            echo "🖼️  Rendering $f → docs/infra/out/${base}.svg"
+            mmdc -i "$f" \
+                 -o "docs/infra/out/${base}.svg" \
+                 -t default \
+                 -b transparent \
+                 -w 1600 -H 1000 \
+                 --scale 2
+          done
+          echo "✅ All diagrams rendered!"
+
+      - name: Commit updated SVGs
+        run: |
+          git config --global user.name "Mermaid Bot"
+          git config --global user.email "bot@digitalmonsters.com"
+          git add docs/infra/out/*.svg || true
+          git diff --cached --quiet && echo "No SVG changes to commit" || git commit -m "Auto-update Mermaid diagrams"
+          git push || echo "No push (maybe running in PR or no changes)"

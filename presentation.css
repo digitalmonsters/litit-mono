@@ -1,0 +1,25 @@
+:root {
+  --bg-light: #fff;
+  --text-light: #23303B;
+  --accent-light: #FF6F61;
+  --bg-dark: #0B132B;
+  --text-dark: #E0E0E0;
+  --accent-dark: #4ABDAC;
+}
+@media (prefers-color-scheme: dark) {
+  body { background: var(--bg-dark); color: var(--text-dark); }
+  h1,h2 { color: var(--accent-dark); }
+}
+@media (prefers-color-scheme: light) {
+  body { background: var(--bg-light); color: var(--text-light); }
+  h1,h2 { color: var(--accent-light); }
+}
+body { font-family:Poppins, sans-serif; margin:0; text-align:center; transition:background 1s ease,color 1s ease;}
+header { position:sticky;top:0;background:inherit;padding:0.5rem; }
+nav a { margin:0 0.5rem;text-decoration:none;font-weight:600;color:inherit; }
+.slide { display:none; padding:2rem; animation:fade 1s ease; }
+.slide img { max-width:90%;max-height:70vh;box-shadow:0 0 20px rgba(0,0,0,0.2);border-radius:10px; }
+footer { position:fixed;bottom:10px;width:100%;text-align:center; }
+button { background:var(--accent-light);border:none;padding:0.5rem 1rem;margin:0 0.3rem;border-radius:6px;color:white;font-weight:bold;cursor:pointer;transition:transform .2s;}
+button:hover { transform:scale(1.05); }
+@keyframes fade {from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}

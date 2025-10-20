@@ -1,0 +1,37 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#FF6F61",
+    "primaryTextColor": "#FFFFFF",
+    "primaryBorderColor": "#D35400",
+    "secondaryColor": "#FFE66D",
+    "secondaryTextColor": "#23303B",
+    "tertiaryColor": "#4ABDAC",
+    "edgeLabelBackground": "#FCE38A",
+    "fontFamily": "Poppins, sans-serif",
+    "fontSize": "14px",
+    "lineColor": "#F46036",
+    "background": "#FFFFFF"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "htmlLabels": true,
+    "curve": "basis"
+  }
+}}%%
+
+graph TD
+  subgraph "Internal Services"
+    A["content.service.go"]
+    B["auth.service.go"]
+    C["payments.service.go"]
+    D["search.indexer.go"]
+    E["notification.service.go"]
+    F["scheduler.cron.go"]
+  end
+  A -->|Media Uploads| Bunny
+  B -->|JWT Issue| Redis
+  C -->|Sync| Postgres
+  D -->|Index Build| Meilisearch
+  E -->|Push| Gotify
+  F -->|Cache Cleanup| Redis

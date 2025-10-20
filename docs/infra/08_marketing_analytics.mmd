@@ -1,0 +1,29 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#FF6F61",
+    "primaryTextColor": "#FFFFFF",
+    "primaryBorderColor": "#D35400",
+    "secondaryColor": "#FFE66D",
+    "secondaryTextColor": "#23303B",
+    "tertiaryColor": "#4ABDAC",
+    "edgeLabelBackground": "#FCE38A",
+    "fontFamily": "Poppins, sans-serif",
+    "fontSize": "14px",
+    "lineColor": "#F46036",
+    "background": "#FFFFFF"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "htmlLabels": true,
+    "curve": "basis"
+  }
+}}%%
+
+graph LR
+  A["Google Analytics / Firebase"]
+  B["Meilisearch Logs"]
+  C["Bunny Analytics"]
+  D["Redis Counters"]
+  E["Prometheus / Grafana"]
+  A --> B --> C --> D --> E

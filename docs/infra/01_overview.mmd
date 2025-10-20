@@ -1,0 +1,53 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#FF6F61",
+    "primaryTextColor": "#FFFFFF",
+    "primaryBorderColor": "#D35400",
+    "secondaryColor": "#FFE66D",
+    "secondaryTextColor": "#23303B",
+    "tertiaryColor": "#4ABDAC",
+    "edgeLabelBackground": "#FCE38A",
+    "fontFamily": "Poppins, sans-serif",
+    "fontSize": "14px",
+    "lineColor": "#F46036",
+    "background": "#FFFFFF"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "htmlLabels": true,
+    "curve": "basis"
+  }
+}}%%
+
+%%{init: {"themeVariables":{}}}%%
+graph TD
+  subgraph "Clients (Mobile & Web)"
+    A1["Android / iOS / PWA"]
+    A2["Web Admin Portal (Next.js)"]
+  end
+  subgraph "Network"
+    B1["Caddy / Nginx<br>(HTTP/2, TLS, Brotli)"]
+  end
+  subgraph "Backend"
+    C1["Go Fiber Monolith"]
+    C2["REST API + WebSocket Hub"]
+  end
+  subgraph "Services"
+    D1["PostgreSQL"]
+    D2["Redis"]
+    D3["Meilisearch"]
+    D4["Gotify"]
+    D5["Bunny CDN"]
+  end
+  subgraph "DevOps & Monitoring"
+    E1["GitHub Actions"]
+    E2["Portainer + Watchtower"]
+    F1["Prometheus / Grafana / Loki"]
+  end
+
+  A1 -->|HTTPS| B1 --> C1
+  A2 -->|Admin| B1
+  C1 --> D1 & D2 & D3 & D4 & D5
+  E1 --> E2 --> C1
+  C1 --> F1

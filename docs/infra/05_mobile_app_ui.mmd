@@ -1,0 +1,33 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#FF6F61",
+    "primaryTextColor": "#FFFFFF",
+    "primaryBorderColor": "#D35400",
+    "secondaryColor": "#FFE66D",
+    "secondaryTextColor": "#23303B",
+    "tertiaryColor": "#4ABDAC",
+    "edgeLabelBackground": "#FCE38A",
+    "fontFamily": "Poppins, sans-serif",
+    "fontSize": "14px",
+    "lineColor": "#F46036",
+    "background": "#FFFFFF"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "htmlLabels": true,
+    "curve": "basis"
+  }
+}}%%
+
+graph TD
+  subgraph "Mobile App (Flutter)"
+    A1["Login / Register<br>/api/auth/*"]
+    A2["Dashboard<br>/api/feed/*"]
+    A3["Casting Calls<br>/api/cast/*"]
+    A4["Messages<br>/api/chat/*"]
+    A5["Profile Edit<br>/api/user/*"]
+    A6["Media Upload<br>/api/content/upload"]
+  end
+  A1 --> A2 --> A3 --> A4 --> A5 --> A6
+  A4 -->|WebSocket /ws| Gotify
