@@ -26,20 +26,21 @@ jobs:
         run: mkdir -p docs/infra/out
 
       # 4️⃣ Render each .mmd file to .svg with your tropical theme
-      - name: Render diagrams
+     - name: Render diagrams
         run: |
-          echo "Rendering Mermaid diagrams..."
-          for f in docs/infra/*.mmd; do
-            base=$(basename "$f" .mmd)
-            echo "🖼️  Rendering $f → docs/infra/out/${base}.svg"
-            mmdc -i "$f" \
-                 -o "docs/infra/out/${base}.svg" \
-                 --themeFile docs/infra/tropical-theme.json \
-                 -b transparent \
-                 -w 1600 -H 1000 \
-                 --scale 2
-          done
-          echo "✅ All diagrams rendered!"
+      echo "Rendering Mermaid diagrams..."
+      for f in docs/infra/*.mmd; do
+      base=$(basename "$f" .mmd)
+      echo "🖼️  Rendering $f → docs/infra/out/${base}.svg"
+      mmdc -i "$f" \
+           -o "docs/infra/out/${base}.svg" \
+           -t default \
+           -b transparent \
+           -w 1600 -H 1000 \
+           --scale 2
+    done
+    echo "✅ All diagrams rendered!"
+
 
       # 5️⃣ Commit changes back to repo (optional if you want automation)
       - name: Commit updated SVGs
